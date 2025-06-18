@@ -40,31 +40,36 @@
     </style>
 </head>
 <body>
-    <div id="number">1</div>
+    <div id="number" style="color: lightgray;">1</div>
 
-    <script>
+    <script>        
         const numberElement = document.getElementById('number');
         let number = 1;
-        const colors = ["red", "blue", "green", "white", "black", "orange", "purple", "brown", "pink", "yellow", "gray"];
+        const colors = ["red", "blue", "green", "white", "orange", "purple", "brown", "pink", "yellow", "gray"];
 
         function incrementNumber() {
             number++;
             numberElement.textContent = number;
-            const color = colors[number % colors.length];
+            const randomIndex = Math.floor(Math.random() * colors.length);
+            const color = colors[randomIndex];
             numberElement.style.color = color;
         }
 
+        // Increment on pressing space and Enter key
         document.addEventListener('keydown', function(event) {
             if (event.code === 'Space' || event.code === 'Enter') {
                 incrementNumber();
             }
         });
 
-        numberElement.addEventListener('click', incrementNumber);
-        numberElement.addEventListener('touchstart', function(e) {
+                
+        // Increment on any click or touch on the body
+        document.body.addEventListener('click', incrementNumber);
+        document.body.addEventListener('touchstart', function(e) {
             e.preventDefault();
             incrementNumber();
         }, { passive: false });
+
     </script>
 </body>
 </html>
