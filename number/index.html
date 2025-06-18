@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Incrementor</title>
+    <meta name="description" content="A simple interactive number incrementor that changes color on key press or tap.">
+    <meta name="keywords" content="numbers, flash, colors, increment, counter, interactive, JavaScript, mobile-friendly">
+    <meta name="author" content="Naveenchandar">
+    <meta property="og:title" content="Number Incrementor">
+    <meta property="og:description" content="A fun and responsive number incrementor that changes color with each interaction.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://navchandar.github.io/lab/number">
+    <meta property="og:image" content="https://navchandar.github.io/lab/number/preview.gif">
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #4e4e4e;
+            font-family: Arial, sans-serif;
+        }
+        #number {
+            font-size: 50vw;
+            color: black;
+            user-select: none;
+            cursor: pointer;
+            -webkit-text-stroke: 2px #333;
+            text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+        }
+        @media (min-width: 768px) {
+            #number {
+                font-size: 20vw;
+                -webkit-text-stroke: 3px #333;
+                text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="number">1</div>
+
+    <script>
+        const numberElement = document.getElementById('number');
+        let number = 1;
+        const colors = ["red", "blue", "green", "white", "black", "orange", "purple", "brown", "pink", "yellow", "gray"];
+
+        function incrementNumber() {
+            number++;
+            numberElement.textContent = number;
+            const color = colors[number % colors.length];
+            numberElement.style.color = color;
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.code === 'Space' || event.code === 'Enter') {
+                incrementNumber();
+            }
+        });
+
+        numberElement.addEventListener('click', incrementNumber);
+        numberElement.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            incrementNumber();
+        }, { passive: false });
+    </script>
+</body>
+</html>
