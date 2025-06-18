@@ -6,9 +6,9 @@ Repo for creative experiments and interactive tools. Each project is lightweight
 ## 🚀 Available Projects
 
 
-| Project | Description | Link |
-|--------|-------------|------|
-| 🔢 **Number Incrementor** | Display and increment numbers with random colors on key press or tap.| <a href="https://navchandar.github.io/lab/number/" target="_blank">Open ↗</a> |
+| Project | Description |
+|--------|-------------|
+| 🔢 <a href="https://navchandar.github.io/lab/number/" target="_blank">**Number Incrementor**</a> | Display and increment numbers with random colors on key press or tap. |
 
 
 
