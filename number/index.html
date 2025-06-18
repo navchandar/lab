@@ -32,7 +32,7 @@
         }
         @media (min-width: 768px) {
             #number {
-                font-size: 20vw;
+                font-size: 22em;
                 -webkit-text-stroke: 3px #333;
                 text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
             }
@@ -43,16 +43,28 @@
     <div id="number" style="color: lightgray;">1</div>
 
     <script>        
-        const numberElement = document.getElementById('number');
         let number = 1;
+        let currentColor = null;
+        let previousColor = null
+        const numberElement = document.getElementById('number');
+
         const colors = ["red", "blue", "green", "white", "orange", "purple", "brown", "pink", "yellow", "gray"];
+
+        function getNewColor() {
+            let newColor;
+            do {
+                const randomIndex = Math.floor(Math.random() * colors.length);
+                newColor = colors[randomIndex];
+            } while (newColor === currentColor || newColor === previousColor);
+            return newColor;
+        }
 
         function incrementNumber() {
             number++;
             numberElement.textContent = number;
-            const randomIndex = Math.floor(Math.random() * colors.length);
-            const color = colors[randomIndex];
-            numberElement.style.color = color;
+            previousColor = currentColor;
+            currentColor = getNewColor();
+            numberElement.style.color = currentColor;
         }
 
         // Increment on pressing space and Enter key
