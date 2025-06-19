@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="en" class="">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alphabet Generator</title>
     <meta name="description" content="A simple interactive Alphabet Generator that changes color on key press or tap.">
-    <meta name="keywords" content="alphabet, english letters, flash, colors, increment, interactive, JavaScript, mobile-friendly">
+    <meta name="keywords"
+        content="alphabet, english letters, flash, colors, increment, interactive, JavaScript, mobile-friendly">
     <meta name="author" content="Naveenchandar">
     <meta property="og:title" content="Alphabet Generator">
-    <meta property="og:description" content="A fun and responsive Alphabet Generator that changes color with each interaction.">
+    <meta property="og:description"
+        content="A fun and responsive Alphabet Generator that changes color with each interaction.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://navchandar.github.io/lab/alphabet">
     <meta property="og:image" content="https://navchandar.github.io/lab/alphabet/preview.gif">
@@ -30,52 +33,87 @@
             justify-content: center;
             align-items: center;
 
-            font-size: 15em; 
+            font-size: 15em;
             color: black;
             user-select: none;
             cursor: pointer;
             -webkit-text-stroke: 2px #333;
             text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
-            line-height: 1; 
+            line-height: 1;
 
 
             /* Paper-like background styles */
             background-color: lightgrey;
             background-image:
-                repeating-linear-gradient(
-                    0deg,
+                repeating-linear-gradient(0deg,
                     #eee 0.5px,
                     transparent 0.5px,
-                    transparent 20px
-                ),
-                repeating-linear-gradient(
-                    180deg,
+                    transparent 20px),
+                repeating-linear-gradient(180deg,
                     #000 0.1px,
                     transparent 0.5px,
-                    transparent 20px
-                );
-            background-size: 20px 20px; 
+                    transparent 20px);
+            background-size: 20px 20px;
             box-shadow:
-                0 1px 1px rgba(0, 0, 0, 0.1), 
+                0 1px 1px rgba(0, 0, 0, 0.1),
                 0 8px 16px rgba(0, 0, 0, 0.3);
             border-radius: 10px 40px 40px 10px;
             position: relative;
             overflow: hidden;
         }
 
+        /* Styles for the mute button */
+        #muteButton {
+            position: fixed;
+            /* Fixed position relative to the viewport */
+            bottom: 20px;
+            /* 20px from the bottom */
+            right: 20px;
+            /* 20px from the right */
+            background-color: #6c757d;
+            /* Grayish button */
+            color: white;
+            border: none;
+            border-radius: 50%;
+            /* Make it a circle */
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            /* Ensure it's above other elements */
+            transition: background-color 0.3s ease;
+        }
+
+        #muteButton:hover {
+            background-color: #5a6268;
+        }
+
         /* Styles for mobile devices */
-        @media (max-width: 767px) { 
+        @media (max-width: 767px) {
             #number {
                 width: 250px;
-                height: 400px; 
-                font-size: 8em; 
+                height: 400px;
+                font-size: 8em;
                 -webkit-text-stroke: 1px #333;
                 text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+
+            #muteButton {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+                bottom: 10px;
+                right: 10px;
             }
         }
 
         /* Styles for desktop */
-        @media (min-width: 768px) { 
+        @media (min-width: 768px) {
             #number {
                 width: 600px;
                 height: 720px;
@@ -86,66 +124,155 @@
         }
     </style>
 </head>
+
 <body>
-    <div id="number" style="color: lightgray;">A</div>
+
+    <div id="number" style="color: lightgray;" aria-label="Current letter">A</div>
+
+    <button id="muteButton" aria-label="Toggle mute" title="Toggle sound"></button>
 
     <script>
-        // Initialize with ASCII code for 'A'
-        let currentAlphabetCode = 'A'.charCodeAt(0); 
+        // =========================
+        // Initialization
+        // =========================
+        let currentAlphabetCode = 'A'.charCodeAt(0);
         let currentColor = null;
         let previousColor = null;
-        const numberElement = document.getElementById('number');
+        let isMuted = localStorage.getItem('isMuted') === 'true';
 
+        const numberElement = document.getElementById('number');
+        const muteButton = document.getElementById('muteButton');
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
+        // Set initial mute button icon
+        muteButton.textContent = isMuted ? '🔇' : '🔊';
+
+        // =========================
+        // Speech Synthesis Setup
+        // =========================
+        const synth = window.speechSynthesis;
+        let utterance = null;
+
+        if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
+            console.warn("Web Speech API is not supported in this browser.");
+            muteButton.style.display = 'none';
+            window.speaker = () => console.warn("Speech API not available.");
+        } else {
+            utterance = new SpeechSynthesisUtterance();
+            let availableVoices = [];
+
+            function populateVoiceList() {
+                availableVoices = synth.getVoices().sort((a, b) => a.name.localeCompare(b.name));
+                let preferredVoice = availableVoices.find(voice =>
+                    voice.lang === 'en-US' &&
+                    ["Google", "Microsoft", "Apple", "Samantha", "Monica", "Zira", "David"]
+                        .some(name => voice.name.includes(name))
+                );
+
+                if (!preferredVoice) {
+                    preferredVoice = availableVoices.find(v => v.lang.startsWith('en-US')) ||
+                        availableVoices.find(v => v.lang.startsWith('en-')) ||
+                        availableVoices[0];
+                }
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                    utterance.lang = preferredVoice.lang;
+                    console.log("Set default voice to:", preferredVoice.name, preferredVoice.lang);
+                } else {
+                    console.warn("No suitable English voice found.");
+                }
+            }
+
+            populateVoiceList();
+            if (synth.onvoiceschanged !== undefined) {
+                synth.onvoiceschanged = populateVoiceList;
+            }
+        }
+
+        // =========================
+        // Utility Functions
+        // =========================
         function getNewColor() {
             let newColor;
             do {
-                const randomIndex = Math.floor(Math.random() * colors.length);
-                newColor = colors[randomIndex];
+                newColor = colors[Math.floor(Math.random() * colors.length)];
             } while (newColor === currentColor || newColor === previousColor);
             return newColor;
         }
 
-        function incrementAlphabet() {
-            // Increment the character code
-            currentAlphabetCode++;
+        function speaker() {
+            if (utterance && !isMuted) {
+                if (synth.speaking) synth.cancel();
+                utterance.text = numberElement.textContent;
+                try {
+                    synth.speak(utterance);
+                } catch (error) {
+                    console.error("Error speaking:", error);
+                }
+            }
+        }
 
-            // If it goes past 'Z', reset to 'A'
+        function toggleMute() {
+            isMuted = !isMuted;
+            localStorage.setItem('isMuted', isMuted);
+            muteButton.textContent = isMuted ? '🔇' : '🔊';
+            if (isMuted && synth.speaking) synth.cancel();
+            if (!isMuted) speaker();
+        }
+
+        function incrementAlphabet() {
+            currentAlphabetCode++;
             if (currentAlphabetCode > 'Z'.charCodeAt(0)) {
                 currentAlphabetCode = 'A'.charCodeAt(0);
             }
 
-            // Convert the character code back to a letter
-            numberElement.textContent = String.fromCharCode(currentAlphabetCode);
+            const newChar = String.fromCharCode(currentAlphabetCode);
+            numberElement.textContent = newChar;
 
-            // Update colors
             previousColor = currentColor;
             currentColor = getNewColor();
             numberElement.style.color = currentColor;
+
+            speaker();
         }
 
-        // Initial display of 'A'
+        // =========================
+        // Initial Display
+        // =========================
         numberElement.textContent = String.fromCharCode(currentAlphabetCode);
         currentColor = getNewColor();
         numberElement.style.color = currentColor;
 
-
-        // Increment on pressing space and Enter key
-        document.addEventListener('keydown', function(event) {
+        // =========================
+        // Event Listeners
+        // =========================
+        document.addEventListener('keydown', event => {
             if (event.code === 'Space' || event.code === 'Enter') {
-                event.preventDefault(); // Prevent default browser behavior (e.g., scrolling with spacebar)
+                event.preventDefault();
                 incrementAlphabet();
             }
         });
 
-        // Increment on any click or touch on the body
         document.body.addEventListener('click', incrementAlphabet);
-        document.body.addEventListener('touchstart', function(e) {
-            e.preventDefault(); // Prevent default touch behavior (e.g., zooming, scrolling)
+        document.body.addEventListener('touchstart', e => {
+            e.preventDefault();
             incrementAlphabet();
+        }, { passive: false });
+
+        muteButton.addEventListener('click', e => {
+            e.stopPropagation();
+            toggleMute();
+        });
+
+        muteButton.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleMute();
         }, { passive: false });
     </script>
 
+
 </body>
+
 </html>
