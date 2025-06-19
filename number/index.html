@@ -121,7 +121,7 @@
 <body>
     <div id="number" style="color: lightgray;">1</div>
 
-    <button id="muteButton">🔊</button>
+    <button id="muteButton"></button>
 
     <script>        
         let number = 1;
@@ -141,7 +141,16 @@
             return newColor;
         }
 
-        let isMuted = false; 
+        // Get stored value, default to false if not found or 'false'
+        let isMuted = localStorage.getItem('isMuted') === 'true';
+        // Initialize the mute button icon based on the loaded state
+        if (isMuted) {
+            muteButton.textContent = '🔇'; // Muted icon
+        } else {
+            muteButton.textContent = '🔊'; // Unmuted icon
+        }
+
+
         // Initialize Web Speech API
         const synth = window.speechSynthesis;
         let utterance = new SpeechSynthesisUtterance();
@@ -160,6 +169,9 @@
         // Toggle mute state and update button icon
         function toggleMute() {
             isMuted = !isMuted; // Flip the state
+            // Store as string 'true' or 'false'
+            localStorage.setItem('isMuted', isMuted);
+
             if (isMuted) {
                 muteButton.textContent = '🔇'; // Muted icon
                 if (synth.speaking) {
