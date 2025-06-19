@@ -163,7 +163,17 @@
             let availableVoices = [];
 
             function populateVoiceList() {
-                availableVoices = synth.getVoices().sort((a, b) => a.name.localeCompare(b.name));
+
+                let voices = synth.getVoices();
+                if (!voices || !voices.length) {
+                    // Retry after a short delay
+                    setTimeout(populateVoiceList, 100);
+                    return;
+                }
+
+                availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
+                console.log("Available voices:", availableVoices.map(v => `${v.name} (${v.lang})`));
+
                 let preferredVoice = availableVoices.find(voice =>
                     voice.lang === 'en-US' &&
                     ["Google", "Microsoft", "Apple", "Samantha", "Monica", "Zira", "David"]
@@ -173,9 +183,10 @@
                 // Fallback if preferred not found
                 if (!preferredVoice) {
                     preferredVoice = availableVoices.find(v => v.lang.startsWith('en-US')) ||
-                        availableVoices.find(v => v.lang.startsWith('en-')) ||
+                        availableVoices.find(v => v.lang.startsWith('en')) ||
                         availableVoices[0];
                 }
+
 
                 if (preferredVoice) {
                     utterance.voice = preferredVoice;
