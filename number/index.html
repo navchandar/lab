@@ -21,6 +21,7 @@
             align-items: center;
             background-color: #4e4e4e;
             font-family: Arial, sans-serif;
+            overflow: hidden;
         }
 
         #number {
@@ -62,6 +63,31 @@
             overflow: hidden;
         }
 
+        /* Styles for the mute button */
+        #muteButton {
+            position: fixed; /* Fixed position relative to the viewport */
+            bottom: 20px;    /* 20px from the bottom */
+            right: 20px;     /* 20px from the right */
+            background-color: #6c757d; /* Grayish button */
+            color: white;
+            border: none;
+            border-radius: 50%; /* Make it a circle */
+            width: 50px;
+            height: 50px;
+            font-size: 1.5em;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000; /* Ensure it's above other elements */
+            transition: background-color 0.3s ease;
+        }
+
+        #muteButton:hover {
+            background-color: #5a6268;
+        }
+
         /* Styles for mobile devices */
         @media (max-width: 767px) { 
             #number {
@@ -70,6 +96,13 @@
                 font-size: 8em; 
                 -webkit-text-stroke: 1px #333;
                 text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            #muteButton {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+                bottom: 10px;
+                right: 10px;
             }
         }
 
@@ -88,11 +121,14 @@
 <body>
     <div id="number" style="color: lightgray;">1</div>
 
+    <button id="muteButton">🔊</button>
+
     <script>        
         let number = 1;
         let currentColor = null;
         let previousColor = null
         const numberElement = document.getElementById('number');
+        const muteButton = document.getElementById('muteButton');
 
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
@@ -105,12 +141,44 @@
             return newColor;
         }
 
+        let isMuted = false; 
+        // Initialize Web Speech API
+        const synth = window.speechSynthesis;
+        let utterance = new SpeechSynthesisUtterance();
+
+        // Function to speak the current value
+        function speaker() {
+            if (!isMuted) { // Only speak if not muted
+                if (synth.speaking) {
+                    synth.cancel(); // Stop any ongoing speech
+                }
+                utterance.text = numberElement.textContent;
+                synth.speak(utterance);
+            }
+        }
+
+        // Toggle mute state and update button icon
+        function toggleMute() {
+            isMuted = !isMuted; // Flip the state
+            if (isMuted) {
+                muteButton.textContent = '🔇'; // Muted icon
+                if (synth.speaking) {
+                    synth.cancel(); // Stop any speech if muting mid-speech
+                }
+            } else {
+                muteButton.textContent = '🔊'; // Unmuted icon
+                // speak the current letter when unmuting
+                speaker();
+            }
+        }
+
         function incrementNumber() {
             number++;
             numberElement.textContent = number;
             previousColor = currentColor;
             currentColor = getNewColor();
             numberElement.style.color = currentColor;
+            speaker();
         }
 
         // Increment on pressing space and Enter key
@@ -127,6 +195,13 @@
             e.preventDefault(); // Prevent default browser behavior (e.g., scrolling with spacebar)
             incrementNumber();
         }, { passive: false });
+
+        muteButton.addEventListener('click', toggleMute);
+        muteButton.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            toggleMute();
+        }, { passive: false });
+
 
     </script>
 </body>
