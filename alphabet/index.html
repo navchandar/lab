@@ -204,7 +204,7 @@
         function speaker() {
             if (utterance && !isMuted) {
                 if (synth.speaking) synth.cancel();
-                utterance.text = numberElement.textContent;
+                utterance.text = numberElement.textContent.toLowerCase();
                 try {
                     synth.speak(utterance);
                 } catch (error) {
