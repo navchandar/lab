@@ -131,72 +131,46 @@
     <button id="muteButton"></button>
 
     <script>
+        // =========================
+        // Initialization
+        // =========================
         let number = 1;
         let currentColor = null;
-        let previousColor = null
+        let previousColor = null;
+        let isMuted = localStorage.getItem('isMuted') === 'true';
+
         const numberElement = document.getElementById('number');
         const muteButton = document.getElementById('muteButton');
-
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
-        function getNewColor() {
-            let newColor;
-            do {
-                const randomIndex = Math.floor(Math.random() * colors.length);
-                newColor = colors[randomIndex];
-            } while (newColor === currentColor || newColor === previousColor);
-            return newColor;
-        }
+        // Set initial mute button icon based on the loaded state
+        muteButton.textContent = isMuted ? '🔇' : '🔊';
 
-        // Get stored value, default to false if not found or 'false'
-        let isMuted = localStorage.getItem('isMuted') === 'true';
-        // Initialize the mute button icon based on the loaded state
-        if (isMuted) {
-            muteButton.textContent = '🔇'; // Muted icon
-        } else {
-            muteButton.textContent = '🔊'; // Unmuted icon
-        }
-
-
-        // Initialize Web Speech API
+        // =========================
+        // Speech Synthesis Setup
+        // =========================
         const synth = window.speechSynthesis;
         let utterance = null;
 
-        // Check if Web Speech API is supported
-        if (!synth || !SpeechSynthesisUtterance) {
+        if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
             console.warn("Web Speech API is not supported in this browser.");
-            // Disable mute button or speech features
             muteButton.style.display = 'none';
-            // Override speaker to do nothing
-            window.speaker = () => { console.warn("Speech API not available."); };
-
+            window.speaker = () => console.warn("Speech API not available.");
         } else {
             // Initialize utterance only if supported
             utterance = new SpeechSynthesisUtterance();
-
-            // Store voices globally or pass them around
             let availableVoices = [];
 
-            // Function to populate voice list (call this on voiceschanged event)
             function populateVoiceList() {
-                availableVoices = synth.getVoices().sort((a, b) => {
-                    const aname = a.name.toUpperCase();
-                    const bname = b.name.toUpperCase();
-                    if (aname < bname) return -1;
-                    else if (aname == bname) return 0;
-                    else return +1;
-                });
+                availableVoices = synth.getVoices().sort((a, b) => a.name.localeCompare(b.name));
+                let preferredVoice = availableVoices.find(voice =>
+                    voice.lang === 'en-US' &&
+                    ["Google", "Microsoft", "Apple", "Samantha", "Monica", "Zira", "David"]
+                        .some(name => voice.name.includes(name))
+                );
 
-                let preferredVoice = null;
-                for (const voice of availableVoices) {
-                    // Prioritize English (US) voices from common providers for better natural sounding voices
-                    if (voice.lang === 'en-US' && (voice.name.includes('Google') || voice.name.includes('Microsoft') || voice.name.includes('Apple') || voice.name.includes('Samantha') || voice.name.includes('Monica') || voice.name.includes('Zira') || voice.name.includes('David'))) {
-                        preferredVoice = voice;
-                        break;
-                    }
-                }
-                // Fallback if preferred not found, try any English speaking voice
-                if (!preferredVoice && availableVoices.length > 0) {
+                // Fallback if preferred not found
+                if (!preferredVoice) {
                     preferredVoice = availableVoices.find(v => v.lang.startsWith('en-US')) ||
                         availableVoices.find(v => v.lang.startsWith('en-')) ||
                         availableVoices[0];
@@ -207,27 +181,33 @@
                     utterance.lang = preferredVoice.lang;
                     console.log("Set default voice to:", preferredVoice.name, preferredVoice.lang);
                 } else {
-                    console.warn("No suitable English voice found, using browser default. Speech quality may vary.");
+                    console.warn("No suitable English voice found.");
                 }
             }
 
-            // Attempt to load voices initially
-            populateVoiceList(); 
+            populateVoiceList();
             if (synth.onvoiceschanged !== undefined) {
                 synth.onvoiceschanged = populateVoiceList;
             }
         }
 
-        // Function to speak the current value
+        // =========================
+        // Utility Functions
+        // =========================
+        function getNewColor() {
+            let newColor;
+            do {
+                newColor = colors[Math.floor(Math.random() * colors.length)];
+            } while (newColor === currentColor || newColor === previousColor);
+            return newColor;
+        }
+
         function speaker() {
-            // Only speak if not muted and speech API is supported
-           if (utterance && !isMuted) {
-                if (synth.speaking) {
-                    synth.cancel(); // Stop any ongoing speech
-                }
+            if (utterance && !isMuted) {
+                if (synth.speaking) synth.cancel();
                 utterance.text = numberElement.textContent;
                 try {
-                synth.speak(utterance);
+                    synth.speak(utterance);
                 } catch (error) {
                     console.error("Error speaking:", error);
                 }
@@ -236,22 +216,12 @@
             }
         }
 
-        // Toggle mute state and update button icon
         function toggleMute() {
-            isMuted = !isMuted; // Flip the state
-            // Store as string 'true' or 'false'
+            isMuted = !isMuted;
             localStorage.setItem('isMuted', isMuted);
-
-            if (isMuted) {
-                muteButton.textContent = '🔇'; // Muted icon
-                if (synth.speaking) {
-                    synth.cancel(); // Stop any speech if muting mid-speech
-                }
-            } else {
-                muteButton.textContent = '🔊'; // Unmuted icon
-                // speak the current letter when unmuting
-                speaker();
-            }
+            muteButton.textContent = isMuted ? '🔇' : '🔊';
+            if (isMuted && synth.speaking) synth.cancel();
+            if (!isMuted) speaker();
         }
 
         function incrementNumber() {
@@ -263,32 +233,33 @@
             speaker();
         }
 
-        // Increment on pressing space and Enter key
-        document.addEventListener('keydown', function (event) {
+        // =========================
+        // Event Listeners
+        // =========================
+        document.addEventListener('keydown', event => {
             if (event.code === 'Space' || event.code === 'Enter') {
                 incrementNumber();
             }
         });
 
-
-        // Increment on any click or touch on the body
         document.body.addEventListener('click', incrementNumber);
-        document.body.addEventListener('touchstart', function (e) {
-            e.preventDefault(); // Prevent default browser behavior (e.g., scrolling with spacebar)
+        document.body.addEventListener('touchstart', e => {
+            e.preventDefault();
             incrementNumber();
         }, { passive: false });
 
-        muteButton.addEventListener('click', function (event) {
-            event.stopPropagation();
+        muteButton.addEventListener('click', e => {
+            e.stopPropagation();
             toggleMute();
         });
-        muteButton.addEventListener('touchstart', function (e) {
+
+        muteButton.addEventListener('touchstart', e => {
             e.preventDefault();
             e.stopPropagation();
             toggleMute();
         }, { passive: false });
-
     </script>
+
 </body>
 
 </html>
