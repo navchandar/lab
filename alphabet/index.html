@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Number Incrementor</title>
-    <meta name="description" content="A simple interactive number incrementor that changes color on key press or tap.">
-    <meta name="keywords" content="numbers, flash, colors, increment, counter, interactive, JavaScript, mobile-friendly">
+    <title>Alphabet Generator</title>
+    <meta name="description" content="A simple interactive Alphabet Generator that changes color on key press or tap.">
+    <meta name="keywords" content="alphabet, english letters, flash, colors, increment, interactive, JavaScript, mobile-friendly">
     <meta name="author" content="Naveenchandar">
-    <meta property="og:title" content="Number Incrementor">
-    <meta property="og:description" content="A fun and responsive number incrementor that changes color with each interaction.">
+    <meta property="og:title" content="Alphabet Generator">
+    <meta property="og:description" content="A fun and responsive Alphabet Generator that changes color with each interaction.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://navchandar.github.io/lab/number">
-    <meta property="og:image" content="https://navchandar.github.io/lab/number/preview.gif">
+    <meta property="og:url" content="https://navchandar.github.io/lab/alphabet">
+    <meta property="og:image" content="https://navchandar.github.io/lab/alphabet/preview.gif">
     <style>
         body {
             margin: 0;
@@ -86,12 +86,13 @@
     </style>
 </head>
 <body>
-    <div id="number" style="color: lightgray;">1</div>
+    <div id="number" style="color: lightgray;">A</div>
 
-    <script>        
-        let number = 1;
+    <script>
+        // Initialize with ASCII code for 'A'
+        let currentAlphabetCode = 'A'.charCodeAt(0); 
         let currentColor = null;
-        let previousColor = null
+        let previousColor = null;
         const numberElement = document.getElementById('number');
 
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
@@ -105,29 +106,45 @@
             return newColor;
         }
 
-        function incrementNumber() {
-            number++;
-            numberElement.textContent = number;
+        function incrementAlphabet() {
+            // Increment the character code
+            currentAlphabetCode++;
+
+            // If it goes past 'Z', reset to 'A'
+            if (currentAlphabetCode > 'Z'.charCodeAt(0)) {
+                currentAlphabetCode = 'A'.charCodeAt(0);
+            }
+
+            // Convert the character code back to a letter
+            numberElement.textContent = String.fromCharCode(currentAlphabetCode);
+
+            // Update colors
             previousColor = currentColor;
             currentColor = getNewColor();
             numberElement.style.color = currentColor;
         }
 
+        // Initial display of 'A'
+        numberElement.textContent = String.fromCharCode(currentAlphabetCode);
+        currentColor = getNewColor();
+        numberElement.style.color = currentColor;
+
+
         // Increment on pressing space and Enter key
         document.addEventListener('keydown', function(event) {
             if (event.code === 'Space' || event.code === 'Enter') {
-                incrementNumber();
+                event.preventDefault(); // Prevent default browser behavior (e.g., scrolling with spacebar)
+                incrementAlphabet();
             }
         });
 
-                
         // Increment on any click or touch on the body
-        document.body.addEventListener('click', incrementNumber);
+        document.body.addEventListener('click', incrementAlphabet);
         document.body.addEventListener('touchstart', function(e) {
-            e.preventDefault(); // Prevent default browser behavior (e.g., scrolling with spacebar)
-            incrementNumber();
+            e.preventDefault(); // Prevent default touch behavior (e.g., zooming, scrolling)
+            incrementAlphabet();
         }, { passive: false });
-
     </script>
+
 </body>
 </html>
