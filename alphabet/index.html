@@ -263,7 +263,7 @@
         let currentIndex = 0;
         function incrementAlphabet() {
 
-            if (currentIndex >= selectedAlphabet.length) {
+            if (currentIndex >= Alphabet.length) {
                 currentIndex = 0;
             }
 
@@ -309,6 +309,8 @@
             e.stopPropagation();
             toggleMute();
         }, { passive: false });
+        
+        speaker();
     </script>
 
 
