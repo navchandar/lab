@@ -130,11 +130,18 @@
 
     <button id="muteButton" aria-label="Toggle mute" disabled title="Toggle sound"></button>
 
+
+    <script src="data.js"></script>
     <script>
         // =========================
         // Initialization
         // =========================
-        let currentAlphabetCode = 'A'.charCodeAt(0);
+        const urlParams = new URLSearchParams(window.location.search);
+        const lang = urlParams.get('lang')?.toLowerCase() || 'english';
+        const languageData = window.alphabets[lang] || window.alphabets.english;        
+        const Alphabet = languageData.chars;
+        const Locale = languageData.locale;
+
         let currentColor = null;
         let previousColor = null;
         let isMuted = localStorage.getItem('isMuted') === 'true';
@@ -146,6 +153,9 @@
         const numberElement = document.getElementById('number');
         const muteButton = document.getElementById('muteButton');
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
+
+        let currentAlphabet = Alphabet[0];
+        numberElement.textContent = currentAlphabet;
 
         // Set initial mute button icon based on the loaded state
         muteButton.textContent = isMuted ? '🔇' : '🔊';
@@ -188,13 +198,14 @@
                 console.log("Available voices:", availableVoices.map(v => `${v.name} (${v.lang})`));
 
                 let preferredVoice = availableVoices.find(voice =>
-                    voice.lang === 'en-US' &&
+                    voice.lang === Locale &&
                     ["Google", "Microsoft", "Apple", "Samantha", "Monica", "Zira", "David"]
                         .some(name => voice.name.includes(name))
                 );
 
                 if (!preferredVoice) {
-                    preferredVoice = availableVoices.find(v => v.lang.startsWith('en-US')) ||
+                    const langPrefix = preferredLocale.split('-')[0]; 
+                    preferredVoice = availableVoices.find(v => v.lang.startsWith(langPrefix)) ||
                         availableVoices.find(v => v.lang.startsWith('en')) ||
                         availableVoices[0];
                 }
@@ -206,7 +217,7 @@
                     muteButton.disabled = false;
                     muteButton.title = "Toggle sound";
                 } else {
-                    console.warn("No suitable English voice found.");
+                    console.warn("No suitable voice found.");
                 }
             }
 
@@ -249,14 +260,17 @@
             if (!isMuted) speaker();
         }
 
+        let currentIndex = 0;
         function incrementAlphabet() {
-            currentAlphabetCode++;
-            if (currentAlphabetCode > 'Z'.charCodeAt(0)) {
-                currentAlphabetCode = 'A'.charCodeAt(0);
+
+            if (currentIndex >= selectedAlphabet.length) {
+                currentIndex = 0;
             }
 
-            const newChar = String.fromCharCode(currentAlphabetCode);
+            const newChar = Alphabet[currentIndex];
             numberElement.textContent = newChar;
+            currentIndex++;
+
 
             previousColor = currentColor;
             currentColor = getNewColor();
@@ -265,10 +279,6 @@
             speaker();
         }
 
-        // =========================
-        // Initial Display
-        // =========================
-        numberElement.textContent = String.fromCharCode(currentAlphabetCode);
 
         // =========================
         // Event Listeners
