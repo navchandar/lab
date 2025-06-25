@@ -208,6 +208,8 @@
                     muteButton.title = "Toggle sound";
                 } else {
                     console.warn("No suitable English voice found.");
+                    muteButton.disabled = false;
+                    muteButton.style.display = "none";
                 }
             }
 
