@@ -262,15 +262,13 @@
 
         let currentIndex = 0;
         function incrementAlphabet() {
-
+            currentIndex++;
             if (currentIndex >= Alphabet.length) {
                 currentIndex = 0;
             }
 
             const newChar = Alphabet[currentIndex];
             numberElement.textContent = newChar;
-            currentIndex++;
-
 
             previousColor = currentColor;
             currentColor = getNewColor();
@@ -309,7 +307,7 @@
             e.stopPropagation();
             toggleMute();
         }, { passive: false });
-        
+
         speaker();
     </script>
 
