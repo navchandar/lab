@@ -59,7 +59,10 @@
             border-radius: 10px 40px 40px 10px;
             position: relative;
             overflow: hidden;
-            transition: color 0.4s ease;
+
+            transition: color 0.5s ease, opacity 0.5s ease;
+            opacity: 1;
+
         }
 
         /* Styles for the mute button */
@@ -138,7 +141,7 @@
         // =========================
         const urlParams = new URLSearchParams(window.location.search);
         const lang = urlParams.get('lang')?.toLowerCase() || 'english';
-        const languageData = window.alphabets[lang] || window.alphabets.english;        
+        const languageData = window.alphabets[lang] || window.alphabets.english;
         const Alphabet = languageData.chars;
         const Locale = languageData.locale;
 
@@ -204,7 +207,7 @@
                 );
 
                 if (!preferredVoice) {
-                    const langPrefix = preferredLocale.split('-')[0]; 
+                    const langPrefix = Locale.split('-')[0];
                     preferredVoice = availableVoices.find(v => v.lang.startsWith(langPrefix)) ||
                         availableVoices.find(v => v.lang.startsWith('en')) ||
                         availableVoices[0];
@@ -262,17 +265,19 @@
 
         let currentIndex = 0;
         function incrementAlphabet() {
-            currentIndex++;
-            if (currentIndex >= Alphabet.length) {
-                currentIndex = 0;
-            }
-
-            const newChar = Alphabet[currentIndex];
-            numberElement.textContent = newChar;
-
-            previousColor = currentColor;
-            currentColor = getNewColor();
-            numberElement.style.color = currentColor;
+            numberElement.style.opacity = 0.3;
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex >= Alphabet.length) {
+                    currentIndex = 0;
+                }
+                const newChar = Alphabet[currentIndex];
+                numberElement.textContent = newChar;
+                previousColor = currentColor;
+                currentColor = getNewColor();
+                numberElement.style.color = currentColor;
+                numberElement.style.opacity = 1;
+            }, 200);
 
             speaker();
         }
