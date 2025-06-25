@@ -251,7 +251,6 @@
         }
 
         function incrementNumber() {
-            numberElement.style.opacity = 0.3;
 
             setTimeout(() => {
                 number++;
@@ -259,9 +258,8 @@
                 previousColor = currentColor;
                 currentColor = getNewColor();
                 numberElement.style.color = currentColor;
-                numberElement.style.opacity = 1;
+                speaker();
             }, 200);
-            speaker();
         }
 
         // =========================

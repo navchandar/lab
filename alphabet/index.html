@@ -265,7 +265,6 @@
 
         let currentIndex = 0;
         function incrementAlphabet() {
-            numberElement.style.opacity = 0.3;
             setTimeout(() => {
                 currentIndex++;
                 if (currentIndex >= Alphabet.length) {
@@ -276,12 +275,9 @@
                 previousColor = currentColor;
                 currentColor = getNewColor();
                 numberElement.style.color = currentColor;
-                numberElement.style.opacity = 1;
+                speaker();
             }, 200);
-
-            speaker();
         }
-
 
         // =========================
         // Event Listeners
