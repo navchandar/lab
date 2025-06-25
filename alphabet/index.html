@@ -129,7 +129,7 @@
 
     <div id="number" style="color: lightgray;" aria-label="Current letter">A</div>
 
-    <button id="muteButton" aria-label="Toggle mute" title="Toggle sound"></button>
+    <button id="muteButton" aria-label="Toggle mute" disabled title="Toggle sound"></button>
 
     <script>
         // =========================
@@ -140,12 +140,19 @@
         let previousColor = null;
         let isMuted = localStorage.getItem('isMuted') === 'true';
 
+        let retryCount = 0;
+        const maxRetries = 10;
+
+
         const numberElement = document.getElementById('number');
         const muteButton = document.getElementById('muteButton');
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
         // Set initial mute button icon
         muteButton.textContent = isMuted ? '🔇' : '🔊';
+        // Initial mute button state
+        muteButton.disabled = true;
+        muteButton.title = "Setting up Speech Synthesis...";
 
         // =========================
         // Speech Synthesis Setup
@@ -161,12 +168,19 @@
             utterance = new SpeechSynthesisUtterance();
             let availableVoices = [];
 
-            function populateVoiceList() {
 
+            function populateVoiceList() {
                 let voices = synth.getVoices();
+
                 if (!voices || !voices.length) {
-                    // Retry after a short delay
-                    setTimeout(populateVoiceList, 100);
+                    if (retryCount < maxRetries) {
+                        retryCount++;
+                        setTimeout(populateVoiceList, 100);
+                    } else {
+                        console.warn("Failed to load voices after multiple attempts.");
+                        muteButton.disabled = true;
+                        muteButton.title = "Speech not available";
+                    }
                     return;
                 }
 
@@ -179,18 +193,18 @@
                         .some(name => voice.name.includes(name))
                 );
 
-                // Fallback if preferred not found
                 if (!preferredVoice) {
                     preferredVoice = availableVoices.find(v => v.lang.startsWith('en-US')) ||
                         availableVoices.find(v => v.lang.startsWith('en')) ||
                         availableVoices[0];
                 }
 
-
                 if (preferredVoice) {
                     utterance.voice = preferredVoice;
                     utterance.lang = preferredVoice.lang;
                     console.log("Set default voice to:", preferredVoice.name, preferredVoice.lang);
+                    muteButton.disabled = false;
+                    muteButton.title = "Toggle sound";
                 } else {
                     console.warn("No suitable English voice found.");
                 }
