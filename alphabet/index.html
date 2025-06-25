@@ -41,7 +41,6 @@
             text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
             line-height: 1;
 
-
             /* Paper-like background styles */
             background-color: lightgrey;
             background-image:
@@ -60,6 +59,7 @@
             border-radius: 10px 40px 40px 10px;
             position: relative;
             overflow: hidden;
+            transition: color 0.4s ease;
         }
 
         /* Styles for the mute button */
@@ -85,7 +85,6 @@
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
             z-index: 1000;
-            /* Ensure it's above other elements */
             transition: background-color 0.3s ease;
         }
 
@@ -148,7 +147,7 @@
         const muteButton = document.getElementById('muteButton');
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
-        // Set initial mute button icon
+        // Set initial mute button icon based on the loaded state
         muteButton.textContent = isMuted ? '🔇' : '🔊';
         // Initial mute button state
         muteButton.disabled = true;
@@ -165,6 +164,7 @@
             muteButton.style.display = 'none';
             window.speaker = () => console.warn("Speech API not available.");
         } else {
+            // Initialize utterance only if supported
             utterance = new SpeechSynthesisUtterance();
             let availableVoices = [];
 
@@ -236,6 +236,8 @@
                 } catch (error) {
                     console.error("Error speaking:", error);
                 }
+            } else if (!utterance) {
+                console.warn("Speech API not initialized. Cannot speak.");
             }
         }
 
@@ -267,8 +269,6 @@
         // Initial Display
         // =========================
         numberElement.textContent = String.fromCharCode(currentAlphabetCode);
-        currentColor = getNewColor();
-        numberElement.style.color = currentColor;
 
         // =========================
         // Event Listeners
@@ -277,6 +277,9 @@
             if (event.code === 'Space' || event.code === 'Enter') {
                 event.preventDefault();
                 incrementAlphabet();
+            } else if (event.code === 'KeyM') {
+                event.preventDefault();
+                toggleMute();
             }
         });
 
