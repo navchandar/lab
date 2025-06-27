@@ -111,7 +111,7 @@
 
         /* Hover effect when IN fullscreen */
         #fullscreen-btn.fullscreen-active:hover {
-            transform: scale(0.8);
+            transform: scale(0.7);
         }
 
         /* Styles for mobile devices */
@@ -297,6 +297,19 @@
             }, 200);
         }
 
+        
+        const fullscreenbtn = document.getElementById('fullscreen-btn');
+        fullscreenbtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+
         // =========================
         // Event Listeners
         // =========================
@@ -307,6 +320,9 @@
             } else if (event.code === 'KeyM') {
                 event.preventDefault();
                 toggleMute();
+            } else if (event.code === 'KeyF') {
+                event.preventDefault();
+                toggleFullscreen();
             }
         });
 
@@ -328,23 +344,23 @@
         }, { passive: false });
 
         speaker();
-    </script>
-    <script>
-        const btn = document.getElementById('fullscreen-btn');
-
-        btn.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
+   
+        fullscreenbtn.addEventListener('click', e => {
+            e.stopPropagation();
+            toggleFullscreen();
         });
+
+        fullscreenbtn.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleFullscreen();
+        }, { passive: false });
 
         document.addEventListener('fullscreenchange', () => {
-            btn.classList.toggle('fullscreen-active', !!document.fullscreenElement);
+            fullscreenbtn.classList.toggle('fullscreen-active', !!document.fullscreenElement);
         });
+
+   
     </script>
 
 </body>
