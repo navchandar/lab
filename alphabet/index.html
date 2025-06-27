@@ -68,13 +68,9 @@
         /* Styles for the mute button */
         #muteButton {
             position: fixed;
-            /* Fixed position relative to the viewport */
             bottom: 20px;
-            /* 20px from the bottom */
-            right: 20px;
-            /* 20px from the right */
+            left: 20px;
             background-color: #6c757d;
-            /* Grayish button */
             color: white;
             border: none;
             border-radius: 50%;
@@ -95,6 +91,31 @@
             background-color: #5a6268;
         }
 
+        /* Styles for full screen button*/
+        #fullscreen-btn {
+            position: fixed;
+            bottom: 50px;
+            right: 50px;
+            font-size: 1.5em;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            z-index: 999;
+            transition: transform 0.3s ease;
+        }
+
+        /* Hover effect when NOT in fullscreen */
+        #fullscreen-btn:hover:not(.fullscreen-active) {
+            transform: scale(1.5);
+        }
+
+        /* Hover effect when IN fullscreen */
+        #fullscreen-btn.fullscreen-active:hover {
+            transform: scale(0.8);
+        }
+
+
         /* Styles for mobile devices */
         @media (max-width: 767px) {
             #number {
@@ -110,8 +131,19 @@
                 height: 40px;
                 font-size: 1.2em;
                 bottom: 10px;
+                left: 10px;
+            }
+
+            #fullscreen-btn {
+                font-size: 1.2em;
+                bottom: 10px;
                 right: 10px;
             }
+
+            #fullscreen-btn:active {
+                transform: scale(1.2);
+            }
+
         }
 
         /* Styles for desktop */
@@ -132,6 +164,8 @@
     <div id="number" style="color: lightgray;" aria-label="Current letter"> </div>
 
     <button id="muteButton" aria-label="Toggle mute" disabled title="Toggle sound"></button>
+
+    <button id="fullscreen-btn">⛶</button>
 
 
     <script src="data.js"></script>
@@ -312,7 +346,23 @@
 
         speaker();
     </script>
+    <script>
+        const btn = document.getElementById('fullscreen-btn');
 
+        btn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        document.addEventListener('fullscreenchange', () => {
+            btn.classList.toggle('fullscreen-active', !!document.fullscreenElement);
+        });
+    </script>
 
 </body>
 
