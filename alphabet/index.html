@@ -15,7 +15,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://navchandar.github.io/lab/alphabet">
     <meta property="og:image" content="https://navchandar.github.io/lab/alphabet/preview.gif">
-    
+
     <meta name="theme-color" content="#4e4e4e">
 
     <style>
@@ -168,7 +168,12 @@
 
     <button id="muteButton" aria-label="Toggle mute" disabled title="Toggle sound"></button>
 
-    <button id="fullscreen-btn" aria-label="Toggle fullscreen mode" title="Toggle fullscreen">⛶</button>
+    <button id="fullscreen-btn" onclick="toggleFullscreen()" aria-label="Toggle fullscreen mode"
+        title="Toggle fullscreen">
+        <svg id="fullscreen-icon" fill="none" height="24" viewBox="0 0 24 24" width="24"
+            xmlns="http://www.w3.org/2000/svg">
+        </svg>
+    </button>
 
 
     <script src="data.js"></script>
@@ -318,6 +323,24 @@
         }
 
         const fullscreenbtn = document.getElementById('fullscreen-btn');
+        const fullscreenIcon = document.getElementById('fullscreen-icon');
+
+        function setEnterFullscreenIcon() {
+            fullscreenIcon.innerHTML = `
+            <path d="M9 21H3L3 15" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path d="M21 15V21H15" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path d="M15 3H21V9" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path d="M3 9V3H9" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />`;
+        }
+
+        function setExitFullscreenIcon() {
+            fullscreenIcon.innerHTML = `
+            <path d="M3 15H9V21" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <path d="M15 21V15H21" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <path d="M21 9H15V3" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <path d="M9 3V9H3" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
+        }
+
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
                 document.documentElement.requestFullscreen().catch(err => {
@@ -328,7 +351,8 @@
             }
         }
 
-    
+        document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
+
         // =========================
         // Event Listeners
         // =========================
@@ -377,6 +401,7 @@
 
         document.addEventListener('fullscreenchange', () => {
             fullscreenbtn.classList.toggle('fullscreen-active', !!document.fullscreenElement);
+            document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
         });
 
 
