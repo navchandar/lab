@@ -7,7 +7,7 @@
     <title>Alphabet Generator</title>
     <meta name="description" content="A simple interactive Alphabet Generator that changes color on key press or tap.">
     <meta name="keywords"
-        content="alphabet, english letters, flash, colors, increment, interactive, JavaScript, mobile-friendly">
+        content="alphabet, english letters, tamil alphabet, hindi alphabet, flash, colors, increment, interactive, JavaScript, mobile-friendly, kid-friendly">
     <meta name="author" content="Naveenchandar">
     <meta property="og:title" content="Alphabet Generator">
     <meta property="og:description"
@@ -115,7 +115,11 @@
 
         /* Hover effect when IN fullscreen */
         #fullscreen-btn.fullscreen-active:hover {
-            transform: scale(0.7);
+            transform: scale(0.8);
+        }
+
+        #fullscreen-btn.fullscreen-active > svg {
+            transform: scale(1.2);
         }
 
 
@@ -327,18 +331,18 @@
 
         function setEnterFullscreenIcon() {
             fullscreenIcon.innerHTML = `
-            <path d="M9 21H3L3 15" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M21 15V21H15" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M15 3H21V9" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M3 9V3H9" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />`;
+            <path d="M9 21H3L3 15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path d="M21 15V21H15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path d="M15 3H21V9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+            <path d="M3 9V3H9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />`;
         }
 
         function setExitFullscreenIcon() {
             fullscreenIcon.innerHTML = `
-            <path d="M3 15H9V21" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M15 21V15H21" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M21 9H15V3" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M9 3V9H3" stroke="black" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
+            <path d="M3 15H9V21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <path d="M15 21V15H21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <path d="M21 9H15V3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+            <path d="M9 3V9H3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
         }
 
         function toggleFullscreen() {
