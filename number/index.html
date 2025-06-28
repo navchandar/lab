@@ -278,6 +278,7 @@
         }
 
         function speaker() {
+            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
             if (utterance && !isMuted) {
                 if (synth.speaking) synth.cancel();
                 utterance.text = numberElement.textContent;
@@ -297,6 +298,7 @@
             muteButton.textContent = isMuted ? '🔇' : '🔊';
             if (isMuted && synth.speaking) synth.cancel();
             if (!isMuted) speaker();
+            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
         }
 
         function incrementNumber() {

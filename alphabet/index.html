@@ -118,7 +118,7 @@
             transform: scale(0.8);
         }
 
-        #fullscreen-btn.fullscreen-active > svg {
+        #fullscreen-btn.fullscreen-active>svg {
             transform: scale(1.2);
         }
 
@@ -163,6 +163,51 @@
                 text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
             }
         }
+
+        /* Styles for settings menu*/
+
+        /* Settings Button */
+        #settings-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 0.5rem;
+            border: none;
+            cursor: pointer;
+            z-index: 998;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Settings Menu */
+        #settings-menu {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 1rem;
+            display: none;
+            ;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        #settings-menu label {
+            font-weight: bold;
+            color: white;
+        }
+
+        #settings-menu select {
+            margin-top: 0.5rem;
+            padding: 0.5rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            color: #000;
+        }
     </style>
 </head>
 
@@ -178,6 +223,39 @@
             xmlns="http://www.w3.org/2000/svg">
         </svg>
     </button>
+
+
+    <!-- Settings Button -->
+    <button id="settings-btn" aria-label="Settings" style="background: none; border: none; cursor: pointer;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M7 7C5.89543 7 5 6.10457 5 5C5 3.89543 5.89543 3 7 3C8.10457 3 9 3.89543 9 5C9 6.10457 8.10457 7 7 7Z"
+                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M7 21C5.89543 21 5 20.1046 5 19C5 17.8954 5.89543 17 7 17C8.10457 17 9 17.8954 9 19C9 20.1046 8.10457 21 7 21Z"
+                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path fill-rule="evenodd" clip-rule="evenodd"
+                d="M17 14C15.8954 14 15 13.1046 15 12C15 10.8954 15.8954 10 17 10C18.1046 10 19 10.8954 19 12C19 13.1046 18.1046 14 17 14Z"
+                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M3 5H4" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M9.99683 5H21" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M3 19H4" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M9.99683 19H21" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M21 12H20" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+            <path d="M14.0032 12H3.00003" stroke="black" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round" />
+        </svg>
+    </button>
+
+
+    <!-- Overlay Menu -->
+    <div id="settings-menu">
+        <label for="language-select">Choose Language:</label>
+        <select id="language-select">
+            <!-- Options to be populated by JS -->
+        </select>
+    </div>
+
 
 
     <script src="data.js"></script>
@@ -289,6 +367,7 @@
         }
 
         function speaker() {
+            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
             if (utterance && !isMuted) {
                 if (synth.speaking) synth.cancel();
                 utterance.text = numberElement.textContent.toLowerCase();
@@ -308,6 +387,7 @@
             muteButton.textContent = isMuted ? '🔇' : '🔊';
             if (isMuted && synth.speaking) synth.cancel();
             if (!isMuted) speaker();
+            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
         }
 
         let currentIndex = 0;
@@ -410,6 +490,52 @@
 
 
     </script>
+
+    <script>
+        // =========================
+        // Settungs Menu
+        // =========================
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsMenu = document.getElementById('settings-menu');
+        const languageSelect = document.getElementById('language-select');
+
+
+        function toTitleCase(str) {
+            return str.toLocaleLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+
+        // Toggle menu visibility
+        settingsBtn.addEventListener('click', () => {
+            settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Populate dropdown
+        Object.keys(window.alphabets).forEach(lang => {
+            const option = document.createElement('option');
+            option.value = lang;
+            option.textContent = lang.charAt(0).toUpperCase() + lang.slice(1);
+            languageSelect.appendChild(option);
+        });
+
+        // Detect current language from URL
+        const urlParam = new URLSearchParams(window.location.search);
+        const currentLang = urlParam.get('lang') || 'english';
+        languageSelect.value = currentLang;
+
+        // Redirect on language change
+        languageSelect.addEventListener('change', (e) => {
+            const selectedLang = e.target.value;
+            window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
+        });
+
+        // Show settings button after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            settingsBtn.style.display = 'block';
+        });
+
+    </script>
+
 
 </body>
 
