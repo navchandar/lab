@@ -171,7 +171,7 @@
             position: fixed;
             top: 10px;
             right: 10px;
-            background: rgba(255, 255, 255, 0.15);
+            background-color: #6c757d;
             backdrop-filter: blur(10px);
             border-radius: 8px;
             padding: 0.5rem;
@@ -181,32 +181,49 @@
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
+        #settings-btn:hover {
+            background-color: #5a6268;
+        }
+
         /* Settings Menu */
         #settings-menu {
             position: fixed;
             top: 60px;
             right: 10px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 8px;
-            padding: 1rem;
-            display: none;
-            ;
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            padding: 0.75rem;
+            border-radius: 12px;
+            z-index: 999;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.46);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            padding-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(-10px);
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
         #settings-menu label {
             font-weight: bold;
-            color: white;
+            color: lightgray;
+            font-size: 1.2em;
+            padding-right: 5px;
         }
 
         #settings-menu select {
             margin-top: 0.5rem;
             padding: 0.5rem;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
             border: none;
             color: #000;
+        }
+
+        #settings-menu.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
         }
     </style>
 </head>
@@ -226,7 +243,7 @@
 
 
     <!-- Settings Button -->
-    <button id="settings-btn" aria-label="Settings" style="background: none; border: none; cursor: pointer;">
+    <button id="settings-btn" aria-label="Settings">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd"
                 d="M7 7C5.89543 7 5 6.10457 5 5C5 3.89543 5.89543 3 7 3C8.10457 3 9 3.89543 9 5C9 6.10457 8.10457 7 7 7Z"
@@ -493,7 +510,7 @@
 
     <script>
         // =========================
-        // Settungs Menu
+        // Settings Menu
         // =========================
         const settingsBtn = document.getElementById('settings-btn');
         const settingsMenu = document.getElementById('settings-menu');
@@ -507,8 +524,18 @@
 
         // Toggle menu visibility
         settingsBtn.addEventListener('click', () => {
+            e.stopPropagation();
             settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'block' : 'none';
+            settingsMenu.classList.toggle('show');
         });
+
+        document.addEventListener('click', (event) => {
+            const isClickInside = settingsMenu.contains(event.target) || settingsBtn.contains(event.target);
+            if (!isClickInside) {
+                settingsMenu.classList.remove('show');
+            }
+        });
+
 
         // Populate dropdown
         Object.keys(window.alphabets).forEach(lang => {
