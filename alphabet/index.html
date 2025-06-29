@@ -188,7 +188,6 @@
 
         /* Settings Menu */
         #settings-menu {
-            display: none;
             position: fixed;
             top: 60px;
             right: 10px;
@@ -198,13 +197,13 @@
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.46);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+            border: 0px solid rgba(0, 0, 0, 0.46);
+            box-shadow: 0 0px 5px rgba(0, 0, 0, 0.35);
             padding-bottom: 1rem;
             opacity: 0;
             transform: translateY(-10px);
             pointer-events: none;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
         }
 
         #settings-menu label {
@@ -228,6 +227,12 @@
             transform: translateY(0);
             pointer-events: auto;
         }
+
+        .radio-btn {
+            display: flex;
+            padding: 10px 0px;
+        }
+
     </style>
 </head>
 
@@ -274,6 +279,11 @@
         <select id="language-select">
             <!-- Options to be populated by JS -->
         </select>
+
+        <div class="radio-btn">
+            <label for="randomize-alphabet-checkbox">Randomize Alphabet:</label>
+            <input type="checkbox" id="randomize-alphabet-checkbox">
+        </div>
     </div>
 
 
@@ -287,6 +297,7 @@
         const settingsBtn = document.getElementById('settings-btn');
         const settingsMenu = document.getElementById('settings-menu');
         const languageSelect = document.getElementById('language-select');
+        const randomizeAlphabetCheckbox = document.getElementById('randomize-alphabet-checkbox');
 
         function toTitleCase(str) {
             return str.toLocaleLowerCase().replace(/\b\w/g, char => char.toUpperCase());
@@ -328,6 +339,25 @@
         window.addEventListener('DOMContentLoaded', () => {
             settingsBtn.style.display = 'block';
         });
+
+
+        // Function to get the randomize state from localStorage
+        function getIsRandomAlphabetEnabled() {
+            return localStorage.getItem('randomizeAlphabet') === 'true';
+        }
+
+        // Function to set the randomize state in localStorage
+        function setIsRandomAlphabet(value) {
+            localStorage.setItem('randomizeAlphabet', value);
+            console.log('Randomize Alphabet set to:', getIsRandomAlphabetEnabled());
+        }
+
+
+        randomizeAlphabetCheckbox.addEventListener('change', () => {
+            e.stopPropagation();
+            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+        });
+        setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
 
 
     </script>
