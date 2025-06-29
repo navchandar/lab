@@ -279,6 +279,59 @@
 
 
     <script src="data.js"></script>
+
+    <script>
+        // =========================
+        // Settings Menu
+        // =========================
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsMenu = document.getElementById('settings-menu');
+        const languageSelect = document.getElementById('language-select');
+
+        function toTitleCase(str) {
+            return str.toLocaleLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+        }
+
+        // Populate dropdown
+        Object.keys(window.alphabets).forEach(lang => {
+            const option = document.createElement('option');
+            option.value = lang;
+            option.textContent = toTitleCase(lang);
+            languageSelect.appendChild(option);
+        });
+
+        // Detect current language from URL
+        const urlParam = new URLSearchParams(window.location.search);
+        const currentLang = urlParam.get('lang') || 'english';
+        languageSelect.value = currentLang;
+
+        // Redirect on language change
+        languageSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const selectedLang = e.target.value;
+            window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
+        });
+
+        // Toggle menu visibility
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            settingsMenu.classList.toggle('show');
+        });
+
+        settingsBtn.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            settingsMenu.classList.toggle('show');
+        }, { passive: false });
+
+        // Show settings button after DOM is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            settingsBtn.style.display = 'block';
+        });
+
+
+    </script>
+
     <script>
         // =========================
         // Initialization
@@ -428,6 +481,7 @@
 
         const fullscreenbtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = document.getElementById('fullscreen-icon');
+        const settings_Menu = document.getElementById('settings-menu')
 
         function setEnterFullscreenIcon() {
             fullscreenIcon.innerHTML = `
@@ -470,10 +524,14 @@
             } else if (event.code === 'KeyF') {
                 event.preventDefault();
                 toggleFullscreen();
+            } else if (event.code === 'KeyS') {
+                event.preventDefault();
+                settings_Menu.classList.toggle('show');
+            } else if (event.code == 'Escape') {
+                settings_Menu.classList.remove('show');
             }
         });
 
-        const settings_Menu = document.getElementById('settings-menu')
 
         document.body.addEventListener('click', incrementAlphabet);
         document.body.addEventListener('touchstart', e => {
@@ -518,52 +576,6 @@
 
     </script>
 
-    <script>
-        // =========================
-        // Settings Menu
-        // =========================
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsMenu = document.getElementById('settings-menu');
-        const languageSelect = document.getElementById('language-select');
-
-
-        function toTitleCase(str) {
-            return str.toLocaleLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-        }
-
-
-        // Toggle menu visibility
-        settingsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            settingsMenu.classList.toggle('show');
-        });
-
-
-        // Populate dropdown
-        Object.keys(window.alphabets).forEach(lang => {
-            const option = document.createElement('option');
-            option.value = lang;
-            option.textContent = lang.charAt(0).toUpperCase() + lang.slice(1);
-            languageSelect.appendChild(option);
-        });
-
-        // Detect current language from URL
-        const urlParam = new URLSearchParams(window.location.search);
-        const currentLang = urlParam.get('lang') || 'english';
-        languageSelect.value = currentLang;
-
-        // Redirect on language change
-        languageSelect.addEventListener('change', (e) => {
-            const selectedLang = e.target.value;
-            window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
-        });
-
-        // Show settings button after DOM is ready
-        window.addEventListener('DOMContentLoaded', () => {
-            settingsBtn.style.display = 'block';
-        });
-
-    </script>
 
 
 </body>
