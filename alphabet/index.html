@@ -409,7 +409,6 @@
         window.getIsRandomAlphabetEnabled = getIsRandomAlphabetEnabled;
 
         randomizeAlphabetCheckbox.addEventListener('touchstart', e => {
-            e.preventDefault();
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         }, { passive: false });
