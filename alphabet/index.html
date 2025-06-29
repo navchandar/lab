@@ -174,7 +174,9 @@
             right: 10px;
             background-color: #6c757d;
             backdrop-filter: blur(10px);
-            border-radius: 8px;
+            border-radius: 2px;
+            border-bottom-left-radius: 0px;
+            border-bottom-right-radius: 0px;
             padding: 0.5rem;
             border: none;
             cursor: pointer;
@@ -186,14 +188,19 @@
             background-color: #5a6268;
         }
 
+        #settings-btn>svg {
+            margin-bottom: -5px;
+        }
+
         /* Settings Menu */
         #settings-menu {
             position: fixed;
-            top: 60px;
+            top: 56px;
             right: 10px;
             padding: 0.75rem;
-            border-radius: 12px;
-            z-index: 999;
+            border-radius: 5px;
+            border-top-right-radius: 0px;
+            z-index: 995;
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
@@ -223,8 +230,8 @@
 
         #settings-menu select:hover {
             background-color: #f0f8ff;
-            border: 1px solid #007BFF;
             cursor: pointer;
+            box-shadow: 0 0px 3px #007BFF inset;
         }
 
         #settings-menu.show {
@@ -259,12 +266,11 @@
             -webkit-transform-origin: 0 0;
             -o-transform-origin: 0 0;
             -moz-transform-origin: 0 0;
+            accent-color: aqua;
         }
 
         input[type='checkbox']:hover {
             background-color: #f0f8ff;
-            border-radius: 4px;
-            padding: 4px;
             cursor: pointer;
         }
     </style>
