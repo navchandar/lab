@@ -362,6 +362,9 @@
             const selectedLang = e.target.value;
             window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
         });
+        languageSelect.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
 
         // Toggle menu visibility
         settingsBtn.addEventListener('click', (e) => {
@@ -397,8 +400,21 @@
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         });
+
+        randomizeAlphabetCheckbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
         setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         window.getIsRandomAlphabetEnabled = getIsRandomAlphabetEnabled;
+
+        randomizeAlphabetCheckbox.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+        }, { passive: false });
+
+
 
     </script>
 
