@@ -7,7 +7,7 @@
     <title>Alphabet Generator</title>
     <meta name="description" content="A simple interactive Alphabet Generator that changes color on key press or tap.">
     <meta name="keywords"
-        content="alphabet, english letters, tamil alphabet, hindi alphabet, flash, colors, increment, interactive, JavaScript, mobile-friendly, kid-friendly">
+        content="language learning, kids learning, alphabet, english letters, tamil alphabet, hindi alphabet, flash, colors, increment, interactive, JavaScript, mobile-friendly, kid-friendly">
     <meta name="author" content="Naveenchandar">
     <meta property="og:title" content="Alphabet Generator">
     <meta property="og:description"
@@ -122,48 +122,6 @@
             transform: scale(1.2);
         }
 
-
-        /* Styles for mobile devices */
-        @media (max-width: 767px) {
-            #number {
-                width: 250px;
-                height: 400px;
-                font-size: 8em;
-                -webkit-text-stroke: 1px #333;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            }
-
-            #muteButton {
-                width: 40px;
-                height: 40px;
-                font-size: 1.2em;
-                bottom: 10px;
-                left: 10px;
-            }
-
-            #fullscreen-btn {
-                font-size: 1.2em;
-                bottom: 10px;
-                right: 10px;
-            }
-
-            #fullscreen-btn:active {
-                transform: scale(1.2);
-            }
-
-        }
-
-        /* Styles for desktop */
-        @media (min-width: 768px) {
-            #number {
-                width: 600px;
-                height: 720px;
-                font-size: 18em;
-                -webkit-text-stroke: 3px #333;
-                text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
-            }
-        }
-
         /* Styles for settings menu*/
 
         /* Settings Button */
@@ -195,13 +153,13 @@
         /* Settings Menu */
         #settings-menu {
             position: fixed;
-            top: 56px;
+            top: 55px;
             right: 10px;
             padding: 0.75rem;
             border-radius: 5px;
             border-top-right-radius: 0px;
             z-index: 995;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            background: linear-gradient(180deg, #6c757dd4, #343434a3);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 0px solid rgba(0, 0, 0, 0.46);
@@ -211,6 +169,7 @@
             transform: translateY(-10px);
             pointer-events: none;
             transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            text-shadow: 0px 2px 5px #000c;
         }
 
         #settings-menu label {
@@ -241,18 +200,15 @@
             pointer-events: auto;
         }
 
-
         .randomize-checkbox {
             display: flex;
             padding: 20px 0px 20px 0px;
         }
 
-
         .randomize-checkbox input[type="checkbox"] {
             vertical-align: middle;
             margin: 0px 0px 10px 10px;
         }
-
 
         input[type='checkbox'] {
             zoom: 1;
@@ -272,6 +228,65 @@
         input[type='checkbox']:hover {
             background-color: #f0f8ff;
             cursor: pointer;
+        }
+
+
+        /* Styles for mobile devices */
+        @media (max-width: 767px) {
+            #number {
+                width: 250px;
+                height: 400px;
+                font-size: 8em;
+                -webkit-text-stroke: 1px #333;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+
+            #muteButton {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2em;
+                bottom: 10px;
+                left: 10px;
+            }
+
+            #fullscreen-btn {
+                font-size: 1.2em;
+                bottom: 10px;
+                right: 10px;
+            }
+
+            #fullscreen-btn:active {
+                transform: scale(1.2);
+            }
+
+            /* Settings Menu */
+            #settings-menu {
+                top: 50px;
+                right: 10px;
+                padding: 0.5rem;
+                padding-bottom: 0.75rem;
+            }
+
+            input[type='checkbox'] {
+                zoom: 1;
+                transform: scale(1.7);
+                -ms-transform: scale(1.7);
+                -webkit-transform: scale(1.7);
+                -o-transform: scale(1.7);
+                -moz-transform: scale(1.7);
+            }
+
+        }
+
+        /* Styles for desktop */
+        @media (min-width: 768px) {
+            #number {
+                width: 600px;
+                height: 720px;
+                font-size: 18em;
+                -webkit-text-stroke: 3px #333;
+                text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
+            }
         }
     </style>
 </head>
@@ -365,6 +380,10 @@
         languageSelect.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+        languageSelect.addEventListener('touchstart', e => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { passive: false });
 
         // Toggle menu visibility
         settingsBtn.addEventListener('click', (e) => {
@@ -403,6 +422,7 @@
 
         randomizeAlphabetCheckbox.addEventListener('click', (e) => {
             e.stopPropagation();
+            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         });
 
         setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
@@ -412,7 +432,6 @@
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         }, { passive: false });
-
 
 
     </script>
@@ -441,6 +460,7 @@
 
         let currentAlphabet = Alphabet[0];
         numberElement.textContent = currentAlphabet;
+        const settings_Menu = document.getElementById('settings-menu')
 
         // Set initial mute button icon based on the loaded state
         muteButton.textContent = isMuted ? '🔇' : '🔊';
@@ -546,6 +566,7 @@
             if (isMuted && synth.speaking) synth.cancel();
             if (!isMuted) speaker();
             muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
+            settings_Menu.classList.remove('show');
         }
 
 
@@ -632,11 +653,11 @@
         function incrementAlphabet() {
             // Delay the execution slightly for visual/auditory pacing
             setTimeout(updateCharacter, 100);
+            settings_Menu.classList.remove('show');
         }
 
         const fullscreenbtn = document.getElementById('fullscreen-btn');
         const fullscreenIcon = document.getElementById('fullscreen-icon');
-        const settings_Menu = document.getElementById('settings-menu')
 
         function setEnterFullscreenIcon() {
             fullscreenIcon.innerHTML = `
@@ -662,6 +683,7 @@
             } else {
                 document.exitFullscreen();
             }
+            settings_Menu.classList.remove('show');
         }
 
         document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
@@ -692,20 +714,17 @@
         document.body.addEventListener('touchstart', e => {
             e.preventDefault();
             incrementAlphabet();
-            settings_Menu.classList.remove('show');
         }, { passive: false });
 
         muteButton.addEventListener('click', e => {
             e.stopPropagation();
             toggleMute();
-            settings_Menu.classList.remove('show');
         });
 
         muteButton.addEventListener('touchstart', e => {
             e.preventDefault();
             e.stopPropagation();
             toggleMute();
-            settings_Menu.classList.remove('show');
         }, { passive: false });
 
         speaker();
@@ -713,14 +732,12 @@
         fullscreenbtn.addEventListener('click', e => {
             e.stopPropagation();
             toggleFullscreen();
-            settings_Menu.classList.remove('show');
         });
 
         fullscreenbtn.addEventListener('touchstart', e => {
             e.preventDefault();
             e.stopPropagation();
             toggleFullscreen();
-            settings_Menu.classList.remove('show');
         }, { passive: false });
 
         document.addEventListener('fullscreenchange', () => {
