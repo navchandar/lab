@@ -159,8 +159,8 @@
             border-radius: 5px;
             border-top-right-radius: 0px;
             z-index: 995;
-            background: linear-gradient(180deg, #6c757dd4, #343434a3);
-            backdrop-filter: blur(12px);
+            background: linear-gradient(180deg, #6c757d80, #343434b3);
+            backdrop-filter: blur(2px);
             -webkit-backdrop-filter: blur(12px);
             border: 0px solid rgba(0, 0, 0, 0.46);
             box-shadow: 0 0px 5px rgba(0, 0, 0, 0.35);
@@ -168,7 +168,7 @@
             opacity: 0;
             transform: translateY(-10px);
             pointer-events: none;
-            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
             text-shadow: 0px 2px 5px #000c;
         }
 
@@ -261,10 +261,13 @@
 
             /* Settings Menu */
             #settings-menu {
-                top: 50px;
+                top: 49px;
                 right: 10px;
-                padding: 0.5rem;
-                padding-bottom: 0.75rem;
+                padding: 1rem;
+                border-radius: 10px;
+                border-top-right-radius: 0px;
+                background: linear-gradient(180deg, #6c757dc7, #6c757d99, #34343485);
+                text-shadow: 0px 2px 3px #000c;
             }
 
             input[type='checkbox'] {
@@ -330,13 +333,13 @@
 
     <!-- Overlay Menu -->
     <div id="settings-menu">
-        <label for="language-select">Choose Language:</label>
+        <label for="language-select" id="language-label">Choose Language:</label>
         <select id="language-select">
             <!-- Options to be populated by JS -->
         </select>
 
         <div class="randomize-checkbox">
-            <label for="randomize-alphabet">Randomize Alphabet:</label>
+            <label for="randomize-alphabet" id="randomize-label">Randomize Alphabet:</label>
             <input type="checkbox" id="randomize-alphabet">
         </div>
     </div>
@@ -377,11 +380,25 @@
             const selectedLang = e.target.value;
             window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
         });
+
         languageSelect.addEventListener('click', (e) => {
             e.stopPropagation();
         });
+
+        document.getElementById('language-label').addEventListener('click', (e) => {
+            e.stopPropagation();
+            languageSelect.focus();
+            languageSelect.click();
+        });
+
         languageSelect.addEventListener('touchstart', e => {
             e.stopPropagation();
+        }, { passive: false });
+
+        document.getElementById('language-label').addEventListener('touchstart', e => {
+            e.stopPropagation();
+            languageSelect.focus();
+            languageSelect.click();
         }, { passive: false });
 
         // Toggle menu visibility
@@ -413,7 +430,6 @@
             console.log('Randomize Alphabet set to:', getIsRandomAlphabetEnabled());
         }
 
-
         randomizeAlphabetCheckbox.addEventListener('change', (e) => {
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
@@ -424,14 +440,27 @@
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         });
 
-        setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
-        window.getIsRandomAlphabetEnabled = getIsRandomAlphabetEnabled;
+        document.getElementById('randomize-label').addEventListener('click', (e) => {
+            e.stopPropagation();
+            randomizeAlphabetCheckbox.focus();
+            randomizeAlphabetCheckbox.click();
+            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+        });
+        
+        document.getElementById('randomize-label').addEventListener('touchstart', e => {
+            e.stopPropagation();
+            randomizeAlphabetCheckbox.focus();
+            randomizeAlphabetCheckbox.click();
+            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+        }, { passive: false });
 
         randomizeAlphabetCheckbox.addEventListener('touchstart', e => {
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         }, { passive: false });
 
+        setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+        window.getIsRandomAlphabetEnabled = getIsRandomAlphabetEnabled;
 
     </script>
 
