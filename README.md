@@ -1,6 +1,8 @@
-# ⚙️ [Lab](https://github.com/navchandar/lab)
 
-Repo for creative experiments and interactive tools. 
+<h1>⚙️ <a href="https://github.com/navchandar/lab" target="_blank">Lab Repository</a></h1>
+
+
+This Repo for creative experiments and interactive tools. 
 
 Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use.
 

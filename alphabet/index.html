@@ -375,7 +375,7 @@
         languageSelect.value = currentLang;
 
         // Redirect on language change
-        languageSelect.addEventListener('change', (e) => {
+        languageSelect.addEventListener('change', e => {
             e.stopPropagation();
             const selectedLang = e.target.value;
             window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
@@ -385,23 +385,21 @@
             e.stopPropagation();
         }, { passive: false });
 
+        languageSelect.addEventListener('click', e => {
+            e.stopPropagation();
+        });
+
         document.getElementById('language-label').addEventListener('touchstart', e => {
-            languageSelect.click();
             e.stopPropagation();
         }, { passive: false });
 
-        languageSelect.addEventListener('click', (e) => {
+
+        document.getElementById('language-label').addEventListener('click', e => {
             e.stopPropagation();
         });
-
-        document.getElementById('language-label').addEventListener('click', (e) => {
-            languageSelect.click();
-            e.stopPropagation();
-        });
-
 
         // Toggle menu visibility
-        settingsBtn.addEventListener('click', (e) => {
+        settingsBtn.addEventListener('click', e => {
             e.stopPropagation();
             settingsMenu.classList.toggle('show');
         });
@@ -429,22 +427,16 @@
             console.log('Randomize Alphabet set to:', getIsRandomAlphabetEnabled());
         }
 
-        randomizeAlphabetCheckbox.addEventListener('change', (e) => {
+        randomizeAlphabetCheckbox.addEventListener('change', e => {
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         });
 
-        randomizeAlphabetCheckbox.addEventListener('click', (e) => {
+        randomizeAlphabetCheckbox.addEventListener('click', e => {
             e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
         });
 
-        document.getElementById('randomize-label').addEventListener('click', (e) => {
-            randomizeAlphabetCheckbox.click();
-            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
-            e.stopPropagation();
-        });
-        
         document.getElementById('randomize-label').addEventListener('touchstart', e => {
             randomizeAlphabetCheckbox.click();
             e.stopPropagation();
