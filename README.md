@@ -1,6 +1,8 @@
-# ⚙️ Lab
+# ⚙️ [Lab](https://github.com/navchandar/lab)
 
-Repo for creative experiments and interactive tools. Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use.
+Repo for creative experiments and interactive tools. 
+
+Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use.
 
 
 ## 🚀 Available Projects
@@ -21,5 +23,7 @@ Repo for creative experiments and interactive tools. Each project is lightweight
 
 
 
-### 📑 License
-[GPLv3](LICENSE)
+## 📑 License
+[GPLv3](https://github.com/navchandar/lab/blob/main/LICENSE)
+
+

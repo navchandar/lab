@@ -153,7 +153,7 @@
         /* Settings Menu */
         #settings-menu {
             position: fixed;
-            top: 55px;
+            top: 52px;
             right: 10px;
             padding: 0.75rem;
             border-radius: 5px;
@@ -381,25 +381,24 @@
             window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
         });
 
-        languageSelect.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        document.getElementById('language-label').addEventListener('click', (e) => {
-            e.stopPropagation();
-            languageSelect.focus();
-            languageSelect.click();
-        });
-
         languageSelect.addEventListener('touchstart', e => {
             e.stopPropagation();
         }, { passive: false });
 
         document.getElementById('language-label').addEventListener('touchstart', e => {
-            e.stopPropagation();
-            languageSelect.focus();
             languageSelect.click();
+            e.stopPropagation();
         }, { passive: false });
+
+        languageSelect.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.getElementById('language-label').addEventListener('click', (e) => {
+            languageSelect.click();
+            e.stopPropagation();
+        });
+
 
         // Toggle menu visibility
         settingsBtn.addEventListener('click', (e) => {
@@ -441,22 +440,19 @@
         });
 
         document.getElementById('randomize-label').addEventListener('click', (e) => {
-            e.stopPropagation();
-            randomizeAlphabetCheckbox.focus();
             randomizeAlphabetCheckbox.click();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+            e.stopPropagation();
         });
         
         document.getElementById('randomize-label').addEventListener('touchstart', e => {
-            e.stopPropagation();
-            randomizeAlphabetCheckbox.focus();
             randomizeAlphabetCheckbox.click();
-            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+            e.stopPropagation();
         }, { passive: false });
 
         randomizeAlphabetCheckbox.addEventListener('touchstart', e => {
-            e.stopPropagation();
             setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+            e.stopPropagation();
         }, { passive: false });
 
         setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
