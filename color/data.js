@@ -8,7 +8,7 @@ window.colors = {
             { color: 'yellow', label: 'YELLOW' },
             { color: 'orange', label: 'ORANGE' },
             { color: 'purple', label: 'PURPLE' },
-            { color: 'pink', label: 'PINK' },
+            { color: 'hotpink', label: 'PINK' },
             { color: 'brown', label: 'BROWN' },
             { color: 'white', label: 'WHITE' }
         ],
@@ -23,7 +23,7 @@ window.colors = {
             { color: 'yellow', label: 'மஞ்சள்' },
             { color: 'orange', label: 'ஆரஞ்சு' },
             { color: 'purple', label: 'ஊதா' },
-            { color: 'pink', label: 'இளஞ்சிவப்பு' },
+            { color: 'hotpink', label: 'இளஞ்சிவப்பு' },
             { color: 'brown', label: 'பழுப்பு' },
             { color: 'white', label: 'வெள்ளை' }
         ],

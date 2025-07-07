@@ -2,22 +2,29 @@ let currentIndex = 0;
 let currentLang = 'english';
 
 
-function getBrightness(color) {
-    const ctx = document.createElement('canvas').getContext('2d');
-    ctx.fillStyle = color;
-    const rgbString = ctx.fillStyle;
-    const rgb = rgbString.match(/\d+/g);
+// Create a 1x1 pixel canvas to do the color conversion
+const canvas = document.createElement('canvas');
+canvas.width = 1;
+canvas.height = 1;
+const ctx = canvas.getContext('2d');
 
-    // Assume bright background as fallback
-    if (!rgb || rgb.length < 3) {
-        console.warn(`Invalid color: ${color}`);
+
+function getBrightness(color) {
+    try {
+        // Draw a 1x1 pixel rectangle to apply the color
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, 1, 1);
+        // Get the color data for that single pixel in an array [R, G, B, Alpha].
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        // Formula to calculate a weighted average of the three primary colors
+        // Baed on ITU-R BT.601 standard
+        return (r * 299 + g * 587 + b * 114) / 1000;
+
+    } catch (e) {
+        // Assume bright background as fallback
+        console.error(`Invalid color: ${color}`, e);
         return 255;
     }
-
-    // Formula to calculate a weighted average of the three primary colors
-    // Baed on ITU-R BT.601 standard
-    const [r, g, b] = rgb.map(Number);
-    return (r * 299 + g * 587 + b * 114) / 1000;
 }
 
 
@@ -42,17 +49,21 @@ function changeBodyColor(color) {
     if (metaTag) {
         metaTag.setAttribute('content', color);
     }
-    console.log("Updated color to: " + color);
+    console.log("Updated background color to: " + color);
 }
 
 function changeTextColor(color, label) {
-    const { textColor, textShadow } = getTextStyleForBrightness(color);
+    const {
+        textColor,
+        textShadow
+    } = getTextStyleForBrightness(color);
 
     const colorNameEl = document.getElementById('color-name');
     colorNameEl.style.color = textColor;
     colorNameEl.style.textShadow = textShadow;
     colorNameEl.textContent = label;
-    console.log("Updated text to: " + label);
+    console.log("Updated text content to: " + label);
+    console.log("Updated text color to: " + textColor);
 }
 
 function updateColor() {
