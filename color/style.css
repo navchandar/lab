@@ -1,0 +1,36 @@
+body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    font-family: sans-serif;
+    background-color: black;
+    transition: background-color 0.5s ease;
+}
+
+#color-name {
+    font-size: 15em;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 80px;
+    padding: 0 20px;
+    text-align: center;
+    user-select: none;
+    cursor: pointer;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.4);
+}
+
+
+@media (max-width: 768px) {
+    #color-name {
+        font-size: 8em;
+    }
+}
+
+@media (max-width: 480px) {
+    #color-name {
+        font-size: 5em;
+    }
+}
