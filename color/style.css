@@ -14,23 +14,25 @@ body {
     font-size: 12em;
     font-weight: bold;
     text-transform: uppercase;
-    margin-bottom: 80px;
+    margin-bottom: 100px;
     padding: 0 20px;
     text-align: center;
     user-select: none;
     cursor: pointer;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.4);
+    text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.4), -2px -2px 5px rgba(255, 255, 255, 0.4);
 }
 
 
 @media (max-width: 768px) {
     #color-name {
-        font-size: 8em;
+        font-size: 7em;
+        margin-bottom: 120px;
     }
 }
 
 @media (max-width: 480px) {
     #color-name {
         font-size: 5em;
+        margin-bottom: 80px;
     }
 }

@@ -35,8 +35,8 @@ function getTextStyleForBrightness(color) {
     return {
         textColor: isDark ? 'white' : 'black',
         textShadow: `
-            2px 2px 4px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)'},
-           -2px -2px 4px ${isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'}
+            5px 5px 5px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)'},
+           -2px -2px 5px ${isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'}
         `
     };
 }
@@ -81,5 +81,9 @@ function updateColor() {
 document.addEventListener('DOMContentLoaded', () => {
     updateColor();
     document.body.addEventListener('click', updateColor);
-    document.body.addEventListener('touchstart', updateColor);
+    document.body.addEventListener('touchstart', e => {
+        // Prevent the browser from firing the emulated 'click' event.
+        e.preventDefault();
+        updateColor();
+    }, { passive: false });
 });
