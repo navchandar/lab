@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
             event.preventDefault();
             updateColor();
         }
-    }
+    );
     document.body.addEventListener('click', updateColor);
     document.body.addEventListener('touchstart', e => {
         // Prevent the browser from firing the emulated 'click' event.
