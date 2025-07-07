@@ -10,6 +10,18 @@ function getBrightness(hexColor) {
 }
 
 
+function getTextStyleForBrightness(brightness) {
+    const isDark = brightness < 128;
+    return {
+        textColor: isDark ? 'white' : 'black',
+        textShadow: `
+            2px 2px 4px ${isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.4)'},
+           -2px -2px 4px ${isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'}
+        `
+    };
+}
+
+
 function updateColor() {
     const colorData = window.colors[currentLang].names[currentIndex];
     const color = colorData.color;
@@ -17,9 +29,12 @@ function updateColor() {
 
     document.body.style.backgroundColor = color;
     const brightness = getBrightness(color);
-    colorName = document.getElementById('color-name')
-    colorName.style.color = brightness < 128 ? 'white' : 'black';
-    colorName.textContent = label;
+    const { textColor, textShadow } = getTextStyleForBrightness(brightness);
+
+    const colorNameEl = document.getElementById('color-name');
+    colorNameEl.style.color = textColor;
+    colorNameEl.style.textShadow = textShadow;
+    colorNameEl.textContent = label;
 
     currentIndex = (currentIndex + 1) % window.colors[currentLang].names.length;
 }
