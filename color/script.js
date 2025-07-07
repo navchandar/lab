@@ -80,6 +80,16 @@ function updateColor() {
 
 document.addEventListener('DOMContentLoaded', () => {
     updateColor();
+
+    // =========================
+    // Event Listeners
+    // =========================
+    document.addEventListener('keydown', event => {
+        if (event.code === 'Space' || event.code === 'Enter') {
+            event.preventDefault();
+            updateColor();
+        }
+    }
     document.body.addEventListener('click', updateColor);
     document.body.addEventListener('touchstart', e => {
         // Prevent the browser from firing the emulated 'click' event.
