@@ -86,8 +86,11 @@ function getRandomColorExcludingLast(colorsArray) {
 
 function updateColor() {
     // Get color data and label values
-    const colorData = window.colors[currentLang] ?? (() => { console.error(`Color Data for language "${currentLang}" does not exist`); })();
-    if color {
+    const colorData = (window.colors && window.colors[currentLang]) 
+        ? window.colors[currentLang] 
+        : (console.error(`Color data for "${currentLang}" not found`), {});
+
+    if (colorData) {
         // Determine which mode to use (random or sequential)
         const isRandomEnabled = window.getIsRandomEnabled();
         let selectedColorData;
