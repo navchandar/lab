@@ -349,6 +349,7 @@ document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
 
 document.addEventListener('DOMContentLoaded', () => {
     updateSettingsMenu();
+    updateSpeakerOptions()
     updateColor();
     speaker();
 
