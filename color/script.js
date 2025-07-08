@@ -14,7 +14,7 @@ const fullscreenbtn = document.getElementById('fullscreen-btn');
 const fullscreenIcon = document.getElementById('fullscreen-icon');
 const muteButton = document.getElementById('muteButton');
 const synth = window.speechSynthesis;
-
+let isMuted = localStorage.getItem('isMuted') === 'true';
 
 function getBrightness(color) {
     try {
@@ -220,7 +220,7 @@ function updateSettingsMenu(){
 }
 
 function updateSpeakerOptions() {
-    let isMuted = localStorage.getItem('isMuted') === 'true';
+    isMuted = localStorage.getItem('isMuted') === 'true';
     // Set initial mute button icon based on the loaded state
     muteButton.textContent = isMuted ? '🔇' : '🔊';
     // Initial mute button state
