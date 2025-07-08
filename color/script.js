@@ -18,6 +18,8 @@ const synth = window.speechSynthesis;
 let Locale = null;
 let utterance = null;
 let isMuted = localStorage.getItem('isMuted') === 'true';
+let retryCount = 0;
+const maxRetries = 10;
 
 
 function getBrightness(color) {
