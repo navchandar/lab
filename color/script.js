@@ -97,7 +97,7 @@ function updateColor() {
     if (colorData) {
         Locale = colorData.locale;
         // Determine which mode to use (random or sequential)
-        const isRandomEnabled = window.getIsRandomEnabled();
+        const isRandomEnabled = getIsRandomEnabled();
         let selectedColorData;
         if (isRandomEnabled) {
             selectedColorData = getRandomColorExcludingLast(colorData.names);
@@ -122,6 +122,18 @@ function updateColor() {
 
     }
 }
+
+// Function to get the randomize state from localStorage
+function getIsRandomEnabled() {
+    return localStorage.getItem('randomize') === 'true';
+}
+
+// Function to set the randomize state in localStorage
+function setIsRandom(value) {
+    localStorage.setItem('randomize', value);
+    console.log('Randomize set to:', getIsRandomEnabled());
+}
+
 
 function updateSettingsMenu(){
     // =========================
@@ -189,16 +201,6 @@ function updateSettingsMenu(){
     });
 
 
-    // Function to get the randomize state from localStorage
-    function getIsRandomEnabled() {
-        return localStorage.getItem('randomize') === 'true';
-    }
-
-    // Function to set the randomize state in localStorage
-    function setIsRandom(value) {
-        localStorage.setItem('randomize', value);
-        console.log('Randomize set to:', getIsRandomEnabled());
-    }
 
     randomizeCheckbox.addEventListener('change', e => {
         e.stopPropagation();
@@ -221,7 +223,6 @@ function updateSettingsMenu(){
     }, { passive: false });
 
     setIsRandom(randomizeCheckbox.checked);
-    window.getIsRandomEnabled = getIsRandomEnabled;
 }
 
 function updateSpeakerOptions() {
