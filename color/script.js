@@ -132,7 +132,7 @@ function updateSettingsMenu(){
     }
 
     // Populate dropdown
-    Object.keys(window.alphabets).forEach(lang => {
+    Object.keys(window.colors).forEach(lang => {
         const option = document.createElement('option');
         option.value = lang;
         option.textContent = toTitleCase(lang);
