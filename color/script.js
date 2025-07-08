@@ -9,6 +9,7 @@ canvas.width = 1;
 canvas.height = 1;
 const ctx = canvas.getContext('2d');
 
+const colorNameEl = document.getElementById('color-name');
 const settings_Menu = document.getElementById('settings-menu')
 const fullscreenbtn = document.getElementById('fullscreen-btn');
 const fullscreenIcon = document.getElementById('fullscreen-icon');
@@ -66,7 +67,6 @@ function changeTextColor(color, label) {
         textShadow
     } = getTextStyleForBrightness(color);
 
-    const colorNameEl = document.getElementById('color-name');
     colorNameEl.style.color = textColor;
     colorNameEl.style.textShadow = textShadow;
     colorNameEl.textContent = label;
@@ -300,7 +300,7 @@ function speaker() {
     muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
     if (utterance && !isMuted) {
         if (synth.speaking) synth.cancel();
-        utterance.text = numberElement.textContent.toLowerCase();
+        utterance.text = colorNameEl.textContent.toLowerCase();
         try {
             synth.speak(utterance);
         } catch (error) {
