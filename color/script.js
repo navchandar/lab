@@ -146,6 +146,7 @@ function updateSettingsMenu(){
     const settingsMenu = document.getElementById('settings-menu');
     const languageSelect = document.getElementById('language-select');
     const randomizeCheckbox = document.getElementById('randomize');
+    Locale = window.colors[currentLang].locale
 
     function toTitleCase(str) {
         return str.toLocaleLowerCase().replace(/\b\w/g, char => char.toUpperCase());
