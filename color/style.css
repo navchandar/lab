@@ -23,7 +23,210 @@ body {
 }
 
 
-@media (max-width: 768px) {
+/* Styles for the mute button */
+#muteButton {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    /* Make it a circle */
+    width: 50px;
+    height: 50px;
+    font-size: 1.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+}
+
+#muteButton:hover {
+    background-color: #5a6268;
+}
+
+/* Styles for full screen button*/
+#fullscreen-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    font-size: 1.5em;
+    background: none;
+    border: none;
+    color: #aaaaaa;
+    cursor: pointer;
+    z-index: 999;
+    transition: transform 0.3s ease;
+}
+
+/* Hover effect when NOT in fullscreen */
+#fullscreen-btn:hover:not(.fullscreen-active) {
+    transform: scale(1.5);
+}
+
+/* Hover effect when IN fullscreen */
+#fullscreen-btn.fullscreen-active:hover {
+    transform: scale(0.8);
+}
+
+#fullscreen-btn.fullscreen-active>svg {
+    transform: scale(1.2);
+}
+
+/* Styles for settings menu*/
+
+/* Settings Button */
+#settings-btn {
+    display: none;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background-color: #6c757d;
+    backdrop-filter: blur(10px);
+    border-radius: 2px;
+    border-bottom-left-radius: 0px;
+    border-bottom-right-radius: 0px;
+    padding: 0.5rem;
+    border: none;
+    cursor: pointer;
+    z-index: 998;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
+
+#settings-btn:hover {
+    background-color: #5a6268;
+}
+
+#settings-btn>svg {
+    margin-bottom: -5px;
+}
+
+/* Settings Menu */
+#settings-menu {
+    position: fixed;
+    top: 52px;
+    right: 10px;
+    padding: 0.75rem;
+    border-radius: 5px;
+    border-top-right-radius: 0px;
+    z-index: 995;
+    background: linear-gradient(180deg, #6c757d80, #343434b3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 0px solid rgba(0, 0, 0, 0.46);
+    box-shadow: 0 0px 5px rgba(0, 0, 0, 0.35);
+    padding-bottom: 1rem;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+    text-shadow: 0px 2px 5px #000c;
+}
+
+#settings-menu label {
+    font-weight: bold;
+    color: lightgray;
+    font-size: 0.9em;
+    padding-right: 5px;
+}
+
+#settings-menu select {
+    margin-top: 0.5rem;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: none;
+    color: #000;
+}
+
+#settings-menu select:hover {
+    background-color: #f0f8ff;
+    cursor: pointer;
+    box-shadow: 0 0px 3px #007BFF inset;
+}
+
+#settings-menu.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.randomize-checkbox {
+    display: flex;
+    padding: 20px 0px 20px 0px;
+}
+
+.randomize-checkbox input[type="checkbox"] {
+    vertical-align: middle;
+    margin: 0px 0px 10px 10px;
+}
+
+input[type='checkbox'] {
+    zoom: 1;
+    transform: scale(2);
+    -ms-transform: scale(2);
+    -webkit-transform: scale(2);
+    -o-transform: scale(2);
+    -moz-transform: scale(2);
+    transform-origin: 0 0;
+    -ms-transform-origin: 0 0;
+    -webkit-transform-origin: 0 0;
+    -o-transform-origin: 0 0;
+    -moz-transform-origin: 0 0;
+    accent-color: aqua;
+}
+
+input[type='checkbox']:hover {
+    background-color: #f0f8ff;
+    cursor: pointer;
+}
+
+
+/* Styles for mobile devices */
+@media (max-width: 767px) {
+
+    #muteButton {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2em;
+        bottom: 10px;
+        left: 10px;
+    }
+
+    #fullscreen-btn {
+        font-size: 1.2em;
+        bottom: 10px;
+        right: 10px;
+    }
+
+    #fullscreen-btn:active {
+        transform: scale(1.2);
+    }
+
+    /* Settings Menu */
+    #settings-menu {
+        top: 49px;
+        right: 10px;
+        padding: 1rem;
+        border-radius: 10px;
+        border-top-right-radius: 0px;
+        background: linear-gradient(180deg, #6c757dc7, #6c757d99, #34343485);
+        text-shadow: 0px 2px 3px #000c;
+    }
+
+    input[type='checkbox'] {
+        zoom: 1;
+        transform: scale(1.7);
+        -ms-transform: scale(1.7);
+        -webkit-transform: scale(1.7);
+        -o-transform: scale(1.7);
+        -moz-transform: scale(1.7);
+    }
+
     #color-name {
         font-size: 7em;
         margin-bottom: 120px;

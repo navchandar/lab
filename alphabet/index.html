@@ -471,7 +471,6 @@
 
 
         const numberElement = document.getElementById('number');
-        const muteButton = document.getElementById('muteButton');
         const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
         let currentAlphabet = Alphabet[0];
@@ -479,6 +478,7 @@
         const settings_Menu = document.getElementById('settings-menu')
 
         // Set initial mute button icon based on the loaded state
+        const muteButton = document.getElementById('muteButton');
         muteButton.textContent = isMuted ? '🔇' : '🔊';
         // Initial mute button state
         muteButton.disabled = true;
