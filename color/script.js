@@ -14,6 +14,7 @@ const fullscreenbtn = document.getElementById('fullscreen-btn');
 const fullscreenIcon = document.getElementById('fullscreen-icon');
 const muteButton = document.getElementById('muteButton');
 const synth = window.speechSynthesis;
+let Locale = null;
 let utterance = null;
 let isMuted = localStorage.getItem('isMuted') === 'true';
 
@@ -91,8 +92,10 @@ function updateColor() {
     const colorData = (window.colors && window.colors[currentLang]) 
         ? window.colors[currentLang] 
         : (console.error(`Color data for "${currentLang}" not found`), {});
+    
 
     if (colorData) {
+        Locale = colorData.locale;
         // Determine which mode to use (random or sequential)
         const isRandomEnabled = window.getIsRandomEnabled();
         let selectedColorData;
@@ -348,9 +351,9 @@ document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateColor();
     updateSettingsMenu();
     updateSpeakerOptions()
-    updateColor();
     speaker();
 
     // =========================
