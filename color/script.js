@@ -14,7 +14,9 @@ const fullscreenbtn = document.getElementById('fullscreen-btn');
 const fullscreenIcon = document.getElementById('fullscreen-icon');
 const muteButton = document.getElementById('muteButton');
 const synth = window.speechSynthesis;
+let utterance = null;
 let isMuted = localStorage.getItem('isMuted') === 'true';
+
 
 function getBrightness(color) {
     try {
@@ -230,8 +232,6 @@ function updateSpeakerOptions() {
     // =========================
     // Speech Synthesis Setup
     // =========================
-    let utterance = null;
-
     if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
         console.warn("Web Speech API is not supported in this browser.");
         muteButton.style.display = 'none';
