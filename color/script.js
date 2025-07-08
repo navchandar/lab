@@ -121,6 +121,7 @@ function updateColor() {
         }
 
     }
+    settings_Menu.classList.remove('show');
 }
 
 // Function to get the randomize state from localStorage
