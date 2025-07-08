@@ -74,6 +74,7 @@ function changeTextColor(color, label) {
     colorNameEl.textContent = label;
     console.log("Updated text content to: " + label);
     console.log("Updated text color to: " + textColor);
+    speaker();
 }
 
 const lastColors = [];
@@ -121,7 +122,6 @@ function updateColor() {
                 lastColors.shift();
             }
         }
-
     }
     settings_Menu.classList.remove('show');
 }
@@ -355,10 +355,9 @@ document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    updateSpeakerOptions()
     updateColor();
     updateSettingsMenu();
-    updateSpeakerOptions()
-    speaker();
 
     // =========================
     // Event Listeners
