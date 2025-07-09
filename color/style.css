@@ -11,15 +11,18 @@ body {
 }
 
 #color-name {
-    font-size: 12em;
+    font-size: clamp(50px, 10vw, 120px);
     font-weight: bold;
     text-transform: uppercase;
-    margin-bottom: 8%;
+    margin-bottom: 10%;
     padding: 0 20px;
     text-align: center;
     user-select: none;
     cursor: pointer;
     text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.4), -2px -2px 5px rgba(255, 255, 255, 0.4);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
 }
 
 
@@ -228,14 +231,14 @@ input[type='checkbox']:hover {
     }
 
     #color-name {
-        font-size: 5em;
-        margin-bottom: 25%;
+        font-size: clamp(50px, 5vw, 120px);
+        margin-bottom: 50%;
     }
 }
 
 @media (max-width: 480px) {
     #color-name {
-        font-size: 3.5em;
-        margin-bottom: 25%;
+        font-size: clamp(50px, 4vw, 120px);
+        margin-bottom: 50%;
     }
 }
