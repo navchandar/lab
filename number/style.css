@@ -1,0 +1,136 @@
+body {
+    align-items: center;
+    background-color: #4e4e4e;
+    display: flex;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    justify-content: center;
+    margin: 0;
+    overflow: hidden;
+}
+
+#number {
+    /* Center the number within this container */
+    align-items: center;
+    background-color: lightgrey;
+    background-image:
+        repeating-linear-gradient(0deg,
+            #eee 0.5px,
+            transparent 0.5px,
+            transparent 20px),
+        repeating-linear-gradient(180deg,
+            #000 0.1px,
+            transparent 0.5px,
+            transparent 20px);
+    background-size: 20px 20px;
+    border-radius: 10px 40px 40px 10px;
+    box-shadow:
+        0 1px 1px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.3);
+    color: black;
+    cursor: pointer;
+    display: flex;
+    font-size: 15em;
+    justify-content: center;
+    line-height: 1;
+    opacity: 1;
+    overflow: hidden;
+    position: relative;
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+    transition: color 0.5s ease, opacity 0.5s ease;
+    user-select: none;
+    -webkit-text-stroke: 2px #333;
+}
+
+/* Styles for the mute button */
+#muteButton {
+    align-items: center;
+    background-color: #6c757d;
+    border: none;
+    border-radius: 50%;
+    bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    font-size: 1.5em;
+    height: 50px;
+    justify-content: center;
+    left: 20px;
+    position: fixed;
+    transition: background-color 0.3s ease;
+    width: 50px;
+    z-index: 1000;
+}
+
+#muteButton:hover {
+    background-color: #5a6268;
+}
+
+/* Styles for full screen button*/
+#fullscreen-btn {
+    background: none;
+    border: none;
+    bottom: 20px;
+    color: #aaaaaa;
+    cursor: pointer;
+    font-size: 1.5em;
+    position: fixed;
+    right: 20px;
+    transition: transform 0.3s ease;
+    z-index: 999;
+}
+
+/* Hover effect when NOT in fullscreen */
+#fullscreen-btn:hover:not(.fullscreen-active) {
+    transform: scale(1.5);
+}
+
+/* Hover effect when IN fullscreen */
+#fullscreen-btn.fullscreen-active:hover {
+    transform: scale(0.8);
+}
+
+#fullscreen-btn.fullscreen-active > svg {
+    transform: scale(1.2);
+}
+
+/* Styles for mobile devices */
+@media (max-width: 767px) {
+    #number {
+        font-size: 8em;
+        height: 400px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        -webkit-text-stroke: 1px #333;
+        width: 250px;
+    }
+
+    #muteButton {
+        bottom: 10px;
+        font-size: 1.2em;
+        height: 40px;
+        left: 10px;
+        width: 40px;
+    }
+
+    #fullscreen-btn {
+        bottom: 10px;
+        font-size: 1.2em;
+        right: 10px;
+    }
+
+    #fullscreen-btn:active {
+        transform: scale(1.2);
+    }
+}
+
+/* Styles for desktop */
+@media (min-width: 768px) {
+    #number {
+        font-size: 18em;
+        height: 720px;
+        text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
+        -webkit-text-stroke: 3px #333;
+        width: 600px;
+    }
+}
