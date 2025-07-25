@@ -10,12 +10,22 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 ## 🚀 Available Projects
 
 
-| Project | Description |
-|--------|-------------|
-| 🔢 <a href="https://navchandar.github.io/lab/number/" target="_blank">**Number Incrementor**</a> | Display and increment numbers with random colors on key press or tap. |
-| 🌈 <a href="https://navchandar.github.io/lab/color/" target="_blank">**Color Viewer**</a> | Display and increment color names with random colors on key press or tap. |
-| 🔠 <a href="https://navchandar.github.io/lab/alphabet/" target="_blank">**English Alphabet**</a> | Display and increment english alphabet with random colors on key press or tap. |
-| 🔠 <a href="https://navchandar.github.io/lab/alphabet/?lang=tamil" target="_blank">**Tamil Alphabet**</a> | Display and increment tamil alphabet with random colors on key press or tap. |
+| Project | Description | Progress |
+|--------|-------------|----------|
+| 🔢 <a href="https://navchandar.github.io/lab/number/" target="_blank">**Number Incrementor**</a> | Display and increment numbers with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
+| 🌈 <a href="https://navchandar.github.io/lab/color/" target="_blank">**Color Viewer**</a> | Display and increment color names with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
+| 🔠 <a href="https://navchandar.github.io/lab/alphabet/" target="_blank">**English Alphabet**</a> | Display and increment english alphabet with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
+| 🔠 <a href="https://navchandar.github.io/lab/alphabet/?lang=tamil" target="_blank">**Tamil Alphabet**</a> | Display and increment tamil alphabet with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
+| 🐾 **Animals** | Tap on animals to view the animals, hear their sounds and see their names. | ⬜⬜⬜⬜⬜ 0% |
+| 🍎 **Fruits And Veggies** | Learn names and colors of fruits and vegetables with illustrations. | ⬜⬜⬜⬜⬜ 0% |
+| 🎨 **Shape Explorer** | Identify and learn basic shapes with color and sound effects. | ⬜⬜⬜⬜⬜ 0% |
+| 🕒 **Learn the Clock** | Interactive analog and digital clock to teach time-telling. | ⬜⬜⬜⬜⬜ 0% |
+| 📅 **Days And Months** | Learn days of the week and months of the year with animations and sounds. | ⬜⬜⬜⬜⬜ 0% |
+| 🌍 **World Explorer** | Learn country names, flags, and capitals with a simple quiz mode. | ⬜⬜⬜⬜⬜ 0% |
+
+
+### Maintained By:
+<a style="display:inline-block;" href="https://navchandar.github.io/">Naveenchandar</a>
 
 
 ## Support This Project
