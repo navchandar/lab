@@ -16,16 +16,21 @@ const shapes = [
     'circle'
 ];
 
-let currentShapeIndex = 0;
+const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
 
-function getRandomColor() {
-    const letters = '0123456789ABCDEF';
-    let color = '#';
-    for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-    }
-    return color;
+let currentShapeIndex = 0;
+let currentColor = null;
+let previousColor = null;
+
+
+function getNewColor() {
+    let newColor;
+    do {
+        newColor = colors[Math.floor(Math.random() * colors.length)];
+    } while (newColor === currentColor || newColor === previousColor);
+    return newColor;
 }
+
 
 function updateShape() {
     // Remove current shape class
@@ -39,7 +44,9 @@ function updateShape() {
     shapeElement.classList.add(newShape);
 
     // Apply random background color
-    shapeElement.style.backgroundColor = getRandomColor();
+    previousColor = currentColor;
+    currentColor = getNewColor();
+    shapeElement.style.backgroundColor = currentColor;
 }
 
 // Initial setup
