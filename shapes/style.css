@@ -1,0 +1,87 @@
+body {
+    margin: 0;
+    background: #eee;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+#shape {
+    width: 200px;
+    height: 200px;
+    background-color: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transition: background-color 1s ease-in-out, clip-path 1s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Common shape styles */
+.shape {
+    width: 100%;
+    height: 100%;
+    background-color: white;
+    transition: clip-path 1s ease-in-out, background-color 1s ease-in-out;
+}
+
+
+.circle {
+    border-radius: 50%;
+}
+
+
+/* Line: a thin horizontal bar */
+.line {
+    clip-path: polygon(0% 49%, 100% 49%, 100% 52%, 0% 52%);
+    background-color: currentColor;
+    border-radius: 2px;
+    width: 100%;
+}
+
+/* Angle: an L-shape using pseudo-elements */
+.angle {
+    clip-path: polygon(50% 0, 60% 0, 16% 90%, 100% 90%, 100% 100%, 0 100%);
+    position: relative;
+    width: 100px;
+    height: 100px;
+    background: transparent;
+    box-shadow: none !important;
+    color: coral;
+}
+
+
+/* 3 to 10 sides - Polygons using clip-path */
+.triangle {
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.square {
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+
+.pentagon {
+    clip-path: polygon(50% 0%, 95% 35%, 77% 90%, 23% 90%, 5% 35%);
+}
+
+.hexagon {
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+}
+
+.heptagon {
+    clip-path: polygon(50% 0%, 90% 20%, 100% 60%, 75% 100%, 25% 100%, 0% 60%, 10% 20%);
+}
+
+.octagon {
+    clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+}
+
+.nonagon {
+    clip-path: polygon(50% 0%, 80% 10%, 100% 40%, 95% 75%, 70% 100%, 30% 100%, 5% 75%, 0% 40%, 20% 10%);
+}
+
+.decagon {
+    clip-path: polygon(50% 0%, 80% 5%, 100% 30%, 100% 70%, 80% 95%, 50% 100%, 20% 95%, 0% 70%, 0% 30%, 20% 5%);
+}
