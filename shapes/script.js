@@ -7,13 +7,17 @@ const shapes = [
     'angle',      // 2 sides
     'triangle',   // 3 sides
     'square',     // 4 sides
+    'rectangle',  // 4 sides
+    'rhombus',    // 4 sides
     'pentagon',   // 5 sides
     'hexagon',    // 6 sides
     'heptagon',   // 7 sides
     'octagon',    // 8 sides
     'nonagon',    // 9 sides
     'decagon',    // 10 sides
-    'circle'
+    'star',
+    'circle',
+    'oval',
 ];
 
 const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
@@ -41,6 +45,7 @@ function updateShape() {
 
     // Add new shape class
     const newShape = shapes[currentShapeIndex];
+    shapeElement.classList.add("shape");
     shapeElement.classList.add(newShape);
 
     // Apply random background color
@@ -53,5 +58,10 @@ function updateShape() {
 shapeElement.style.backgroundColor = 'cornflowerblue';
 
 // Add click/touch event listener
-document.body.addEventListener('click', updateShape);
-document.body.addEventListener('touchstart', updateShape);
+document.body.addEventListener('pointerup', updateShape);
+document.addEventListener('keydown', (event) => {
+    if (event.code === 'Space' || event.code === 'Enter') {
+        event.preventDefault(); // Prevent scrolling on Space
+        updateShape();
+    }
+});
