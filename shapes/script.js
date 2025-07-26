@@ -20,7 +20,7 @@ const shapes = [
     'oval',
 ];
 
-const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
+const colors = ["black", "darkgray", "red", "maroon", "gold", "olive", "lime", "green", "teal", "blue", "navy", "purple"]
 
 let currentShapeIndex = 0;
 let currentColor = null;
