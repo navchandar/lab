@@ -40,16 +40,16 @@ body {
     z-index: -1;
 }
 
-
-
 .circle {
     border-radius: 50%;
-    transition: background-color 1s ease-in-out, border 1s ease-in-out !important;
+    transition: background-color 1s ease-in-out, border-radius 1s ease-in-out !important;
 }
 
 
 .oval {
-    clip-path: ellipse(35% 50% at 50% 50%);
+    width: calc(10%) !important;
+    border-radius: 50%;
+    transition: background-color 1s ease-in-out, width 1s ease-in-out, border-radius 1s ease-in-out !important;
 }
 
 
@@ -105,7 +105,7 @@ body {
 }
 
 .star {
-    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    clip-path: polygon(19% 100%, 50% 70%, 83% 100%, 68% 57%, 98% 35%, 61% 35%, 50% 0%, 39% 35%, 2% 35%, 32% 57%);
 }
 
 /* Styles for mobile devices */
