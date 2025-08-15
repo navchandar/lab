@@ -2,12 +2,12 @@
 <h1>⚙️ <a href="https://github.com/navchandar/lab" target="_blank">Lab Repository</a></h1>
 
 
-This Repo for creative experiments and interactive tools. 
+This Repo for creative tools, experiments and interactive web apps for learning. 
 
 Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use.
 
 
-## 🚀 Available Projects
+## 🚀 Project Index
 
 
 | Project | Description | Progress |
@@ -18,7 +18,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🔠 <a href="https://navchandar.github.io/lab/alphabet/?lang=tamil" target="_blank">**Tamil Alphabet**</a> | Display and increment tamil alphabet with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
 | 🐾 **Animals** | Tap on animals to view the animals, hear their sounds and see their names. | ⬜⬜⬜⬜⬜ 0% |
 | 🍎 **Fruits And Veggies** | Learn names and colors of fruits and vegetables with illustrations. | ⬜⬜⬜⬜⬜ 0% |
-| 🔼 <a href="https://navchandar.github.io/lab/shapes/" target="_blank">**Shape Explorer**</a> | Identify and learn basic shapes with color and sound effects. | 🟩🟩⬜⬜⬜ 40% |
+| 🔼 <a href="https://navchandar.github.io/lab/shapes/" target="_blank">**Shape Explorer**</a> | Identify and learn basic shapes with color and sound effects. | 🟩🟩🟩⬜⬜ 60% |
 | 🕒 **Learn the Clock** | Interactive analog and digital clock to teach time-telling. | ⬜⬜⬜⬜⬜ 0% |
 | 📅 **Days And Months** | Learn days of the week and months of the year with animations and sounds. | ⬜⬜⬜⬜⬜ 0% |
 | 🌍 **World Explorer** | Learn country names, flags, and capitals with a simple quiz mode. | ⬜⬜⬜⬜⬜ 0% |
