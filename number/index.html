@@ -1,262 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Number Incrementor</title>
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' style='dominant-baseline:central; text-anchor:middle; font-size:80px;'>🔢</text></svg>"
-        type="image/svg+xml">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' style='dominant-baseline:central; text-anchor:middle; font-size:80px;'>🔢</text></svg>"
+      type="image/svg+xml"
+    />
 
-    <meta name="description" content="A simple interactive number incrementor that changes color on key press or tap.">
-    <meta name="keywords"
-        content="numbers, kids learning, math, flash, colors, increment, counter, interactive, JavaScript, mobile-friendly, kid-friendly">
-    <meta name="author" content="Naveenchandar">
-    <meta property="og:title" content="Number Incrementor">
-    <meta property="og:description"
-        content="A fun and responsive number incrementor that changes color with each interaction.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://navchandar.github.io/lab/number">
-    <meta property="og:image" content="https://navchandar.github.io/lab/number/preview.gif">
+    <meta
+      name="description"
+      content="A simple interactive number incrementor that changes color on key press or tap."
+    />
+    <meta
+      name="keywords"
+      content="numbers, kids learning, math, flash, colors, increment, counter, interactive, JavaScript, mobile-friendly, kid-friendly"
+    />
+    <meta name="author" content="Naveenchandar" />
+    <meta property="og:title" content="Number Incrementor" />
+    <meta
+      property="og:description"
+      content="A fun and responsive number incrementor that changes color with each interaction."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/number" />
+    <meta
+      property="og:image"
+      content="https://navchandar.github.io/lab/number/preview.gif"
+    />
 
-    <meta name="theme-color" content="#4e4e4e">
+    <meta name="theme-color" content="#4e4e4e" />
 
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-<body>
-
+  <body>
     <div id="number" style="color: lightgray;">1</div>
 
-    <button id="muteButton" aria-label="Toggle mute" disabled title="Toggle sound"></button>
+    <button
+      id="muteButton"
+      aria-label="Toggle mute"
+      disabled
+      title="Toggle sound"
+    ></button>
 
-    <button id="fullscreen-btn" onclick="toggleFullscreen()" aria-label="Toggle fullscreen mode"
-        title="Toggle fullscreen">
-        <svg id="fullscreen-icon" fill="none" height="24" viewBox="0 0 24 24" width="24"
-            xmlns="http://www.w3.org/2000/svg">
-        </svg>
+    <button
+      id="fullscreen-btn"
+      onclick="toggleFullscreen()"
+      aria-label="Toggle fullscreen mode"
+      title="Toggle fullscreen"
+    >
+      <svg
+        id="fullscreen-icon"
+        fill="none"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      ></svg>
     </button>
 
+    <!-- Settings Button -->
+    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M7 7C5.89543 7 5 6.10457 5 5C5 3.89543 5.89543 3 7 3C8.10457 3 9 3.89543 9 5C9 6.10457 8.10457 7 7 7Z"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M7 21C5.89543 21 5 20.1046 5 19C5 17.8954 5.89543 17 7 17C8.10457 17 9 17.8954 9 19C9 20.1046 8.10457 21 7 21Z"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M17 14C15.8954 14 15 13.1046 15 12C15 10.8954 15.8954 10 17 10C18.1046 10 19 10.8954 19 12C19 13.1046 18.1046 14 17 14Z"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M3 5H4"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M9.99683 5H21"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M3 19H4"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M9.99683 19H21"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M21 12H20"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M14.0032 12H3.00003"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
 
-    <script>
-        // =========================
-        // Initialization
-        // =========================
-        let number = 1;
-        let currentColor = null;
-        let previousColor = null;
-        let isMuted = localStorage.getItem('isMuted') === 'true';
-        let retryCount = 0;
-        const maxRetries = 10;
+    <!-- Overlay Menu -->
+    <div id="settings-menu">
+      <div class="randomize-checkbox">
+        <label for="randomize" id="randomize-label">Randomize Numbers:</label>
+        <input type="checkbox" id="randomize" />
+      </div>
+      <div class="autoplay-checkbox">
+        <label for="autoplay" id="autoplay-label">Autoplay:</label>
+        <input type="checkbox" id="autoplay" />
+      </div>
+    </div>
 
-
-        const numberElement = document.getElementById('number');
-        const muteButton = document.getElementById('muteButton');
-        const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
-
-        // Set initial mute button icon based on the loaded state
-        muteButton.textContent = isMuted ? '🔇' : '🔊';
-        // Initial mute button state
-        muteButton.disabled = true;
-        muteButton.title = "Setting up Speech Synthesis...";
-
-        // =========================
-        // Speech Synthesis Setup
-        // =========================
-        const synth = window.speechSynthesis;
-        let utterance = null;
-
-        if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
-            console.warn("Web Speech API is not supported in this browser.");
-            muteButton.style.display = 'none';
-            window.speaker = () => console.warn("Speech API not available.");
-        } else {
-            // Initialize utterance only if supported
-            utterance = new SpeechSynthesisUtterance();
-            let availableVoices = [];
-
-
-            function populateVoiceList() {
-                let voices = synth.getVoices();
-
-                if (!voices || !voices.length) {
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        setTimeout(populateVoiceList, 100);
-                    } else {
-                        console.warn("Failed to load voices after multiple attempts.");
-                        muteButton.disabled = true;
-                        muteButton.title = "Speech not available";
-                    }
-                    return;
-                }
-
-                availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
-                console.log("Available voices:", availableVoices.map(v => `${v.name} (${v.lang})`));
-
-                let preferredVoice = availableVoices.find(voice =>
-                    voice.lang === 'en-US' &&
-                    ["Google", "Microsoft", "Apple", "Samantha", "Monica", "Zira", "David"]
-                        .some(name => voice.name.includes(name))
-                );
-
-                if (!preferredVoice) {
-                    preferredVoice = availableVoices.find(v => v.lang.startsWith('en-US')) ||
-                        availableVoices.find(v => v.lang.startsWith('en')) ||
-                        availableVoices[0];
-                }
-
-                if (preferredVoice) {
-                    utterance.voice = preferredVoice;
-                    utterance.lang = preferredVoice.lang;
-                    console.log("Set default voice to:", preferredVoice.name, preferredVoice.lang);
-                    muteButton.disabled = false;
-                    muteButton.title = "Toggle sound";
-                } else {
-                    console.warn("No suitable English voice found.");
-                    muteButton.disabled = false;
-                    muteButton.style.display = "none";
-                }
-            }
-
-            populateVoiceList();
-            if (synth.onvoiceschanged !== undefined) {
-                synth.onvoiceschanged = populateVoiceList;
-            }
-        }
-
-        // =========================
-        // Utility Functions
-        // =========================
-        function getNewColor() {
-            let newColor;
-            do {
-                newColor = colors[Math.floor(Math.random() * colors.length)];
-            } while (newColor === currentColor || newColor === previousColor);
-            return newColor;
-        }
-
-        function speaker() {
-            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
-            if (utterance && !isMuted) {
-                if (synth.speaking) synth.cancel();
-                utterance.text = numberElement.textContent;
-                try {
-                    synth.speak(utterance);
-                } catch (error) {
-                    console.error("Error speaking:", error);
-                }
-            } else if (!utterance) {
-                console.warn("Speech API not initialized. Cannot speak.");
-            }
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            localStorage.setItem('isMuted', isMuted);
-            muteButton.textContent = isMuted ? '🔇' : '🔊';
-            if (isMuted && synth.speaking) synth.cancel();
-            if (!isMuted) speaker();
-            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
-        }
-
-        function incrementNumber() {
-
-            setTimeout(() => {
-                number++;
-                numberElement.textContent = number;
-                previousColor = currentColor;
-                currentColor = getNewColor();
-                numberElement.style.color = currentColor;
-                speaker();
-            }, 200);
-        }
-
-        const fullscreenbtn = document.getElementById('fullscreen-btn');
-        const fullscreenIcon = document.getElementById('fullscreen-icon');
-
-        function setEnterFullscreenIcon() {
-            fullscreenIcon.innerHTML = `
-            <path d="M9 21H3L3 15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M21 15V21H15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M15 3H21V9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M3 9V3H9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />`;
-        }
-
-        function setExitFullscreenIcon() {
-            fullscreenIcon.innerHTML = `
-            <path d="M3 15H9V21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M15 21V15H21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M21 9H15V3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M9 3V9H3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
-        }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
-
-        // =========================
-        // Event Listeners
-        // =========================
-        document.addEventListener('keydown', event => {
-            if (event.code === 'Space' || event.code === 'Enter') {
-                event.preventDefault();
-                incrementNumber();
-            } else if (event.code === 'KeyM') {
-                event.preventDefault();
-                toggleMute();
-            } else if (event.code === 'KeyF') {
-                event.preventDefault();
-                toggleFullscreen();
-            }
-        });
-
-        document.body.addEventListener('click', incrementNumber);
-        document.body.addEventListener('touchstart', e => {
-            e.preventDefault();
-            incrementNumber();
-        }, { passive: false });
-
-        muteButton.addEventListener('click', e => {
-            e.stopPropagation();
-            toggleMute();
-        });
-
-        muteButton.addEventListener('touchstart', e => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleMute();
-        }, { passive: false });
-
-        speaker();
-
-        fullscreenbtn.addEventListener('click', e => {
-            e.stopPropagation();
-            toggleFullscreen();
-        });
-
-        fullscreenbtn.addEventListener('touchstart', e => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleFullscreen();
-        }, { passive: false });
-
-        document.addEventListener('fullscreenchange', () => {
-            fullscreenbtn.classList.toggle('fullscreen-active', !!document.fullscreenElement);
-            document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
-        });
-
-    </script>
-
-</body>
-
+    <script src="script.js"></script>
+  </body>
 </html>
