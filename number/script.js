@@ -184,7 +184,12 @@ function setIsRandom(value) {
 }
 
 function autoplay() {
-  intervalID = setInterval(incrementNumber, 5000);
+  if (intervalID) {
+    clearInterval(intervalID);
+  }
+  intervalID = setInterval(() => {
+    incrementNumber();
+  }, 5000);
 }
 
 function updateSettingsMenu() {
@@ -197,79 +202,86 @@ function updateSettingsMenu() {
   const autoplayCheckbox = document.getElementById("autoplay");
 
   // Toggle menu visibility
-  settingsBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    settingsMenu.classList.toggle("show");
-  });
+  function addUnifiedListeners(element, handlers, options = { passive: false }) {
+    if (handlers.click) {
+      element.addEventListener("click", handlers.click);
+    }
+    if (handlers.touchstart) {
+      element.addEventListener("touchstart", handlers.touchstart, options);
+    }
+    if (handlers.change) {
+      element.addEventListener("change", handlers.change);
+    }
+  }
 
-  settingsBtn.addEventListener(
-    "touchstart",
-    (e) => {
-      e.preventDefault();
+
+  addUnifiedListeners(settingsBtn, {
+    click: e => {
       e.stopPropagation();
       settingsMenu.classList.toggle("show");
     },
-    { passive: false }
-  );
+    touchstart: e => {
+      e.preventDefault();
+      e.stopPropagation();
+      settingsMenu.classList.toggle("show");
+    }
+  });
+
 
   // Show settings button after DOM is ready
   window.addEventListener("DOMContentLoaded", () => {
     settingsBtn.style.display = "block";
   });
 
-  randomizeCheckbox.addEventListener("change", (e) => {
-    e.stopPropagation();
-    setIsRandom(randomizeCheckbox.checked);
-  });
-
-  randomizeCheckbox.addEventListener("click", (e) => {
-    e.stopPropagation();
-    setIsRandom(randomizeCheckbox.checked);
-  });
-
-  document.getElementById("randomize-label").addEventListener(
-    "touchstart",
-    (e) => {
-      randomizeCheckbox.click();
+  addUnifiedListeners(randomizeCheckbox, {
+    click: e => {
       e.stopPropagation();
-    },
-    { passive: false }
-  );
-
-  randomizeCheckbox.addEventListener(
-    "touchstart",
-    (e) => {
       setIsRandom(randomizeCheckbox.checked);
-      e.stopPropagation();
     },
-    { passive: false }
-  );
+    change: e => {
+      e.stopPropagation();
+      setIsRandom(randomizeCheckbox.checked);
+    },
+    touchstart: e => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsRandom(randomizeCheckbox.checked);
+    }
+  });
+
+  document.getElementById("randomize-label").addEventListener("touchstart", e => {
+    e.preventDefault();
+    e.stopPropagation();
+    randomizeCheckbox.click();
+  });
 
   setIsRandom(randomizeCheckbox.checked);
 
-  autoplayCheckbox.addEventListener("change", (e) => {
-    e.stopPropagation();
+  function handleAutoplayToggle() {
     if (autoplayCheckbox.checked) {
       autoplay();
     } else {
       clearInterval(intervalID);
       incrementNumber();
     }
+  }
+
+  addUnifiedListeners(autoplayCheckbox, {
+    click: e => {
+      e.stopPropagation();
+      handleAutoplayToggle();
+    },
+    change: e => {
+      e.stopPropagation();
+      handleAutoplayToggle();
+    },
+    touchstart: e => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAutoplayToggle();
+    }
   });
 
-  autoplayCheckbox.addEventListener(
-    "touchstart",
-    (e) => {
-      e.stopPropagation();
-      if (autoplayCheckbox.checked) {
-        autoplay();
-      } else {
-        clearInterval(intervalID);
-        incrementNumber();
-      }
-    },
-    { passive: false }
-  );
 }
 
 function setEnterFullscreenIcon() {
