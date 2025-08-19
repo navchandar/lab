@@ -1,26 +1,26 @@
 body {
-    margin: 0;
-    padding: 0;
-    height: 100vh;
     display: flex;
     justify-content: center;
     align-items: flex-end;
-    font-family: sans-serif;
-    background-color: black;
-    background: radial-gradient(#dadada26,#aaa8a800,#00000063);
     transition: background 1s ease-in-out;
+    margin: 0;
+    background: radial-gradient(#dadada26, #aaa8a800, #00000063);
+    background-color: black;
+    padding: 0;
+    height: 100vh;
+    font-family: sans-serif;
 }
 
 #color-name {
-    font-size: clamp(50px, 10vw, 120px);
-    font-weight: bold;
-    text-transform: uppercase;
+    cursor: pointer;
     margin-bottom: 10%;
     padding: 0 20px;
-    text-align: center;
+    font-weight: bold;
+    font-size: clamp(50px, 10vw, 120px);
     user-select: none;
-    cursor: pointer;
+    text-align: center;
     text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.4), -2px -2px 5px rgba(255, 255, 255, 0.4);
+    text-transform: uppercase;
     word-wrap: break-word;
     overflow-wrap: break-word;
 
@@ -29,24 +29,24 @@ body {
 
 /* Styles for the mute button */
 #muteButton {
+    display: flex;
     position: fixed;
     bottom: 20px;
     left: 20px;
-    background-color: #6c757d;
-    color: white;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border: none;
     border-radius: 50%;
+    background-color: #6c757d;
     /* Make it a circle */
     width: 50px;
     height: 50px;
+    color: white;
     font-size: 1.5em;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    transition: background-color 0.3s ease;
 }
 
 #muteButton:hover {
@@ -56,15 +56,15 @@ body {
 /* Styles for full screen button*/
 #fullscreen-btn {
     position: fixed;
-    bottom: 20px;
     right: 20px;
-    font-size: 1.5em;
-    background: none;
-    border: none;
-    color: #aaaaaa;
-    cursor: pointer;
+    bottom: 20px;
     z-index: 999;
     transition: transform 0.3s ease;
+    cursor: pointer;
+    border: none;
+    background: none;
+    color: #aaaaaa;
+    font-size: 1.5em;
 }
 
 /* Hover effect when NOT in fullscreen */
@@ -89,16 +89,16 @@ body {
     position: fixed;
     top: 10px;
     right: 10px;
-    background-color: #6c757d;
-    backdrop-filter: blur(10px);
-    border-radius: 2px;
-    border-bottom-left-radius: 0px;
-    border-bottom-right-radius: 0px;
-    padding: 0.5rem;
-    border: none;
-    cursor: pointer;
     z-index: 998;
+    backdrop-filter: blur(10px);
+    cursor: pointer;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 2px;
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+    background-color: #6c757d;
+    padding: 0.5rem;
 }
 
 #settings-btn:hover {
@@ -114,62 +114,60 @@ body {
     position: fixed;
     top: 52px;
     right: 10px;
-    padding: 0.75rem;
+    z-index: 995;
+    backdrop-filter: blur(2px);
     border-radius: 5px;
     border-top-right-radius: 0px;
-    z-index: 995;
     background: linear-gradient(180deg, #6c757d80, #343434b3);
-    backdrop-filter: blur(2px);
+    padding: 0.75rem;
     -webkit-backdrop-filter: blur(12px);
-    border: 0px solid rgba(0, 0, 0, 0.46);
-    box-shadow: 0 0px 5px rgba(0, 0, 0, 0.35);
-    padding-bottom: 1rem;
-    opacity: 0;
     transform: translateY(-10px);
-    pointer-events: none;
+    opacity: 0;
     transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+    box-shadow: 0 0px 5px rgba(0, 0, 0, 0.35);
+    border: 0px solid rgba(0, 0, 0, 0.46);
+    padding-bottom: 1rem;
+    pointer-events: none;
     text-shadow: 0px 2px 5px #000c;
 }
 
 #settings-menu label {
-    font-weight: bold;
-    color: lightgray;
-    font-size: 0.9em;
     padding-right: 5px;
+    color: lightgray;
+    font-weight: bold;
+    font-size: 0.9em;
 }
 
 #settings-menu select {
     margin-top: 0.5rem;
-    padding: 0.5rem;
-    border-radius: 5px;
     border: none;
+    border-radius: 5px;
+    padding: 0.5rem;
     color: #000;
 }
 
 #settings-menu select:hover {
-    background-color: #f0f8ff;
     cursor: pointer;
     box-shadow: 0 0px 3px #007BFF inset;
+    background-color: #f0f8ff;
 }
 
 #settings-menu.show {
     display: block;
-    opacity: 1;
     transform: translateY(0);
+    opacity: 1;
     pointer-events: auto;
 }
 
-.randomize-checkbox {
+.randomize-checkbox,
+.autoplay-checkbox {
     display: flex;
     padding: 20px 0px 20px 0px;
 }
 
-.randomize-checkbox input[type="checkbox"] {
-    vertical-align: middle;
-    margin: 0px 0px 10px 10px;
-}
-
 input[type='checkbox'] {
+    vertical-align: middle;
+    margin: -3px 10px 5px 5px;
     zoom: 1;
     transform: scale(2);
     -ms-transform: scale(2);
@@ -181,12 +179,8 @@ input[type='checkbox'] {
     -webkit-transform-origin: 0 0;
     -o-transform-origin: 0 0;
     -moz-transform-origin: 0 0;
-    accent-color: aqua;
-}
-
-input[type='checkbox']:hover {
-    background-color: #f0f8ff;
     cursor: pointer;
+    accent-color: aqua;
 }
 
 
@@ -194,17 +188,17 @@ input[type='checkbox']:hover {
 @media (max-width: 767px) {
 
     #muteButton {
+        bottom: 10px;
+        left: 10px;
         width: 40px;
         height: 40px;
         font-size: 1.2em;
-        bottom: 10px;
-        left: 10px;
     }
 
     #fullscreen-btn {
-        font-size: 1.2em;
-        bottom: 10px;
         right: 10px;
+        bottom: 10px;
+        font-size: 1.2em;
     }
 
     #fullscreen-btn:active {
@@ -215,10 +209,10 @@ input[type='checkbox']:hover {
     #settings-menu {
         top: 49px;
         right: 10px;
-        padding: 1rem;
         border-radius: 10px;
         border-top-right-radius: 0px;
         background: linear-gradient(180deg, #6c757dc7, #6c757d99, #34343485);
+        padding: 1rem;
         text-shadow: 0px 2px 3px #000c;
     }
 
@@ -232,14 +226,14 @@ input[type='checkbox']:hover {
     }
 
     #color-name {
-        font-size: clamp(50px, 5vw, 120px);
         margin-bottom: 50%;
+        font-size: clamp(50px, 5vw, 120px);
     }
 }
 
 @media (max-width: 480px) {
     #color-name {
-        font-size: clamp(50px, 4vw, 120px);
         margin-bottom: 50%;
+        font-size: clamp(50px, 4vw, 120px);
     }
 }

@@ -180,14 +180,11 @@ body {
 
 }
 
-input[type="checkbox"] {
-    vertical-align: middle;
-    margin: -3px 10px 5px 5px;
-}
-
 input[type='checkbox'] {
     zoom: 1;
+    vertical-align: middle;
     transform: scale(2);
+    margin: -3px 10px 5px 5px;
     -ms-transform: scale(2);
     -webkit-transform: scale(2);
     -o-transform: scale(2);
@@ -197,12 +194,8 @@ input[type='checkbox'] {
     -webkit-transform-origin: 0 0;
     -o-transform-origin: 0 0;
     -moz-transform-origin: 0 0;
-    accent-color: aqua;
-}
-
-input[type='checkbox']:hover {
     cursor: pointer;
-    background-color: #f0f8ff;
+    accent-color: aqua;
 }
 
 

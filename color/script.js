@@ -137,6 +137,15 @@ function setIsRandom(value) {
   console.log("Randomize set to:", getIsRandomEnabled());
 }
 
+function autoplay() {
+  if (intervalID) {
+    clearInterval(intervalID);
+  }
+  intervalID = setInterval(() => {
+    updateColor();
+  }, 5000);
+}
+
 function updateSettingsMenu() {
   // =========================
   // Settings Menu
@@ -145,6 +154,23 @@ function updateSettingsMenu() {
   const settingsMenu = document.getElementById("settings-menu");
   const languageSelect = document.getElementById("language-select");
   const randomizeCheckbox = document.getElementById("randomize");
+  const autoplayCheckbox = document.getElementById("autoplay");
+
+  function addUnifiedListeners(
+    element,
+    handlers,
+    options = { passive: false }
+  ) {
+    if (handlers.click) {
+      element.addEventListener("click", handlers.click);
+    }
+    if (handlers.touchstart) {
+      element.addEventListener("touchstart", handlers.touchstart, options);
+    }
+    if (handlers.change) {
+      element.addEventListener("change", handlers.change);
+    }
+  }
 
   function toTitleCase(str) {
     return str
@@ -195,55 +221,65 @@ function updateSettingsMenu() {
   });
 
   // Toggle menu visibility
-  settingsBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    settingsMenu.classList.toggle("show");
-  });
-
-  settingsBtn.addEventListener(
-    "touchstart",
-    (e) => {
+  addUnifiedListeners(settingsBtn, {
+    click: (e) => {
+      e.stopPropagation();
+      settingsMenu.classList.toggle("show");
+    },
+    touchstart: (e) => {
       e.preventDefault();
       e.stopPropagation();
       settingsMenu.classList.toggle("show");
     },
-    { passive: false }
-  );
+  });
 
   // Show settings button after DOM is ready
   window.addEventListener("DOMContentLoaded", () => {
     settingsBtn.style.display = "block";
   });
 
-  randomizeCheckbox.addEventListener("change", (e) => {
-    e.stopPropagation();
-    setIsRandom(randomizeCheckbox.checked);
-  });
-
-  randomizeCheckbox.addEventListener("click", (e) => {
-    e.stopPropagation();
-    setIsRandom(randomizeCheckbox.checked);
-  });
-
-  document.getElementById("randomize-label").addEventListener(
-    "touchstart",
-    (e) => {
-      randomizeCheckbox.click();
-      e.stopPropagation();
-    },
-    { passive: false }
-  );
-
-  randomizeCheckbox.addEventListener(
-    "touchstart",
-    (e) => {
+  addUnifiedListeners(randomizeCheckbox, {
+    click: (e) => {
       setIsRandom(randomizeCheckbox.checked);
       e.stopPropagation();
     },
-    { passive: false }
-  );
+    change: (e) => {
+      setIsRandom(randomizeCheckbox.checked);
+      e.stopPropagation();
+    },
+    touchstart: (e) => {
+      setIsRandom(randomizeCheckbox.checked);
+      e.preventDefault();
+      e.stopPropagation();
+    },
+  });
 
   setIsRandom(randomizeCheckbox.checked);
+
+  function handleAutoplayToggle() {
+    if (autoplayCheckbox.checked) {
+      autoplay();
+    } else {
+      clearInterval(intervalID);
+      updateColor();
+    }
+  }
+
+  addUnifiedListeners(autoplayCheckbox, {
+    click: (e) => {
+      handleAutoplayToggle();
+      e.stopPropagation();
+    },
+    change: (e) => {
+      handleAutoplayToggle();
+      e.stopPropagation();
+    },
+    touchstart: (e) => {
+      handleAutoplayToggle();
+      e.preventDefault();
+      e.stopPropagation();
+    },
+  });
 }
 
 function updateSpeakerOptions() {
@@ -387,6 +423,71 @@ function toggleFullscreen() {
   settings_Menu.classList.remove("show");
 }
 
+function isInteractiveElement(target) {
+  const selectors = [
+    "a",
+    "button",
+    "svg",
+    "path",
+    "input",
+    "label",
+    "select",
+    "textarea",
+    "#settings-menu",
+    ".allow-click",
+  ];
+  return target.closest(selectors.join(","));
+}
+
+// =========================
+// Event Listeners
+// =========================
+function handleKeydown(event) {
+  const target = event.target;
+
+  switch (event.code) {
+    case "Space":
+    case "Enter":
+      // Ignore key presses if focused on an interactive element
+      if (isInteractiveElement(target)) return;
+      event.preventDefault();
+      updateColor();
+      break;
+    case "KeyM":
+      event.preventDefault();
+      toggleMute();
+      break;
+    case "KeyF":
+      event.preventDefault();
+      toggleFullscreen();
+      break;
+    case "KeyS":
+      event.preventDefault();
+      settings_Menu.classList.toggle("show");
+      break;
+    case "Escape":
+      settings_Menu.classList.remove("show");
+      break;
+  }
+}
+
+function addButtonListeners(button, handler) {
+  button.addEventListener("click", (e) => {
+    e.stopPropagation();
+    handler();
+  });
+
+  button.addEventListener(
+    "touchstart",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler();
+    },
+    { passive: false }
+  );
+}
+
 document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -394,75 +495,33 @@ document.addEventListener("DOMContentLoaded", () => {
   updateColor();
   updateSettingsMenu();
 
-  // =========================
-  // Event Listeners
-  // =========================
-  document.addEventListener("keydown", (event) => {
-    if (event.code === "Space" || event.code === "Enter") {
-      event.preventDefault();
+  document.addEventListener("keydown", handleKeydown);
+
+  addButtonListeners(muteButton, toggleMute);
+  addButtonListeners(fullscreenbtn, toggleFullscreen);
+
+  document.body.addEventListener("click", (e) => {
+    console.log("Clicked on:", e.target);
+    if (!isInteractiveElement(e.target)) {
       updateColor();
-    } else if (event.code === "KeyM") {
-      event.preventDefault();
-      toggleMute();
-    } else if (event.code === "KeyF") {
-      event.preventDefault();
-      toggleFullscreen();
-    } else if (event.code === "KeyS") {
-      event.preventDefault();
-      settings_Menu.classList.toggle("show");
-    } else if (event.code == "Escape") {
-      settings_Menu.classList.remove("show");
     }
   });
 
-  document.body.addEventListener("click", updateColor);
   document.body.addEventListener(
     "touchstart",
     (e) => {
-      // Prevent the browser from firing the emulated 'click' event.
-      e.preventDefault();
-      updateColor();
-    },
-    { passive: false }
-  );
-
-  muteButton.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleMute();
-  });
-
-  muteButton.addEventListener(
-    "touchstart",
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleMute();
-    },
-    { passive: false }
-  );
-
-  fullscreenbtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleFullscreen();
-  });
-
-  fullscreenbtn.addEventListener(
-    "touchstart",
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleFullscreen();
+      console.log("Clicked on:", e.target);
+      if (!isInteractiveElement(e.target)) {
+        e.preventDefault();
+        updateColor();
+      }
     },
     { passive: false }
   );
 
   document.addEventListener("fullscreenchange", () => {
-    fullscreenbtn.classList.toggle(
-      "fullscreen-active",
-      !!document.fullscreenElement
-    );
-    document.fullscreenElement
-      ? setExitFullscreenIcon()
-      : setEnterFullscreenIcon();
+    const isFullscreen = !!document.fullscreenElement;
+    fullscreenbtn.classList.toggle("fullscreen-active", isFullscreen);
+    isFullscreen ? setExitFullscreenIcon() : setEnterFullscreenIcon();
   });
 });
