@@ -236,34 +236,11 @@ function updateSettingsMenu() {
   });
 
   addUnifiedListeners(randomizeCheckbox, {
-    click: (e) => {
-      e.stopPropagation();
-      setIsRandom(randomizeCheckbox.checked);
-    },
     change: (e) => {
       e.stopPropagation();
       setIsRandom(randomizeCheckbox.checked);
     },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsRandom(randomizeCheckbox.checked);
-    },
   });
-
-  addUnifiedListeners(document.getElementById("randomize-label"), {
-    click: (e) => {
-      e.stopPropagation();
-      randomizeCheckbox.click();
-    },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      randomizeCheckbox.click();
-    },
-  });
-
-  setIsRandom(randomizeCheckbox.checked);
 
   function handleAutoplayToggle() {
     if (autoplayCheckbox.checked) {
@@ -274,34 +251,20 @@ function updateSettingsMenu() {
     }
   }
 
-  addUnifiedListeners(document.getElementById("autoplay-label"), {
-    click: (e) => {
-      e.stopPropagation();
-      autoplayCheckbox.click();
-      handleAutoplayToggle();
-    },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      autoplayCheckbox.click();
-      handleAutoplayToggle();
-    },
-  });
-
   addUnifiedListeners(autoplayCheckbox, {
-    click: (e) => {
-      e.stopPropagation();
-      handleAutoplayToggle();
-    },
     change: (e) => {
       e.stopPropagation();
       handleAutoplayToggle();
     },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handleAutoplayToggle();
-    },
+  });
+
+  setIsRandom(randomizeCheckbox.checked);
+  document.getElementById("randomize-label").addEventListener("click", () => {
+    randomizeCheckbox.click();
+  });
+
+  document.getElementById("autoplay-label").addEventListener("click", () => {
+    autoplayCheckbox.click();
   });
 }
 
