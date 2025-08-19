@@ -278,24 +278,32 @@ function updateSettingsMenu() {
     },
   });
 
-  let lastClickTime_randomize = 0;
-  document.getElementById("randomize-label").addEventListener("click", (e) => {
-    const now = Date.now();
-    if (now - lastClickTime_randomize > 300) {
+  addUnifiedListeners(document.getElementById("randomize-label"), {
+    click: (e) => {
+      e.stopPropagation();
       randomizeCheckbox.click();
-    }
-    lastClickTime_randomize = now;
-    e.stopPropagation();
+      randomizeCheckbox.click();
+    },
+    touchstart: (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      randomizeCheckbox.click();
+      randomizeCheckbox.click();
+    },
   });
 
-  let lastClickTime_autoplay = 0;
-  document.getElementById("autoplay-label").addEventListener("click", (e) => {
-    const now = Date.now();
-    if (now - lastClickTime_autoplay > 300) {
+  addUnifiedListeners(document.getElementById("autoplay-label"), {
+    click: (e) => {
+      e.stopPropagation();
       autoplayCheckbox.click();
-    }
-    lastClickTime_autoplay = now;
-    e.stopPropagation();
+      autoplayCheckbox.click();
+    },
+    touchstart: (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      autoplayCheckbox.click();
+      autoplayCheckbox.click();
+    },
   });
 }
 
