@@ -14,6 +14,8 @@ const settings_Menu = document.getElementById("settings-menu");
 const fullscreenbtn = document.getElementById("fullscreen-btn");
 const fullscreenIcon = document.getElementById("fullscreen-icon");
 const muteButton = document.getElementById("muteButton");
+let intervalID = null;
+
 const synth = window.speechSynthesis;
 let Locale = null;
 let utterance = null;
