@@ -236,11 +236,22 @@ function updateSettingsMenu() {
   });
 
   addUnifiedListeners(randomizeCheckbox, {
+    click: (e) => {
+      e.stopPropagation();
+      setIsRandom(randomizeCheckbox.checked);
+    },
     change: (e) => {
       e.stopPropagation();
       setIsRandom(randomizeCheckbox.checked);
     },
+    touchstart: (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsRandom(randomizeCheckbox.checked);
+    },
   });
+
+  setIsRandom(randomizeCheckbox.checked);
 
   function handleAutoplayToggle() {
     if (autoplayCheckbox.checked) {
@@ -252,19 +263,39 @@ function updateSettingsMenu() {
   }
 
   addUnifiedListeners(autoplayCheckbox, {
+    click: (e) => {
+      e.stopPropagation();
+      handleAutoplayToggle();
+    },
     change: (e) => {
+      e.stopPropagation();
+      handleAutoplayToggle();
+    },
+    touchstart: (e) => {
+      e.preventDefault();
       e.stopPropagation();
       handleAutoplayToggle();
     },
   });
 
-  setIsRandom(randomizeCheckbox.checked);
-  document.getElementById("randomize-label").addEventListener("click", () => {
-    randomizeCheckbox.click();
+  let lastClickTime_randomize = 0;
+  document.getElementById("randomize-label").addEventListener("click", (e) => {
+    const now = Date.now();
+    if (now - lastClickTime_randomize > 300) {
+      randomizeCheckbox.click();
+    }
+    lastClickTime_randomize = now;
+    e.stopPropagation();
   });
 
-  document.getElementById("autoplay-label").addEventListener("click", () => {
-    autoplayCheckbox.click();
+  let lastClickTime_autoplay = 0;
+  document.getElementById("autoplay-label").addEventListener("click", (e) => {
+    const now = Date.now();
+    if (now - lastClickTime_autoplay > 300) {
+      autoplayCheckbox.click();
+    }
+    lastClickTime_autoplay = now;
+    e.stopPropagation();
   });
 }
 
