@@ -278,33 +278,33 @@ function updateSettingsMenu() {
     },
   });
 
-  addUnifiedListeners(document.getElementById("randomize-label"), {
-    click: (e) => {
-      e.stopPropagation();
-      randomizeCheckbox.click();
-      randomizeCheckbox.click();
-    },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      randomizeCheckbox.click();
-      randomizeCheckbox.click();
-    },
-  });
+  // addUnifiedListeners(document.getElementById("randomize-label"), {
+  //   click: (e) => {
+  //     e.stopPropagation();
+  //     randomizeCheckbox.click();
+  //     randomizeCheckbox.click();
+  //   },
+  //   touchstart: (e) => {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //     randomizeCheckbox.click();
+  //     randomizeCheckbox.click();
+  //   },
+  // });
 
-  addUnifiedListeners(document.getElementById("autoplay-label"), {
-    click: (e) => {
-      e.stopPropagation();
-      autoplayCheckbox.click();
-      autoplayCheckbox.click();
-    },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      autoplayCheckbox.click();
-      autoplayCheckbox.click();
-    },
-  });
+  // addUnifiedListeners(document.getElementById("autoplay-label"), {
+  //   click: (e) => {
+  //     e.stopPropagation();
+  //     autoplayCheckbox.click();
+  //     autoplayCheckbox.click();
+  //   },
+  //   touchstart: (e) => {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+  //     autoplayCheckbox.click();
+  //     autoplayCheckbox.click();
+  //   },
+  // });
 }
 
 function setEnterFullscreenIcon() {
@@ -338,66 +338,95 @@ function toggleFullscreen() {
 
 document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
 
+// =========================
+// Event Listeners
+// =========================
+function handleKeydown(event) {
+  const target = event.target;
+
+  switch (event.code) {
+    case "Space":
+    case "Enter":
+      // Ignore key presses if focused on an interactive element
+      if (isInteractiveElement(target)) return;
+      event.preventDefault();
+      incrementNumber();
+      break;
+    case "KeyM":
+      event.preventDefault();
+      toggleMute();
+      break;
+    case "KeyF":
+      event.preventDefault();
+      toggleFullscreen();
+      break;
+    case "KeyS":
+      event.preventDefault();
+      settings_Menu.classList.toggle("show");
+      break;
+    case "Escape":
+      settings_Menu.classList.remove("show");
+      break;
+  }
+}
+
+function addButtonListeners(button, handler) {
+  button.addEventListener("click", (e) => {
+    e.stopPropagation();
+    handler();
+  });
+
+  button.addEventListener(
+    "touchstart",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler();
+    },
+    { passive: false }
+  );
+}
+
+function isInteractiveElement(target) {
+  const selectors = [
+    "a",
+    "button",
+    "svg",
+    "path",
+    "input",
+    "label",
+    "select",
+    "textarea",
+    "#settings-menu",
+    ".allow-click",
+  ];
+  return target.closest(selectors.join(","));
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   speaker();
   updateSettingsMenu();
 
-  // =========================
-  // Event Listeners
-  // =========================
-  function handleKeydown(event) {
-    switch (event.code) {
-      case "Space":
-      case "Enter":
-        event.preventDefault();
-        incrementNumber();
-        break;
-      case "KeyM":
-        event.preventDefault();
-        toggleMute();
-        break;
-      case "KeyF":
-        event.preventDefault();
-        toggleFullscreen();
-        break;
-      case "KeyS":
-        event.preventDefault();
-        settings_Menu.classList.toggle("show");
-        break;
-      case "Escape":
-        settings_Menu.classList.remove("show");
-        break;
-    }
-  }
-
   document.addEventListener("keydown", handleKeydown);
-
-  function addButtonListeners(button, handler) {
-    button.addEventListener("click", (e) => {
-      e.stopPropagation();
-      handler();
-    });
-
-    button.addEventListener(
-      "touchstart",
-      (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handler();
-      },
-      { passive: false }
-    );
-  }
 
   addButtonListeners(muteButton, toggleMute);
   addButtonListeners(fullscreenbtn, toggleFullscreen);
 
-  document.body.addEventListener("click", incrementNumber);
+  document.body.addEventListener("click", (e) => {
+    console.log("Clicked on:", e.target);
+    if (!isInteractiveElement(e.target)) {
+      incrementNumber();
+    }
+  });
+
   document.body.addEventListener(
     "touchstart",
     (e) => {
-      e.preventDefault();
-      incrementNumber();
+      console.log("Clicked on:", e.target);
+      if (!isInteractiveElement(e.target)) {
+        e.preventDefault();
+        incrementNumber();
+      }
     },
     { passive: false }
   );
