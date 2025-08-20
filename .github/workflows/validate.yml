@@ -36,7 +36,7 @@ jobs:
         run: htmlhint --config config/.htmlhintrc .
 
       - name: Validate CSS
-        run: csslint --config config/.csslintrc "**/*.css"
+        run: csslint --errors=box-model,duplicate-properties,empty-rules,important,known-properties,universal-selector "**/*.css"
 
       - name: Validate JS
         run: eslint -c config/.eslintrc.json "**/*.js"
