@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IP Finder</title>
+    <link
+      rel="shortcut icon"
+      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAACXBIWXMAAAOwAAADsAEnxA+tAAAFPklEQVR42sVXXUxcRRQe7rILy+4Cu1ARSuNPaqo2GiNvjTZGjfHZB2M0URONmtgXjSa+SWJipFDT8ltbkJ/FkvK3fxdsJIbWxLZRrGkbtWhwba0QpZRS2Dtzf/aO5+zOleuui2Up6cOXe8+5Z2a+OfPNuTOEc05uJdYXXM8lElEfJDH2piSzRkmmnVKMdkkxtpfElLfB/xSZ4GU3nQCJ0cekKA0WxNhiQYxyRGGIcUeY4bvpHGEm+gR0wCS0eZFM8uINESByoq4gSk/YOudShPLSTmOhotkIF4bVs+BTKg/wjrJDRhy/gW3HZSDyPHRWsC4C2AAavo+zwU4LR5kG7/jk/tbkD1Xt/G6MA3Lfgj+B7zUNfEegxTwJMUkRSx0hpqeJsFEyyL03RIBMcSemGxs6h9RFT58uIxFItxloMyd21nMXxtkIrFg2DOLwdxh9MDCSMH3detj9mRoXJL4n8jX//xKQZKUNG7hG2CVvt/ocvM+i7enRjuAAGJOLgAVPnzEglmDee1DfXTygnhf2lzjBnARIlL4iAk3XqNoIrIfQlqLqVVD4HiKz1+yAb78BWKafRNgeKcqWUm1letQZQltdTNkx1vCfBEhY2QYBFMA3GTqJqjuzCMB+7kilul87529P/mitXdEgi1e0mr8EWpMzmSgcVhdApJqwp7GdHa5B9RL2UdKvXSzvSM74urXpdBZo378IQBHZCh9UwBWrkBTI9AsMJlH2esYaZ2pgOecWiyrvpGetRIVI3agLgEbGVm5fJQCDiPXZm7LHeRHYCYBJxpXavAnE1HvFDlhEAYtMf5CeGH0ZbdERG0k5Y4mH03pQ7xfrNYt2vgQQ8H0p3Te7B21cf7EMA2hbQXPIEmu9VXoxCAfYOAHlrJjx41aRSy2DTONoWw4dA8no8m1YLDA9IgPjaOcCFhesA2vH0GMiA2/YfN8ADDLJC4lw8FsBFDxBNYrarXh79eueXj1RPKApKd8I09HOBSi5Bgo1018S1Ffc/VoK1n/ENcSo5XOMUn2VAKgT0+GIqKeqm3gdwt2jPosBjhA9ibYdVQ38iapG/iRCCrMzqAF8zwUgkNrO7iP6e//4QiouAbWLcBYwZwkHt55I0+8bFaHQCSdj7Gm7CAEXVgnISlgo9S7r5AO2AkhiTdgYARwMCagPWFtcbMOerEKExypbw8l0Q7o770IUoneKTK6g4kUhqkcfkelLqwSOJarByQDTqAl7IDw/zL8S0lcFgeOiFLvEcq+QCPehL+scADgFmACcF/Y82jmwBDDW+H5R9PGHsE+nf++0M+tvWBRkO6QIW97svQ9bUC3p0eqyCCBKgmoq7c4R7WpFixHy9mn9aBcd1ebh4DlWecCU7XAOs1+lKFMs2w53v3oh3Rc7AW0/h9ryJywZ93UbwzlPRNubeZEnqB0Xf7DvhDbOCYG+m0MDS5l+8S8xASqqH0s6gJd2afHSTh5Y80xY2cVrvL2atf4zJKq8JbakTmTlmWwCbNHuIxG2XQgNBKy0wvOr9OD6X4FDfNcNHcvLm/gdZYf1M1KYcjGTK4KQgbeijAwsCBvL+kNY0ERsAsnhsb7sk+Scv1l/dF0Xk9qPuTvQbg57gvq1gmiWmCbw0iIIzONS4WEGU26PKwlqeFybCjTz2ryvZoF9fFeg1fja96k+D3U9k0gSYCDsVzZvj3YdBv6pso2/cNMup9UN/L4t+3lLRYt5OtCWnC4/mJyB69hl32FjtrzDiIPvZzi8TlXuTwa3NPFHNuV2bAektXRrA6+t2ce3+T/iZfn28zfarH8W/vOdtgAAAABJRU5ErkJggg=="
+    />
+
+    <meta
+      name="description"
+      content="Quickly check your public IP address using this simple and responsive web page."
+    />
+    <meta
+      name="keywords"
+      content="IP address, public IP, check IP, find IP, IP lookup, ipify"
+    />
+    <meta name="author" content="Naveenchandar" />
+
+    <meta property="og:title" content="Find Your IP Address" />
+    <meta
+      property="og:description"
+      content="Quickly check your public IP address using this simple and responsive web page."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/ip" />
+
+    <style>
+        body {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin: 0;
+          background-color: #eee;
+          padding: 0;
+          min-height: 100vh;
+          color: #333;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        header {
+          padding: 20px;
+          text-align: center;
+        }
+
+        h1 {
+          margin-bottom: 10px;
+          font-size: 2rem;
+        }
+
+        .ip-container {
+          display: flex;
+          flex-direction: row;
+          flex-wrap: nowrap;
+          align-content: space-between;
+          justify-content: space-between;
+          align-items: center;
+          margin: 10px 0;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          border-radius: 10px;
+          background-color: #fff;
+          padding: 20px;
+          width: 90%;
+          max-width: 525px;
+        }
+
+        .ip-text {
+          margin-bottom: 10px;
+          font-size: 1.2rem;
+          word-break: break-word;
+        }
+
+        .copy-btn {
+          transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+          cursor: pointer;
+          border: none;
+          border-radius: 5px;
+          background-color: #007BFF;
+          padding: 8px 16px;
+          width: 6em;
+          color: white;
+          font-size: 14px;
+        }
+
+        .copy-btn:hover, .copy-btn:focus {
+          transform: scale(1.05);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+          background-color: #0056b3;
+        }
+
+        .copy-btn.success {
+          background-color: #28a745;
+        }
+
+        .copy-btn.error {
+          background-color: #dc3545;
+        }
+
+      @media (max-width: 600px) {
+          header {
+          margin-top: 10%;
+          margin-bottom: 20vh;
+          }
+          h1 {
+          font-size: 1.5rem;
+          }
+
+          .ip-text {
+          font-size: 1rem;
+          word-break: break-all;
+          }
+
+          .ip-container {
+          margin-bottom: 10%;
+          }
+
+          .copy-btn {
+          padding: 6px 12px;
+          font-size: 11px;
+          }
+      }
+
+      @media (prefers-color-scheme: dark) {
+          body {
+          background-color: #121212;
+          color: #e0e0e0;
+          }
+
+          .ip-container {
+          box-shadow: 0 2px 8px rgba(255, 255, 255, 0.05);
+          background-color: #2c2c2c;
+          }
+
+          .copy-btn {
+          background-color: #3399ff;
+          color: #fff;
+          }
+
+          .copy-btn:hover, .copy-btn:focus {
+          box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+          background-color: #1a73e8;
+          }
+
+          .copy-btn.success {
+          background-color: #34c759;
+          }
+
+          .copy-btn.error {
+          background-color: #ff3b30;
+          }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Your Public IP Address</h1>
+    </header>
+
+    <div class="ip-container">
+      <div class="ip-text">
+        <strong>IPv4:</strong> <span id="ip1">Loading from ipify.org...</span>
+      </div>
+      <button class="copy-btn" onclick="copyIP('ip1', this)">Copy</button>
+    </div>
+
+    <div class="ip-container">
+      <div class="ip-text">
+        <strong>IPv6:</strong>
+        <span id="ip2">Loading from api64.ipify.org...</span>
+      </div>
+      <button class="copy-btn" onclick="copyIP('ip2', this)">Copy</button>
+    </div>
+
+    <script>
+      function fetchIP(url, elementId) {
+        fetch(url)
+          .then((response) => response.text())
+          .then((ip) => {
+            document.getElementById(elementId).textContent = ip;
+          })
+          .catch((error) => {
+            document.getElementById(elementId).textContent =
+              "Error fetching IP";
+            console.error("Fetch error:", error);
+          });
+      }
+
+      function copyIP(elementId, button) {
+        const ipText = document.getElementById(elementId).textContent;
+        navigator.clipboard
+          .writeText(ipText)
+          .then(() => {
+            button.textContent = "Copied!";
+            button.classList.add("success");
+            setTimeout(() => {
+              button.textContent = "Copy";
+              button.classList.remove("success");
+            }, 1500);
+          })
+          .catch(() => {
+            button.textContent = "Error!";
+            button.classList.add("error");
+            setTimeout(() => {
+              button.textContent = "Copy";
+              button.classList.remove("error");
+            }, 1500);
+          });
+      }
+
+      // Fetch IPs
+      fetchIP("https://api.ipify.org", "ip1");
+      fetchIP("https://api64.ipify.org", "ip2");
+    </script>
+  </body>
+</html>
