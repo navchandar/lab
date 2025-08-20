@@ -354,7 +354,6 @@ function handleKeydown(event) {
       if (isInteractiveElement(target)) {
         return;
       }
-      return;
       event.preventDefault();
       incrementNumber();
       break;
