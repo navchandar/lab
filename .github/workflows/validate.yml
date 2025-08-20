@@ -1,0 +1,42 @@
+name: Validate Site Files
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      - name: Cache npm global dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-npm-global-v1
+          restore-keys: |
+            ${{ runner.os }}-npm-global
+
+      - name: Install dependencies
+        run: |
+          npm install -g htmlhint csslint eslint
+
+      - name: Validate HTML
+        run: htmlhint --config config/.htmlhintrc .
+
+      - name: Validate CSS
+        run: csslint --config config/.csslintrc "**/*.css"
+
+      - name: Validate JS
+        run: eslint -c config/.eslintrc.json "**/*.js"
