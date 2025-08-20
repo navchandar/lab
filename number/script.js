@@ -137,7 +137,9 @@ function getNewColor() {
 function speaker() {
   muteButton.title = isMuted ? "Unmute button" : "Mute Button";
   if (utterance && !isMuted) {
-    if (synth.speaking) synth.cancel();
+    if (synth.speaking) {
+      synth.cancel();
+    }
     utterance.text = numberElement.textContent;
     try {
       synth.speak(utterance);
@@ -153,8 +155,12 @@ function toggleMute() {
   isMuted = !isMuted;
   localStorage.setItem("isMuted", isMuted);
   muteButton.textContent = isMuted ? "🔇" : "🔊";
-  if (isMuted && synth.speaking) synth.cancel();
-  if (!isMuted) speaker();
+  if (isMuted && synth.speaking) {
+    synth.cancel();
+  }
+  if (!isMuted) {
+    speaker();
+  }
   muteButton.title = isMuted ? "Unmute button" : "Mute Button";
   settings_Menu.classList.remove("show");
 }
@@ -345,7 +351,10 @@ function handleKeydown(event) {
     case "Space":
     case "Enter":
       // Ignore key presses if focused on an interactive element
-      if (isInteractiveElement(target)) return;
+      if (isInteractiveElement(target)) {
+        return;
+      }
+      return;
       event.preventDefault();
       incrementNumber();
       break;
@@ -387,6 +396,7 @@ function addButtonListeners(button, handler) {
 document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
+  updateSpeakerOptions();
   speaker();
   updateSettingsMenu();
 

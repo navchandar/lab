@@ -1,501 +1,654 @@
 <!DOCTYPE html>
 <html>
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alphabet Generator</title>
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' style='dominant-baseline:central; text-anchor:middle; font-size:80px;'>🔠</text></svg>"
-        type="image/svg+xml">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' style='dominant-baseline:central; text-anchor:middle; font-size:80px;'>🔠</text></svg>"
+      type="image/svg+xml"
+    />
 
-    <meta name="description" content="A simple interactive Alphabet Generator that changes color on key press or tap.">
-    <meta name="keywords"
-        content="language learning, kids learning, alphabet, english letters, tamil alphabet, hindi alphabet, flash, colors, increment, interactive, JavaScript, mobile-friendly, kid-friendly">
-    <meta name="author" content="Naveenchandar">
-    <meta property="og:title" content="Alphabet Generator">
-    <meta property="og:description"
-        content="A fun and responsive Alphabet Generator that changes color with each interaction.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://navchandar.github.io/lab/alphabet">
-    <meta property="og:image" content="https://navchandar.github.io/lab/alphabet/preview.gif">
+    <meta
+      name="description"
+      content="A simple interactive Alphabet Generator that changes color on key press or tap."
+    />
+    <meta
+      name="keywords"
+      content="language learning, kids learning, alphabet, english letters, tamil alphabet, hindi alphabet, flash, colors, increment, interactive, JavaScript, mobile-friendly, kid-friendly"
+    />
+    <meta name="author" content="Naveenchandar" />
+    <meta property="og:title" content="Alphabet Generator" />
+    <meta
+      property="og:description"
+      content="A fun and responsive Alphabet Generator that changes color with each interaction."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://navchandar.github.io/lab/alphabet"
+    />
+    <meta
+      property="og:image"
+      content="https://navchandar.github.io/lab/alphabet/preview.gif"
+    />
 
-    <meta name="theme-color" content="#4e4e4e">
+    <meta name="theme-color" content="#4e4e4e" />
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css" />
+  </head>
 
-</head>
+  <body>
+    <div
+      id="number"
+      style="color: lightgray;"
+      aria-label="Current letter"
+    ></div>
 
-<body>
+    <button
+      id="muteButton"
+      aria-label="Toggle mute"
+      disabled
+      title="Toggle sound"
+    ></button>
 
-    <div id="number" style="color: lightgray;" aria-label="Current letter"> </div>
-
-    <button id="muteButton" aria-label="Toggle mute" disabled title="Toggle sound"></button>
-
-    <button id="fullscreen-btn" onclick="toggleFullscreen()" aria-label="Toggle fullscreen mode"
-        title="Toggle fullscreen">
-        <svg id="fullscreen-icon" fill="none" height="24" viewBox="0 0 24 24" width="24"
-            xmlns="http://www.w3.org/2000/svg">
-        </svg>
+    <button
+      id="fullscreen-btn"
+      onclick="toggleFullscreen()"
+      aria-label="Toggle fullscreen mode"
+      title="Toggle fullscreen"
+    >
+      <svg
+        id="fullscreen-icon"
+        fill="none"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      ></svg>
     </button>
-
 
     <!-- Settings Button -->
     <button id="settings-btn" aria-label="Settings" title="Settings Menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd"
-                d="M7 7C5.89543 7 5 6.10457 5 5C5 3.89543 5.89543 3 7 3C8.10457 3 9 3.89543 9 5C9 6.10457 8.10457 7 7 7Z"
-                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path fill-rule="evenodd" clip-rule="evenodd"
-                d="M7 21C5.89543 21 5 20.1046 5 19C5 17.8954 5.89543 17 7 17C8.10457 17 9 17.8954 9 19C9 20.1046 8.10457 21 7 21Z"
-                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path fill-rule="evenodd" clip-rule="evenodd"
-                d="M17 14C15.8954 14 15 13.1046 15 12C15 10.8954 15.8954 10 17 10C18.1046 10 19 10.8954 19 12C19 13.1046 18.1046 14 17 14Z"
-                stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M3 5H4" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M9.99683 5H21" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M3 19H4" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M9.99683 19H21" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M21 12H20" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M14.0032 12H3.00003" stroke="black" stroke-width="2" stroke-linecap="round"
-                stroke-linejoin="round" />
-        </svg>
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M7 7C5.89543 7 5 6.10457 5 5C5 3.89543 5.89543 3 7 3C8.10457 3 9 3.89543 9 5C9 6.10457 8.10457 7 7 7Z"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M7 21C5.89543 21 5 20.1046 5 19C5 17.8954 5.89543 17 7 17C8.10457 17 9 17.8954 9 19C9 20.1046 8.10457 21 7 21Z"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          fill-rule="evenodd"
+          clip-rule="evenodd"
+          d="M17 14C15.8954 14 15 13.1046 15 12C15 10.8954 15.8954 10 17 10C18.1046 10 19 10.8954 19 12C19 13.1046 18.1046 14 17 14Z"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M3 5H4"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M9.99683 5H21"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M3 19H4"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M9.99683 19H21"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M21 12H20"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path
+          d="M14.0032 12H3.00003"
+          stroke="black"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
     </button>
-
 
     <!-- Overlay Menu -->
     <div id="settings-menu">
-        <label for="language-select" id="language-label">Choose Language:</label>
-        <select id="language-select">
-            <!-- Options to be populated by JS -->
-        </select>
+      <label for="language-select" id="language-label">Choose Language:</label>
+      <select id="language-select">
+        <!-- Options to be populated by JS -->
+      </select>
 
-        <div class="randomize-checkbox">
-            <label for="randomize-alphabet" id="randomize-label">Randomize Alphabet:</label>
-            <input type="checkbox" id="randomize-alphabet">
-        </div>
+      <div class="randomize-checkbox">
+        <label for="randomize-alphabet" id="randomize-label"
+          >Randomize Alphabet:</label
+        >
+        <input type="checkbox" id="randomize-alphabet" />
+      </div>
     </div>
-
-
 
     <script src="data.js"></script>
 
     <script>
-        // =========================
-        // Settings Menu
-        // =========================
-        const settingsBtn = document.getElementById('settings-btn');
-        const settingsMenu = document.getElementById('settings-menu');
-        const languageSelect = document.getElementById('language-select');
-        const randomizeAlphabetCheckbox = document.getElementById('randomize-alphabet');
+      // =========================
+      // Settings Menu
+      // =========================
+      const settingsBtn = document.getElementById("settings-btn");
+      const settingsMenu = document.getElementById("settings-menu");
+      const languageSelect = document.getElementById("language-select");
+      const randomizeAlphabetCheckbox =
+        document.getElementById("randomize-alphabet");
 
-        function toTitleCase(str) {
-            return str.toLocaleLowerCase().replace(/\b\w/g, char => char.toUpperCase());
-        }
+      function toTitleCase(str) {
+        return str
+          .toLocaleLowerCase()
+          .replace(/\b\w/g, (char) => char.toUpperCase());
+      }
 
-        // Populate dropdown
-        Object.keys(window.alphabets).forEach(lang => {
-            const option = document.createElement('option');
-            option.value = lang;
-            option.textContent = toTitleCase(lang);
-            languageSelect.appendChild(option);
+      // Populate dropdown
+      Object.keys(window.alphabets).forEach((lang) => {
+        const option = document.createElement("option");
+        option.value = lang;
+        option.textContent = toTitleCase(lang);
+        languageSelect.appendChild(option);
+      });
+
+      // Detect current language from URL
+      const urlParam = new URLSearchParams(window.location.search);
+      const currentLang = urlParam.get("lang") || "english";
+      languageSelect.value = currentLang;
+
+      // Redirect on language change
+      languageSelect.addEventListener("change", (e) => {
+        e.stopPropagation();
+        const selectedLang = e.target.value;
+        window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
+      });
+
+      languageSelect.addEventListener(
+        "touchstart",
+        (e) => {
+          e.stopPropagation();
+        },
+        { passive: false }
+      );
+
+      languageSelect.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+
+      document.getElementById("language-label").addEventListener(
+        "touchstart",
+        (e) => {
+          e.stopPropagation();
+        },
+        { passive: false }
+      );
+
+      document
+        .getElementById("language-label")
+        .addEventListener("click", (e) => {
+          e.stopPropagation();
         });
 
-        // Detect current language from URL
-        const urlParam = new URLSearchParams(window.location.search);
-        const currentLang = urlParam.get('lang') || 'english';
-        languageSelect.value = currentLang;
+      // Toggle menu visibility
+      settingsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        settingsMenu.classList.toggle("show");
+      });
 
-        // Redirect on language change
-        languageSelect.addEventListener('change', e => {
-            e.stopPropagation();
-            const selectedLang = e.target.value;
-            window.location.href = `https://navchandar.github.io/lab/alphabet/?lang=${selectedLang}`;
-        });
+      settingsBtn.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          settingsMenu.classList.toggle("show");
+        },
+        { passive: false }
+      );
 
-        languageSelect.addEventListener('touchstart', e => {
-            e.stopPropagation();
-        }, { passive: false });
+      // Show settings button after DOM is ready
+      window.addEventListener("DOMContentLoaded", () => {
+        settingsBtn.style.display = "block";
+      });
 
-        languageSelect.addEventListener('click', e => {
-            e.stopPropagation();
-        });
+      // Function to get the randomize state from localStorage
+      function getIsRandomAlphabetEnabled() {
+        return localStorage.getItem("randomizeAlphabet") === "true";
+      }
 
-        document.getElementById('language-label').addEventListener('touchstart', e => {
-            e.stopPropagation();
-        }, { passive: false });
+      // Function to set the randomize state in localStorage
+      function setIsRandomAlphabet(value) {
+        localStorage.setItem("randomizeAlphabet", value);
+        console.log("Randomize Alphabet set to:", getIsRandomAlphabetEnabled());
+      }
 
-
-        document.getElementById('language-label').addEventListener('click', e => {
-            e.stopPropagation();
-        });
-
-        // Toggle menu visibility
-        settingsBtn.addEventListener('click', e => {
-            e.stopPropagation();
-            settingsMenu.classList.toggle('show');
-        });
-
-        settingsBtn.addEventListener('touchstart', e => {
-            e.preventDefault();
-            e.stopPropagation();
-            settingsMenu.classList.toggle('show');
-        }, { passive: false });
-
-        // Show settings button after DOM is ready
-        window.addEventListener('DOMContentLoaded', () => {
-            settingsBtn.style.display = 'block';
-        });
-
-
-        // Function to get the randomize state from localStorage
-        function getIsRandomAlphabetEnabled() {
-            return localStorage.getItem('randomizeAlphabet') === 'true';
-        }
-
-        // Function to set the randomize state in localStorage
-        function setIsRandomAlphabet(value) {
-            localStorage.setItem('randomizeAlphabet', value);
-            console.log('Randomize Alphabet set to:', getIsRandomAlphabetEnabled());
-        }
-
-        randomizeAlphabetCheckbox.addEventListener('change', e => {
-            e.stopPropagation();
-            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
-        });
-
-        randomizeAlphabetCheckbox.addEventListener('click', e => {
-            e.stopPropagation();
-            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
-        });
-
-        document.getElementById('randomize-label').addEventListener('touchstart', e => {
-            randomizeAlphabetCheckbox.click();
-            e.stopPropagation();
-        }, { passive: false });
-
-        randomizeAlphabetCheckbox.addEventListener('touchstart', e => {
-            setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
-            e.stopPropagation();
-        }, { passive: false });
-
+      randomizeAlphabetCheckbox.addEventListener("change", (e) => {
+        e.stopPropagation();
         setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
-        window.getIsRandomAlphabetEnabled = getIsRandomAlphabetEnabled;
+      });
 
+      randomizeAlphabetCheckbox.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+      });
+
+      document.getElementById("randomize-label").addEventListener(
+        "touchstart",
+        (e) => {
+          randomizeAlphabetCheckbox.click();
+          e.stopPropagation();
+        },
+        { passive: false }
+      );
+
+      randomizeAlphabetCheckbox.addEventListener(
+        "touchstart",
+        (e) => {
+          setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+          e.stopPropagation();
+        },
+        { passive: false }
+      );
+
+      setIsRandomAlphabet(randomizeAlphabetCheckbox.checked);
+      window.getIsRandomAlphabetEnabled = getIsRandomAlphabetEnabled;
     </script>
 
     <script>
-        // =========================
-        // Initialization
-        // =========================
-        const urlParams = new URLSearchParams(window.location.search);
-        const lang = urlParams.get('lang')?.toLowerCase() || 'english';
-        const languageData = window.alphabets[lang] || window.alphabets.english;
-        const Alphabet = languageData.chars;
-        const Locale = languageData.locale;
+      // =========================
+      // Initialization
+      // =========================
+      const urlParams = new URLSearchParams(window.location.search);
+      const lang = urlParams.get("lang")?.toLowerCase() || "english";
+      const languageData = window.alphabets[lang] || window.alphabets.english;
+      const Alphabet = languageData.chars;
+      const Locale = languageData.locale;
 
-        let currentColor = null;
-        let previousColor = null;
-        let isMuted = localStorage.getItem('isMuted') === 'true';
+      let currentColor = null;
+      let previousColor = null;
+      let isMuted = localStorage.getItem("isMuted") === "true";
 
-        let retryCount = 0;
-        const maxRetries = 10;
+      let retryCount = 0;
+      const maxRetries = 10;
 
+      const numberElement = document.getElementById("number");
+      const colors = [
+        "red",
+        "blue",
+        "green",
+        "white",
+        "orange",
+        "brown",
+        "pink",
+        "yellow",
+      ];
 
-        const numberElement = document.getElementById('number');
-        const colors = ["red", "blue", "green", "white", "orange", "brown", "pink", "yellow"];
+      let currentAlphabet = Alphabet[0];
+      numberElement.textContent = currentAlphabet;
+      const settings_Menu = document.getElementById("settings-menu");
 
-        let currentAlphabet = Alphabet[0];
-        numberElement.textContent = currentAlphabet;
-        const settings_Menu = document.getElementById('settings-menu')
+      // Set initial mute button icon based on the loaded state
+      const muteButton = document.getElementById("muteButton");
+      muteButton.textContent = isMuted ? "🔇" : "🔊";
+      // Initial mute button state
+      muteButton.disabled = true;
+      muteButton.title = "Setting up Speech Synthesis...";
 
-        // Set initial mute button icon based on the loaded state
-        const muteButton = document.getElementById('muteButton');
-        muteButton.textContent = isMuted ? '🔇' : '🔊';
-        // Initial mute button state
-        muteButton.disabled = true;
-        muteButton.title = "Setting up Speech Synthesis...";
+      // =========================
+      // Speech Synthesis Setup
+      // =========================
+      const synth = window.speechSynthesis;
+      let utterance = null;
 
-        // =========================
-        // Speech Synthesis Setup
-        // =========================
-        const synth = window.speechSynthesis;
-        let utterance = null;
+      if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
+        console.warn("Web Speech API is not supported in this browser.");
+        muteButton.style.display = "none";
+        window.speaker = () => console.warn("Speech API not available.");
+      } else {
+        // Initialize utterance only if supported
+        utterance = new SpeechSynthesisUtterance();
+        let availableVoices = [];
 
-        if (!synth || typeof SpeechSynthesisUtterance === 'undefined') {
-            console.warn("Web Speech API is not supported in this browser.");
-            muteButton.style.display = 'none';
-            window.speaker = () => console.warn("Speech API not available.");
-        } else {
-            // Initialize utterance only if supported
-            utterance = new SpeechSynthesisUtterance();
-            let availableVoices = [];
+        let pop = function populateVoiceList() {
+          let voices = synth.getVoices();
 
-
-            function populateVoiceList() {
-                let voices = synth.getVoices();
-
-                if (!voices || !voices.length) {
-                    if (retryCount < maxRetries) {
-                        retryCount++;
-                        setTimeout(populateVoiceList, 100);
-                    } else {
-                        console.warn("Failed to load voices after multiple attempts.");
-                        muteButton.disabled = true;
-                        muteButton.title = "Speech not available";
-                    }
-                    return;
-                }
-
-                availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
-                console.log("Available voices:", availableVoices.map(v => `${v.name} (${v.lang})`));
-
-                let preferredVoice = availableVoices.find(voice =>
-                    voice.lang === Locale &&
-                    ["Google", "Microsoft", "Apple", "Samantha", "Monica", "Zira", "David"]
-                        .some(name => voice.name.includes(name))
-                );
-
-                if (!preferredVoice) {
-                    const langPrefix = Locale.split('-')[0];
-                    preferredVoice = availableVoices.find(v => v.lang.startsWith(langPrefix)) ||
-                        availableVoices.find(v => v.lang.indexOf(Locale) !== -1)
-                }
-
-                if (preferredVoice) {
-                    utterance.voice = preferredVoice;
-                    utterance.lang = preferredVoice.lang;
-                    console.log("Set default voice to:", preferredVoice.name, preferredVoice.lang);
-                    muteButton.disabled = false;
-                    muteButton.title = "Toggle sound";
-                } else {
-                    console.warn("No suitable voice found for Locale: " + Locale);
-                    muteButton.disabled = false;
-                    muteButton.style.display = "none";
-                }
-            }
-
-            populateVoiceList();
-            if (synth.onvoiceschanged !== undefined) {
-                synth.onvoiceschanged = populateVoiceList;
-            }
-        }
-
-        // =========================
-        // Utility Functions
-        // =========================
-        function getNewColor() {
-            let newColor;
-            do {
-                newColor = colors[Math.floor(Math.random() * colors.length)];
-            } while (newColor === currentColor || newColor === previousColor);
-            return newColor;
-        }
-
-        function speaker() {
-            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
-            if (utterance && !isMuted) {
-                if (synth.speaking) synth.cancel();
-                utterance.text = numberElement.textContent.toLowerCase();
-                try {
-                    synth.speak(utterance);
-                } catch (error) {
-                    console.error("Error speaking:", error);
-                }
-            } else if (!utterance) {
-                console.warn("Speech API not initialized. Cannot speak.");
-            }
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted;
-            localStorage.setItem('isMuted', isMuted);
-            muteButton.textContent = isMuted ? '🔇' : '🔊';
-            if (isMuted && synth.speaking) synth.cancel();
-            if (!isMuted) speaker();
-            muteButton.title = isMuted ? 'Unmute button' : 'Mute Button';
-            settings_Menu.classList.remove('show');
-        }
-
-
-        let currentIndex = 0;
-        let history = [];
-
-        /**
-         * Gets the next character in sequential order.
-         * Resets to the beginning if the end of the alphabet is reached.
-         * @returns {string} The next character.
-         */
-        function getNextSequentialChar() {
-            currentIndex++;
-            if (currentIndex >= Alphabet.length) {
-                currentIndex = 0;
-            }
-            return Alphabet[currentIndex];
-        }
-
-        /**
-         * Gets a random character from the alphabet, avoiding immediate repeats.
-         * @returns {string} A random character.
-         */
-        function getNextRandomChar() {
-            let newChar;
-            let randomIndex;
-            let attempts = 0;
-            const maxAttempts = Alphabet.length * 2; // Safeguard against infinite loops
-
-            do {
-                randomIndex = Math.floor(Math.random() * Alphabet.length);
-                newChar = Alphabet[randomIndex];
-                attempts++;
-            } while (
-                Alphabet.length > 1 &&               // Only apply history check if more than one char
-                history.includes(newChar) &&         // Check if char is in recent history
-                attempts < maxAttempts               // Prevent infinite loop
-            );
-
-            // Update history: Add the new character, remove the oldest if history is too long.
-            // Ensure history size doesn't exceed Alphabet.length - 1 (to always have a new option if possible)
-            const maxHistorySize = Math.min(Alphabet.length - 1, 3);
-            // Keep max history at 3, or alphabet size - 1 if smaller
-
-            // Avoid adding same char if it's the only option
-            if (Alphabet.length > 1 && newChar !== history[history.length - 1]) {
-                history.push(newChar);
-                // Remove the oldest character
-                if (history.length > maxHistorySize) {
-                    history.shift();
-                }
-            }
-
-            return newChar;
-        }
-
-        /**
-         * Updates the displayed character, its color, and triggers speech.
-         */
-        function updateCharacter() {
-            // Determine which mode to use (random or sequential)
-            const isRandomAlphabetEnabled = window.getIsRandomAlphabetEnabled();
-
-            let charToDisplay;
-            if (isRandomAlphabetEnabled) {
-                charToDisplay = getNextRandomChar();
-                currentIndex = -1; // Reset sequential index when in random mode (optional, good for clarity)
+          if (!voices || !voices.length) {
+            if (retryCount < maxRetries) {
+              retryCount++;
+              setTimeout(populateVoiceList, 100);
             } else {
-                charToDisplay = getNextSequentialChar();
-                history = []; // Clear history when switching to sequential mode
+              console.warn("Failed to load voices after multiple attempts.");
+              muteButton.disabled = true;
+              muteButton.title = "Speech not available";
             }
+            return;
+          }
 
-            // Update the DOM element with the new character
-            numberElement.textContent = charToDisplay;
+          availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
+          console.log(
+            "Available voices:",
+            availableVoices.map((v) => `${v.name} (${v.lang})`)
+          );
 
-            // Change and apply a new color
-            previousColor = currentColor;
-            currentColor = getNewColor();
-            numberElement.style.color = currentColor;
+          let preferredVoice = availableVoices.find(
+            (voice) =>
+              voice.lang === Locale &&
+              [
+                "Google",
+                "Microsoft",
+                "Apple",
+                "Samantha",
+                "Monica",
+                "Zira",
+                "David",
+              ].some((name) => voice.name.includes(name))
+          );
 
-            speaker();
+          if (!preferredVoice) {
+            const langPrefix = Locale.split("-")[0];
+            preferredVoice =
+              availableVoices.find((v) => v.lang.startsWith(langPrefix)) ||
+              availableVoices.find((v) => v.lang.indexOf(Locale) !== -1);
+          }
+
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+            utterance.lang = preferredVoice.lang;
+            console.log(
+              "Set default voice to:",
+              preferredVoice.name,
+              preferredVoice.lang
+            );
+            muteButton.disabled = false;
+            muteButton.title = "Toggle sound";
+          } else {
+            console.warn("No suitable voice found for Locale: " + Locale);
+            muteButton.disabled = false;
+            muteButton.style.display = "none";
+          }
+        };
+
+        pop();
+        if (synth.onvoiceschanged !== undefined) {
+          synth.onvoiceschanged = pop;
+        }
+      }
+
+      // =========================
+      // Utility Functions
+      // =========================
+      function getNewColor() {
+        let newColor;
+        do {
+          newColor = colors[Math.floor(Math.random() * colors.length)];
+        } while (newColor === currentColor || newColor === previousColor);
+        return newColor;
+      }
+
+      function speaker() {
+        muteButton.title = isMuted ? "Unmute button" : "Mute Button";
+        if (utterance && !isMuted) {
+          if (synth.speaking) {
+            synth.cancel();
+          }
+          utterance.text = numberElement.textContent.toLowerCase();
+          try {
+            synth.speak(utterance);
+          } catch (error) {
+            console.error("Error speaking:", error);
+          }
+        } else if (!utterance) {
+          console.warn("Speech API not initialized. Cannot speak.");
+        }
+      }
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        localStorage.setItem("isMuted", isMuted);
+        muteButton.textContent = isMuted ? "🔇" : "🔊";
+        if (isMuted && synth.speaking) {
+          synth.cancel();
+        }
+        if (!isMuted) {
+          speaker();
+        }
+        muteButton.title = isMuted ? "Unmute button" : "Mute Button";
+        settings_Menu.classList.remove("show");
+      }
+
+      let currentIndex = 0;
+      let history = [];
+
+      /**
+       * Gets the next character in sequential order.
+       * Resets to the beginning if the end of the alphabet is reached.
+       * @returns {string} The next character.
+       */
+      function getNextSequentialChar() {
+        currentIndex++;
+        if (currentIndex >= Alphabet.length) {
+          currentIndex = 0;
+        }
+        return Alphabet[currentIndex];
+      }
+
+      /**
+       * Gets a random character from the alphabet, avoiding immediate repeats.
+       * @returns {string} A random character.
+       */
+      function getNextRandomChar() {
+        let newChar;
+        let randomIndex;
+        let attempts = 0;
+        const maxAttempts = Alphabet.length * 2; // Safeguard against infinite loops
+
+        do {
+          randomIndex = Math.floor(Math.random() * Alphabet.length);
+          newChar = Alphabet[randomIndex];
+          attempts++;
+        } while (
+          Alphabet.length > 1 && // Only apply history check if more than one char
+          history.includes(newChar) && // Check if char is in recent history
+          attempts < maxAttempts // Prevent infinite loop
+        );
+
+        // Update history: Add the new character, remove the oldest if history is too long.
+        // Ensure history size doesn't exceed Alphabet.length - 1 (to always have a new option if possible)
+        const maxHistorySize = Math.min(Alphabet.length - 1, 3);
+        // Keep max history at 3, or alphabet size - 1 if smaller
+
+        // Avoid adding same char if it's the only option
+        if (Alphabet.length > 1 && newChar !== history[history.length - 1]) {
+          history.push(newChar);
+          // Remove the oldest character
+          if (history.length > maxHistorySize) {
+            history.shift();
+          }
         }
 
-        function incrementAlphabet() {
-            // Delay the execution slightly for visual/auditory pacing
-            setTimeout(updateCharacter, 100);
-            settings_Menu.classList.remove('show');
+        return newChar;
+      }
+
+      /**
+       * Updates the displayed character, its color, and triggers speech.
+       */
+      function updateCharacter() {
+        // Determine which mode to use (random or sequential)
+        const isRandomAlphabetEnabled = window.getIsRandomAlphabetEnabled();
+
+        let charToDisplay;
+        if (isRandomAlphabetEnabled) {
+          charToDisplay = getNextRandomChar();
+          currentIndex = -1; // Reset sequential index when in random mode (optional, good for clarity)
+        } else {
+          charToDisplay = getNextSequentialChar();
+          history = []; // Clear history when switching to sequential mode
         }
 
-        const fullscreenbtn = document.getElementById('fullscreen-btn');
-        const fullscreenIcon = document.getElementById('fullscreen-icon');
+        // Update the DOM element with the new character
+        numberElement.textContent = charToDisplay;
 
-        function setEnterFullscreenIcon() {
-            fullscreenIcon.innerHTML = `
+        // Change and apply a new color
+        previousColor = currentColor;
+        currentColor = getNewColor();
+        numberElement.style.color = currentColor;
+
+        speaker();
+      }
+
+      function incrementAlphabet() {
+        // Delay the execution slightly for visual/auditory pacing
+        setTimeout(updateCharacter, 100);
+        settings_Menu.classList.remove("show");
+      }
+
+      const fullscreenbtn = document.getElementById("fullscreen-btn");
+      const fullscreenIcon = document.getElementById("fullscreen-icon");
+
+      function setEnterFullscreenIcon() {
+        fullscreenIcon.innerHTML = `
             <path d="M9 21H3L3 15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
             <path d="M21 15V21H15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
             <path d="M15 3H21V9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
             <path d="M3 9V3H9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />`;
-        }
+      }
 
-        function setExitFullscreenIcon() {
-            fullscreenIcon.innerHTML = `
+      function setExitFullscreenIcon() {
+        fullscreenIcon.innerHTML = `
             <path d="M3 15H9V21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
             <path d="M15 21V15H21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
             <path d="M21 9H15V3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
             <path d="M9 3V9H3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
+      }
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().catch((err) => {
+            console.log(
+              `Error attempting to enable full-screen mode: ${err.message}`
+            );
+          });
+        } else {
+          document.exitFullscreen();
         }
+        settings_Menu.classList.remove("show");
+      }
 
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error attempting to enable full-screen mode: ${err.message}`);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-            settings_Menu.classList.remove('show');
+      document.fullscreenElement
+        ? setExitFullscreenIcon()
+        : setEnterFullscreenIcon();
+
+      // =========================
+      // Event Listeners
+      // =========================
+      document.addEventListener("keydown", (event) => {
+        if (event.code === "Space" || event.code === "Enter") {
+          event.preventDefault();
+          incrementAlphabet();
+        } else if (event.code === "KeyM") {
+          event.preventDefault();
+          toggleMute();
+        } else if (event.code === "KeyF") {
+          event.preventDefault();
+          toggleFullscreen();
+        } else if (event.code === "KeyS") {
+          event.preventDefault();
+          settings_Menu.classList.toggle("show");
+        } else if (event.code == "Escape") {
+          settings_Menu.classList.remove("show");
         }
+      });
 
-        document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
+      document.body.addEventListener("click", incrementAlphabet);
+      document.body.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          incrementAlphabet();
+        },
+        { passive: false }
+      );
 
-        // =========================
-        // Event Listeners
-        // =========================
-        document.addEventListener('keydown', event => {
-            if (event.code === 'Space' || event.code === 'Enter') {
-                event.preventDefault();
-                incrementAlphabet();
-            } else if (event.code === 'KeyM') {
-                event.preventDefault();
-                toggleMute();
-            } else if (event.code === 'KeyF') {
-                event.preventDefault();
-                toggleFullscreen();
-            } else if (event.code === 'KeyS') {
-                event.preventDefault();
-                settings_Menu.classList.toggle('show');
-            } else if (event.code == 'Escape') {
-                settings_Menu.classList.remove('show');
-            }
-        });
+      muteButton.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMute();
+      });
 
+      muteButton.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleMute();
+        },
+        { passive: false }
+      );
 
-        document.body.addEventListener('click', incrementAlphabet);
-        document.body.addEventListener('touchstart', e => {
-            e.preventDefault();
-            incrementAlphabet();
-        }, { passive: false });
+      speaker();
 
-        muteButton.addEventListener('click', e => {
-            e.stopPropagation();
-            toggleMute();
-        });
+      fullscreenbtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleFullscreen();
+      });
 
-        muteButton.addEventListener('touchstart', e => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleMute();
-        }, { passive: false });
+      fullscreenbtn.addEventListener(
+        "touchstart",
+        (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFullscreen();
+        },
+        { passive: false }
+      );
 
-        speaker();
-
-        fullscreenbtn.addEventListener('click', e => {
-            e.stopPropagation();
-            toggleFullscreen();
-        });
-
-        fullscreenbtn.addEventListener('touchstart', e => {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleFullscreen();
-        }, { passive: false });
-
-        document.addEventListener('fullscreenchange', () => {
-            fullscreenbtn.classList.toggle('fullscreen-active', !!document.fullscreenElement);
-            document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
-        });
-
+      document.addEventListener("fullscreenchange", () => {
+        fullscreenbtn.classList.toggle(
+          "fullscreen-active",
+          !!document.fullscreenElement
+        );
+        document.fullscreenElement
+          ? setExitFullscreenIcon()
+          : setEnterFullscreenIcon();
+      });
     </script>
-
-
-</body>
-
+  </body>
 </html>
