@@ -47,10 +47,12 @@ setInterval(refreshIPs, 600000);
 window.addEventListener("online", () => {
   console.log("Network connected. Refreshing IPs...");
   refreshIPs();
+  document.title = "Online";
 });
 
 window.addEventListener("offline", () => {
   console.log("Network disconnected");
   document.getElementById("ip1").textContent = "Network Offline";
   document.getElementById("ip2").textContent = "Network Offline";
+  document.title = "Network Offline";
 });
