@@ -38,5 +38,10 @@ jobs:
       - name: Validate CSS
         run: csslint --errors=box-model,duplicate-properties,empty-rules,important,known-properties,universal-selector "**/*.css"
 
+      - name: Validate CSS
+        run: |
+          css_files=$(find . -name "*.css" -type f -size +0c)
+          csslint --errors=box-model,duplicate-properties,empty-rules,important,known-properties,universal-selector $css_files
+
       - name: Validate JS
         run: eslint -c config/.eslintrc.json "**/*.js"
