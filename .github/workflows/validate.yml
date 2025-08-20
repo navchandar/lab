@@ -41,4 +41,4 @@ jobs:
           csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
 
       - name: Validate JS
-        run: eslint -c config/.eslintrc.js "**/*.js"
+        run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js

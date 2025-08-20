@@ -4,16 +4,20 @@
 let number = 1;
 let currentColor = null;
 let previousColor = null;
-let isMuted = localStorage.getItem("isMuted") === "true";
-let retryCount = 0;
-let intervalID = null;
-const maxRetries = 10;
 
 const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
 const fullscreenbtn = document.getElementById("fullscreen-btn");
 const fullscreenIcon = document.getElementById("fullscreen-icon");
 const settings_Menu = document.getElementById("settings-menu");
+let intervalID = null;
+
+const synth = window.speechSynthesis;
+let Locale = null;
+let utterance = null;
+let isMuted = localStorage.getItem("isMuted") === "true";
+let retryCount = 0;
+const maxRetries = 10;
 
 const colors = [
   "red",
@@ -32,86 +36,93 @@ muteButton.textContent = isMuted ? "🔇" : "🔊";
 muteButton.disabled = true;
 muteButton.title = "Setting up Speech Synthesis...";
 
-// =========================
-// Speech Synthesis Setup
-// =========================
-const synth = window.speechSynthesis;
-let utterance = null;
+function updateSpeakerOptions() {
+  isMuted = localStorage.getItem("isMuted") === "true";
+  // Set initial mute button icon based on the loaded state
+  muteButton.textContent = isMuted ? "🔇" : "🔊";
+  // Initial mute button state
+  muteButton.disabled = true;
+  muteButton.title = "Setting up Speech Synthesis...";
 
-if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
-  console.warn("Web Speech API is not supported in this browser.");
-  muteButton.style.display = "none";
-  window.speaker = () => console.warn("Speech API not available.");
-} else {
-  // Initialize utterance only if supported
-  utterance = new SpeechSynthesisUtterance();
-  let availableVoices = [];
+  Locale = "en-US";
+  // =========================
+  // Speech Synthesis Setup
+  // =========================
+  if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
+    console.warn("Web Speech API is not supported in this browser.");
+    muteButton.style.display = "none";
+    window.speaker = () => console.warn("Speech API not available.");
+  } else {
+    // Initialize utterance only if supported
+    utterance = new SpeechSynthesisUtterance();
+    let availableVoices = [];
 
-  function populateVoiceList() {
-    let voices = synth.getVoices();
+    let pop = function populateVoiceList() {
+      let voices = synth.getVoices();
 
-    if (!voices || !voices.length) {
-      if (retryCount < maxRetries) {
-        retryCount++;
-        setTimeout(populateVoiceList, 100);
-      } else {
-        console.warn("Failed to load voices after multiple attempts.");
-        muteButton.disabled = true;
-        muteButton.title = "Speech not available";
+      if (!voices || !voices.length) {
+        if (retryCount < maxRetries) {
+          retryCount++;
+          setTimeout(populateVoiceList, 100);
+        } else {
+          console.warn("Failed to load voices after multiple attempts.");
+          muteButton.disabled = true;
+          muteButton.title = "Speech not available";
+        }
+        return;
       }
-      return;
-    }
 
-    availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
-    console.log(
-      "Available voices:",
-      availableVoices.map((v) => `${v.name} (${v.lang})`)
-    );
-
-    let preferredVoice = availableVoices.find(
-      (voice) =>
-        voice.lang === "en-US" &&
-        [
-          "Google",
-          "Microsoft",
-          "Apple",
-          "Samantha",
-          "Monica",
-          "Zira",
-          "David",
-        ].some((name) => voice.name.includes(name))
-    );
-
-    if (!preferredVoice) {
-      preferredVoice =
-        availableVoices.find((v) => v.lang.startsWith("en-US")) ||
-        availableVoices.find((v) => v.lang.startsWith("en")) ||
-        availableVoices[0];
-    }
-
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
-      utterance.lang = preferredVoice.lang;
+      availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
       console.log(
-        "Set default voice to:",
-        preferredVoice.name,
-        preferredVoice.lang
+        "Available voices:",
+        availableVoices.map((v) => `${v.name} (${v.lang})`)
       );
-      muteButton.disabled = false;
-      muteButton.title = "Toggle sound";
-    } else {
-      console.warn("No suitable English voice found.");
-      muteButton.disabled = false;
-      muteButton.style.display = "none";
-    }
-  }
 
-  populateVoiceList();
-  if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = populateVoiceList;
+      let preferredVoice = availableVoices.find(
+        (voice) =>
+          voice.lang === Locale &&
+          [
+            "Google",
+            "Microsoft",
+            "Apple",
+            "Samantha",
+            "Monica",
+            "Zira",
+            "David",
+          ].some((name) => voice.name.includes(name))
+      );
+
+      if (!preferredVoice) {
+        const langPrefix = Locale.split("-")[0];
+        preferredVoice =
+          availableVoices.find((v) => v.lang.startsWith(langPrefix)) ||
+          availableVoices.find((v) => v.lang.indexOf(Locale) !== -1) ||
+          availableVoices[0];
+      }
+
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+        utterance.lang = preferredVoice.lang;
+        console.log(
+          "Set default voice to:",
+          preferredVoice.name,
+          preferredVoice.lang
+        );
+        muteButton.disabled = false;
+        muteButton.title = "Toggle sound";
+      } else {
+        console.warn("No suitable voice found for Locale: " + Locale);
+        muteButton.disabled = false;
+        muteButton.style.display = "none";
+      }
+    };
+
+    pop();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = pop;
+    }
   }
 }
-
 // =========================
 // Utility Functions
 // =========================

@@ -305,7 +305,7 @@ function updateSpeakerOptions() {
     utterance = new SpeechSynthesisUtterance();
     let availableVoices = [];
 
-    function populateVoiceList() {
+    let pop = function populateVoiceList() {
       let voices = synth.getVoices();
 
       if (!voices || !voices.length) {
@@ -344,7 +344,8 @@ function updateSpeakerOptions() {
         const langPrefix = Locale.split("-")[0];
         preferredVoice =
           availableVoices.find((v) => v.lang.startsWith(langPrefix)) ||
-          availableVoices.find((v) => v.lang.indexOf(Locale) != -1);
+          availableVoices.find((v) => v.lang.indexOf(Locale) !== -1) ||
+          availableVoices[0];
       }
 
       if (preferredVoice) {
@@ -362,11 +363,11 @@ function updateSpeakerOptions() {
         muteButton.disabled = false;
         muteButton.style.display = "none";
       }
-    }
+    };
 
-    populateVoiceList();
+    pop();
     if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = populateVoiceList;
+      synth.onvoiceschanged = pop;
     }
   }
 }

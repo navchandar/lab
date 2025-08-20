@@ -259,7 +259,7 @@
                 if (!preferredVoice) {
                     const langPrefix = Locale.split('-')[0];
                     preferredVoice = availableVoices.find(v => v.lang.startsWith(langPrefix)) ||
-                        availableVoices.find(v => v.lang.indexOf(Locale) != -1)
+                        availableVoices.find(v => v.lang.indexOf(Locale) !== -1)
                 }
 
                 if (preferredVoice) {
