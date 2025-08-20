@@ -30,18 +30,15 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install -g htmlhint csslint eslint
+          npm install -g htmlhint csslint eslint@8
 
       - name: Validate HTML
-        continue-on-error: true
         run: htmlhint --config config/.htmlhintrc .
 
       - name: Validate CSS
-        continue-on-error: true
         run: |
           css_files=$(find . -name "*.css" -type f -size +0c)
           csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
 
       - name: Validate JS
-        continue-on-error: true
         run: eslint -c config/.eslintrc.js "**/*.js"
