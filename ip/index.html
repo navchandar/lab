@@ -15,7 +15,7 @@
     />
     <meta
       name="keywords"
-      content="IP address, public IP, check IP, find IP, IP lookup, ipify"
+      content="IP address, public IP, check IP, find IP, IP lookup, ipify, IP finder, navchandar"
     />
     <meta name="author" content="Naveenchandar" />
 
@@ -105,8 +105,8 @@
 
       @media (max-width: 600px) {
           header {
-          margin-top: 10%;
-          margin-bottom: 20vh;
+          margin-top: 30%;
+          margin-bottom: 10vh;
           }
           h1 {
           font-size: 1.5rem;
@@ -125,6 +125,10 @@
           margin: 10px 0px 10px 10px;
           padding: 6px 12px;
           font-size: 11px;
+          }
+
+          .last-refresh {
+          margin: 30px 0 0 0;
           }
       }
 
@@ -179,9 +183,7 @@
       <button class="copy-btn" onclick="copyIP('ip2', this)">Copy</button>
     </div>
 
-    <div id="last-refresh" class="last-refresh">
-      Last refreshed: just now
-    </div>
+    <div id="last-refresh" class="last-refresh">Last refreshed: just now</div>
 
     <script src="script.js"></script>
   </body>
