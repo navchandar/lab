@@ -34,3 +34,14 @@ jobs:
 
       - name: Validate JS
         run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
+
+      - name: Validate Broken Links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --base . --verbose --no-progress "./**/*.md" "./**/*.html"
+
+      - name: Validate Spelling
+        uses: rojopolis/spellcheck-github-actions@0.23.0
+        with:
+          config_path: config/.spellcheck.yml
+          task_name: HTML

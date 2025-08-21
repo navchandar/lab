@@ -1,0 +1,17 @@
+matrix:
+  - name: HTML
+    dictionary:
+      wordlists:
+        - file: config/wordlist.txt
+    sources:
+      - "**/*.html"
+    pipeline:
+      - pyspelling.filters.markdown:
+      - pyspelling.filters.html:
+          comments: false
+          ignores:
+            - code
+            - pre
+    aspell:
+      lang: en
+      mode: html
