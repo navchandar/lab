@@ -1,8 +1,42 @@
+let previousIP = null;
+let activeNotification = null;
+
+function requestNotificationPermission() {
+  if (Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
+}
+
+function notifyIPChange(newIP) {
+  try {
+    // Safely close previous notification if it's still open
+    if (activeNotification && typeof activeNotification.close === "function") {
+      activeNotification.close();
+    }
+  } catch (e) {
+    console.warn("Error closing previous notification:", e);
+  }
+
+  if (Notification.permission === "granted") {
+    // Show new notification and store reference
+    activeNotification = new Notification("IP Changed", {
+      body: `New IP: ${newIP}`,
+    });
+  }
+}
+
 function fetchIP(url, elementId) {
   fetch(url)
     .then((response) => response.text())
     .then((ip) => {
       document.getElementById(elementId).textContent = ip;
+
+      if (elementId === "ip1") {
+        if (previousIP && previousIP !== ip) {
+          notifyIPChange(ip);
+        }
+        previousIP = ip;
+      }
     })
     .catch((error) => {
       document.getElementById(elementId).textContent = "Error fetching IP";
@@ -37,13 +71,14 @@ function refreshIPs() {
   fetchIP("https://api64.ipify.org", "ip2");
 }
 
-// Initial fetch
+// Initial setup
 refreshIPs();
+requestNotificationPermission();
 
-// Refresh every 10 minutes (600,000 ms)
+// Refresh every 10 minutes
 setInterval(refreshIPs, 600000);
 
-// Detect network changes
+// Network change detection
 window.addEventListener("online", () => {
   console.log("Network connected. Refreshing IPs...");
   refreshIPs();

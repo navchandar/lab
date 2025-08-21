@@ -19,7 +19,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🌈 <a href="https://navchandar.github.io/lab/color/" target="_blank">**Color Viewer**</a> | Display and increment color names with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
 | 🔠 <a href="https://navchandar.github.io/lab/alphabet/" target="_blank">**English Alphabet**</a> | Display and increment english alphabet with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
 | 🔠 <a href="https://navchandar.github.io/lab/alphabet/?lang=tamil" target="_blank">**Tamil Alphabet**</a> | Display and increment tamil alphabet with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
-| 🌐 <a href="https://navchandar.github.io/lab/ip/" target="_blank">**IP Finder**</a> | Display your public IP address in a simple and responsive web page. | 🟩🟩🟩🟩🟩 100% |
+| 🌐 <a href="https://navchandar.github.io/lab/ip/" target="_blank">**IP Finder**</a> | Display your public IP address in a simple web page and notify on change. | 🟩🟩🟩🟩🟩 100% |
 | 🐾 **Animals** | Tap on animals to view the animals, hear their sounds and see their names. | ⬜⬜⬜⬜⬜ 0% |
 | 🍎 **Fruits And Veggies** | Learn names and colors of fruits and vegetables with illustrations. | ⬜⬜⬜⬜⬜ 0% |
 | 🔼 <a href="https://navchandar.github.io/lab/shapes/" target="_blank">**Shape Explorer**</a> | Identify and learn basic shapes with color and sound effects. | 🟩🟩🟩🟩⬜ 80% |
