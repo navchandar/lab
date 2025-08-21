@@ -47,7 +47,7 @@ function notifyIPChange(newIP) {
 }
 
 function fetchIP(url, elementId) {
-  fetch(url)
+  return fetch(url)
     .then((response) => response.text())
     .then((ip) => {
       document.getElementById(elementId).textContent = ip;
@@ -75,7 +75,7 @@ function copyIP(elementId, button) {
       setTimeout(() => {
         button.textContent = "Copy";
         button.classList.remove("success");
-      }, 1500);
+      }, 2000);
     })
     .catch(() => {
       button.textContent = "Error!";
@@ -83,13 +83,16 @@ function copyIP(elementId, button) {
       setTimeout(() => {
         button.textContent = "Copy";
         button.classList.remove("error");
-      }, 1500);
+      }, 2000);
     });
 }
 
-function refreshIPs() {
-  fetchIP("https://api.ipify.org", "ip1");
-  fetchIP("https://api64.ipify.org", "ip2");
+async function refreshIPs() {
+  await Promise.all([
+    fetchIP("https://api.ipify.org", "ip1"),
+    fetchIP("https://api64.ipify.org", "ip2"),
+  ]);
+
   lastRefreshTime = new Date();
   updateRefreshTimeDisplay();
 }
