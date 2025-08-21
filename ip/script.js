@@ -1,5 +1,26 @@
 let previousIP = null;
 let activeNotification = null;
+let lastRefreshTime = new Date();
+
+function updateRefreshTimeDisplay() {
+  const now = new Date();
+  const seconds = Math.floor((now - lastRefreshTime) / 1000);
+  let displayText = "just now";
+
+  if (seconds < 60) {
+    displayText = `${seconds} seconds ago`;
+  } else if (seconds < 3600) {
+    const minutes = Math.floor(seconds / 60);
+    displayText = `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+  } else {
+    const hours = Math.floor(seconds / 3600);
+    displayText = `${hours} hour${hours > 1 ? "s" : ""} ago`;
+  }
+
+  document.getElementById(
+    "last-refresh"
+  ).textContent = `Last refreshed: ${displayText}`;
+}
 
 function requestNotificationPermission() {
   if (Notification.permission !== "granted") {
@@ -69,14 +90,18 @@ function copyIP(elementId, button) {
 function refreshIPs() {
   fetchIP("https://api.ipify.org", "ip1");
   fetchIP("https://api64.ipify.org", "ip2");
+  lastRefreshTime = new Date();
+  updateRefreshTimeDisplay();
 }
 
 // Initial setup
 refreshIPs();
 requestNotificationPermission();
 
-// Refresh every 10 minutes
-setInterval(refreshIPs, 600000);
+// Refresh every 5 minutes
+setInterval(refreshIPs, 300000);
+// Update the time since last refresh every 30 seconds
+setInterval(updateRefreshTimeDisplay, 30000);
 
 // Network change detection
 window.addEventListener("online", () => {

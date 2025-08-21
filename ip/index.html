@@ -58,16 +58,16 @@
           justify-content: space-between;
           align-items: center;
           margin: 10px 0;
+          margin-bottom: 20px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           border-radius: 10px;
           background-color: #fff;
           padding: 20px;
           width: 90%;
-          max-width: 525px;
+          max-width: 550px;
         }
 
         .ip-text {
-          margin-bottom: 10px;
           font-size: 1.2rem;
           word-break: break-word;
         }
@@ -98,6 +98,11 @@
           background-color: #dc3545;
         }
 
+        .last-refresh {
+          margin: 10px 0;
+          font-style: italic;
+        }
+
       @media (max-width: 600px) {
           header {
           margin-top: 10%;
@@ -117,6 +122,7 @@
           }
 
           .copy-btn {
+          margin: 10px 0px 10px 10px;
           padding: 6px 12px;
           font-size: 11px;
           }
@@ -171,6 +177,10 @@
         <span id="ip2">Loading from api64.ipify.org...</span>
       </div>
       <button class="copy-btn" onclick="copyIP('ip2', this)">Copy</button>
+    </div>
+
+    <div id="last-refresh" class="last-refresh">
+      Last refreshed: just now
     </div>
 
     <script src="script.js"></script>
