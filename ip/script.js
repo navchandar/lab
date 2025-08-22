@@ -2,11 +2,15 @@ let previousIP = null;
 let activeNotification = null;
 let lastRefreshTime = new Date();
 
+function showText(elementId, message) {
+  document.getElementById(elementId).textContent = message;
+}
+
 function updateRefreshTimeDisplay() {
   const now = new Date();
   const seconds = Math.floor((now - lastRefreshTime) / 1000);
   let displayText = "just now";
-
+  // calculdate time difference
   if (seconds < 60) {
     displayText = `${seconds} seconds ago`;
   } else if (seconds < 3600) {
@@ -16,10 +20,8 @@ function updateRefreshTimeDisplay() {
     const hours = Math.floor(seconds / 3600);
     displayText = `${hours} hour${hours > 1 ? "s" : ""} ago`;
   }
-
-  document.getElementById(
-    "last-refresh"
-  ).textContent = `Last refreshed: ${displayText}`;
+  // display text in the UI
+  showText("last-refresh", `Last refreshed: ${displayText}`);
 }
 
 function requestNotificationPermission() {
@@ -114,17 +116,14 @@ async function retrieveIPAddress({
   try {
     const ip = await fetchValidIPAddress(primaryUrl, ipVersion);
     updateIPAddressDisplay(ip, elementId);
-  } catch (primaryError) {
-    console.warn(`Primary IP fetch failed for ${elementId}:`, primaryError);
+  } catch (e) {
+    console.warn(`Primary IP fetch failed for ${elementId}:`, e);
     try {
       const fallbackIP = await fetchValidIPAddress(fallbackUrl, ipVersion);
       updateIPAddressDisplay(fallbackIP, elementId);
-    } catch (fallbackError) {
-      console.error(
-        `Fallback IP fetch failed for ${elementId}:`,
-        fallbackError
-      );
-      showIPAddressError(elementId);
+    } catch (f) {
+      console.error(`Fallback IP fetch failed for ${elementId}:`, f);
+      showText(elementId, "Error fetching IP");
     }
   }
 }
@@ -155,29 +154,27 @@ function updateIPAddressDisplay(ip, elementId) {
   }
 }
 
-function showIPAddressError(elementId) {
-  document.getElementById(elementId).textContent = "Error fetching IP";
-}
-
 // Initial setup
-refreshIPs();
+refreshIPAddresses();
 requestNotificationPermission();
 
 // Refresh every 5 minutes
-setInterval(refreshIPs, 300000);
+setInterval(refreshIPAddresses, 300000);
 // Update the time since last refresh every 30 seconds
 setInterval(updateRefreshTimeDisplay, 30000);
 
 // Network change detection
 window.addEventListener("online", () => {
   console.log("Network connected. Refreshing IPs...");
-  refreshIPs();
-  document.title = "Online";
+  showText("ip1", "Network Online");
+  showText("ip2", "Network Online");
+  document.title = "IP Finder";
+  refreshIPAddresses();
 });
 
 window.addEventListener("offline", () => {
   console.log("Network disconnected");
-  document.getElementById("ip1").textContent = "Network Offline";
-  document.getElementById("ip2").textContent = "Network Offline";
+  showText("ip1", "Network Offline");
+  showText("ip2", "Network Offline");
   document.title = "Network Offline";
 });
