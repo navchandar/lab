@@ -28,7 +28,23 @@ function requestNotificationPermission() {
   }
 }
 
-function notifyIPChange(newIP) {
+function showToast(oldIP, newIP) {
+  const toast = document.getElementById("ip-toast");
+  const message = document.getElementById("ip-toast-message");
+  const closeBtn = document.getElementById("ip-toast-close");
+  // Update message and show toast
+  toast.classList.remove("show");
+  message.textContent = `IP changed from ${oldIP} to ${newIP}`;
+  console.log(message.textContent);
+  toast.classList.add("show");
+
+  // Manual close
+  closeBtn.onclick = () => {
+    toast.classList.remove("show");
+  };
+}
+
+function notifyIPChange(previousIP, newIP) {
   try {
     // Safely close previous notification if it's still open
     if (activeNotification && typeof activeNotification.close === "function") {
@@ -44,6 +60,7 @@ function notifyIPChange(newIP) {
       body: `New IP: ${newIP}`,
     });
   }
+  showToast(previousIP, newIP);
 }
 
 function fetchIP(url, elementId) {
@@ -54,7 +71,7 @@ function fetchIP(url, elementId) {
 
       if (elementId === "ip1") {
         if (previousIP && previousIP !== ip) {
-          notifyIPChange(ip);
+          notifyIPChange(previousIP, ip);
         }
         previousIP = ip;
       }

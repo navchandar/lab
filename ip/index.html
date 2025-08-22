@@ -99,9 +99,54 @@
         }
 
         .last-refresh {
-          margin: 10px 0;
+          margin: 30px 0;
           font-style: italic;
         }
+
+        .ip-toast {
+        display: none;
+        position: fixed;
+        opacity: 0;
+        z-index: 1000;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-radius: 8px;
+        background-color: #333;
+        padding: 12px 20px;
+        color: #fff;
+        font-family: sans-serif;
+      }
+
+      .ip-toast.show {
+        display: block;
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .ip-toast-close {
+        cursor: pointer;
+        margin-left: 12px;
+        border: none;
+        background: none;
+        color: #fff;
+        font-size: 18px;
+      }
+
+      @media (max-width: 768px) {
+        .ip-toast {
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+        }
+      }
+
+      @media (min-width: 769px) {
+        .ip-toast {
+          top: 20px;
+          right: 20px;
+          transform: translateY(-20px);
+        }
+      }
 
       @media (max-width: 600px) {
           header {
@@ -181,6 +226,11 @@
         <span id="ip2">Loading from api64.ipify.org...</span>
       </div>
       <button class="copy-btn" onclick="copyIP('ip2', this)">Copy</button>
+    </div>
+
+    <div id="ip-toast" class="ip-toast">
+      <span id="ip-toast-message"></span>
+      <button id="ip-toast-close" class="ip-toast-close">&times;</button>
     </div>
 
     <div id="last-refresh" class="last-refresh">Last refreshed: just now</div>
