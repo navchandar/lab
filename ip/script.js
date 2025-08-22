@@ -104,7 +104,7 @@ async function refreshIPAddresses() {
   ]);
 
   lastRefreshTime = new Date();
-  updateRefreshTimestamp();
+  updateRefreshTimeDisplay();
 }
 
 async function retrieveIPAddress({
