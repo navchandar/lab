@@ -134,6 +134,21 @@
           font-size: 18px;
       }
 
+      footer {
+          position: fixed;
+          bottom: 20px;
+          font-size: 0.8em;
+          text-align: center;
+      }
+
+      a {
+          text-decoration: none;
+      }
+
+      a:hover, a:focus {
+          border-bottom: 2px solid  #0056b3;
+      }
+
       @media (max-width: 768px) {
           .ip-toast {
               bottom: 30px;
@@ -247,6 +262,15 @@
     </div>
 
     <div id="last-refresh" class="last-refresh">Last refreshed: just now</div>
+
+    <footer>
+      <p>
+        IP data by
+        <a href="https://www.ipify.org/" target="_blank">ipify.org</a> and
+        <a href="https://icanhazip.com/" target="_blank">icanhazip.com</a> in
+        real-time.
+      </p>
+    </footer>
 
     <script src="script.js"></script>
   </body>
