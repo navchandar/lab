@@ -148,7 +148,7 @@ function updateIPAddressDisplay(ip, elementId) {
   document.getElementById(elementId).textContent = ip;
   if (elementId === "ip1") {
     if (previousIP && previousIP !== ip) {
-      notifyIPAddressChange(previousIP, ip);
+      notifyIPChange(previousIP, ip);
     }
     previousIP = ip;
   }
