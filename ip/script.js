@@ -63,25 +63,6 @@ function notifyIPChange(previousIP, newIP) {
   showToast(previousIP, newIP);
 }
 
-function fetchIP(url, elementId) {
-  return fetch(url)
-    .then((response) => response.text())
-    .then((ip) => {
-      document.getElementById(elementId).textContent = ip;
-
-      if (elementId === "ip1") {
-        if (previousIP && previousIP !== ip) {
-          notifyIPChange(previousIP, ip);
-        }
-        previousIP = ip;
-      }
-    })
-    .catch((error) => {
-      document.getElementById(elementId).textContent = "Error fetching IP";
-      console.error("Fetch error:", error);
-    });
-}
-
 function copyIP(elementId, button) {
   const ipText = document.getElementById(elementId).textContent;
   navigator.clipboard
@@ -104,14 +85,78 @@ function copyIP(elementId, button) {
     });
 }
 
-async function refreshIPs() {
+async function refreshIPAddresses() {
   await Promise.all([
-    fetchIP("https://api.ipify.org", "ip1"),
-    fetchIP("https://api64.ipify.org", "ip2"),
+    retrieveIPAddress({
+      primaryUrl: "https://api.ipify.org",
+      fallbackUrl: "https://ipv4.icanhazip.com/",
+      elementId: "ip1",
+      ipVersion: "IPv4",
+    }),
+    retrieveIPAddress({
+      primaryUrl: "https://api64.ipify.org",
+      fallbackUrl: "https://ipv6.icanhazip.com/",
+      elementId: "ip2",
+      ipVersion: "IPv6",
+    }),
   ]);
 
   lastRefreshTime = new Date();
-  updateRefreshTimeDisplay();
+  updateRefreshTimestamp();
+}
+
+async function retrieveIPAddress({
+  primaryUrl,
+  fallbackUrl,
+  elementId,
+  ipVersion,
+}) {
+  try {
+    const ip = await fetchValidIPAddress(primaryUrl, ipVersion);
+    updateIPAddressDisplay(ip, elementId);
+  } catch (primaryError) {
+    console.warn(`Primary IP fetch failed for ${elementId}:`, primaryError);
+    try {
+      const fallbackIP = await fetchValidIPAddress(fallbackUrl, ipVersion);
+      updateIPAddressDisplay(fallbackIP, elementId);
+    } catch (fallbackError) {
+      console.error(
+        `Fallback IP fetch failed for ${elementId}:`,
+        fallbackError
+      );
+      showIPAddressError(elementId);
+    }
+  }
+}
+
+async function fetchValidIPAddress(url, ipVersion) {
+  const response = await fetch(url);
+  const ip = (await response.text()).trim();
+  if (!isIPAddressValid(ip, ipVersion)) {
+    console.error(`Invalid ${ipVersion} format: ${ip}`);
+    throw new Error(`Invalid ${ipVersion} format: ${ip}`);
+  }
+  return ip;
+}
+
+function isIPAddressValid(ip, version) {
+  const ipv4Pattern = /^(?:\d{1,3}\.){3}\d{1,3}$/;
+  const ipv6Pattern = /^[a-fA-F0-9:]+$/;
+  return version === "IPv4" ? ipv4Pattern.test(ip) : ipv6Pattern.test(ip);
+}
+
+function updateIPAddressDisplay(ip, elementId) {
+  document.getElementById(elementId).textContent = ip;
+  if (elementId === "ip1") {
+    if (previousIP && previousIP !== ip) {
+      notifyIPAddressChange(previousIP, ip);
+    }
+    previousIP = ip;
+  }
+}
+
+function showIPAddressError(elementId) {
+  document.getElementById(elementId).textContent = "Error fetching IP";
 }
 
 // Initial setup
