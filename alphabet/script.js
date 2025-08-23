@@ -1,6 +1,7 @@
 // =========================================================================
 // GLOBAL VARIABLES & CONSTANTS
 // =========================================================================
+import * as utils from "../static/utils.js";
 
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
@@ -9,8 +10,7 @@ const settingsMenu = document.getElementById("settings-menu");
 const languageSelect = document.getElementById("language-select");
 const randomizeCheckbox = document.getElementById("randomize-alphabet");
 const muteButton = document.getElementById("muteButton");
-const fullscreenbtn = document.getElementById("fullscreen-btn");
-const fullscreenIcon = document.getElementById("fullscreen-icon");
+
 
 // --- Application State & Configuration ---
 const urlParams = new URLSearchParams(window.location.search);
@@ -40,7 +40,6 @@ const synth = window.speechSynthesis;
 let utterance = null;
 let retryCount = 0;
 const maxRetries = 10; // Max attempts to fetch voices
-
 
 /**
  * Gets a new random color, avoiding the current and previous colors.
@@ -275,21 +274,6 @@ function toggleMute() {
 }
 
 
-/**
- * Toggles fullscreen mode for the page.
- */
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch((err) => {
-      console.log(
-        `Error attempting to enable full-screen mode: ${err.message}`
-      );
-    });
-  } else {
-    document.exitFullscreen();
-  }
-  settingsMenu.classList.remove("show");
-}
 
 // =========================================================================
 // INITIALIZATION
@@ -299,7 +283,7 @@ function toggleFullscreen() {
 Object.keys(window.alphabets).forEach((langKey) => {
   const option = document.createElement("option");
   option.value = langKey;
-  option.textContent = toTitleCase(langKey);
+  option.textContent = utils.toTitleCase(langKey);
   languageSelect.appendChild(option);
 });
 
@@ -326,7 +310,9 @@ if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
 }
 
 // --- Initialize Fullscreen Icon ---
-document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
+document.fullscreenElement
+  ? utils.setExitFullscreenIcon()
+  : utils.setEnterFullscreenIcon();
 
 // --- Initial Sound on Load ---
 speaker();
@@ -355,7 +341,8 @@ document.addEventListener("keydown", (event) => {
     toggleMute();
   } else if (event.code === "KeyF") {
     event.preventDefault();
-    toggleFullscreen();
+    utils.toggleFullscreen();
+    settingsMenu.classList.remove("show");
   } else if (event.code === "KeyS") {
     event.preventDefault();
     settingsMenu.classList.toggle("show");
@@ -442,23 +429,4 @@ muteButton.addEventListener(
   { passive: false }
 );
 
-// --- Fullscreen Button Listeners ---
-fullscreenbtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  toggleFullscreen();
-});
-fullscreenbtn.addEventListener(
-  "touchstart",
-  (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleFullscreen();
-  },
-  { passive: false }
-);
-
-document.addEventListener("fullscreenchange", () => {
-  const isFullscreen = !!document.fullscreenElement;
-  fullscreenbtn.classList.toggle("fullscreen-active", isFullscreen);
-  isFullscreen ? setExitFullscreenIcon() : setEnterFullscreenIcon();
-});
+utils.updateFullScreenBtn();
