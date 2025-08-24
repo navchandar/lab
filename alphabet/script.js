@@ -309,10 +309,6 @@ if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
   }
 }
 
-// --- Initialize Fullscreen Icon ---
-document.fullscreenElement
-  ? utils.setExitFullscreenIcon()
-  : utils.setEnterFullscreenIcon();
 
 // --- Initial Sound on Load ---
 speaker();
@@ -429,4 +425,5 @@ muteButton.addEventListener(
   { passive: false }
 );
 
+utils.setFullscreenIcon();
 utils.updateFullScreenBtn();

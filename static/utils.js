@@ -35,6 +35,13 @@ export function setExitFullscreenIcon() {
       <path d="M9 3V9H3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
 }
 
+// --- Initialize Fullscreen Icon ---
+export function setFullscreenIcon() {
+  document.fullscreenElement
+    ? setExitFullscreenIcon()
+    : setEnterFullscreenIcon();
+}
+
 /**
  * Toggles fullscreen mode for the page.
  */
@@ -72,4 +79,15 @@ export function updateFullScreenBtn() {
     fullscreenbtn.classList.toggle("fullscreen-active", isFullscreen);
     isFullscreen ? setExitFullscreenIcon() : setEnterFullscreenIcon();
   });
+}
+
+// Function to get the randomize state from localStorage
+export function getIsRandomEnabled() {
+  return localStorage.getItem("randomize") === "true";
+}
+
+// Function to set the randomize state in localStorage
+export function setIsRandom(value) {
+  localStorage.setItem("randomize", value);
+  console.log("Randomize set to:", getIsRandomEnabled());
 }

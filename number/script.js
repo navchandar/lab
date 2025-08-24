@@ -1,14 +1,14 @@
 // =========================
 // Initialization
 // =========================
+import * as utils from "../static/utils.js";
+
 let number = 1;
 let currentColor = null;
 let previousColor = null;
 
 const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
-const fullscreenbtn = document.getElementById("fullscreen-btn");
-const fullscreenIcon = document.getElementById("fullscreen-icon");
 const settings_Menu = document.getElementById("settings-menu");
 let intervalID = null;
 
@@ -167,7 +167,7 @@ function toggleMute() {
 
 function incrementNumber() {
   // Determine which mode to use (random or sequential)
-  const isRandomEnabled = getIsRandomEnabled();
+  const isRandomEnabled = utils.getIsRandomEnabled();
 
   setTimeout(() => {
     if (isRandomEnabled) {
@@ -186,15 +186,10 @@ function incrementNumber() {
   settings_Menu.classList.remove("show");
 }
 
-// Function to get the randomize state from localStorage
-function getIsRandomEnabled() {
-  return localStorage.getItem("randomize") === "true";
-}
-
 // Function to set the randomize state in localStorage
-function setIsRandom(value) {
+function setIsRandomNum(value) {
   localStorage.setItem("randomize", value);
-  console.log("Randomize set to:", getIsRandomEnabled());
+  console.log("Randomize set to:", utils.getIsRandomEnabled());
   if (!value && number !== 1) {
     number = 0;
   }
@@ -254,21 +249,21 @@ function updateSettingsMenu() {
 
   addUnifiedListeners(randomizeCheckbox, {
     click: (e) => {
-      setIsRandom(randomizeCheckbox.checked);
+      setIsRandomNum(randomizeCheckbox.checked);
       e.stopPropagation();
     },
     change: (e) => {
-      setIsRandom(randomizeCheckbox.checked);
+      setIsRandomNum(randomizeCheckbox.checked);
       e.stopPropagation();
     },
     touchstart: (e) => {
-      setIsRandom(randomizeCheckbox.checked);
+      setIsRandomNum(randomizeCheckbox.checked);
       e.preventDefault();
       e.stopPropagation();
     },
   });
 
-  setIsRandom(randomizeCheckbox.checked);
+  setIsRandomNum(randomizeCheckbox.checked);
 
   function handleAutoplayToggle() {
     if (autoplayCheckbox.checked) {
@@ -294,35 +289,6 @@ function updateSettingsMenu() {
       e.stopPropagation();
     },
   });
-}
-
-function setEnterFullscreenIcon() {
-  fullscreenIcon.innerHTML = `
-            <path d="M9 21H3L3 15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M21 15V21H15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M15 3H21V9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
-            <path d="M3 9V3H9" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />`;
-}
-
-function setExitFullscreenIcon() {
-  fullscreenIcon.innerHTML = `
-            <path d="M3 15H9V21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M15 21V15H21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M21 9H15V3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-            <path d="M9 3V9H3" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>`;
-}
-
-function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch((err) => {
-      console.log(
-        `Error attempting to enable full-screen mode: ${err.message}`
-      );
-    });
-  } else {
-    document.exitFullscreen();
-  }
-  settings_Menu.classList.remove("show");
 }
 
 function isInteractiveElement(target) {
@@ -363,7 +329,8 @@ function handleKeydown(event) {
       break;
     case "KeyF":
       event.preventDefault();
-      toggleFullscreen();
+      utils.toggleFullscreen();
+      settings_Menu.classList.remove("show");
       break;
     case "KeyS":
       event.preventDefault();
@@ -392,7 +359,7 @@ function addButtonListeners(button, handler) {
   );
 }
 
-document.fullscreenElement ? setExitFullscreenIcon() : setEnterFullscreenIcon();
+utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
   updateSpeakerOptions();
@@ -402,7 +369,6 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("keydown", handleKeydown);
 
   addButtonListeners(muteButton, toggleMute);
-  addButtonListeners(fullscreenbtn, toggleFullscreen);
 
   document.body.addEventListener("click", (e) => {
     console.log("Clicked on:", e.target);
@@ -422,10 +388,5 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     { passive: false }
   );
-
-  document.addEventListener("fullscreenchange", () => {
-    const isFullscreen = !!document.fullscreenElement;
-    fullscreenbtn.classList.toggle("fullscreen-active", isFullscreen);
-    isFullscreen ? setExitFullscreenIcon() : setEnterFullscreenIcon();
-  });
+  utils.updateFullScreenBtn();
 });
