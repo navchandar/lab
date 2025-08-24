@@ -7,14 +7,14 @@
  * @param {string} str The string to convert.
  * @returns {string} The Title Cased string.
  */
-function toTitleCase(str) {
+export function toTitleCase(str) {
   return str.toLocaleLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 /**
  * Sets the fullscreen button icon to the 'enter fullscreen' state.
  */
-function setEnterFullscreenIcon() {
+export function setEnterFullscreenIcon() {
   const fullscreenIcon = document.getElementById("fullscreen-icon");
   fullscreenIcon.innerHTML = `
       <path d="M9 21H3L3 15" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
@@ -26,7 +26,7 @@ function setEnterFullscreenIcon() {
 /**
  * Sets the fullscreen button icon to the 'exit fullscreen' state.
  */
-function setExitFullscreenIcon() {
+export function setExitFullscreenIcon() {
   const fullscreenIcon = document.getElementById("fullscreen-icon");
   fullscreenIcon.innerHTML = `
       <path d="M3 15H9V21" stroke="lightgray" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
@@ -38,7 +38,7 @@ function setExitFullscreenIcon() {
 /**
  * Toggles fullscreen mode for the page.
  */
-function toggleFullscreen() {
+export function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch((err) => {
       console.log(
@@ -51,7 +51,7 @@ function toggleFullscreen() {
 }
 
 // --- Add Fullscreen Button Listeners ---
-function updateFullScreenBtn() {
+export function updateFullScreenBtn() {
   const fullscreenbtn = document.getElementById("fullscreen-btn");
   fullscreenbtn.addEventListener("click", (e) => {
     e.stopPropagation();
