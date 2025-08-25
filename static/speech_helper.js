@@ -33,7 +33,9 @@ export const TTS = () => {
    */
   function loadVoices({ timeoutMs = 1500, pollIntervalMs = 100 } = {}) {
     return new Promise((resolve) => {
-      if (!isSpeechSupported()) return resolve([]);
+      if (!isSpeechSupported()) {
+        return resolve([]);
+      }
 
       const synth = window.speechSynthesis;
       const existing = synth.getVoices();
@@ -88,7 +90,9 @@ export const TTS = () => {
   function sameLangOrPrefixMatch(voiceLang, desiredLocale) {
     const v = normalizeLangTag(voiceLang).toLowerCase();
     const d = normalizeLangTag(desiredLocale).toLowerCase();
-    if (!v || !d) return false;
+    if (!v || !d) {
+      return false;
+    }
     return v === d || v.startsWith(d.split("-")[0] + "-");
   }
 
@@ -96,9 +100,15 @@ export const TTS = () => {
   function sortVoicesForDebug(voices) {
     const vendorRank = (name = "", uri = "") => {
       const tag = (name + " " + uri).toLowerCase();
-      if (tag.includes("google")) return 1;
-      if (tag.includes("microsoft")) return 2;
-      if (tag.includes("apple") || tag.includes("com.apple")) return 3;
+      if (tag.includes("google")) {
+        return 1;
+      }
+      if (tag.includes("microsoft")) {
+        return 2;
+      }
+      if (tag.includes("apple") || tag.includes("com.apple")) {
+        return 3;
+      }
       return 9; // other vendors
     };
 
@@ -106,19 +116,27 @@ export const TTS = () => {
       // Prefer local voices, then default voice, then vendor rank, then lang, then name
       const localA = a.localService === true ? 0 : 1;
       const localB = b.localService === true ? 0 : 1;
-      if (localA !== localB) return localA - localB;
+      if (localA !== localB) {
+        return localA - localB;
+      }
 
       const defA = a.default ? 0 : 1;
       const defB = b.default ? 0 : 1;
-      if (defA !== defB) return defA - defB;
+      if (defA !== defB) {
+        return defA - defB;
+      }
 
       const vendA = vendorRank(a.name, a.voiceURI);
       const vendB = vendorRank(b.name, b.voiceURI);
-      if (vendA !== vendB) return vendA - vendB;
+      if (vendA !== vendB) {
+        return vendA - vendB;
+      }
 
       const langA = normalizeLangTag(a.lang).toLowerCase();
       const langB = normalizeLangTag(b.lang).toLowerCase();
-      if (langA !== langB) return langA.localeCompare(langB);
+      if (langA !== langB) {
+        return langA.localeCompare(langB);
+      }
 
       return (a.name || "").localeCompare(b.name || "");
     });
@@ -138,7 +156,9 @@ export const TTS = () => {
     locale,
     preferredVendors = ["Google", "Microsoft", "Apple"]
   ) {
-    if (!Array.isArray(voices) || voices.length === 0) return null;
+    if (!Array.isArray(voices) || voices.length === 0) {
+      return null;
+    }
     const normLocale = normalizeLangTag(locale);
     const inLocale = voices.filter((v) =>
       sameLangOrPrefixMatch(v.lang, normLocale)
@@ -176,7 +196,9 @@ export const TTS = () => {
     const exact = voices.find(
       (v) => normalizeLangTag(v.lang).toLowerCase() === normLocale.toLowerCase()
     );
-    if (exact) return exact;
+    if (exact) {
+      return exact;
+    }
 
     const prefix = normLocale.split("-")[0].toLowerCase();
     const byPrefix = voices.find((v) =>
@@ -184,7 +206,9 @@ export const TTS = () => {
         .toLowerCase()
         .startsWith(prefix + "-")
     );
-    if (byPrefix) return byPrefix;
+    if (byPrefix) {
+      return byPrefix;
+    }
 
     return voices[0] || null;
   }
@@ -195,19 +219,25 @@ export const TTS = () => {
   function getElementFromInput(elOrSelector) {
     if (typeof elOrSelector === "string")
       return document.querySelector(elOrSelector);
-    if (elOrSelector && elOrSelector.nodeType === 1) return elOrSelector;
+    if (elOrSelector && elOrSelector.nodeType === 1) {
+      return elOrSelector;
+    }
     return null;
   }
 
   function extractTextContent(el) {
-    if (!el) return "";
+    if (!el) {
+      return "";
+    }
     // You can customize this to ignore hidden elements, ARIA, etc.
     return (el.textContent || "").replace(/\s+/g, " ").trim();
   }
 
   // Optional chunking for very long text (keeps engines stable)
   function splitIntoChunks(text, maxLen = 400) {
-    if (!text || text.length <= maxLen) return [text];
+    if (!text || text.length <= maxLen) {
+      return [text];
+    }
 
     const chunks = [];
     let remaining = text.trim();
@@ -263,7 +293,9 @@ export const TTS = () => {
    * @param {function} [options.onBoundary] // word/char boundary events
    */
   async function speakElement(elOrSelector, options = {}) {
-    if (!isSpeechSupported()) return;
+    if (!isSpeechSupported()) {
+      return;
+    }
 
     const {
       locale = "en-US",
@@ -364,24 +396,36 @@ export const TTS = () => {
   }
 
   function cancel() {
-    if (!isSpeechSupported()) return;
+    if (!isSpeechSupported()) {
+      return;
+    }
     window.speechSynthesis.cancel();
   }
   function pause() {
-    if (!isSpeechSupported()) return;
+    if (!isSpeechSupported()) {
+      return;
+    }
     window.speechSynthesis.pause();
   }
   function resume() {
-    if (!isSpeechSupported()) return;
+    if (!isSpeechSupported()) {
+      return;
+    }
     window.speechSynthesis.resume();
   }
 
   // Optional iOS warm-up helper
   function unlockSpeech() {
-    if (!("speechSynthesis" in window)) return;
+    if (!("speechSynthesis" in window)) {
+      return;
+    }
     try {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(" "));
-    } catch {}
+    } catch {
+      console.error(
+        "[TTS] Web Speech Synthesis API not supported in this browser/device."
+      );
+    }
   }
 
   return {

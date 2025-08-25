@@ -18,7 +18,7 @@ export function toTitleCase(str) {
  * @param {HTMLElement} button - The button element to attach listeners to.
  * @param {callback} handler - The function to execute when the button is activated.
  */
-function addListeners(button, callback) {
+export function addListeners(button, callback) {
   button.addEventListener("click", (e) => {
     e.stopPropagation();
     callback();
