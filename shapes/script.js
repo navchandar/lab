@@ -75,8 +75,6 @@ function updateShape() {
   changeTextColor(currentColor, newShape);
 }
 
-
-
 // =========================
 // Event Listeners
 // =========================
@@ -93,30 +91,28 @@ function handleKeydown(event) {
       event.preventDefault();
       updateShape();
       break;
-    case "KeyM":
-      event.preventDefault();
-      utils.toggleMute();
-      settingsMenu.classList.remove("show");
-      break;
-    case "KeyF":
-      event.preventDefault();
-      utils.toggleFullscreen();
-      settingsMenu.classList.remove("show");
-      break;
-    case "KeyS":
-      event.preventDefault();
-      settingsMenu.classList.toggle("show");
-      break;
-    case "Escape":
-      settingsMenu.classList.remove("show");
-      break;
+    // case "KeyM":
+    //   event.preventDefault();
+    //   utils.toggleMute();
+    //   settingsMenu.classList.remove("show");
+    //   break;
+    // case "KeyF":
+    //   event.preventDefault();
+    //   utils.toggleFullscreen();
+    //   settingsMenu.classList.remove("show");
+    //   break;
+    // case "KeyS":
+    //   event.preventDefault();
+    //   settingsMenu.classList.toggle("show");
+    //   break;
+    // case "Escape":
+    //   settingsMenu.classList.remove("show");
+    //   break;
   }
 }
-
 
 document.addEventListener("DOMContentLoaded", () => {
   shapeElement.style.backgroundColor = "cornflowerblue";
   document.addEventListener("keydown", handleKeydown);
   utils.bodyAction(updateShape);
-
-}
+});
