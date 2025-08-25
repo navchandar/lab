@@ -217,8 +217,9 @@ export const TTS = () => {
   // Text helpers
   // ---------------------------
   function getElementFromInput(elOrSelector) {
-    if (typeof elOrSelector === "string")
+    if (typeof elOrSelector === "string") {
       return document.querySelector(elOrSelector);
+    }
     if (elOrSelector && elOrSelector.nodeType === 1) {
       return elOrSelector;
     }
@@ -265,7 +266,9 @@ export const TTS = () => {
       remaining = remaining.slice(cut).trim();
     }
 
-    if (remaining) chunks.push(remaining);
+    if (remaining) {
+      chunks.push(remaining);
+    }
     return chunks;
   }
 

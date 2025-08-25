@@ -82,6 +82,10 @@ export function toggleFullscreen() {
   }
 }
 
+export function isMuted() {
+  return localStorage.getItem("isMuted") === "true";
+}
+
 /**
  * Toggles Mute button for the page.
  */
@@ -108,9 +112,6 @@ export function updateMuteBtn() {
   muteButton.title = isMuted ? "Unmute button" : "Mute Button";
 }
 
-export function isMuted() {
-  return localStorage.getItem("isMuted") === "true";
-}
 
 // --- Add Fullscreen Button Listeners ---
 export function updateFullScreenBtn() {
