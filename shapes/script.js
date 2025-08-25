@@ -43,6 +43,7 @@ const colors = [
 
 let intervalID = null;
 let currentShapeIndex = 0;
+let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
 
@@ -60,20 +61,41 @@ function changeTextColor(color, label) {
 function updateShape() {
   // Remove current shape class
   shapeElement.className = "";
+  shapeElement.classList.add("shape");
+  let newShape = null;
 
-  // Update index
-  currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+  // Determine which mode to use (random or sequential)
+  const isRandomEnabled = utils.getIsRandomEnabled();
+  if (isRandomEnabled) {
+    let randomIndex;
+    let currentShape = shapes[currentShapeIndex];
+    let previousShape = shapes[previousShapeIndex];
+
+    // Keep picking a random shape until it's not the current or previous one
+    do {
+      randomIndex = Math.floor(Math.random() * shapes.length);
+    } while (
+      shapes[randomIndex] === currentShape ||
+      shapes[randomIndex] === previousShape
+    );
+
+    // Update indices
+    previousShapeIndex = currentShapeIndex;
+    currentShapeIndex = randomIndex;
+  } else {
+    // Update index
+    currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+  }
 
   // Add new shape class
-  const newShape = shapes[currentShapeIndex];
-  shapeElement.classList.add("shape");
+  newShape = shapes[currentShapeIndex];
   shapeElement.classList.add(newShape);
-
   // Apply random background color
   previousColor = currentColor;
   currentColor = utils.getNewColor(colors, previousColor, currentColor);
   shapeElement.style.backgroundColor = currentColor;
   changeTextColor(currentColor, newShape);
+  settingsMenu.classList.remove("show");
 }
 
 function autoplay() {
