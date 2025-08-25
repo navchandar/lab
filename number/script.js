@@ -3,19 +3,22 @@
 // =========================
 import * as utils from "../static/utils.js";
 
+// --- DOM Element References ---
+const numberElement = document.getElementById("number");
+const muteButton = document.getElementById("muteButton");
+const settingsMenu = document.getElementById("settings-menu");
+const settingsBtn = document.getElementById("settings-btn");
+
 let number = 1;
 let currentColor = null;
 let previousColor = null;
 
-const numberElement = document.getElementById("number");
-const muteButton = document.getElementById("muteButton");
-const settingsMenu = document.getElementById("settings-menu");
 let intervalID = null;
 
 const synth = window.speechSynthesis;
 let Locale = null;
 let utterance = null;
-let isMuted = localStorage.getItem("isMuted") === "true";
+let isMuted = utils.isMuted();
 let retryCount = 0;
 const maxRetries = 10;
 
@@ -30,16 +33,11 @@ const colors = [
   "yellow",
 ];
 
-// Set initial mute button icon based on the loaded state
-muteButton.textContent = isMuted ? "🔇" : "🔊";
 // Initial mute button state
 muteButton.disabled = true;
 muteButton.title = "Setting up Speech Synthesis...";
 
 function updateSpeakerOptions() {
-  isMuted = localStorage.getItem("isMuted") === "true";
-  // Set initial mute button icon based on the loaded state
-  muteButton.textContent = isMuted ? "🔇" : "🔊";
   // Initial mute button state
   muteButton.disabled = true;
   muteButton.title = "Setting up Speech Synthesis...";
@@ -135,7 +133,6 @@ function getNewColor() {
 }
 
 function speaker() {
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
   if (utterance && !isMuted) {
     if (synth.speaking) {
       synth.cancel();
@@ -194,7 +191,6 @@ function updateSettingsMenu() {
   // =========================
   // Settings Menu
   // =========================
-  const settingsBtn = document.getElementById("settings-btn");
   const randomizeCheckbox = document.getElementById("randomize");
   const autoplayCheckbox = document.getElementById("autoplay");
 

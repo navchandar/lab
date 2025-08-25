@@ -91,18 +91,21 @@ export function toggleMute() {
   localStorage.setItem("isMuted", isMuted);
   const muteButton = document.getElementById("muteButton");
   muteButton.textContent = isMuted ? "🔇" : "🔊";
-  if (isMuted && synth.speaking) {
-    synth.cancel();
-  }
-  if (!isMuted) {
-    speaker();
-  }
+  // if (isMuted && synth.speaking) {
+  //   synth.cancel();
+  // }
+  // if (!isMuted) {
+  //   speaker();
+  // }
   muteButton.title = isMuted ? "Unmute button" : "Mute Button";
 }
 
 export function updateMuteBtn() {
   const muteButton = document.getElementById("muteButton");
   addListeners(muteButton, toggleMute);
+  let isMuted = isMuted();
+  muteButton.textContent = isMuted ? "🔇" : "🔊";
+  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
 }
 
 export function isMuted() {

@@ -1,6 +1,16 @@
 import * as utils from "../static/utils.js";
 
+// --- DOM Element References ---
+const colorNameEl = document.getElementById("color-name");
+const muteButton = document.getElementById("muteButton");
+const settingsMenu = document.getElementById("settings-menu");
+const settingsBtn = document.getElementById("settings-btn");
+
+// --- Application State & Configuration ---
+
 let currentIndex = 0;
+let intervalID = null;
+
 const urlParam = new URLSearchParams(window.location.search);
 let currentLang = urlParam.get("lang") || "english";
 
@@ -10,15 +20,10 @@ canvas.width = 1;
 canvas.height = 1;
 const ctx = canvas.getContext("2d");
 
-const colorNameEl = document.getElementById("color-name");
-const settingsMenu = document.getElementById("settings-menu");
-const muteButton = document.getElementById("muteButton");
-let intervalID = null;
-
 const synth = window.speechSynthesis;
 let Locale = null;
 let utterance = null;
-let isMuted = localStorage.getItem("isMuted") === "true";
+let isMuted = utils.isMuted();
 let retryCount = 0;
 const maxRetries = 10;
 
@@ -141,7 +146,6 @@ function updateSettingsMenu() {
   // =========================
   // Settings Menu
   // =========================
-  const settingsBtn = document.getElementById("settings-btn");
   const languageSelect = document.getElementById("language-select");
   const randomizeCheckbox = document.getElementById("randomize");
   const autoplayCheckbox = document.getElementById("autoplay");
@@ -207,7 +211,7 @@ function updateSettingsMenu() {
   // Toggle menu visibility
   utils.addListeners(settingsBtn, ()=> {
     settingsMenu.classList.toggle("show");
-  })
+  });
 
   addUnifiedListeners(randomizeCheckbox, {
     click: (e) => {
@@ -254,9 +258,6 @@ function updateSettingsMenu() {
 }
 
 function updateSpeakerOptions() {
-  isMuted = localStorage.getItem("isMuted") === "true";
-  // Set initial mute button icon based on the loaded state
-  muteButton.textContent = isMuted ? "🔇" : "🔊";
   // Initial mute button state
   muteButton.disabled = true;
   muteButton.title = "Setting up Speech Synthesis...";
@@ -342,7 +343,6 @@ function updateSpeakerOptions() {
 }
 
 function speaker() {
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
   if (utterance && !isMuted) {
     if (synth.speaking) {
       synth.cancel();

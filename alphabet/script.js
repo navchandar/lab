@@ -5,11 +5,11 @@ import * as utils from "../static/utils.js";
 
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
-const settingsBtn = document.getElementById("settings-btn");
+const muteButton = document.getElementById("muteButton");
 const settingsMenu = document.getElementById("settings-menu");
+const settingsBtn = document.getElementById("settings-btn");
 const languageSelect = document.getElementById("language-select");
 const randomizeCheckbox = document.getElementById("randomize-alphabet");
-const muteButton = document.getElementById("muteButton");
 
 // --- Application State & Configuration ---
 const urlParams = new URLSearchParams(window.location.search);
@@ -30,7 +30,7 @@ const colors = [
 
 let currentColor = null;
 let previousColor = null;
-let isMuted = localStorage.getItem("isMuted") === "true";
+let isMuted = utils.isMuted();
 let currentIndex = 0;
 let history = []; // Used to prevent immediate repeats in random mode
 
@@ -215,7 +215,6 @@ function populateVoiceList() {
  * Speaks the current character displayed on the screen.
  */
 function speaker() {
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
   if (utterance && !isMuted) {
     if (synth.speaking) {
       synth.cancel(); // Stop any currently playing speech
@@ -246,7 +245,6 @@ Object.keys(window.alphabets).forEach((langKey) => {
 // --- Set Initial Values from URL and LocalStorage ---
 languageSelect.value = lang;
 numberElement.textContent = Alphabet[0];
-muteButton.textContent = isMuted ? "🔇" : "🔊";
 randomizeCheckbox.checked = utils.getIsRandomEnabled();
 
 // --- Initialize Speech Synthesis ---
@@ -286,7 +284,7 @@ function handleKeydown(event) {
       break;
     case "KeyM":
       event.preventDefault();
-      toggleMute();
+      utils.toggleMute();
       settingsMenu.classList.remove("show");
       break;
     case "KeyF":
@@ -359,7 +357,7 @@ utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
   settingsBtn.style.display = "block";
-  
+
   document.addEventListener("keydown", handleKeydown);
   utils.bodyAction(incrementAlphabet);
   utils.updateMuteBtn();
