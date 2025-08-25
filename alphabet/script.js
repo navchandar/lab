@@ -11,7 +11,6 @@ const languageSelect = document.getElementById("language-select");
 const randomizeCheckbox = document.getElementById("randomize-alphabet");
 const muteButton = document.getElementById("muteButton");
 
-
 // --- Application State & Configuration ---
 const urlParams = new URLSearchParams(window.location.search);
 const lang = urlParams.get("lang")?.toLowerCase() || "english";
@@ -51,26 +50,6 @@ function getNewColor() {
     newColor = colors[Math.floor(Math.random() * colors.length)];
   } while (newColor === currentColor || newColor === previousColor);
   return newColor;
-}
-
-// =========================================================================
-// STATE MANAGEMENT (LOCALSTORAGE)
-// =========================================================================
-
-/**
- * Gets the randomize state from localStorage.
- * @returns {boolean} True if randomize is enabled, otherwise false.
- */
-function getIsRandomAlphabetEnabled() {
-  return localStorage.getItem("randomizeAlphabet") === "true";
-}
-
-/**
- * Sets the randomize state in localStorage.
- * @param {boolean} value The new state for the randomize setting.
- */
-function setIsRandomAlphabet(value) {
-  localStorage.setItem("randomizeAlphabet", value);
 }
 
 // =========================================================================
@@ -130,7 +109,7 @@ function getNextRandomChar() {
  * This is the main function that drives the UI change.
  */
 function updateCharacter() {
-  const isRandomAlphabetEnabled = getIsRandomAlphabetEnabled();
+  const isRandomAlphabetEnabled = utils.getIsRandomEnabled();
   let charToDisplay;
 
   // Determine which mode to use (random or sequential)
@@ -273,8 +252,6 @@ function toggleMute() {
   settingsMenu.classList.remove("show");
 }
 
-
-
 // =========================================================================
 // INITIALIZATION
 // =========================================================================
@@ -291,7 +268,7 @@ Object.keys(window.alphabets).forEach((langKey) => {
 languageSelect.value = lang;
 numberElement.textContent = Alphabet[0];
 muteButton.textContent = isMuted ? "🔇" : "🔊";
-randomizeCheckbox.checked = getIsRandomAlphabetEnabled();
+randomizeCheckbox.checked = utils.getIsRandomEnabled();
 
 // --- Initialize Speech Synthesis ---
 if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
@@ -308,7 +285,6 @@ if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
     synth.onvoiceschanged = populateVoiceList;
   }
 }
-
 
 // --- Initial Sound on Load ---
 speaker();
@@ -387,17 +363,17 @@ document
 // --- Randomize Checkbox Listeners ---
 randomizeCheckbox.addEventListener("change", (e) => {
   e.stopPropagation();
-  setIsRandomAlphabet(randomizeCheckbox.checked);
+  utils.setIsRandom(randomizeCheckbox.checked);
 });
 randomizeCheckbox.addEventListener("click", (e) => {
   e.stopPropagation();
-  setIsRandomAlphabet(randomizeCheckbox.checked);
+  utils.setIsRandom(randomizeCheckbox.checked);
 });
 randomizeCheckbox.addEventListener(
   "touchstart",
   (e) => {
     e.stopPropagation();
-    setIsRandomAlphabet(randomizeCheckbox.checked);
+    utils.setIsRandom(randomizeCheckbox.checked);
   },
   { passive: false }
 );

@@ -81,12 +81,18 @@ export function updateFullScreenBtn() {
   });
 }
 
-// Function to get the randomize state from localStorage
+/**
+ * Gets the randomize state from localStorage.
+ * @returns {boolean} True if randomize is enabled, otherwise false.
+ */
 export function getIsRandomEnabled() {
   return localStorage.getItem("randomize") === "true";
 }
 
-// Function to set the randomize state in localStorage
+/**
+ * Saves the randomize state in localStorage.
+ * @param {boolean} value The new state for the randomize setting.
+ */
 export function setIsRandom(value) {
   localStorage.setItem("randomize", value);
   console.log("Randomize set to:", getIsRandomEnabled());
