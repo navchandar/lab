@@ -126,6 +126,7 @@ function updateSpeakerOptions() {
 // =========================
 
 function speaker() {
+  isMute = utils.isMuted();
   if (utterance && !isMute) {
     if (synth.speaking) {
       synth.cancel();

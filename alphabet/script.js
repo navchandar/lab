@@ -203,6 +203,7 @@ function populateVoiceList() {
  * Speaks the current character displayed on the screen.
  */
 function speaker() {
+  isMute = utils.isMuted();
   if (utterance && !isMute) {
     if (synth.speaking) {
       synth.cancel(); // Stop any currently playing speech
@@ -331,14 +332,7 @@ randomizeCheckbox.addEventListener(
   },
   { passive: false }
 );
-document.getElementById("randomize-label").addEventListener(
-  "touchstart",
-  (e) => {
-    randomizeCheckbox.click();
-    e.stopPropagation();
-  },
-  { passive: false }
-);
+
 
 utils.setFullscreenIcon();
 
