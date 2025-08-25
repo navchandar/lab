@@ -4,11 +4,11 @@ import { TTS } from "../static/speech_helper.js";
 // --- DOM Element References ---
 const shapeElement = document.getElementById("shape");
 const shapeNameElement = document.getElementById("shapename");
-const muteButton = document.getElementById("muteButton");
 const settingsMenu = document.getElementById("settings-menu");
 const settingsBtn = document.getElementById("settings-btn");
 
 const ttsInstance = TTS();
+ttsInstance.unlockSpeech();
 
 // List of shapes from 1 to 10 sides
 const shapes = [
@@ -49,6 +49,7 @@ let currentShapeIndex = 0;
 let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
+let isMute = utils.isMuted();
 
 function changeTextColor(color, label) {
   shapeNameElement.classList.add("fade-out");
@@ -57,7 +58,9 @@ function changeTextColor(color, label) {
     shapeNameElement.textContent = label;
     shapeNameElement.classList.remove("fade-out");
     // Speak the shape name
-    ttsInstance.speakElement(shapeNameElement);
+    if (!utils.isMuted()) {
+      ttsInstance.speakElement(shapeNameElement);
+    }
   }, 700);
   console.log("Updated text content to: " + label);
 }
@@ -161,6 +164,11 @@ function handleKeydown(event) {
       event.preventDefault();
       utils.toggleMute();
       settingsMenu.classList.remove("show");
+      if (utils.isMuted()) {
+        ttsInstance.cancel();
+      } else {
+        ttsInstance.speakElement(shapeNameElement);
+      }
       break;
     case "KeyF":
       event.preventDefault();
@@ -188,4 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
   utils.bodyAction(updateShape);
   utils.updateMuteBtn();
   utils.updateFullScreenBtn();
+  if (!utils.isMuted()) {
+    ttsInstance.speakElement(shapeNameElement);
+  }
 });

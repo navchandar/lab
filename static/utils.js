@@ -128,12 +128,6 @@ export function toggleMute() {
   localStorage.setItem("isMuted", isMute);
   const muteButton = document.getElementById("muteButton");
   muteButton.textContent = isMute ? "🔇" : "🔊";
-  // if (isMute && synth.speaking) {
-  //   synth.cancel();
-  // }
-  // if (!isMute) {
-  //   speaker();
-  // }
   muteButton.title = isMute ? "Unmute button" : "Mute Button";
 }
 

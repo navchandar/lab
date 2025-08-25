@@ -302,7 +302,7 @@ export const TTS = () => {
 
     const {
       locale = "en-US",
-      rate = 1,
+      rate = 0.9,
       pitch = 1,
       volume = 1,
       preferredVendors = ["Google", "Microsoft", "Apple"],
@@ -354,8 +354,9 @@ export const TTS = () => {
         findPreferredVoice(allVoices, locale, preferredVendors) ||
         findFallbackVoice(allVoices, locale);
     }
-
-    if (!voice) {
+    if (voice) {
+      console.log(`[TTS] Selected Voice: ${voice}`);
+    } else {
       console.warn("[TTS] Could not select any voice. Aborting.");
       return;
     }
