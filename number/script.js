@@ -124,13 +124,6 @@ function updateSpeakerOptions() {
 // =========================
 // Utility Functions
 // =========================
-function getNewColor() {
-  let newColor;
-  do {
-    newColor = colors[Math.floor(Math.random() * colors.length)];
-  } while (newColor === currentColor || newColor === previousColor);
-  return newColor;
-}
 
 function speaker() {
   if (utterance && !isMute) {
@@ -154,6 +147,7 @@ function incrementNumber() {
 
   setTimeout(() => {
     if (isRandomEnabled) {
+      // select random number between 1 and 100.
       const randomValue = Math.floor(Math.random() * 100) + 1;
       numberElement.textContent = randomValue;
     } else {
@@ -161,7 +155,7 @@ function incrementNumber() {
       numberElement.textContent = number;
     }
     previousColor = currentColor;
-    currentColor = getNewColor();
+    currentColor = utils.getNewColor(colors, previousColor, currentColor);
     numberElement.style.color = currentColor;
     speaker();
   }, 200);

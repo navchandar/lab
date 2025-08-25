@@ -53,13 +53,17 @@ body {
     display: block;
     opacity: 1;
     transition: all 1s ease-in-out;
+    cursor: pointer;
     color: black;
     font-size: 2em;
+    user-select: none;
     text-align: center;
+    text-transform: uppercase;
+    word-wrap: break-word;
     text-shadow: rgba(255, 255, 255, 0.4) 5px 5px 5px, rgba(0, 0, 0, 0.4) -2px -2px 5px;
 }
 
-.caption.fade-out {
+.fade-out {
     opacity: 0;
     transition: all 1s ease-in-out;
     color: transparent;

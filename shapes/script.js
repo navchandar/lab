@@ -1,5 +1,11 @@
+import * as utils from "../static/utils.js";
+
+// --- DOM Element References ---
 const shapeElement = document.getElementById("shape");
 const shapeNameElement = document.getElementById("shapename");
+const muteButton = document.getElementById("muteButton");
+const settingsMenu = document.getElementById("settings-menu");
+const settingsBtn = document.getElementById("settings-btn");
 
 // List of shapes from 1 to 10 sides
 const shapes = [
@@ -39,14 +45,6 @@ let currentShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
 
-function getNewColor() {
-  let newColor;
-  do {
-    newColor = colors[Math.floor(Math.random() * colors.length)];
-  } while (newColor === currentColor || newColor === previousColor);
-  return newColor;
-}
-
 function changeTextColor(color, label) {
   shapeNameElement.classList.add("fade-out");
   // Wait for fade-out to complete, then change text and fade in
@@ -72,19 +70,53 @@ function updateShape() {
 
   // Apply random background color
   previousColor = currentColor;
-  currentColor = getNewColor();
+  currentColor = utils.getNewColor(colors, previousColor, currentColor);
   shapeElement.style.backgroundColor = currentColor;
-  changeTextColor(currentColor, newShape.toUpperCase());
+  changeTextColor(currentColor, newShape);
 }
 
-// Initial setup
-shapeElement.style.backgroundColor = "cornflowerblue";
 
-// Add click/touch event listener
-document.body.addEventListener("pointerup", updateShape);
-document.addEventListener("keydown", (event) => {
-  if (event.code === "Space" || event.code === "Enter") {
-    event.preventDefault(); // Prevent scrolling on Space
-    updateShape();
+
+// =========================
+// Event Listeners
+// =========================
+function handleKeydown(event) {
+  const target = event.target;
+
+  switch (event.code) {
+    case "Space":
+    case "Enter":
+      // Ignore key presses if focused on an interactive element
+      if (utils.isInteractiveElement(target)) {
+        return;
+      }
+      event.preventDefault();
+      updateShape();
+      break;
+    case "KeyM":
+      event.preventDefault();
+      utils.toggleMute();
+      settingsMenu.classList.remove("show");
+      break;
+    case "KeyF":
+      event.preventDefault();
+      utils.toggleFullscreen();
+      settingsMenu.classList.remove("show");
+      break;
+    case "KeyS":
+      event.preventDefault();
+      settingsMenu.classList.toggle("show");
+      break;
+    case "Escape":
+      settingsMenu.classList.remove("show");
+      break;
   }
-});
+}
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  shapeElement.style.backgroundColor = "cornflowerblue";
+  document.addEventListener("keydown", handleKeydown);
+  utils.bodyAction(updateShape);
+
+}

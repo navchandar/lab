@@ -40,18 +40,6 @@ let utterance = null;
 let retryCount = 0;
 const maxRetries = 10; // Max attempts to fetch voices
 
-/**
- * Gets a new random color, avoiding the current and previous colors.
- * @returns {string} A new color name.
- */
-function getNewColor() {
-  let newColor;
-  do {
-    newColor = colors[Math.floor(Math.random() * colors.length)];
-  } while (newColor === currentColor || newColor === previousColor);
-  return newColor;
-}
-
 // =========================================================================
 // CORE APPLICATION LOGIC
 // =========================================================================
@@ -126,7 +114,7 @@ function updateCharacter() {
 
   // Change and apply a new color
   previousColor = currentColor;
-  currentColor = getNewColor();
+  currentColor = utils.getNewColor(colors, previousColor, currentColor);
   numberElement.style.color = currentColor;
 
   // Speak the new character
@@ -301,7 +289,6 @@ function handleKeydown(event) {
       break;
   }
 }
-
 
 // Toggle menu visibility
 utils.addListeners(settingsBtn, () => {

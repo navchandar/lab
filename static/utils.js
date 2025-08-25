@@ -112,7 +112,6 @@ export function updateMuteBtn() {
   muteButton.title = isMute ? "Unmute button" : "Mute Button";
 }
 
-
 // --- Add Fullscreen Button Listeners ---
 export function updateFullScreenBtn() {
   const fullscreenbtn = document.getElementById("fullscreen-btn");
@@ -178,4 +177,16 @@ export function bodyAction(callback) {
     },
     { passive: false }
   );
+}
+
+/**
+ * Gets a new random color, avoiding the current and previous colors.
+ * @returns {string} A new color name from the given list.
+ */
+export function getNewColor(colorsList, previousColor, currentColor) {
+  let newColor;
+  do {
+    newColor = colorsList[Math.floor(Math.random() * colorsList.length)];
+  } while (newColor === currentColor || newColor === previousColor);
+  return newColor;
 }

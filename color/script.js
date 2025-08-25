@@ -74,12 +74,17 @@ function changeBodyColor(color) {
 function changeTextColor(color, label) {
   const { textColor, textShadow } = getTextStyleForBrightness(color);
 
-  colorNameEl.style.color = textColor;
-  colorNameEl.style.textShadow = textShadow;
-  colorNameEl.textContent = label;
+  colorNameEl.classList.add("fade-out");
+  // Wait for fade-out to complete, then change text and fade in
+  setTimeout(() => {
+    colorNameEl.style.color = textColor;
+    colorNameEl.style.textShadow = textShadow;
+    colorNameEl.textContent = label;
+    colorNameEl.classList.remove("fade-out");
+    speaker();
+  }, 700);
   console.log("Updated text content to: " + label);
   console.log("Updated text color to: " + textColor);
-  speaker();
 }
 
 const lastColors = [];
@@ -131,7 +136,6 @@ function updateColor() {
   }
   settingsMenu.classList.remove("show");
 }
-
 
 function autoplay() {
   if (intervalID) {
@@ -209,7 +213,7 @@ function updateSettingsMenu() {
   });
 
   // Toggle menu visibility
-  utils.addListeners(settingsBtn, ()=> {
+  utils.addListeners(settingsBtn, () => {
     settingsMenu.classList.toggle("show");
   });
 
@@ -357,7 +361,6 @@ function speaker() {
     console.warn("Speech API not initialized. Cannot speak.");
   }
 }
-
 
 // =========================
 // Event Listeners
