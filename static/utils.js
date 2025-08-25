@@ -91,25 +91,25 @@ export function isMuted() {
  */
 export function toggleMute() {
   // Get the value and and change it
-  let isMuted = !isMuted();
-  localStorage.setItem("isMuted", isMuted);
+  let isMute = !isMuted();
+  localStorage.setItem("isMuted", isMute);
   const muteButton = document.getElementById("muteButton");
-  muteButton.textContent = isMuted ? "🔇" : "🔊";
-  // if (isMuted && synth.speaking) {
+  muteButton.textContent = isMute ? "🔇" : "🔊";
+  // if (isMute && synth.speaking) {
   //   synth.cancel();
   // }
-  // if (!isMuted) {
+  // if (!isMute) {
   //   speaker();
   // }
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
+  muteButton.title = isMute ? "Unmute button" : "Mute Button";
 }
 
 export function updateMuteBtn() {
   const muteButton = document.getElementById("muteButton");
   addListeners(muteButton, toggleMute);
-  let isMuted = isMuted();
-  muteButton.textContent = isMuted ? "🔇" : "🔊";
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
+  let isMute = isMuted();
+  muteButton.textContent = isMute ? "🔇" : "🔊";
+  muteButton.title = isMute ? "Unmute button" : "Mute Button";
 }
 
 

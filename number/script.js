@@ -18,7 +18,7 @@ let intervalID = null;
 const synth = window.speechSynthesis;
 let Locale = null;
 let utterance = null;
-let isMuted = utils.isMuted();
+let isMute = utils.isMuted();
 let retryCount = 0;
 const maxRetries = 10;
 
@@ -133,7 +133,7 @@ function getNewColor() {
 }
 
 function speaker() {
-  if (utterance && !isMuted) {
+  if (utterance && !isMute) {
     if (synth.speaking) {
       synth.cancel();
     }

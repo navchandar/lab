@@ -30,7 +30,7 @@ const colors = [
 
 let currentColor = null;
 let previousColor = null;
-let isMuted = utils.isMuted();
+let isMute = utils.isMuted();
 let currentIndex = 0;
 let history = []; // Used to prevent immediate repeats in random mode
 
@@ -215,7 +215,7 @@ function populateVoiceList() {
  * Speaks the current character displayed on the screen.
  */
 function speaker() {
-  if (utterance && !isMuted) {
+  if (utterance && !isMute) {
     if (synth.speaking) {
       synth.cancel(); // Stop any currently playing speech
     }
