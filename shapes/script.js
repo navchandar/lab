@@ -1,4 +1,5 @@
 import * as utils from "../static/utils.js";
+import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
 const shapeElement = document.getElementById("shape");
@@ -6,6 +7,8 @@ const shapeNameElement = document.getElementById("shapename");
 const muteButton = document.getElementById("muteButton");
 const settingsMenu = document.getElementById("settings-menu");
 const settingsBtn = document.getElementById("settings-btn");
+
+const ttsInstance = TTS();
 
 // List of shapes from 1 to 10 sides
 const shapes = [
@@ -53,9 +56,10 @@ function changeTextColor(color, label) {
   setTimeout(() => {
     shapeNameElement.textContent = label;
     shapeNameElement.classList.remove("fade-out");
+    // Speak the shape name
+    ttsInstance.speakElement(shapeNameElement);
   }, 700);
   console.log("Updated text content to: " + label);
-  // speaker();
 }
 
 function updateShape() {
@@ -172,6 +176,8 @@ function handleKeydown(event) {
       break;
   }
 }
+
+utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
   settingsBtn.style.display = "block";
