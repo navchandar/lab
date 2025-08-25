@@ -9,7 +9,7 @@ let previousColor = null;
 
 const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
-const settings_Menu = document.getElementById("settings-menu");
+const settingsMenu = document.getElementById("settings-menu");
 let intervalID = null;
 
 const synth = window.speechSynthesis;
@@ -151,20 +151,6 @@ function speaker() {
   }
 }
 
-function toggleMute() {
-  isMuted = !isMuted;
-  localStorage.setItem("isMuted", isMuted);
-  muteButton.textContent = isMuted ? "🔇" : "🔊";
-  if (isMuted && synth.speaking) {
-    synth.cancel();
-  }
-  if (!isMuted) {
-    speaker();
-  }
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
-  settings_Menu.classList.remove("show");
-}
-
 function incrementNumber() {
   // Determine which mode to use (random or sequential)
   const isRandomEnabled = utils.getIsRandomEnabled();
@@ -183,7 +169,7 @@ function incrementNumber() {
     speaker();
   }, 200);
 
-  settings_Menu.classList.remove("show");
+  settingsMenu.classList.remove("show");
 }
 
 // Function to set the randomize state in localStorage
@@ -209,7 +195,6 @@ function updateSettingsMenu() {
   // Settings Menu
   // =========================
   const settingsBtn = document.getElementById("settings-btn");
-  const settingsMenu = document.getElementById("settings-menu");
   const randomizeCheckbox = document.getElementById("randomize");
   const autoplayCheckbox = document.getElementById("autoplay");
 
@@ -230,21 +215,8 @@ function updateSettingsMenu() {
   }
 
   // Toggle menu visibility
-  addUnifiedListeners(settingsBtn, {
-    click: (e) => {
-      e.stopPropagation();
-      settingsMenu.classList.toggle("show");
-    },
-    touchstart: (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      settingsMenu.classList.toggle("show");
-    },
-  });
-
-  // Show settings button after DOM is ready
-  window.addEventListener("DOMContentLoaded", () => {
-    settingsBtn.style.display = "block";
+  utils.addListeners(settingsBtn, () => {
+    settingsMenu.classList.toggle("show");
   });
 
   addUnifiedListeners(randomizeCheckbox, {
@@ -291,22 +263,6 @@ function updateSettingsMenu() {
   });
 }
 
-function isInteractiveElement(target) {
-  const selectors = [
-    "a",
-    "button",
-    "svg",
-    "path",
-    "input",
-    "label",
-    "select",
-    "textarea",
-    "#settings-menu",
-    ".allow-click",
-  ];
-  return target.closest(selectors.join(","));
-}
-
 // =========================
 // Event Listeners
 // =========================
@@ -317,7 +273,7 @@ function handleKeydown(event) {
     case "Space":
     case "Enter":
       // Ignore key presses if focused on an interactive element
-      if (isInteractiveElement(target)) {
+      if (utils.isInteractiveElement(target)) {
         return;
       }
       event.preventDefault();
@@ -325,68 +281,34 @@ function handleKeydown(event) {
       break;
     case "KeyM":
       event.preventDefault();
-      toggleMute();
+      utils.toggleMute();
+      settingsMenu.classList.remove("show");
       break;
     case "KeyF":
       event.preventDefault();
       utils.toggleFullscreen();
-      settings_Menu.classList.remove("show");
+      settingsMenu.classList.remove("show");
       break;
     case "KeyS":
       event.preventDefault();
-      settings_Menu.classList.toggle("show");
+      settingsMenu.classList.toggle("show");
       break;
     case "Escape":
-      settings_Menu.classList.remove("show");
+      settingsMenu.classList.remove("show");
       break;
   }
-}
-
-function addButtonListeners(button, handler) {
-  button.addEventListener("click", (e) => {
-    e.stopPropagation();
-    handler();
-  });
-
-  button.addEventListener(
-    "touchstart",
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      handler();
-    },
-    { passive: false }
-  );
 }
 
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
+  settingsBtn.style.display = "block";
   updateSpeakerOptions();
   speaker();
   updateSettingsMenu();
 
   document.addEventListener("keydown", handleKeydown);
-
-  addButtonListeners(muteButton, toggleMute);
-
-  document.body.addEventListener("click", (e) => {
-    console.log("Clicked on:", e.target);
-    if (!isInteractiveElement(e.target)) {
-      incrementNumber();
-    }
-  });
-
-  document.body.addEventListener(
-    "touchstart",
-    (e) => {
-      console.log("Clicked on:", e.target);
-      if (!isInteractiveElement(e.target)) {
-        e.preventDefault();
-        incrementNumber();
-      }
-    },
-    { passive: false }
-  );
+  utils.bodyAction(incrementNumber);
+  utils.updateMuteBtn();
   utils.updateFullScreenBtn();
 });

@@ -12,6 +12,31 @@ export function toTitleCase(str) {
 }
 
 /**
+ * Adds event listeners to a button for both click and touchstart events.
+ * Ensures that the provided handler is called without triggering parent event handlers.
+ *
+ * @param {HTMLElement} button - The button element to attach listeners to.
+ * @param {callback} handler - The function to execute when the button is activated.
+ */
+function addListeners(button, callback) {
+  button.addEventListener("click", (e) => {
+    e.stopPropagation();
+    callback();
+  });
+
+  // Add a touchstart event listener for mobile devices
+  button.addEventListener(
+    "touchstart",
+    (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      callback();
+    },
+    { passive: false }
+  );
+}
+
+/**
  * Sets the fullscreen button icon to the 'enter fullscreen' state.
  */
 export function setEnterFullscreenIcon() {
@@ -57,22 +82,37 @@ export function toggleFullscreen() {
   }
 }
 
+/**
+ * Toggles Mute button for the page.
+ */
+export function toggleMute() {
+  // Get the value and and change it
+  let isMuted = !isMuted();
+  localStorage.setItem("isMuted", isMuted);
+  const muteButton = document.getElementById("muteButton");
+  muteButton.textContent = isMuted ? "🔇" : "🔊";
+  if (isMuted && synth.speaking) {
+    synth.cancel();
+  }
+  if (!isMuted) {
+    speaker();
+  }
+  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
+}
+
+export function updateMuteBtn() {
+  const muteButton = document.getElementById("muteButton");
+  addListeners(muteButton, toggleMute);
+}
+
+export function isMuted() {
+  return localStorage.getItem("isMuted") === "true";
+}
+
 // --- Add Fullscreen Button Listeners ---
 export function updateFullScreenBtn() {
   const fullscreenbtn = document.getElementById("fullscreen-btn");
-  fullscreenbtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    toggleFullscreen();
-  });
-  fullscreenbtn.addEventListener(
-    "touchstart",
-    (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleFullscreen();
-    },
-    { passive: false }
-  );
+  addListeners(fullscreenbtn, toggleFullscreen);
 
   document.addEventListener("fullscreenchange", () => {
     const isFullscreen = !!document.fullscreenElement;
@@ -96,4 +136,42 @@ export function getIsRandomEnabled() {
 export function setIsRandom(value) {
   localStorage.setItem("randomize", value);
   console.log("Randomize set to:", getIsRandomEnabled());
+}
+
+export function isInteractiveElement(target) {
+  const selectors = [
+    "a",
+    "button",
+    "svg",
+    "path",
+    "input",
+    "label",
+    "select",
+    "option",
+    "textarea",
+    "#settings-menu",
+    ".allow-click",
+  ];
+  return target.closest(selectors.join(","));
+}
+
+export function bodyAction(callback) {
+  document.body.addEventListener("click", (e) => {
+    console.log("Clicked on:", e.target);
+    if (!isInteractiveElement(e.target)) {
+      callback();
+    }
+  });
+
+  document.body.addEventListener(
+    "touchstart",
+    (e) => {
+      console.log("Clicked on:", e.target);
+      if (!isInteractiveElement(e.target)) {
+        e.preventDefault();
+        callback();
+      }
+    },
+    { passive: false }
+  );
 }

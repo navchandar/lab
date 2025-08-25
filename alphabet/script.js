@@ -232,27 +232,6 @@ function speaker() {
 }
 
 // =========================================================================
-// UI CONTROL FUNCTIONS (MUTE, FULLSCREEN, SETTINGS)
-// =========================================================================
-
-/**
- * Toggles the mute state on/off.
- */
-function toggleMute() {
-  isMuted = !isMuted;
-  localStorage.setItem("isMuted", isMuted);
-  muteButton.textContent = isMuted ? "🔇" : "🔊";
-  if (isMuted && synth.speaking) {
-    synth.cancel();
-  }
-  if (!isMuted) {
-    speaker(); // Speak immediately on unmute
-  }
-  muteButton.title = isMuted ? "Unmute button" : "Mute Button";
-  settingsMenu.classList.remove("show");
-}
-
-// =========================================================================
 // INITIALIZATION
 // =========================================================================
 
@@ -292,53 +271,43 @@ speaker();
 // =========================================================================
 // EVENT LISTENERS
 // =========================================================================
+function handleKeydown(event) {
+  const target = event.target;
 
-// --- General Body & Keyboard Listeners ---
-document.body.addEventListener("click", incrementAlphabet);
-document.body.addEventListener(
-  "touchstart",
-  (e) => {
-    e.preventDefault();
-    incrementAlphabet();
-  },
-  { passive: false }
-);
-
-document.addEventListener("keydown", (event) => {
-  if (event.code === "Space" || event.code === "Enter") {
-    event.preventDefault();
-    incrementAlphabet();
-  } else if (event.code === "KeyM") {
-    event.preventDefault();
-    toggleMute();
-  } else if (event.code === "KeyF") {
-    event.preventDefault();
-    utils.toggleFullscreen();
-    settingsMenu.classList.remove("show");
-  } else if (event.code === "KeyS") {
-    event.preventDefault();
-    settingsMenu.classList.toggle("show");
-  } else if (event.code === "Escape") {
-    settingsMenu.classList.remove("show");
+  switch (event.code) {
+    case "Space":
+    case "Enter":
+      // Ignore key presses if focused on an interactive element
+      if (utils.isInteractiveElement(target)) {
+        return;
+      }
+      event.preventDefault();
+      incrementAlphabet();
+      break;
+    case "KeyM":
+      event.preventDefault();
+      toggleMute();
+      settingsMenu.classList.remove("show");
+      break;
+    case "KeyF":
+      event.preventDefault();
+      utils.toggleFullscreen();
+      settingsMenu.classList.remove("show");
+      break;
+    case "KeyS":
+      event.preventDefault();
+      settingsMenu.classList.toggle("show");
+      break;
+    case "Escape":
+      settingsMenu.classList.remove("show");
+      break;
   }
-});
+}
 
-// --- Settings Menu Listeners ---
-settingsBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
+
+// Toggle menu visibility
+utils.addListeners(settingsBtn, () => {
   settingsMenu.classList.toggle("show");
-});
-settingsBtn.addEventListener(
-  "touchstart",
-  (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    settingsMenu.classList.toggle("show");
-  },
-  { passive: false }
-);
-window.addEventListener("DOMContentLoaded", () => {
-  settingsBtn.style.display = "block";
 });
 
 // --- Language Select Listeners ---
@@ -386,20 +355,13 @@ document.getElementById("randomize-label").addEventListener(
   { passive: false }
 );
 
-// --- Mute Button Listeners ---
-muteButton.addEventListener("click", (e) => {
-  e.stopPropagation();
-  toggleMute();
-});
-muteButton.addEventListener(
-  "touchstart",
-  (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    toggleMute();
-  },
-  { passive: false }
-);
-
 utils.setFullscreenIcon();
-utils.updateFullScreenBtn();
+
+document.addEventListener("DOMContentLoaded", () => {
+  settingsBtn.style.display = "block";
+  
+  document.addEventListener("keydown", handleKeydown);
+  utils.bodyAction(incrementAlphabet);
+  utils.updateMuteBtn();
+  utils.updateFullScreenBtn();
+});
