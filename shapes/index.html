@@ -26,6 +26,51 @@
       <label id="shapename" for="shape" class="caption">Line</label>
     </div>
 
+    <button
+      id="muteButton"
+      aria-label="Toggle mute"
+      disabled
+      title="Toggle sound"
+    ></button>
+
+    <button
+      id="fullscreen-btn"
+      aria-label="Toggle fullscreen mode"
+      title="Toggle fullscreen"
+    >
+      <svg
+        id="fullscreen-icon"
+        fill="none"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      ></svg>
+    </button>
+
+    <!-- Settings Button -->
+    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+      <img
+        src="../static/icons/settings.svg"
+        width="24"
+        height="24"
+        alt="Settings"
+        aria-hidden="true"
+      />
+    </button>
+
+    <!-- Overlay Menu -->
+    <div id="settings-menu">
+      <div class="randomize-checkbox">
+        <label for="randomize" id="randomize-label">Randomize Shapes:</label>
+        <input type="checkbox" id="randomize" />
+      </div>
+      <div class="autoplay-checkbox">
+        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+        <input type="checkbox" id="autoplay" />
+      </div>
+    </div>
+
     <script type="module" src="script.js"></script>
   </body>
 </html>

@@ -41,6 +41,7 @@ const colors = [
   "purple",
 ];
 
+let intervalID = null;
 let currentShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
@@ -75,6 +76,45 @@ function updateShape() {
   changeTextColor(currentColor, newShape);
 }
 
+function autoplay() {
+  if (intervalID) {
+    clearInterval(intervalID);
+  }
+  updateShape();
+  intervalID = setInterval(() => {
+    updateShape();
+  }, 5000);
+}
+
+function updateSettingsMenu() {
+  // =========================
+  // Settings Menu
+  // =========================
+  const randomizeCheckbox = document.getElementById("randomize");
+  const autoplayCheckbox = document.getElementById("autoplay");
+
+  // Toggle menu visibility
+  utils.addListeners(settingsBtn, () => {
+    settingsMenu.classList.toggle("show");
+  });
+
+  utils.setIsRandom(randomizeCheckbox.checked);
+  utils.addUnifiedListeners(randomizeCheckbox, () => {
+    utils.setIsRandom(randomizeCheckbox.checked);
+  });
+
+  function handleAutoplayToggle() {
+    if (autoplayCheckbox.checked) {
+      autoplay();
+    } else {
+      clearInterval(intervalID);
+      updateShape();
+    }
+  }
+
+  utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
+}
+
 // =========================
 // Event Listeners
 // =========================
@@ -91,28 +131,33 @@ function handleKeydown(event) {
       event.preventDefault();
       updateShape();
       break;
-    // case "KeyM":
-    //   event.preventDefault();
-    //   utils.toggleMute();
-    //   settingsMenu.classList.remove("show");
-    //   break;
-    // case "KeyF":
-    //   event.preventDefault();
-    //   utils.toggleFullscreen();
-    //   settingsMenu.classList.remove("show");
-    //   break;
-    // case "KeyS":
-    //   event.preventDefault();
-    //   settingsMenu.classList.toggle("show");
-    //   break;
-    // case "Escape":
-    //   settingsMenu.classList.remove("show");
-    //   break;
+    case "KeyM":
+      event.preventDefault();
+      utils.toggleMute();
+      settingsMenu.classList.remove("show");
+      break;
+    case "KeyF":
+      event.preventDefault();
+      utils.toggleFullscreen();
+      settingsMenu.classList.remove("show");
+      break;
+    case "KeyS":
+      event.preventDefault();
+      settingsMenu.classList.toggle("show");
+      break;
+    case "Escape":
+      settingsMenu.classList.remove("show");
+      break;
   }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  settingsBtn.style.display = "block";
+  updateSettingsMenu();
+
   shapeElement.style.backgroundColor = "cornflowerblue";
   document.addEventListener("keydown", handleKeydown);
   utils.bodyAction(updateShape);
+  utils.updateMuteBtn();
+  utils.updateFullScreenBtn();
 });

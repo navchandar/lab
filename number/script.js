@@ -177,6 +177,7 @@ function autoplay() {
   if (intervalID) {
     clearInterval(intervalID);
   }
+  incrementNumber();
   intervalID = setInterval(() => {
     incrementNumber();
   }, 5000);
@@ -189,44 +190,15 @@ function updateSettingsMenu() {
   const randomizeCheckbox = document.getElementById("randomize");
   const autoplayCheckbox = document.getElementById("autoplay");
 
-  function addUnifiedListeners(
-    element,
-    handlers,
-    options = { passive: false }
-  ) {
-    if (handlers.click) {
-      element.addEventListener("click", handlers.click);
-    }
-    if (handlers.touchstart) {
-      element.addEventListener("touchstart", handlers.touchstart, options);
-    }
-    if (handlers.change) {
-      element.addEventListener("change", handlers.change);
-    }
-  }
-
   // Toggle menu visibility
   utils.addListeners(settingsBtn, () => {
     settingsMenu.classList.toggle("show");
   });
 
-  addUnifiedListeners(randomizeCheckbox, {
-    click: (e) => {
-      setIsRandomNum(randomizeCheckbox.checked);
-      e.stopPropagation();
-    },
-    change: (e) => {
-      setIsRandomNum(randomizeCheckbox.checked);
-      e.stopPropagation();
-    },
-    touchstart: (e) => {
-      setIsRandomNum(randomizeCheckbox.checked);
-      e.preventDefault();
-      e.stopPropagation();
-    },
-  });
-
   setIsRandomNum(randomizeCheckbox.checked);
+  utils.addUnifiedListeners(randomizeCheckbox, () => {
+    setIsRandomNum(randomizeCheckbox.checked);
+  });
 
   function handleAutoplayToggle() {
     if (autoplayCheckbox.checked) {
@@ -236,22 +208,7 @@ function updateSettingsMenu() {
       incrementNumber();
     }
   }
-
-  addUnifiedListeners(autoplayCheckbox, {
-    click: (e) => {
-      handleAutoplayToggle();
-      e.stopPropagation();
-    },
-    change: (e) => {
-      handleAutoplayToggle();
-      e.stopPropagation();
-    },
-    touchstart: (e) => {
-      handleAutoplayToggle();
-      e.preventDefault();
-      e.stopPropagation();
-    },
-  });
+  utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
 }
 
 // =========================

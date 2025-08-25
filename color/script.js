@@ -141,6 +141,7 @@ function autoplay() {
   if (intervalID) {
     clearInterval(intervalID);
   }
+  updateColor();
   intervalID = setInterval(() => {
     updateColor();
   }, 5000);
@@ -153,22 +154,6 @@ function updateSettingsMenu() {
   const languageSelect = document.getElementById("language-select");
   const randomizeCheckbox = document.getElementById("randomize");
   const autoplayCheckbox = document.getElementById("autoplay");
-
-  function addUnifiedListeners(
-    element,
-    handlers,
-    options = { passive: false }
-  ) {
-    if (handlers.click) {
-      element.addEventListener("click", handlers.click);
-    }
-    if (handlers.touchstart) {
-      element.addEventListener("touchstart", handlers.touchstart, options);
-    }
-    if (handlers.change) {
-      element.addEventListener("change", handlers.change);
-    }
-  }
 
   // Populate dropdown
   Object.keys(window.colors).forEach((lang) => {
@@ -217,23 +202,10 @@ function updateSettingsMenu() {
     settingsMenu.classList.toggle("show");
   });
 
-  addUnifiedListeners(randomizeCheckbox, {
-    click: (e) => {
-      utils.setIsRandom(randomizeCheckbox.checked);
-      e.stopPropagation();
-    },
-    change: (e) => {
-      utils.setIsRandom(randomizeCheckbox.checked);
-      e.stopPropagation();
-    },
-    touchstart: (e) => {
-      utils.setIsRandom(randomizeCheckbox.checked);
-      e.preventDefault();
-      e.stopPropagation();
-    },
-  });
-
   utils.setIsRandom(randomizeCheckbox.checked);
+  utils.addUnifiedListeners(randomizeCheckbox, () => {
+    utils.setIsRandom(randomizeCheckbox.checked);
+  });
 
   function handleAutoplayToggle() {
     if (autoplayCheckbox.checked) {
@@ -244,21 +216,7 @@ function updateSettingsMenu() {
     }
   }
 
-  addUnifiedListeners(autoplayCheckbox, {
-    click: (e) => {
-      handleAutoplayToggle();
-      e.stopPropagation();
-    },
-    change: (e) => {
-      handleAutoplayToggle();
-      e.stopPropagation();
-    },
-    touchstart: (e) => {
-      handleAutoplayToggle();
-      e.preventDefault();
-      e.stopPropagation();
-    },
-  });
+  utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
 }
 
 function updateSpeakerOptions() {

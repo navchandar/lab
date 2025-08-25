@@ -37,6 +37,39 @@ export function addListeners(button, callback) {
 }
 
 /**
+ * Adds event listeners to an element both click, touchstart and changeevents.
+ */
+function addMultiListeners(element, handlers, options = { passive: false }) {
+  if (handlers.click) {
+    element.addEventListener("click", handlers.click);
+  }
+  if (handlers.touchstart) {
+    element.addEventListener("touchstart", handlers.touchstart, options);
+  }
+  if (handlers.change) {
+    element.addEventListener("change", handlers.change);
+  }
+}
+
+export function addUnifiedListeners(checkBoxElement, callback) {
+  addMultiListeners(checkBoxElement, {
+    click: (e) => {
+      callback();
+      e.stopPropagation();
+    },
+    change: (e) => {
+      callback();
+      e.stopPropagation();
+    },
+    touchstart: (e) => {
+      callback();
+      e.preventDefault();
+      e.stopPropagation();
+    },
+  });
+}
+
+/**
  * Sets the fullscreen button icon to the 'enter fullscreen' state.
  */
 export function setEnterFullscreenIcon() {
