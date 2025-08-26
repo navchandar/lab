@@ -294,6 +294,7 @@ function handleKeydown(event) {
 // Toggle menu visibility
 utils.addListeners(settingsBtn, () => {
   settingsMenu.classList.toggle("show");
+  utils.updateSettingsIcon();
 });
 
 // --- Language Select Listeners ---

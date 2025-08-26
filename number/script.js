@@ -194,6 +194,7 @@ function updateSettingsMenu() {
   settingsBtn.style.display = "block";
   utils.addListeners(settingsBtn, () => {
     settingsMenu.classList.toggle("show");
+    utils.updateSettingsIcon();
   });
 
   setIsRandomNum(randomizeCheckbox.checked);

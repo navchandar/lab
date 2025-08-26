@@ -237,3 +237,16 @@ export function getNewColor(colorsList, previousColor, currentColor) {
   } while (newColor === currentColor || newColor === previousColor);
   return newColor;
 }
+
+export function updateSettingsIcon() {
+  const settingsIcon = document.getElementById("settings-icon");
+  const settingsMenu = document.getElementById("settings-menu");
+  setTimeout(() => {
+    const isOpen = settingsMenu.classList.contains("show");
+    if (isOpen) {
+      settingsIcon.src = "../static/icons/settings-open.svg";
+    } else {
+      settingsIcon.src = "../static/icons/settings.svg";
+    }
+  }, 100);
+}
