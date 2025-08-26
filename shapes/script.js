@@ -17,7 +17,7 @@ const shapes = [
   "triangle", // 3 sides
   "square", // 4 sides
   "rectangle", // 4 sides
-  "rhombus", // 4 sides
+  "diamond", // 4 sides
   "pentagon", // 5 sides
   "hexagon", // 6 sides
   "heptagon", // 7 sides
@@ -26,7 +26,7 @@ const shapes = [
   "decagon", // 10 sides
   "star",
   "circle",
-  "oval",
+  "egg",
 ];
 
 const colors = [
