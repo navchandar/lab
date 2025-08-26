@@ -191,6 +191,7 @@ function updateSettingsMenu() {
   const autoplayCheckbox = document.getElementById("autoplay");
 
   // Toggle menu visibility
+  settingsBtn.style.display = "block";
   utils.addListeners(settingsBtn, () => {
     settingsMenu.classList.toggle("show");
   });
@@ -250,7 +251,6 @@ function handleKeydown(event) {
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
-  settingsBtn.style.display = "block";
   updateSpeakerOptions();
   speaker();
   updateSettingsMenu();

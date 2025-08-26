@@ -123,6 +123,7 @@ function updateSettingsMenu() {
   const autoplayCheckbox = document.getElementById("autoplay");
 
   // Toggle menu visibility
+  settingsBtn.style.display = "block";
   utils.addListeners(settingsBtn, () => {
     settingsMenu.classList.toggle("show");
   });
@@ -188,7 +189,6 @@ function handleKeydown(event) {
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
-  settingsBtn.style.display = "block";
   updateSettingsMenu();
 
   shapeElement.style.backgroundColor = "cornflowerblue";
@@ -196,7 +196,14 @@ document.addEventListener("DOMContentLoaded", () => {
   utils.bodyAction(updateShape);
   utils.updateMuteBtn();
   utils.updateFullScreenBtn();
-  if (!utils.isMuted()) {
-    ttsInstance.speakElement(shapeNameElement);
+
+  // update mute button if speech supported
+  if (ttsInstance.isSpeechReady()) {
+    utils.enableMuteBtn();
+    if (!utils.isMuted()) {
+      ttsInstance.speakElement(shapeNameElement);
+    }
+  } else {
+    utils.disableMuteBtn();
   }
 });

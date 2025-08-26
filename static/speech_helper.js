@@ -280,6 +280,20 @@ export const TTS = () => {
     return sortVoicesForDebug(voices);
   }
 
+  async function isSpeechReady(locale = "en-US") {
+    if (!isSpeechSupported()) {
+      return false;
+    }
+
+    const voices = await loadVoices();
+    if (!voices || voices.length === 0) {
+      return false;
+    }
+
+    const preferredVoice = findPreferredVoice(voices, locale);
+    return !!preferredVoice;
+  }
+
   /**
    * Speak the textContent of an element.
    * @param {string|HTMLElement} elOrSelector
@@ -436,6 +450,7 @@ export const TTS = () => {
     isSpeechSupported,
     loadVoices,
     getVoicesSorted,
+    isSpeechReady,
     speakElement,
     unlockSpeech,
     cancel,

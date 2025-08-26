@@ -155,6 +155,12 @@ function updateSettingsMenu() {
   const randomizeCheckbox = document.getElementById("randomize");
   const autoplayCheckbox = document.getElementById("autoplay");
 
+  // Toggle menu visibility
+  settingsBtn.style.display = "block";
+  utils.addListeners(settingsBtn, () => {
+    settingsMenu.classList.toggle("show");
+  });
+
   // Populate dropdown
   Object.keys(window.colors).forEach((lang) => {
     const option = document.createElement("option");
@@ -195,11 +201,6 @@ function updateSettingsMenu() {
 
   document.getElementById("language-label").addEventListener("click", (e) => {
     e.stopPropagation();
-  });
-
-  // Toggle menu visibility
-  utils.addListeners(settingsBtn, () => {
-    settingsMenu.classList.toggle("show");
   });
 
   utils.setIsRandom(randomizeCheckbox.checked);
@@ -360,7 +361,6 @@ function handleKeydown(event) {
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
-  settingsBtn.style.display = "block";
   updateSpeakerOptions();
   updateColor();
   updateSettingsMenu();

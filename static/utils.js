@@ -128,7 +128,7 @@ export function toggleMute() {
   localStorage.setItem("isMuted", isMute);
   const muteButton = document.getElementById("muteButton");
   muteButton.textContent = isMute ? "🔇" : "🔊";
-  muteButton.title = isMute ? "Unmute button" : "Mute Button";
+  muteButton.title = isMute ? "UnMute sound" : "Mute sound";
 }
 
 export function updateMuteBtn() {
@@ -136,7 +136,27 @@ export function updateMuteBtn() {
   addListeners(muteButton, toggleMute);
   let isMute = isMuted();
   muteButton.textContent = isMute ? "🔇" : "🔊";
-  muteButton.title = isMute ? "Unmute button" : "Mute Button";
+  let msg = (isMute ? "UnMute sound" : "Mute sound";)
+  muteButton.title = msg;
+  muteButton.setAttribute("aria-label", msg);
+}
+
+export function enableMuteBtn() {
+  const muteButton = document.getElementById("muteButton");
+  muteButton.disabled = false;
+  let isMute = isMuted();
+  muteButton.textContent = isMute ? "🔇" : "🔊";
+  let msg = (isMute ? "UnMute sound" : "Mute sound";)
+  muteButton.title = msg;
+  muteButton.setAttribute("aria-label", msg);
+}
+
+export function disableMuteBtn(reason = "Speech not available in this device") {
+  const muteButton = document.getElementById("muteButton");
+  muteButton.disabled = true;
+  muteButton.textContent = "🔇";
+  muteButton.title = reason;
+  muteButton.setAttribute("aria-label", reason);
 }
 
 // --- Add Fullscreen Button Listeners ---
