@@ -136,7 +136,7 @@ export function updateMuteBtn() {
   addListeners(muteButton, toggleMute);
   let isMute = isMuted();
   muteButton.textContent = isMute ? "🔇" : "🔊";
-  let msg = (isMute ? "UnMute sound" : "Mute sound";)
+  let msg = isMute ? "UnMute sound" : "Mute sound";
   muteButton.title = msg;
   muteButton.setAttribute("aria-label", msg);
 }
@@ -146,7 +146,7 @@ export function enableMuteBtn() {
   muteButton.disabled = false;
   let isMute = isMuted();
   muteButton.textContent = isMute ? "🔇" : "🔊";
-  let msg = (isMute ? "UnMute sound" : "Mute sound";)
+  let msg = isMute ? "UnMute sound" : "Mute sound";
   muteButton.title = msg;
   muteButton.setAttribute("aria-label", msg);
 }
