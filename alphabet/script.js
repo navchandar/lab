@@ -6,7 +6,7 @@ import * as utils from "../static/utils.js";
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
-const settingsMenu = document.getElementById("settings-menu");
+
 const settingsBtn = document.getElementById("settings-btn");
 const languageSelect = document.getElementById("language-select");
 const randomizeCheckbox = document.getElementById("randomize-alphabet");
@@ -127,7 +127,7 @@ function updateCharacter() {
 function incrementAlphabet() {
   // Delay the execution slightly for visual/auditory pacing
   setTimeout(updateCharacter, 100);
-  settingsMenu.classList.remove("show");
+  utils.hideSettings();
 }
 
 // =========================================================================
@@ -274,28 +274,25 @@ function handleKeydown(event) {
     case "KeyM":
       event.preventDefault();
       utils.toggleMute();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyF":
       event.preventDefault();
       utils.toggleFullscreen();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyS":
       event.preventDefault();
-      settingsMenu.classList.toggle("show");
+      utils.toggleSettings();
       break;
     case "Escape":
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
   }
 }
 
 // Toggle menu visibility
-utils.addListeners(settingsBtn, () => {
-  settingsMenu.classList.toggle("show");
-  utils.updateSettingsIcon();
-});
+utils.addListeners(settingsBtn, utils.toggleSettings);
 
 // --- Language Select Listeners ---
 languageSelect.addEventListener("change", (e) => {

@@ -6,7 +6,7 @@ import * as utils from "../static/utils.js";
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
-const settingsMenu = document.getElementById("settings-menu");
+
 const settingsBtn = document.getElementById("settings-btn");
 
 let number = 1;
@@ -161,7 +161,7 @@ function incrementNumber() {
     speaker();
   }, 200);
 
-  settingsMenu.classList.remove("show");
+  utils.hideSettings();
 }
 
 // Function to set the randomize state in localStorage
@@ -192,10 +192,7 @@ function updateSettingsMenu() {
 
   // Toggle menu visibility
   settingsBtn.style.display = "block";
-  utils.addListeners(settingsBtn, () => {
-    settingsMenu.classList.toggle("show");
-    utils.updateSettingsIcon();
-  });
+  utils.addListeners(settingsBtn, utils.toggleSettings);
 
   setIsRandomNum(randomizeCheckbox.checked);
   utils.addUnifiedListeners(randomizeCheckbox, () => {
@@ -232,19 +229,19 @@ function handleKeydown(event) {
     case "KeyM":
       event.preventDefault();
       utils.toggleMute();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyF":
       event.preventDefault();
       utils.toggleFullscreen();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyS":
       event.preventDefault();
-      settingsMenu.classList.toggle("show");
+      utils.toggleSettings();
       break;
     case "Escape":
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
   }
 }

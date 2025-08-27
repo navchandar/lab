@@ -4,7 +4,7 @@ import { TTS } from "../static/speech_helper.js";
 // --- DOM Element References ---
 const shapeElement = document.getElementById("shape");
 const shapeNameElement = document.getElementById("shapename");
-const settingsMenu = document.getElementById("settings-menu");
+
 const settingsBtn = document.getElementById("settings-btn");
 
 const ttsInstance = TTS();
@@ -102,7 +102,7 @@ function updateShape() {
   currentColor = utils.getNewColor(colors, previousColor, currentColor);
   shapeElement.style.backgroundColor = currentColor;
   changeTextColor(currentColor, newShape);
-  settingsMenu.classList.remove("show");
+  utils.hideSettings();
 }
 
 function autoplay() {
@@ -124,10 +124,7 @@ function updateSettingsMenu() {
 
   // Toggle menu visibility
   settingsBtn.style.display = "block";
-  utils.addListeners(settingsBtn, () => {
-    settingsMenu.classList.toggle("show");
-    utils.updateSettingsIcon();
-  });
+  utils.addListeners(settingsBtn, utils.toggleSettings);
 
   utils.setIsRandom(randomizeCheckbox.checked);
   utils.addUnifiedListeners(randomizeCheckbox, () => {
@@ -165,7 +162,7 @@ function handleKeydown(event) {
     case "KeyM":
       event.preventDefault();
       utils.toggleMute();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       if (utils.isMuted()) {
         ttsInstance.cancel();
       } else {
@@ -175,14 +172,14 @@ function handleKeydown(event) {
     case "KeyF":
       event.preventDefault();
       utils.toggleFullscreen();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyS":
       event.preventDefault();
-      settingsMenu.classList.toggle("show");
+      utils.toggleSettings();
       break;
     case "Escape":
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
   }
 }

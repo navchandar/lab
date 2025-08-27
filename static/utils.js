@@ -238,15 +238,40 @@ export function getNewColor(colorsList, previousColor, currentColor) {
   return newColor;
 }
 
+/**
+ * Updates the settings icon based on the visibility of the settings menu.
+ * If the menu is opened (has the 'show' class), it sets the icon to 'settings-open.svg'.
+ * Otherwise, it sets the icon back to 'settings.svg'.
+ */
 export function updateSettingsIcon() {
   const settingsIcon = document.getElementById("settings-icon");
   const settingsMenu = document.getElementById("settings-menu");
-  setTimeout(() => {
-    const isOpen = settingsMenu.classList.contains("show");
-    if (isOpen) {
-      settingsIcon.src = "../static/icons/settings-open.svg";
-    } else {
-      settingsIcon.src = "../static/icons/settings.svg";
-    }
-  }, 100);
+  const isOpen = settingsMenu.classList.contains("show");
+
+  if (isOpen) {
+    settingsIcon.src = "../static/icons/settings-open.svg";
+  } else {
+    settingsIcon.src = "../static/icons/settings.svg";
+  }
+}
+
+/**
+ * Toggles the visibility of the settings menu,
+ * and then updates the settings icon to reflect the current state.
+ */
+export function toggleSettings() {
+  const settingsMenu = document.getElementById("settings-menu");
+  settingsMenu.classList.toggle("show");
+  updateSettingsIcon();
+}
+
+/**
+ * Hides the settings menu by removing the 'show' class,
+ * and updates the settings icon to the default (closed) state.
+ */
+export function hideSettings() {
+  const settingsIcon = document.getElementById("settings-icon");
+  const settingsMenu = document.getElementById("settings-menu");
+  settingsMenu.classList.remove("show");
+  updateSettingsIcon();
 }

@@ -3,7 +3,7 @@ import * as utils from "../static/utils.js";
 // --- DOM Element References ---
 const colorNameEl = document.getElementById("color-name");
 const muteButton = document.getElementById("muteButton");
-const settingsMenu = document.getElementById("settings-menu");
+
 const settingsBtn = document.getElementById("settings-btn");
 
 // --- Application State & Configuration ---
@@ -134,7 +134,7 @@ function updateColor() {
       }
     }
   }
-  settingsMenu.classList.remove("show");
+  utils.hideSettings();
 }
 
 function autoplay() {
@@ -157,10 +157,7 @@ function updateSettingsMenu() {
 
   // Toggle menu visibility
   settingsBtn.style.display = "block";
-  utils.addListeners(settingsBtn, () => {
-    settingsMenu.classList.toggle("show");
-    utils.updateSettingsIcon();
-  });
+  utils.addListeners(settingsBtn, utils.toggleSettings);
 
   // Populate dropdown
   Object.keys(window.colors).forEach((lang) => {
@@ -342,19 +339,19 @@ function handleKeydown(event) {
     case "KeyM":
       event.preventDefault();
       utils.toggleMute();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyF":
       event.preventDefault();
       utils.toggleFullscreen();
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
     case "KeyS":
       event.preventDefault();
-      settingsMenu.classList.toggle("show");
+      utils.toggleSettings();
       break;
     case "Escape":
-      settingsMenu.classList.remove("show");
+      utils.hideSettings();
       break;
   }
 }
