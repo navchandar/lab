@@ -140,7 +140,7 @@ async function fetchValidIPAddress(url, ipVersion) {
 
 function isIPAddressValid(ip, version) {
   const ipv4Pattern = /^(?:\d{1,3}\.){3}\d{1,3}$/;
-  const ipv6Pattern = /^(?:\d{1,3}\.){3}\d{1,3} | [a-fA-F0-9:]+$/;
+  const ipv6Pattern = /^(?:\d{1,3}\.){3}\d{1,3}|[a-fA-F0-9:]+$/;
   return version === "IPv4" ? ipv4Pattern.test(ip) : ipv6Pattern.test(ip);
 }
 
