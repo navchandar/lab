@@ -41,23 +41,29 @@
             <h3>Element Locators</h3>
             <label
               >CSS Selector:
-              <input type="text" class="copy-btn" id="cssSelector" /><button
-                onclick="copyToClipboard('cssSelector')"
+              <input type="text" id="cssSelector" />
+              <button
+                class="copy-btn"
+                onclick="copyToClipboard('cssSelector', this)"
               >
                 Copy
               </button>
             </label>
             <label
               >XPath Locator:
-              <input type="text" class="copy-btn" id="xpathSelector" /><button
-                onclick="copyToClipboard('xpathSelector')"
+              <input type="text" id="xpathSelector" />
+              <button
+                class="copy-btn"
+                onclick="copyToClipboard('xpathSelector', this)"
               >
                 Copy
               </button>
             </label>
             <label
-              >ID: <input type="text" class="copy-btn" id="idSelector" /><button
-                onclick="copyToClipboard('idSelector')"
+              >ID: <input type="text" id="idSelector" />
+              <button
+                class="copy-btn"
+                onclick="copyToClipboard('idSelector', this)"
               >
                 Copy
               </button>

@@ -1,12 +1,28 @@
-function copyToClipboard(id) {
-  const input = document.getElementById(id);
+function copyToClipboard(elementId, button) {
+  const input = document.getElementById(elementId);
   navigator.clipboard
     .writeText(input.value)
     .then(() => {
       console.log("Copied to clipboard!");
+      if (button) {
+        button.textContent = "Copied!";
+        button.classList.add("success");
+        setTimeout(() => {
+          button.textContent = "Copy";
+          button.classList.remove("success");
+        }, 2000);
+      }
     })
     .catch((err) => {
       console.error("Failed to copy: ", err);
+      if (button) {
+        button.textContent = "Error!";
+        button.classList.add("error");
+        setTimeout(() => {
+          button.textContent = "Copy";
+          button.classList.remove("error");
+        }, 2000);
+      }
     });
 }
 
