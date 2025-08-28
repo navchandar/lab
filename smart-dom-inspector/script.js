@@ -94,22 +94,172 @@ function getCSSSelector(element) {
   return path.join(" > ");
 }
 
-function updateSelectors(element) {
-  document.getElementById("cssSelector").value = getCSSSelector(element);
-  document.getElementById("xpathSelector").value = getXPath(element);
-  document.getElementById("idSelector").value = element.id || "N/A";
+function highlightElement(element, iframe) {
+  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+  // Remove any existing highlight box
+  const existingHighlight = iframeDoc.querySelector(".highlight-box");
+  if (existingHighlight) {
+    existingHighlight.remove();
+  }
+
+  // Create a new highlight box
+  const highlight = iframeDoc.createElement("div");
+  highlight.className = "highlight-box";
+
+  // Get bounding box of the element
+  const rect = element.getBoundingClientRect();
+
+  // Style the highlight box to overlay the element
+  highlight.style.position = "absolute";
+  highlight.style.border = "2px dashed red";
+  highlight.style.pointerEvents = "none";
+  highlight.style.zIndex = "9999";
+  highlight.style.top = `${rect.top + iframeDoc.documentElement.scrollTop}px`;
+  highlight.style.left = `${
+    rect.left + iframeDoc.documentElement.scrollLeft
+  }px`;
+  highlight.style.width = `${rect.width}px`;
+  highlight.style.height = `${rect.height}px`;
+
+  // Append the highlight box to the iframe's body
+  iframeDoc.body.appendChild(highlight);
+
+  // Remove highlight when mouse leaves the element
+  element.addEventListener(
+    "mouseout",
+    () => {
+      highlight.remove();
+    },
+    { once: true }
+  );
 }
 
-function highlightElement(element, iframe) {
-  const rect = element.getBoundingClientRect();
-  const highlight = document.createElement("div");
-  highlight.className = "highlight-box";
-  highlight.style.top = rect.top + iframe.offsetTop + "px";
-  highlight.style.left = rect.left + iframe.offsetLeft + "px";
-  highlight.style.width = rect.width + "px";
-  highlight.style.height = rect.height + "px";
-  document.body.appendChild(highlight);
-  setTimeout(() => highlight.remove(), 2000);
+/**
+ * Highlights all elements in the iframe that share the same locator.
+ * Uses a distinct color and removes previous highlights before applying new ones.
+ *
+ * @param {string} locator - The locator string (ID, CSS, or XPath).
+ * @param {Document} doc - The iframe's document.
+ * @param {Element} clickedElement - The element that was clicked.
+ * @param {string} type - Type of locator: "ID", "CSS", or "XPATH".
+ */
+function highlightDuplicates(locator, doc, clickedElement, type) {
+  // Remove any existing duplicate highlights
+  const existingHighlights = doc.querySelectorAll(".duplicate-highlight");
+  existingHighlights.forEach((el) => el.remove());
+
+  if (!locator) return;
+
+  let matches = [];
+
+  try {
+    if (type === "ID") {
+      matches = doc.querySelectorAll(`#${locator}`);
+    } else if (type === "CSS") {
+      matches = doc.querySelectorAll(locator);
+    } else if (type === "XPATH") {
+      const xpathResult = doc.evaluate(
+        locator,
+        doc,
+        null,
+        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+        null
+      );
+      for (let i = 0; i < xpathResult.snapshotLength; i++) {
+        matches.push(xpathResult.snapshotItem(i));
+      }
+    }
+  } catch (error) {
+    console.warn(`Error evaluating ${type} locator:`, error);
+    return;
+  }
+
+  if (matches.length <= 1) return; // No duplicates to highlight
+
+  matches.forEach((el) => {
+    const rect = el.getBoundingClientRect();
+    const highlight = doc.createElement("div");
+    highlight.className = "duplicate-highlight";
+    highlight.style.position = "absolute";
+    highlight.style.border = "2px dashed orange";
+    highlight.style.pointerEvents = "none";
+    highlight.style.zIndex = "9999";
+    highlight.style.top = `${rect.top + doc.documentElement.scrollTop}px`;
+    highlight.style.left = `${rect.left + doc.documentElement.scrollLeft}px`;
+    highlight.style.width = `${rect.width}px`;
+    highlight.style.height = `${rect.height}px`;
+
+    doc.body.appendChild(highlight);
+  });
+}
+
+function validateID(id, doc, clickedElement) {
+  if (!id) return "N/A";
+
+  const matches = doc.querySelectorAll(`#${id}`);
+  if (matches.length === 1) {
+    return `#${id}`;
+  } else if (matches.length === 0) {
+    return `ID not found`;
+  } else {
+    highlightDuplicates(id, doc, clickedElement, "ID");
+    return `${id} ⚠️ Multiple elements share this ID`;
+  }
+}
+
+function updateSelectors(element) {
+  const iframe = document.getElementById("renderFrame");
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+
+  // Generate locators
+  let cssSelector = getCSSSelector(element);
+  let xpathSelector = getXPath(element);
+  let idSelector = element.id || "N/A";
+
+  // Validate CSS Selector
+  const cssMatches = doc.querySelectorAll(cssSelector);
+  if (cssMatches.length === 1) {
+    document.getElementById("cssSelector").value = cssSelector;
+  } else if (cssMatches.length === 0) {
+    document.getElementById("cssSelector").value =
+      "⚠️ Valid Locator could not be found";
+  } else {
+    highlightDuplicates(cssSelector, doc, clickedElement, "CSS");
+    // Adjust to uniquely target the clicked element
+    cssSelector = `${cssSelector}:nth-of-type(${
+      Array.from(cssMatches).indexOf(element) + 1
+    })`;
+    document.getElementById("cssSelector").value = cssSelector;
+  }
+
+  // Validate XPath
+  const xpathResult = doc.evaluate(
+    xpathSelector,
+    doc,
+    null,
+    XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+    null
+  );
+  if (xpathResult.snapshotLength === 1) {
+    document.getElementById("xpathSelector").value = xpathSelector;
+  } else if (xpathResult.snapshotLength === 0) {
+    document.getElementById("xpathSelector").value =
+      "⚠️ Valid Locator could not be found";
+  } else {
+    highlightDuplicates(xpathSelector, doc, clickedElement, "XPATH");
+    // Adjust XPath to match the specific element
+    const index = Array.from({ length: xpathResult.snapshotLength }, (_, i) =>
+      xpathResult.snapshotItem(i)
+    ).indexOf(element);
+
+    xpathSelector = `(${xpathSelector})[${index + 1}]`;
+    document.getElementById("xpathSelector").value = xpathSelector;
+  }
+
+  // ID is usually direct and unique but check for duplicates
+  idSelector = validateID(idSelector, doc, element);
+  document.getElementById("idSelector").value = idSelector;
 }
 
 function attachListeners(iframe) {
