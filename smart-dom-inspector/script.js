@@ -149,7 +149,9 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
   const existingHighlights = doc.querySelectorAll(".duplicate-highlight");
   existingHighlights.forEach((el) => el.remove());
 
-  if (!locator) return;
+  if (!locator) {
+    return;
+  }
 
   let matches = [];
 
@@ -175,7 +177,10 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
     return;
   }
 
-  if (matches.length <= 1) return; // No duplicates to highlight
+  // No duplicates to highlight
+  if (matches.length <= 1) {
+    return;
+  }
 
   matches.forEach((el) => {
     const rect = el.getBoundingClientRect();
@@ -195,7 +200,12 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
 }
 
 function validateID(id, doc, clickedElement) {
-  if (!id) return "N/A";
+  if (!id) {
+    return "ID not found";
+  }
+  if (id === "ID not found") {
+    return "ID not found";
+  }
 
   const matches = doc.querySelectorAll(`#${id}`);
   if (matches.length === 1) {
@@ -215,7 +225,7 @@ function updateSelectors(element) {
   // Generate locators
   let cssSelector = getCSSSelector(element);
   let xpathSelector = getXPath(element);
-  let idSelector = element.id || "N/A";
+  let idSelector = element.id || "ID not found";
 
   // Validate CSS Selector
   const cssMatches = doc.querySelectorAll(cssSelector);
@@ -225,7 +235,7 @@ function updateSelectors(element) {
     document.getElementById("cssSelector").value =
       "⚠️ Valid Locator could not be found";
   } else {
-    highlightDuplicates(cssSelector, doc, clickedElement, "CSS");
+    highlightDuplicates(cssSelector, doc, element, "CSS");
     // Adjust to uniquely target the clicked element
     cssSelector = `${cssSelector}:nth-of-type(${
       Array.from(cssMatches).indexOf(element) + 1
@@ -247,7 +257,7 @@ function updateSelectors(element) {
     document.getElementById("xpathSelector").value =
       "⚠️ Valid Locator could not be found";
   } else {
-    highlightDuplicates(xpathSelector, doc, clickedElement, "XPATH");
+    highlightDuplicates(xpathSelector, doc, element, "XPATH");
     // Adjust XPath to match the specific element
     const index = Array.from({ length: xpathResult.snapshotLength }, (_, i) =>
       xpathResult.snapshotItem(i)

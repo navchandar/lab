@@ -270,7 +270,6 @@ export function toggleSettings() {
  * and updates the settings icon to the default (closed) state.
  */
 export function hideSettings() {
-  const settingsIcon = document.getElementById("settings-icon");
   const settingsMenu = document.getElementById("settings-menu");
   settingsMenu.classList.remove("show");
   updateSettingsIcon();
