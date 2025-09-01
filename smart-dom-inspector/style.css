@@ -33,7 +33,7 @@ header {
 .input-panel textarea::-moz-placeholder,
 .input-panel textarea:-moz-placeholder {
     font-size: 20px;
-    line-height: 4;
+    line-height: 3;
 }
 
 .input-panel button {
@@ -67,6 +67,7 @@ iframe {
     align-items: center;
     gap: 1%;
     margin-top: 30px;
+    padding: 0 10px;
 }
 
 #selectorInfo label {
@@ -165,6 +166,13 @@ footer p {
         border-radius: 3px;
         padding: 5px;
         min-width: 120px;
+    }
+
+    .input-panel textarea::placeholder,
+    .input-panel textarea::-moz-placeholder,
+    .input-panel textarea:-moz-placeholder {
+        font-size: 20px;
+        line-height: 150%;
     }
 
 }
