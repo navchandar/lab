@@ -71,6 +71,7 @@ function getXPath(element) {
   // Join all parts with slashes to form the full XPath
   return "/" + parts.join("/");
 }
+
 /**
  * Generates a maintainable CSS selector for a given DOM element.
  * Prioritizes ID-based selectors and builds a path using tag and class names.
@@ -79,34 +80,87 @@ function getXPath(element) {
  * @returns {string} - The CSS selector string.
  */
 function getCSSSelector(element) {
-  // If the element has an ID, return a direct and unique selector
-  if (element.id) {
+  const path = [];
+
+  function isStableID(id) {
+    if (!id) return false;
+    if (id.match(/^[a-zA-Z]{3,8}$/)) return false;
+    const doc = iframe.contentDocument || iframe.contentWindow.document;
+    const matches = doc.querySelectorAll(`#${id}`);
+    return matches.length === 1;
+  }
+
+  if (isStableID(element.id)) {
     return `#${element.id}`;
   }
 
-  const path = [];
-
-  // Traverse up the DOM tree to build the selector path
-  while (element && element.nodeType === Node.ELEMENT_NODE) {
-    let selector = element.nodeName.toLowerCase(); // Use lowercase tag name
-
-    // Add class names if they exist and are meaningful
-    if (element.className && typeof element.className === "string") {
-      const classList = element.className
-        .trim()
-        .split(/\s+/)
-        .filter((cls) => cls && !cls.startsWith("ng-") && !cls.match(/^jsx-/)); // Filter out framework-specific or empty classes
-
-      if (classList.length > 0) {
-        selector += "." + classList.join(".");
-      }
-    }
-
-    path.unshift(selector); // Add to the beginning of the path
-    element = element.parentElement; // Move up the DOM tree
+  // Helper to check if an ID or class is meaningful
+  // And avoid short random strings or automated class names
+  function isStableIdentifier(value) {
+    return (
+      value &&
+      typeof value === "string" &&
+      !value.match(/^(jsname|jsx|ng|gLFyf|data-.*|aria-.*)$/) &&
+      !value.match(/^[a-zA-Z]{3,8}$/)
+    );
   }
 
-  // Join the path with ' > ' to form a full CSS selector
+  let stopAt = null;
+
+  // Traverse up to find a stable ancestor
+  let current = element;
+  while (current && current.nodeType === Node.ELEMENT_NODE) {
+    if (isStableIdentifier(current.id)) {
+      stopAt = current;
+      break;
+    }
+
+    const classList = current.className?.trim().split(/\s+/) || [];
+    const meaningfulClasses = classList.filter((cls) =>
+      isStableIdentifier(cls)
+    );
+    if (meaningfulClasses.length > 0) {
+      stopAt = current;
+      break;
+    }
+
+    current = current.parentElement;
+  }
+
+  // Build path from stopAt to element
+  let node = element;
+  while (node && node !== stopAt && node.nodeType === Node.ELEMENT_NODE) {
+    let selector = node.nodeName.toLowerCase();
+
+    const classList = node.className?.trim().split(/\s+/) || [];
+    const meaningfulClasses = classList.filter((cls) =>
+      isStableIdentifier(cls)
+    );
+    if (meaningfulClasses.length > 0) {
+      selector += "." + meaningfulClasses.join(".");
+    }
+
+    path.unshift(selector);
+    node = node.parentElement;
+  }
+
+  // Add the stable ancestor to the path
+  if (stopAt) {
+    if (stopAt.id) {
+      path.unshift(`#${stopAt.id}`);
+    } else {
+      let selector = stopAt.nodeName.toLowerCase();
+      const classList = stopAt.className?.trim().split(/\s+/) || [];
+      const meaningfulClasses = classList.filter((cls) =>
+        isStableIdentifier(cls)
+      );
+      if (meaningfulClasses.length > 0) {
+        selector += "." + meaningfulClasses.join(".");
+      }
+      path.unshift(selector);
+    }
+  }
+
   return path.join(" > ");
 }
 
@@ -205,7 +259,7 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
     highlight.style.position = "absolute";
     highlight.style.border = "2px dashed orange";
     highlight.style.pointerEvents = "none";
-    highlight.style.zIndex = "9999";
+    highlight.style.zIndex = "9998";
     highlight.style.top = `${rect.top + doc.documentElement.scrollTop}px`;
     highlight.style.left = `${rect.left + doc.documentElement.scrollLeft}px`;
     highlight.style.width = `${rect.width}px`;
