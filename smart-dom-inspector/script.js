@@ -362,13 +362,17 @@ function attachListeners(iframe) {
 }
 
 function renderHTML(content = null) {
-  const html = document.getElementById("htmlInput").value;
+  const html = document.getElementById("htmlInput").value.trim();
   const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   if (null !== html && html !== "") {
     doc.write(html);
-  } else if (null !== content && typeof content === "string") {
+  } else if (
+    null !== content &&
+    typeof content === "string" &&
+    content !== ""
+  ) {
     doc.write(content);
   }
   doc.close();
@@ -398,9 +402,8 @@ function setupIframe({
   textarea.addEventListener("input", () => {
     const content = textarea.value.trim();
     if (content && content.length > 0) {
-      renderHTML("");
-      // If the content is large (more than 1000 characters)
-      if (content.length > 1000) {
+      // If the content is large (more than 10000 characters)
+      if (content.length > 10000) {
         // Show the "Render" button
         renderBtn.style.display = "inline-block";
       } else {
