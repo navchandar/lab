@@ -29,8 +29,20 @@ header {
     resize: none;
 }
 
+.input-panel textarea::placeholder,
+.input-panel textarea::-moz-placeholder,
+.input-panel textarea:-moz-placeholder {
+    font-size: 20px;
+    line-height: 4;
+}
+
 .input-panel button {
-    margin-top: 10px;
+    display: none;
+    margin-top: 3px;
+    margin-left: 35%;
+    padding: 1px 10px;
+    width: 100px;
+    font-weight: bold;
 }
 
 .render-panel {
@@ -53,7 +65,7 @@ iframe {
     display: flex;
     align-items: center;
     gap: 1%;
-    margin-top: 10px;
+    margin-top: 30px;
 }
 
 #selectorInfo label {
@@ -99,6 +111,8 @@ footer p {
 
 .locator-row input {
     box-sizing: border-box;
+    border-width: 1px;
+    border-radius: 5px;
     padding: 5px;
     min-width: 400px;
 }
@@ -146,6 +160,8 @@ footer p {
 
     .locator-row input {
         box-sizing: border-box;
+        border-width: 1px;
+        border-radius: 3px;
         padding: 5px;
         min-width: 120px;
     }

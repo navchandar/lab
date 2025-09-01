@@ -327,18 +327,18 @@ function setupIframe({
   renderBtn.addEventListener("click", renderHTML);
 
   let style =
-    "font-family:sans-serif; padding:20px; color:#555; font-size:30px";
+    "font-family:sans-serif; padding:20px; color:#555; font-size:20px";
 
   // Show default message on load
   window.addEventListener("load", () => {
-    renderHTML(`<div style='${style}'>${defaultMessage}</div>`);
+    renderHTML(`<p id='preview' style='${style}'>${defaultMessage}</p>`);
   });
 
   // Clear iframe when user starts typing
   textarea.addEventListener("input", () => {
     const content = this.value;
     if (content.trim().length > 0) {
-      renderHTML(""); // Clear iframe
+      renderHTML("");
       // If the content is large (more than 1000 characters)
       if (content.length > 1000) {
         // Show the "Render" button
@@ -349,7 +349,7 @@ function setupIframe({
         renderHTML();
       }
     } else {
-      renderHTML(`<div style='${style}'>${defaultMessage}</div>`);
+      renderHTML(`<p id='preview' style='${style}'>${defaultMessage}</p>`);
       renderBtn.style.display = "none"; // Hide render button
     }
   });
