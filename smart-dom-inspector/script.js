@@ -81,10 +81,16 @@ function getXPath(element) {
  */
 function getCSSSelector(element) {
   const path = [];
+  const iframe = document.getElementById("renderFrame");
 
   function isStableID(id) {
-    if (!id) return false;
-    if (id.match(/^[a-zA-Z]{3,8}$/)) return false;
+    if (!id) {
+      return false;
+    }
+    if (id.match(/^[a-zA-Z]{3,8}$/)) {
+      return false;
+    }
+
     const doc = iframe.contentDocument || iframe.contentWindow.document;
     const matches = doc.querySelectorAll(`#${id}`);
     return matches.length === 1;
@@ -371,11 +377,9 @@ function renderHTML(content = null) {
 
 function setupIframe({
   textareaId = "htmlInput",
-  iframeId = "renderFrame",
   renderBtnId = "renderBtn",
 } = {}) {
   const textarea = document.getElementById(textareaId);
-  const iframe = document.getElementById(iframeId);
   const renderBtn = document.getElementById(renderBtnId);
   renderBtn.addEventListener("click", renderHTML);
 
