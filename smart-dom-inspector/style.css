@@ -7,7 +7,7 @@ body {
 
 header {
     background-color: #333;
-    padding: 10px;
+    padding: 5px;
     color: white;
     text-align: center;
 }
@@ -87,7 +87,6 @@ footer p {
     pointer-events: none;
 }
 
-
 .locator-row {
     display: block;
     align-items: center;
@@ -102,7 +101,6 @@ footer p {
     box-sizing: border-box;
     padding: 5px;
     min-width: 400px;
-
 }
 
 .locator-row button {
@@ -123,8 +121,7 @@ footer p {
     font-size: 14px;
 }
 
-.copy-btn:hover,
-.copy-btn:focus {
+.copy-btn:hover, .copy-btn:focus {
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     background-color: #0056b3;
@@ -136,4 +133,21 @@ footer p {
 
 .copy-btn.error {
     background-color: #dc3545;
+}
+
+
+/* Styles for mobile devices */
+@media (max-width: 767px) {
+    #selectorInfo {
+        display: grid;
+        align-items: center;
+        margin: 10px;
+    }
+
+    .locator-row input {
+        box-sizing: border-box;
+        padding: 5px;
+        min-width: 120px;
+    }
+
 }
