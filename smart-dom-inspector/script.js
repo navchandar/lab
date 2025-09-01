@@ -319,15 +319,17 @@ function setupIframe({
   textareaId = "htmlInput",
   iframeId = "renderFrame",
   renderBtnId = "renderBtn",
-  defaultMessage = "Preview will appear here once you paste HTML content.",
 } = {}) {
   const textarea = document.getElementById(textareaId);
   const iframe = document.getElementById(iframeId);
   const renderBtn = document.getElementById(renderBtnId);
   renderBtn.addEventListener("click", renderHTML);
 
+  let defaultMessage =
+    "Preview will appear here once you paste HTML content. Hover & click on any element to get the locator.";
+
   let style =
-    "font-family:sans-serif; padding:20px; color:#555; font-size:20px";
+    "font-family:sans-serif; padding:1px; padding-top:25px; color:#555; font-size:25px";
 
   // Show default message on load
   window.addEventListener("load", () => {
@@ -336,8 +338,8 @@ function setupIframe({
 
   // Clear iframe when user starts typing
   textarea.addEventListener("input", () => {
-    const content = this.value;
-    if (content.trim().length > 0) {
+    const content = textarea.value.trim();
+    if (content && content.length > 0) {
       renderHTML("");
       // If the content is large (more than 1000 characters)
       if (content.length > 1000) {
