@@ -285,7 +285,7 @@ function validateID(id, doc, clickedElement) {
 
   const matches = doc.querySelectorAll(`#${id}`);
   if (matches.length === 1) {
-    return `#${id}`;
+    return `${id}`;
   } else if (matches.length === 0) {
     return `ID not found`;
   } else {
@@ -366,10 +366,10 @@ function renderHTML(content = null) {
   const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
-  if (null !== content) {
-    doc.write(content);
-  } else {
+  if (null !== html && html !== "") {
     doc.write(html);
+  } else if (null !== content && typeof content === "string") {
+    doc.write(content);
   }
   doc.close();
   setTimeout(() => attachListeners(iframe), 500);
