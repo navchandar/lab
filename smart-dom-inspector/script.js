@@ -301,30 +301,59 @@ function attachListeners(iframe) {
   });
 }
 
-function renderHTML() {
+function renderHTML(content = null) {
   const html = document.getElementById("htmlInput").value;
   const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
-  doc.write(html);
+  if (null !== content) {
+    doc.write(content);
+  } else {
+    doc.write(html);
+  }
   doc.close();
   setTimeout(() => attachListeners(iframe), 500);
 }
 
-const renderBtn = document.getElementById("renderBtn");
+function setupIframe({
+  textareaId = "htmlInput",
+  iframeId = "renderFrame",
+  renderBtnId = "renderBtn",
+  defaultMessage = "Preview will appear here once you paste HTML content.",
+} = {}) {
+  const textarea = document.getElementById(textareaId);
+  const iframe = document.getElementById(iframeId);
+  const renderBtn = document.getElementById(renderBtnId);
+  renderBtn.addEventListener("click", renderHTML);
 
-document.getElementById("htmlInput").addEventListener("input", function () {
-  const content = this.value;
+  let style =
+    "font-family:sans-serif; padding:20px; color:#555; font-size:30px";
 
-  // If the content is large (more than 1000 characters)
-  if (content.length > 1000) {
-    // Show the "Render" button
-    renderBtn.style.display = "inline-block";
-  } else {
-    // Hide the button and render immediately
-    renderBtn.style.display = "none";
-    renderHTML();
-  }
-});
+  // Show default message on load
+  window.addEventListener("load", () => {
+    renderHTML(`<div style='${style}'>${defaultMessage}</div>`);
+  });
 
-renderBtn.addEventListener("click", renderHTML);
+  // Clear iframe when user starts typing
+  textarea.addEventListener("input", () => {
+    const content = this.value;
+    if (content.trim().length > 0) {
+      renderHTML(""); // Clear iframe
+      // If the content is large (more than 1000 characters)
+      if (content.length > 1000) {
+        // Show the "Render" button
+        renderBtn.style.display = "inline-block";
+      } else {
+        // Hide the button and render immediately
+        renderBtn.style.display = "none";
+        renderHTML();
+      }
+    } else {
+      renderHTML(`<div style='${style}'>${defaultMessage}</div>`);
+      renderBtn.style.display = "none"; // Hide render button
+    }
+  });
+}
+
+// Initialize the iframe setup
+setupIframe();
