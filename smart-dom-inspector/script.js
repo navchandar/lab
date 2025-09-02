@@ -52,48 +52,295 @@ const isDomElement = (el) => !!el && el.nodeType === Node.ELEMENT_NODE;
  * @param {Element} element - The DOM element to generate XPath for.
  * @returns {string} - The XPath string.
  */
-function getXPath(element) {
-  if (!isDomElement(element)) {
+function getXPath(el, options = {}) {
+  if (!isDomElement(el)) {
     console.error("Target must be a DOM Element");
     return;
   }
 
-  // If the element has an ID, return a direct XPath using it
-  if (element.id) {
-    return `//*[@id="${element.id}"]`;
-  }
+  const cfg = {
+    root: el.ownerDocument, // evaluate within the element's document (iframe-safe)
+    maxDepth: 10,
 
-  const parts = [];
+    // Prefer test IDs and accessibility first, then semantic fallbacks
+    attrWhitelist: [
+      // Test hooks used by Playwright/Cypress/RTL/etc.
+      "data-testid",
+      "data-test-id",
+      "data-test",
+      "data-cy",
+      "data-qa",
+      "data-qa-id",
+      "data-automation-id",
+      "data-automationid",
+      "data-automation",
+      "data-qe-id",
 
-  // Traverse up the DOM tree until the root
-  while (element && element.nodeType === Node.ELEMENT_NODE) {
-    let index = 1;
-    let sibling = element.previousElementSibling;
+      // Accessibility & semantics (user-facing and relatively stable)
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "role",
+      "name",
+      "placeholder",
+      "title",
+      "alt",
 
-    // Count how many previous siblings share the same tag name
-    while (sibling) {
-      if (sibling.nodeName === element.nodeName) {
-        index++;
+      // Low-priority fallbacks
+      "type",
+      "href",
+    ],
+
+    // Detect auto-generated / volatile tokens to avoid brittle predicates
+    unstableMatchers: [
+      (v) => /^\d{3,}$/.test(v), // all-numeric
+      (v) =>
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v), // UUID
+      (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v), // long hex shards
+      (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v), // CSS Modules ___hash
+      (v) => /^css-[a-z0-9]{4,}/.test(v), // Emotion/MUI css-<hash>
+      (v) => /^sc-[a-zA-Z0-9]+/.test(v), // styled-components
+      (v) => /^ng-/.test(v), // Angular state/runtime
+      (v) => /^svelte-[a-zA-Z0-9]+/.test(v), // Svelte scope hash
+    ],
+
+    classLimit: 2, // at most N classes in a class-based predicate
+    preferShort: true,
+    useText: false, // optionally use text() when short & stable
+    textMaxLen: 40, // max length for text predicate
+    ...options,
+  };
+
+  const d = cfg.root;
+
+  // === Helpers ===
+  const isUnstable = (v) =>
+    !v ||
+    cfg.unstableMatchers.some((fn) => {
+      try {
+        return fn(v);
+      } catch {
+        return false;
       }
-      sibling = sibling.previousElementSibling;
+    });
+  const tagOf = (node) => (node.tagName || "").toLowerCase();
+
+  const indexAmongType = (node) => {
+    let i = 1,
+      sib = node;
+    const tag = node.localName;
+    while ((sib = sib.previousElementSibling)) {
+      if (sib.localName === tag) i++;
+    }
+    return i;
+  };
+
+  const xpathString = (s) => {
+    // Escape string literal for XPath
+    if (s.indexOf('"') === -1) {
+      return `"${s}"`;
+    }
+    if (s.indexOf("'") === -1) {
+      return `'${s}'`;
+    }
+    // concat("a", '"', "b")
+    return 'concat("' + s.replace(/"/g, '",\'"\',"') + '")';
+  };
+
+  const isUnique = (xp) => {
+    try {
+      const expr = `count(${xp})`;
+      const r = d.evaluate(expr, d, null, XPathResult.NUMBER_TYPE, null);
+      return r.numberValue === 1;
+    } catch {
+      return false;
+    }
+  };
+
+  const stableAttrPairs = (node) => {
+    const pairs = [];
+    for (const a of cfg.attrWhitelist) {
+      if (!node.hasAttribute || !node.hasAttribute(a)) {
+        continue;
+      }
+      const val = node.getAttribute(a);
+      if (!val || isUnstable(val)) {
+        continue;
+      }
+      pairs.push([a, val]);
+    }
+    return pairs;
+  };
+
+  const uniqueId = (node) => {
+    if (!node.getAttribute) {
+      return null;
+    }
+    const id = node.getAttribute("id");
+    // Use only if looks stable (and likely unique). We still test uniqueness below anyway.
+    return id && !isUnstable(id) ? id : null;
+  };
+
+  const stableClasses = (node) => {
+    if (!node.classList || node.classList.length === 0) {
+      return [];
+    }
+    return Array.from(node.classList)
+      .filter((c) => !isUnstable(c))
+      .slice(0, cfg.classLimit);
+  };
+
+  const classPredicates = (classes) => {
+    // Robust class membership test in XPath
+    return classes.map(
+      (c) => `contains(concat(' ', normalize-space(@class), ' '), ' ${c} ')`
+    );
+  };
+
+  const textPredicate = (node) => {
+    if (!cfg.useText) {
+      return null;
+    }
+    const t = (node.textContent || "").trim();
+    if (!t || t.length > cfg.textMaxLen) {
+      return null;
+    }
+    // Avoid pure numbers or volatile dates by a simple heuristic
+    if (/^\d{1,}$/.test(t)) {
+      return null;
+    }
+    return `normalize-space()=${xpathString(t)}`;
+  };
+
+  // Build candidate expressions for this node alone (relative, starting with //)
+  const nodeCandidates = (node) => {
+    const tag = tagOf(node) || "*";
+    const preds = [];
+
+    // id first if stable
+    const id = uniqueId(node);
+    if (id) {
+      preds.push(`@id=${xpathString(id)}`);
     }
 
-    const tagName = element.nodeName.toLowerCase();
+    // whitelisted attributes
+    const attrs = stableAttrPairs(node);
+    for (const [k, v] of attrs) preds.push(`@${k}=${xpathString(v)}`);
 
-    // Only include index if there are multiple siblings with the same tag
-    const hasSameTagSiblings =
-      element.nextElementSibling &&
-      element.nextElementSibling.nodeName === element.nodeName;
+    // class contains(...) predicates
+    const classes = stableClasses(node);
+    preds.push(...classPredicates(classes));
 
-    const part =
-      index > 1 || hasSameTagSiblings ? `${tagName}[${index}]` : tagName;
+    // optional text()
+    const tp = textPredicate(node);
+    if (tp) {
+      preds.push(tp);
+    }
 
-    parts.unshift(part); // Add to the beginning of the path
-    element = element.parentNode; // Move up the DOM tree
+    const candidates = [];
+
+    // Try: by id only
+    if (id) {
+      candidates.push(`//*[@id=${xpathString(id)}]`);
+    }
+
+    // Try single-attribute-only, regardless of tag
+    for (const [k, v] of attrs) {
+      candidates.push(`//*[@${k}=${xpathString(v)}]`);
+    }
+
+    // Try tag + each attribute
+    for (const [k, v] of attrs) {
+      candidates.push(`//${tag}[@${k}=${xpathString(v)}]`);
+    }
+
+    // Try combining up to two attributes on tag (stronger)
+    for (let i = 0; i < Math.min(attrs.length, 2); i++) {
+      for (let j = i + 1; j < Math.min(attrs.length, 3); j++) {
+        const [k1, v1] = attrs[i],
+          [k2, v2] = attrs[j];
+        candidates.push(
+          `//${tag}[@${k1}=${xpathString(v1)} and @${k2}=${xpathString(v2)}]`
+        );
+      }
+    }
+
+    // Try tag + classes
+    if (classes.length) {
+      const clsPred = classPredicates(classes).join(" and ");
+      candidates.push(`//${tag}[${clsPred}]`);
+    }
+
+    // Try text predicate
+    if (tp) {
+      candidates.push(`//${tag}[${tp}]`);
+      candidates.push(`//*[${tp}]`);
+    }
+
+    // Bare tag (rarely unique, but cheap)
+    candidates.push(`//${tag}`);
+
+    return candidates;
+  };
+
+  // Try node-only candidates
+  for (const xp of cfg.preferShort
+    ? nodeCandidates(el)
+        .slice()
+        .sort((a, b) => a.length - b.length)
+    : nodeCandidates(el)) {
+    if (isUnique(xp)) {
+      // relative XPath
+      return xp;
+    }
   }
 
-  // Join all parts with slashes to form the full XPath
-  return "/" + parts.join("/");
+  // Build a relative path from a stable ancestor
+  const segments = [];
+  let cur = el;
+  let depth = 0;
+
+  while (cur && cur.nodeType === 1 && depth <= cfg.maxDepth) {
+    const tag = tagOf(cur) || "*";
+    const attrs = stableAttrPairs(cur);
+    const classes = stableClasses(cur);
+    const tp = textPredicate(cur);
+
+    // Prefer attribute predicates; if none, use class; else positional index
+    let seg;
+    if (attrs.length) {
+      // Use up to two attributes for stronger uniqueness per segment
+      const parts = attrs
+        .slice(0, 2)
+        .map(([k, v]) => `@${k}=${xpathString(v)}`);
+      seg = `${tag}[${parts.join(" and ")}]`;
+    } else if (classes.length) {
+      seg = `${tag}[${classPredicates(classes).join(" and ")}]`;
+    } else if (tp) {
+      seg = `${tag}[${tp}]`;
+    } else {
+      seg = `${tag}[${indexAmongType(cur)}]`;
+    }
+
+    // relative path from anywhere
+    segments.unshift(seg);
+    const xp = "//" + segments.join("/"); 
+
+    if (isUnique(xp)) {
+      return xp;
+    }
+
+    cur = cur.parentElement;
+    depth++;
+  }
+
+  // Absolute fallback from the document root
+  const absolute = [];
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    const tag = tagOf(n) || "*";
+    absolute.unshift(`${tag}[${indexAmongType(n)}]`);
+  }
+  return "/" + absolute.join("/");
 }
 
 /**
