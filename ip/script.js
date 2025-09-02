@@ -186,16 +186,16 @@ function setupChangeListeners() {
 function setupNetworkListeners() {
   window.addEventListener("online", () => {
     console.log("Network connected. Refreshing IPs...");
-    showStatus("ip1", "Network Online");
-    showStatus("ip2", "Network Online");
+    showText("ip1", "Network Online");
+    showText("ip2", "Network Online");
     document.title = "IP Finder";
     refreshIPAddresses();
   });
 
   window.addEventListener("offline", () => {
     console.log("Network disconnected");
-    showStatus("ip1", "Network Offline");
-    showStatus("ip2", "Network Offline");
+    showText("ip1", "Network Offline");
+    showText("ip2", "Network Offline");
     document.title = "Network Offline";
   });
 }

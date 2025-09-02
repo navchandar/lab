@@ -1,3 +1,6 @@
+/**
+ * copy given text from elementId when button is clicked
+ */
 function copyToClipboard(elementId, button) {
   const input = document.getElementById(elementId);
   navigator.clipboard
@@ -26,6 +29,19 @@ function copyToClipboard(elementId, button) {
     });
 }
 
+// Add listeners to the copy buttons
+function updateButtons() {
+  document.querySelectorAll(".locator-row").forEach((container) => {
+    const button = container.querySelector(".copy-btn");
+    const inputEl = container.querySelector("[type='text']");
+    const inputId = inputEl.id;
+
+    button.addEventListener("click", function () {
+      copyToClipboard(inputId, this);
+    });
+  });
+}
+
 /**
  * Generates a simplified and maintainable XPath for a given DOM element.
  * Prioritizes ID-based paths and avoids overly specific indexing when possible.
@@ -34,6 +50,10 @@ function copyToClipboard(elementId, button) {
  * @returns {string} - The XPath string.
  */
 function getXPath(element) {
+  if (!(element instanceof Element)) {
+    console.error("Target must be a DOM Element");
+  }
+
   // If the element has an ID, return a direct XPath using it
   if (element.id) {
     return `//*[@id="${element.id}"]`;
@@ -80,6 +100,10 @@ function getXPath(element) {
  * @returns {string} - The CSS selector string.
  */
 function getCSSSelector(element) {
+  if (!(element instanceof Element)) {
+    console.error("Target must be a DOM Element");
+  }
+
   const path = [];
   const iframe = document.getElementById("renderFrame");
 
@@ -418,5 +442,6 @@ function setupIframe({
   });
 }
 
-// Initialize the iframe setup
+// Initalize setup
+updateButtons();
 setupIframe();
