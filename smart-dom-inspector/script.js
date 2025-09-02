@@ -217,7 +217,9 @@ function getXPath(el, options = {}) {
 
     // test/ARIA/semantic attributes
     const attrs = stableAttrPairs(node);
-    for (const [k, v] of attrs) preds.push([tag, [`@${k}=${xpathString(v)}`]]);
+    for (const [k, v] of attrs) {
+      preds.push([tag, [`@${k}=${xpathString(v)}`]]);
+    }
 
     // combine up to two attributes
     for (let i = 0; i < Math.min(attrs.length, cfg.maxLeafPredicates); i++) {
