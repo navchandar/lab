@@ -317,7 +317,9 @@ function getCssSelector(el, options = {}) {
 
     for (const p of sorted) {
       const cand = p + accumulated;
-      if (isUnique(cand)) return cand;
+      if (isUnique(cand)) {
+        return cand;
+      }
     }
 
     // If nothing unique, fix the strongest for this level and climb
@@ -470,7 +472,7 @@ function updateSelectors(element) {
   const doc = iframe.contentDocument || iframe.contentWindow.document;
 
   // Generate locators
-  let cssSelector = getCSSSelector(element);
+  let cssSelector = getCssSelector(element);
   let xpathSelector = getXPath(element);
   let idSelector = element.id || "ID not found";
 
