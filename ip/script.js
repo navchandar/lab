@@ -154,27 +154,61 @@ function updateIPAddressDisplay(ip, elementId) {
   }
 }
 
+function updateButtons() {
+  document.querySelectorAll(".ip-container").forEach((container) => {
+    const button = container.querySelector(".copy-btn");
+    const ipSpan = container.querySelector(".ip-text span");
+    const ipId = ipSpan.id;
+
+    button.addEventListener("click", function () {
+      copyIP(ipId, this);
+    });
+  });
+}
+
+function setupChangeListeners() {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      console.log("Tab is active");
+      updateRefreshTimeDisplay();
+    }
+  });
+
+  if (!sessionStorage.getItem("sessionStarted")) {
+    sessionStorage.setItem("sessionStarted", "true");
+    console.log("Browser/tab just opened");
+    refreshIPAddresses();
+    updateRefreshTimeDisplay();
+  }
+}
+
+// Network change detection
+function setupNetworkListeners() {
+  window.addEventListener("online", () => {
+    console.log("Network connected. Refreshing IPs...");
+    showStatus("ip1", "Network Online");
+    showStatus("ip2", "Network Online");
+    document.title = "IP Finder";
+    refreshIPAddresses();
+  });
+
+  window.addEventListener("offline", () => {
+    console.log("Network disconnected");
+    showStatus("ip1", "Network Offline");
+    showStatus("ip2", "Network Offline");
+    document.title = "Network Offline";
+  });
+}
+
 // Initial setup
 refreshIPAddresses();
-requestNotificationPermission();
+updateButtons();
 
 // Refresh every 5 minutes
 setInterval(refreshIPAddresses, 300000);
 // Update the time since last refresh every 30 seconds
 setInterval(updateRefreshTimeDisplay, 30000);
 
-// Network change detection
-window.addEventListener("online", () => {
-  console.log("Network connected. Refreshing IPs...");
-  showText("ip1", "Network Online");
-  showText("ip2", "Network Online");
-  document.title = "IP Finder";
-  refreshIPAddresses();
-});
-
-window.addEventListener("offline", () => {
-  console.log("Network disconnected");
-  showText("ip1", "Network Offline");
-  showText("ip2", "Network Offline");
-  document.title = "Network Offline";
-});
+setupChangeListeners();
+setupNetworkListeners();
+requestNotificationPermission();

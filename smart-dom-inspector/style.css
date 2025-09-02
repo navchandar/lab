@@ -7,7 +7,7 @@ body {
 
 header {
     background-color: #333;
-    padding: 5px;
+    padding: 1px;
     color: white;
     text-align: center;
 }
@@ -33,7 +33,7 @@ header {
 .input-panel textarea::-moz-placeholder,
 .input-panel textarea:-moz-placeholder {
     font-size: 20px;
-    line-height: 3;
+    line-height: 2;
 }
 
 .input-panel button {
@@ -154,6 +154,10 @@ footer p {
 
 /* Styles for mobile devices */
 @media (max-width: 767px) {
+    header h1 {
+        font-size: 1.5em;
+    }
+
     #selectorInfo {
         display: grid;
         align-items: center;
@@ -165,7 +169,8 @@ footer p {
         border-width: 1px;
         border-radius: 3px;
         padding: 5px;
-        min-width: 120px;
+        width: 50%;
+        min-width: 100px;
     }
 
     .input-panel textarea::placeholder,
@@ -173,6 +178,10 @@ footer p {
     .input-panel textarea:-moz-placeholder {
         font-size: 20px;
         line-height: 150%;
+    }
+
+    #selectorInfo label {
+        font-size: 0.85em;
     }
 
 }

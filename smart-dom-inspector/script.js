@@ -391,7 +391,7 @@ function setupIframe({
     "Preview will appear here once you paste HTML content. Hover & click on any element to get the locator.";
 
   let style =
-    "font-family:sans-serif; padding:1px; padding-top:25px; color:#555; font-size:25px; line-height:120%;";
+    "font-family:sans-serif; padding:10px; color:#555; font-size:25px; line-height:120%;";
 
   // Show default message on loadß
   window.addEventListener("load", () => {
