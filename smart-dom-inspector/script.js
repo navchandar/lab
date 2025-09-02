@@ -42,6 +42,9 @@ function updateButtons() {
   });
 }
 
+//Node type check to detect instanceof Element
+const isDomElement = (el) => !!el && el.nodeType === Node.ELEMENT_NODE;
+
 /**
  * Generates a simplified and maintainable XPath for a given DOM element.
  * Prioritizes ID-based paths and avoids overly specific indexing when possible.
@@ -50,8 +53,9 @@ function updateButtons() {
  * @returns {string} - The XPath string.
  */
 function getXPath(element) {
-  if (!(element instanceof Element)) {
+  if (!isDomElement(element)) {
     console.error("Target must be a DOM Element");
+    return;
   }
 
   // If the element has an ID, return a direct XPath using it
@@ -96,98 +100,241 @@ function getXPath(element) {
  * Generates a maintainable CSS selector for a given DOM element.
  * Prioritizes ID-based selectors and builds a path using tag and class names.
  *
- * @param {Element} element - The DOM element to generate a selector for.
+ * @param {Element} el - The DOM element to generate a selector for.
  * @returns {string} - The CSS selector string.
  */
-function getCSSSelector(element) {
-  if (!(element instanceof Element)) {
+function getCssSelector(el, options = {}) {
+  if (!isDomElement(el)) {
     console.error("Target must be a DOM Element");
+    return;
   }
 
-  const path = [];
-  const iframe = document.getElementById("renderFrame");
+  const cssEscape = (v) =>
+    typeof CSS !== "undefined" && CSS.escape
+      ? CSS.escape(v)
+      : String(v).replace(/["\\]/g, "\\$&");
 
-  function isStableID(id) {
-    if (!id) {
-      return false;
+  const cfg = {
+    // Where uniqueness is tested — use the element's own document (iframe-safe)
+    root: el.ownerDocument,
+    maxDepth: 5,
+    useId: true,
+
+    /**
+     * Prefer attributes explicitly added for testing first (data-*),
+     * then accessibility attributes (ARIA), then a few semantic fallbacks.
+     *
+     * Order matters: earlier attributes are tried first.
+     */
+    attrWhitelist: [
+      // Test IDs (widely used by Playwright, Cypress, Testing Library)
+      "data-testid",
+      "data-test-id",
+      "data-test",
+      "data-cy",
+      "data-qa",
+      "data-qa-id",
+      "data-automation-id",
+      "data-automationid",
+      "data-automation",
+      "data-qe-id",
+
+      // Accessibility & semantics (stable, user-facing)
+      "aria-label",
+      "aria-labelledby",
+      "aria-describedby",
+      "role",
+      "name",
+      "placeholder",
+      "title",
+      "alt",
+
+      // Lowest-priority fallbacks (use sparingly)
+      "type",
+      "href",
+    ],
+
+    // Avoid using classes/ids/values that look auto-generated or runtime-volatile
+    unstableMatchers: [
+      // All-numeric tokens (ids/classes like "12345")
+      (v) => /^\d{3,}$/.test(v),
+
+      // UUID/GUIDs
+      (v) =>
+        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v),
+
+      // Long hex-ish chunks surrounded by delimiters (common in build hashes)
+      (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v),
+
+      // CSS Modules patterns: name__local___hash / local___hash
+      (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v),
+
+      // Emotion/MUI runtime classes: css-<hash>
+      (v) => /^css-[a-z0-9]{4,}/.test(v),
+
+      // styled-components: sc-*
+      (v) => /^sc-[a-zA-Z0-9]+/.test(v),
+
+      // Angular runtime/state classes: ng-*
+      (v) => /^ng-/.test(v),
+
+      // Svelte scoping: svelte-<hash>
+      (v) => /^svelte-[a-zA-Z0-9]+/.test(v),
+    ],
+
+    classLimit: 3,
+    preferShort: true,
+    ...options,
+  };
+
+  const d = cfg.root;
+
+  const isUnstable = (value) => {
+    if (!value) {
+      return true;
     }
-    if (id.match(/^[a-zA-Z]{3,8}$/)) {
-      return false;
-    }
-
-    const doc = iframe.contentDocument || iframe.contentWindow.document;
-    const matches = doc.querySelectorAll(`#${id}`);
-    return matches.length === 1;
-  }
-
-  if (isStableID(element.id)) {
-    return `#${element.id}`;
-  }
-
-  // Helper to check if an ID or class is meaningful
-  // And avoid short random strings or automated class names
-  function isStableIdentifier(value) {
-    return (
-      value &&
-      typeof value === "string" &&
-      !value.match(/^(jsname|jsx|ng|gLFyf|data-.*|aria-.*)$/) &&
-      !value.match(/^[a-zA-Z]{3,8}$/)
-    );
-  }
-
-  let stopAt = null;
-
-  // Traverse up to find a stable ancestor
-  let current = element;
-  while (current && current.nodeType === Node.ELEMENT_NODE) {
-    if (isStableIdentifier(current.id)) {
-      stopAt = current;
-      break;
-    }
-
-    const classList = current.className?.trim().split(/\s+/) || [];
-    const meaningfulClasses = classList.filter((cls) =>
-      isStableIdentifier(cls)
-    );
-    if (meaningfulClasses.length > 0) {
-      stopAt = current;
-      break;
-    }
-
-    current = current.parentElement;
-  }
-
-  // Build path from stopAt to element
-  let node = element;
-  while (node && node !== stopAt && node.nodeType === Node.ELEMENT_NODE) {
-    let selector = node.nodeName.toLowerCase();
-
-    const classList = node.className?.trim().split(/\s+/) || [];
-    const meaningfulClasses = classList.filter((cls) =>
-      isStableIdentifier(cls)
-    );
-    if (meaningfulClasses.length > 0) {
-      selector += "." + meaningfulClasses.join(".");
-    }
-
-    path.unshift(selector);
-    node = node.parentElement;
-  }
-
-  // Add the stable ancestor to the path
-  if (stopAt) {
-    if (stopAt.id) {
-      path.unshift(`#${stopAt.id}`);
-    } else {
-      let selector = stopAt.nodeName.toLowerCase();
-      const classList = stopAt.className?.trim().split(/\s+/) || [];
-      const meaningfulClasses = classList.filter((cls) =>
-        isStableIdentifier(cls)
-      );
-      if (meaningfulClasses.length > 0) {
-        selector += "." + meaningfulClasses.join(".");
+    return cfg.unstableMatchers.some((fn) => {
+      try {
+        return fn(value);
+      } catch {
+        return false;
       }
-      path.unshift(selector);
+    });
+  };
+
+  const isUnique = (sel) => {
+    try {
+      return d.querySelectorAll(sel).length === 1;
+    } catch {
+      return false;
+    }
+  };
+
+  const tagOf = (node) => (node.tagName || "").toLowerCase();
+
+  const nthOfType = (node) => {
+    let i = 1,
+      sib = node;
+    const tag = tagOf(node);
+    while ((sib = sib.previousElementSibling)) {
+      if (tagOf(sib) === tag) {
+        i++;
+      }
+    }
+    return i;
+  };
+
+  const uniqueId = (node) => {
+    if (!cfg.useId || !node.getAttribute) {
+      return null;
+    }
+    const id = node.getAttribute("id");
+    if (!id || isUnstable(id)) {
+      return null;
+    }
+    const found = d.getElementById ? d.getElementById(id) : null;
+    return found === node ? id : null;
+  };
+
+  const stableAttrPairs = (node) => {
+    const pairs = [];
+    for (const attr of cfg.attrWhitelist) {
+      if (!node.hasAttribute || !node.hasAttribute(attr)) {
+        continue;
+      }
+      const val = node.getAttribute(attr);
+      if (!val || isUnstable(val)) {
+        continue;
+      }
+      pairs.push([attr, cssEscape(val)]);
+    }
+    return pairs;
+  };
+
+  const classSelectors = (node) => {
+    if (!node.classList || node.classList.length === 0) {
+      return [];
+    }
+    const classes = Array.from(node.classList)
+      .filter((c) => !isUnstable(c)) // drop volatile tokens
+      .slice(0, cfg.classLimit)
+      .map((c) => "." + cssEscape(c));
+    return classes;
+  };
+
+  // Build candidate fragments for this node, from strongest to weakest
+  const nodeCandidates = (node) => {
+    const tag = tagOf(node);
+    const id = uniqueId(node);
+    const attrs = stableAttrPairs(node);
+    const classes = classSelectors(node);
+
+    const candidates = [];
+
+    if (id) {
+      candidates.push(`#${cssEscape(id)}`);
+    }
+
+    // Attribute-only (strong) candidates
+    for (const [k, v] of attrs) {
+      candidates.push(`[${k}="${v}"]`);
+    }
+
+    // tag + attribute
+    for (const [k, v] of attrs) {
+      candidates.push(`${tag}[${k}="${v}"]`);
+    }
+
+    // tag + classes (avoid too many classes)
+    if (classes.length) {
+      candidates.push(tag + classes.join(""));
+    }
+
+    // bare tag
+    if (tag) {
+      candidates.push(tag);
+    }
+
+    // Finally, tag:nth-of-type(n)
+    if (tag) {
+      candidates.push(`${tag}:nth-of-type(${nthOfType(node)})`);
+    }
+
+    return candidates;
+  };
+
+  // Try to find a unique selector by combining ancestors
+  const path = [];
+  let cur = el;
+  let depth = 0;
+
+  while (cur && cur.nodeType === 1 && depth <= cfg.maxDepth) {
+    const parts = nodeCandidates(cur);
+    const accumulated = path.length ? " > " + path.join(" > ") : "";
+    const sorted = cfg.preferShort
+      ? parts.slice().sort((a, b) => a.length - b.length)
+      : parts;
+
+    for (const p of sorted) {
+      const cand = p + accumulated;
+      if (isUnique(cand)) return cand;
+    }
+
+    // If nothing unique, fix the strongest for this level and climb
+    path.unshift(parts[0]);
+    cur = cur.parentElement;
+    depth++;
+  }
+
+  // Last resort: absolute path from root with nth-of-type
+  const absolute = [];
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    const tag = tagOf(n) || "*";
+    const nth = `${tag}:nth-of-type(${nthOfType(n)})`;
+    absolute.unshift(nth);
+    const sel = absolute.join(" > ");
+    if (isUnique(sel)) {
+      return sel;
     }
   }
 
