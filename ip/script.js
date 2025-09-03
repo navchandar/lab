@@ -178,7 +178,6 @@ function setupChangeListeners() {
     sessionStorage.setItem("sessionStarted", "true");
     console.log("Browser/tab just opened");
     refreshIPAddresses();
-    updateRefreshTimeDisplay();
   }
 }
 

@@ -53,11 +53,13 @@ const isDomElement = (el) => !!el && el.nodeType === Node.ELEMENT_NODE;
  * @returns {string} - The XPath string.
  */
 function getXPath(el, options = {}) {
+  // Step 1: Validate the input
   if (!isDomElement(el)) {
     console.error("Target must be a DOM Element");
     return;
   }
 
+  // Step 2: Initialize configuration
   const cfg = {
     root: el.ownerDocument,
     maxDepth: 8, // how far we search for anchors
@@ -69,7 +71,7 @@ function getXPath(el, options = {}) {
     textMaxLen: 40,
     classLimit: 2,
 
-    // Attributes we consider "stable" (ordered by preference).
+    // Attributes considered "stable" (ordered by preference).
     attrWhitelist: [
       "data-testid",
       "data-test-id",
@@ -110,13 +112,12 @@ function getXPath(el, options = {}) {
       (v) => /^ng-/.test(v), // Angular state/runtime
       (v) => /^svelte-[a-zA-Z0-9]+/.test(v), // Svelte scoping
     ],
-
     ...options,
   };
 
   const d = cfg.root;
 
-  // ==== helpers ====
+  // ==== helper functions ====
   const isUnstable = (v) =>
     !v ||
     cfg.unstableMatchers.some((fn) => {
@@ -126,6 +127,7 @@ function getXPath(el, options = {}) {
         return false;
       }
     });
+
   const tagOf = (node) => (node.tagName || "").toLowerCase();
 
   const idxAmongType = (node) => {
@@ -158,7 +160,12 @@ function getXPath(el, options = {}) {
       return NaN;
     }
   };
-  const isUnique = (xp) => countNodes(xp) === 1;
+
+  const isUnique = (xp) => {
+    const count = countNodes(xp);
+    console.log(`Checking uniqueness for XPath: ${xp} → Count: ${count}`);
+    return count === 1;
+  };
 
   const stableAttrPairs = (node) => {
     const pairs = [];
@@ -194,11 +201,8 @@ function getXPath(el, options = {}) {
       return null;
     }
     const t = (node.textContent || "").trim();
-    if (!t || t.length > cfg.textMaxLen) {
-      return null;
-    }
     // avoid pure numbers
-    if (/^\d{1,}$/.test(t)) {
+    if (!t || t.length > cfg.textMaxLen || /^\d{1,}$/.test(t)) {
       return null;
     }
     return `normalize-space()=${xpathString(t)}`;
@@ -237,19 +241,16 @@ function getXPath(el, options = {}) {
       }
     }
 
-    // classes
     const classes = stableClasses(node);
     if (classes.length) {
       preds.push([tag, classPredicates(classes)]);
     }
 
-    // text
     const tp = textPredicate(node);
     if (tp) {
       preds.push([tag, [tp]]);
     }
 
-    // bare tag (last)
     preds.push([tag, []]);
 
     // Turn into concrete XPath snippets //tag[preds] and //*[@attr=val]
@@ -269,6 +270,7 @@ function getXPath(el, options = {}) {
     const anchors = [];
     let cur = node.parentElement,
       depth = 0;
+
     while (cur && depth < cfg.maxDepth) {
       const tag = tagOf(cur) || "*";
       const attrs = stableAttrPairs(cur);
@@ -279,16 +281,17 @@ function getXPath(el, options = {}) {
       if (id && !isUnstable(id)) {
         anchors.push(`//*[@id=${xpathString(id)}]`);
       }
+
       for (const [k, v] of attrs) {
         anchors.push(`//*[@${k}=${xpathString(v)}]`);
         anchors.push(`//${tag}[@${k}=${xpathString(v)}]`);
       }
+
       if (classes.length) {
         anchors.push(`//${tag}[${classPredicates(classes).join(" and ")}]`);
       }
-      // as a weak anchor, tag alone (rarely used, but keep a few)
-      anchors.push(`//${tag}`);
 
+      anchors.push(`//${tag}`);
       cur = cur.parentElement;
       depth++;
     }
@@ -297,16 +300,10 @@ function getXPath(el, options = {}) {
     return cfg.preferShort ? uniq.sort((a, b) => a.length - b.length) : uniq;
   };
 
-  // 1) Try leaf-only candidates (shortest possible)
-  const leafCandidates = buildLeafPredicates(el);
-  for (const xp of leafCandidates) {
-    if (isUnique(xp)) {
-      return xp;
-    }
-  }
-
-  // 2) Try anchor + leaf (limit indexing to the leaf only)
+  // Step 1: Try ancestor-based XPath first
   const anchors = buildAnchorCandidates(el);
+  const leafCandidates = buildLeafPredicates(el);
+
   for (const A of anchors) {
     for (const L of leafCandidates) {
       const tag = tagOf(el) || "*";
@@ -314,9 +311,10 @@ function getXPath(el, options = {}) {
       const m = L.match(/^\/\/([^[]+)(\[.+\])?$/);
       const leafTag = m ? m[1] : tag;
       const leafPred = m && m[2] ? m[2] : "";
-
       let candidate = `${A}//${leafTag}${leafPred}`;
+
       if (isUnique(candidate)) {
+        console.log("XPath found using ancestor + leaf:", candidate);
         return candidate;
       }
 
@@ -328,6 +326,10 @@ function getXPath(el, options = {}) {
           if (index > 0) {
             candidate = `${A}//${leafTag}${leafPred}[${index}]`;
             if (isUnique(candidate)) {
+              console.log(
+                "XPath found using ancestor + leaf + index:",
+                candidate
+              );
               return candidate;
             }
           }
@@ -336,11 +338,21 @@ function getXPath(el, options = {}) {
     }
   }
 
-  // 3) Absolute fallback (then prune unnecessary [1]s)
-  const absolute = buildAbsolute(el);
-  return pruneAbsolute(absolute, d);
+  // Step 2: Try leaf-level XPath alone
+  for (const xp of leafCandidates) {
+    if (isUnique(xp)) {
+      console.log("XPath found using leaf-level attributes:", xp);
+      return xp;
+    }
+  }
 
-  // === local helpers used below ===
+  // Step 3: Fallback to absolute XPath
+  const absolute = buildAbsolute(el);
+  const pruned = pruneAbsolute(absolute, d);
+  console.log("Fallback to pruned absolute XPath:", pruned);
+  return pruned;
+
+  // === local helper functions ===
   function evaluateNodes(xp, doc) {
     try {
       const r = doc.evaluate(
@@ -412,6 +424,7 @@ function getXPath(el, options = {}) {
         parts[leafIdx] = withLeafNoIdx;
       }
     }
+
     return parts.join("/");
   }
 }
@@ -424,18 +437,19 @@ function getXPath(el, options = {}) {
  * @returns {string} - The CSS selector string.
  */
 function getCssSelector(el, options = {}) {
+  // Step 1: Validate the input
   if (!isDomElement(el)) {
     console.error("Target must be a DOM Element");
     return;
   }
 
+  // Step 2: Initialize configuration
   const cssEscape = (v) =>
     typeof CSS !== "undefined" && CSS.escape
       ? CSS.escape(v)
       : String(v).replace(/["\\]/g, "\\$&");
 
   const cfg = {
-    // Where uniqueness is tested — use the element's own document (iframe-safe)
     root: el.ownerDocument,
     maxDepth: 5,
     useId: true,
@@ -478,30 +492,22 @@ function getCssSelector(el, options = {}) {
     unstableMatchers: [
       // All-numeric tokens (ids/classes like "12345")
       (v) => /^\d{3,}$/.test(v),
-
       // UUID/GUIDs
       (v) =>
         /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v),
-
       // Long hex-ish chunks surrounded by delimiters (common in build hashes)
       (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v),
-
       // CSS Modules patterns: name__local___hash / local___hash
       (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v),
-
       // Emotion/MUI runtime classes: css-<hash>
       (v) => /^css-[a-z0-9]{4,}/.test(v),
-
       // styled-components: sc-*
       (v) => /^sc-[a-zA-Z0-9]+/.test(v),
-
       // Angular runtime/state classes: ng-*
       (v) => /^ng-/.test(v),
-
       // Svelte scoping: svelte-<hash>
       (v) => /^svelte-[a-zA-Z0-9]+/.test(v),
     ],
-
     classLimit: 3,
     preferShort: true,
     ...options,
@@ -509,6 +515,7 @@ function getCssSelector(el, options = {}) {
 
   const d = cfg.root;
 
+  // Step 3: Define utility functions
   const isUnstable = (value) => {
     if (!value) {
       return true;
@@ -575,11 +582,10 @@ function getCssSelector(el, options = {}) {
     if (!node.classList || node.classList.length === 0) {
       return [];
     }
-    const classes = Array.from(node.classList)
-      .filter((c) => !isUnstable(c)) // drop volatile tokens
+    return Array.from(node.classList)
+      .filter((c) => !isUnstable(c))
       .slice(0, cfg.classLimit)
       .map((c) => "." + cssEscape(c));
-    return classes;
   };
 
   // Build candidate fragments for this node, from strongest to weakest
@@ -588,42 +594,38 @@ function getCssSelector(el, options = {}) {
     const id = uniqueId(node);
     const attrs = stableAttrPairs(node);
     const classes = classSelectors(node);
-
     const candidates = [];
 
     if (id) {
       candidates.push(`#${cssEscape(id)}`);
     }
-
     // Attribute-only (strong) candidates
     for (const [k, v] of attrs) {
       candidates.push(`[${k}="${v}"]`);
     }
-
     // tag + attribute
     for (const [k, v] of attrs) {
       candidates.push(`${tag}[${k}="${v}"]`);
     }
-
     // tag + classes (avoid too many classes)
     if (classes.length) {
       candidates.push(tag + classes.join(""));
     }
-
     // bare tag
     if (tag) {
       candidates.push(tag);
     }
-
     // Finally, tag:nth-of-type(n)
     if (tag) {
       candidates.push(`${tag}:nth-of-type(${nthOfType(node)})`);
     }
 
+    console.log("Generated candidates for node:", candidates);
+
     return candidates;
   };
 
-  // Try to find a unique selector by combining ancestors
+  // Step 4: Try to build a unique selector from bottom-up
   const path = [];
   let cur = el;
   let depth = 0;
@@ -638,6 +640,7 @@ function getCssSelector(el, options = {}) {
     for (const p of sorted) {
       const cand = p + accumulated;
       if (isUnique(cand)) {
+        console.log("Unique selector found (bottom-up):", cand);
         return cand;
       }
     }
@@ -648,7 +651,7 @@ function getCssSelector(el, options = {}) {
     depth++;
   }
 
-  // Last resort: absolute path from root with nth-of-type
+  // Step 5: Fallback to absolute path using nth-of-type
   const absolute = [];
   for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
     const tag = tagOf(n) || "*";
@@ -656,11 +659,15 @@ function getCssSelector(el, options = {}) {
     absolute.unshift(nth);
     const sel = absolute.join(" > ");
     if (isUnique(sel)) {
+      console.log("Unique selector found (absolute path):", sel);
       return sel;
     }
   }
 
-  return path.join(" > ");
+  // Step 6: Final fallback
+  const fallback = path.join(" > ");
+  console.warn("Returning fallback selector:", fallback);
+  return fallback;
 }
 
 function highlightElement(element, iframe) {
