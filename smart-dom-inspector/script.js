@@ -85,7 +85,7 @@ function sanitizeHTML(htmlString) {
           "z-index",
           "opacity",
           "visibility",
-          "display",
+          // "display",
           "position",
           "clip",
           "overflow",
@@ -106,6 +106,18 @@ function sanitizeHTML(htmlString) {
       )
     ) {
       styleTag.remove();
+    }
+  });
+
+  //target SVGs to ensure they have proper sizing
+  container.querySelectorAll("svg").forEach((svg) => {
+    svg.setAttribute("width", "20px");
+    svg.setAttribute("height", "20px");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+
+    // Optionally add a default viewBox if missing
+    if (!svg.hasAttribute("viewBox")) {
+      svg.setAttribute("viewBox", "0 0 20 20");
     }
   });
 
@@ -929,17 +941,17 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
 
 function validateID(id, doc, clickedElement) {
   if (!id) {
-    return "ID not found";
+    return "⚠️ ID not found";
   }
-  if (id === "ID not found") {
-    return "ID not found";
+  if (id === "⚠️ ID not found") {
+    return id;
   }
 
   const matches = doc.querySelectorAll(`#${id}`);
   if (matches.length === 1) {
     return `${id}`;
   } else if (matches.length === 0) {
-    return `ID not found`;
+    return `⚠️ ID not found`;
   } else {
     highlightDuplicates(id, doc, clickedElement, "ID");
     return `${id} ⚠️ Multiple elements share this ID`;
@@ -953,7 +965,7 @@ function updateSelectors(element) {
   // Generate locators
   let cssSelector = getCssSelector(element);
   let xpathSelector = getXPath(element);
-  let idSelector = element.id || "ID not found";
+  let idSelector = element.id || "⚠️ ID not found";
 
   // Validate CSS Selector
   const cssMatches = doc.querySelectorAll(cssSelector);
