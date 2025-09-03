@@ -346,7 +346,63 @@ function getXPath(el, options = {}) {
     }
   }
 
-  // Step 3: Fallback to absolute XPath
+  // Step 3: Try generic scoped XPath with optional class filtering and indexing
+  function findStableAncestor(node) {
+    let cur = node.parentElement;
+    while (cur) {
+      const attrs = stableAttrPairs(cur);
+      if (attrs.length > 0) {
+        const [key, val] = attrs[0];
+        return {
+          tag: tagOf(cur),
+          attr: key,
+          value: val,
+          node: cur,
+        };
+      }
+      cur = cur.parentElement;
+    }
+    return null;
+  }
+
+  const ancestor = findStableAncestor(el);
+  if (ancestor) {
+    const targetTag = tagOf(el);
+    const classList = stableClasses(el);
+
+    let classFilter = "";
+    if (classList.length === 1) {
+      // Use exact match if there's only one stable class
+      classFilter = `[@class=${xpathString(classList[0])}]`;
+    } else if (classList.length > 1) {
+      // Use contains() for partial match if multiple classes
+      classFilter = `[contains(concat(' ', normalize-space(@class), ' '), ' ${classList[0]} ')]`;
+    }
+    const baseXPath = `//${ancestor.tag}[@${ancestor.attr}=${xpathString(
+      ancestor.value
+    )}]//${targetTag}${classFilter}`;
+    const wrappedXPath = `(${baseXPath})[1]`;
+
+    if (isUnique(wrappedXPath)) {
+      console.log("Generic scoped XPath found:", wrappedXPath);
+      return wrappedXPath;
+    }
+
+    // If not unique, find index
+    const nodes = evaluateNodes(baseXPath, d);
+    if (nodes && nodes.length > 1) {
+      const index = indexWithinNodeSet(nodes, el);
+      if (index > 0) {
+        const indexedXPath = `(${baseXPath})[${index}]`;
+        if (isUnique(indexedXPath)) {
+          console.log("Generic scoped XPath with index found:", indexedXPath);
+          return indexedXPath;
+        }
+      }
+    }
+  }
+
+  // Step 4: Fallback to absolute XPath
   const absolute = buildAbsolute(el);
   const pruned = pruneAbsolute(absolute, d);
   console.log("Fallback to pruned absolute XPath:", pruned);
