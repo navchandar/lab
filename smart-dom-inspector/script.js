@@ -3,8 +3,23 @@
  */
 function copyToClipboard(elementId, button) {
   const input = document.getElementById(elementId);
+  const value = input.value.trim();
+
+  if (!value) {
+    console.warn("Nothing to copy: input is empty.");
+    if (button) {
+      button.textContent = "Empty!";
+      button.classList.add("warning");
+      setTimeout(() => {
+        button.textContent = "Copy";
+        button.classList.remove("warning");
+      }, 2000);
+    }
+    return;
+  }
+
   navigator.clipboard
-    .writeText(input.value)
+    .writeText(value)
     .then(() => {
       console.log("Copied to clipboard!");
       if (button) {
@@ -609,7 +624,7 @@ function getCssSelector(el, options = {}) {
       return false;
     }
   };
-  
+
   function matchesElementByCss(selector, el, root = document) {
     try {
       const matched = root.querySelector(selector);
@@ -995,7 +1010,12 @@ function setupIframe({
       }
     } else {
       renderHTML(`<p id='preview' style='${style}'>${defaultMessage}</p>`);
-      renderBtn.style.display = "none"; // Hide render button
+      // Hide render button
+      renderBtn.style.display = "none";
+      // clear previously selected locators
+      document.getElementById("cssSelector").value = "";
+      document.getElementById("xpathSelector").value = "";
+      document.getElementById("idSelector").value = "";
     }
   });
 }

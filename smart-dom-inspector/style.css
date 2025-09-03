@@ -76,8 +76,9 @@ iframe {
 }
 
 footer {
-    position: absolute;
-    bottom: 5px;
+    position: relative;
+    bottom: 1rem;
+    margin-top: 10rem;
     width: 100%;
     font-size: 0.8em;
     text-align: center;
@@ -151,6 +152,10 @@ footer p {
     background-color: #dc3545;
 }
 
+.copy-btn.warning {
+    background-color: #a8ab06;
+}
+
 
 /* Styles for mobile devices */
 @media (max-width: 767px) {
@@ -182,6 +187,10 @@ footer p {
 
     #selectorInfo label {
         font-size: 0.85em;
+    }
+
+    footer {
+        margin-top: 4rem;
     }
 
 }
