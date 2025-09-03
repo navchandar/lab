@@ -122,6 +122,13 @@ a:hover, a:focus {
     border-bottom: 2px solid #0056b3;
 }
 
+/* Disallow selecting text in button */
+button {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 @media (max-width: 768px) {
     .ip-toast {
         bottom: 30px;
@@ -154,6 +161,7 @@ a:hover, a:focus {
 
     .ip-container {
         margin-bottom: 10%;
+        width: 80%;
     }
 
     .copy-btn {
@@ -164,6 +172,10 @@ a:hover, a:focus {
 
     .last-refresh {
         margin: 30px 0 0 0;
+    }
+
+    footer {
+        width: 80%;
     }
 }
 

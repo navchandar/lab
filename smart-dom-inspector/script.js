@@ -57,6 +57,61 @@ function updateButtons() {
   });
 }
 
+function cleanInputs() {
+  // clear previously selected locators
+  document.getElementById("cssSelector").value = "";
+  document.getElementById("xpathSelector").value = "";
+  document.getElementById("idSelector").value = "";
+}
+
+/**
+ * Function to sanitize styles affecting mouse hover and click behavior
+ * Read given HTML string and return cleaned HTML string
+ */
+function sanitizeHTML(htmlString) {
+  // Create a temporary DOM container
+  const container = document.createElement("div");
+  container.innerHTML = htmlString;
+
+  // Remove inline styles that affect interactivity
+  container.querySelectorAll("[style]").forEach((el) => {
+    const style = el.getAttribute("style");
+    const sanitizedStyle = style
+      .split(";")
+      .filter((rule) => {
+        const prop = rule.trim().split(":")[0]?.trim().toLowerCase();
+        return ![
+          "pointer-events",
+          "z-index",
+          "opacity",
+          "visibility",
+          "display",
+          "position",
+          "clip",
+          "overflow",
+        ].includes(prop);
+      })
+      .join(";");
+    if (sanitizedStyle) {
+      el.setAttribute("style", sanitizedStyle);
+    }
+  });
+
+  // Remove <style> tags that contain problematic rules
+  container.querySelectorAll("style").forEach((styleTag) => {
+    const cssText = styleTag.textContent;
+    if (
+      /pointer-events|clip|opacity|visibility|display\s*:\s*none|position\s*:\s*absolute/.test(
+        cssText
+      )
+    ) {
+      styleTag.remove();
+    }
+  });
+
+  return container.innerHTML;
+}
+
 //Node type check to detect instanceof Element
 const isDomElement = (el) => !!el && el.nodeType === Node.ELEMENT_NODE;
 
@@ -964,7 +1019,8 @@ function renderHTML(content = null) {
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   if (null !== html && html !== "") {
-    doc.write(html);
+    const cleanedHtml = sanitizeHTML(html);
+    doc.write(cleanedHtml);
   } else if (
     null !== content &&
     typeof content === "string" &&
@@ -1012,14 +1068,12 @@ function setupIframe({
       renderHTML(`<p id='preview' style='${style}'>${defaultMessage}</p>`);
       // Hide render button
       renderBtn.style.display = "none";
-      // clear previously selected locators
-      document.getElementById("cssSelector").value = "";
-      document.getElementById("xpathSelector").value = "";
-      document.getElementById("idSelector").value = "";
+      cleanInputs();
     }
   });
 }
 
 // Initalize setup
+window.onload = cleanInputs;
 updateButtons();
 setupIframe();

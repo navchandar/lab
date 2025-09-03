@@ -71,20 +71,20 @@
         <div class="locator-row">
           <label
             >CSS Selector:
-            <input type="text" id="cssSelector" />
+            <input type="text" id="cssSelector" autocomplete="off" />
             <button class="copy-btn">Copy</button>
           </label>
         </div>
         <div class="locator-row">
           <label
             >XPath Locator:
-            <input type="text" id="xpathSelector" />
+            <input type="text" id="xpathSelector" autocomplete="off" />
             <button class="copy-btn">Copy</button>
           </label>
         </div>
         <div class="locator-row">
           <label
-            >ID: <input type="text" id="idSelector" />
+            >ID: <input type="text" id="idSelector" autocomplete="off" />
             <button class="copy-btn">Copy</button>
           </label>
         </div>
@@ -93,13 +93,24 @@
     <footer>
       <p>
         Disclaimer: This site processes the input within your browser client. No
-        data is stored or transmitted externally.
+        data is stored or transmitted externally <br />
         <a
           href="https://github.com/navchandar/lab/tree/main/smart-dom-inspector"
           target="_blank"
+          >GitHub</a
         >
-          Source
-        </a>
+        | Copyright &copy;
+        <script>
+          document.write(new Date().getFullYear());
+        </script>
+        Naveenchandar. | This work is licensed under the
+        <a
+          href="https://github.com/navchandar/lab/blob/main/LICENSE"
+          target="_blank"
+          rel="license"
+        >
+          GNU GPLv3</a
+        >.
       </p>
     </footer>
     <script src="script.js"></script>
