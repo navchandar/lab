@@ -313,7 +313,7 @@ function getXPath(el, options = {}) {
       const leafPred = m && m[2] ? m[2] : "";
       let candidate = `${A}//${leafTag}${leafPred}`;
 
-      if (isUnique(candidate)) {
+      if (isUnique(candidate) && matchesElement(candidate, el, d)) {
         console.log("XPath found using ancestor + leaf:", candidate);
         return candidate;
       }
@@ -325,7 +325,7 @@ function getXPath(el, options = {}) {
           const index = indexWithinNodeSet(nodes, el);
           if (index > 0) {
             candidate = `${A}//${leafTag}${leafPred}[${index}]`;
-            if (isUnique(candidate)) {
+            if (isUnique(candidate) && matchesElement(candidate, el, d)) {
               console.log(
                 "XPath found using ancestor + leaf + index:",
                 candidate
@@ -340,7 +340,7 @@ function getXPath(el, options = {}) {
 
   // Step 2: Try leaf-level XPath alone
   for (const xp of leafCandidates) {
-    if (isUnique(xp)) {
+    if (isUnique(xp) && matchesElement(xp, el, d)) {
       console.log("XPath found using leaf-level attributes:", xp);
       return xp;
     }
@@ -383,7 +383,7 @@ function getXPath(el, options = {}) {
     )}]//${targetTag}${classFilter}`;
     const wrappedXPath = `(${baseXPath})[1]`;
 
-    if (isUnique(wrappedXPath)) {
+    if (isUnique(wrappedXPath) && matchesElement(wrappedXPath, el, d)) {
       console.log("Generic scoped XPath found:", wrappedXPath);
       return wrappedXPath;
     }
@@ -394,7 +394,7 @@ function getXPath(el, options = {}) {
       const index = indexWithinNodeSet(nodes, el);
       if (index > 0) {
         const indexedXPath = `(${baseXPath})[${index}]`;
-        if (isUnique(indexedXPath)) {
+        if (isUnique(indexedXPath) && matchesElement(indexedXPath, el, d)) {
           console.log("Generic scoped XPath with index found:", indexedXPath);
           return indexedXPath;
         }
@@ -425,6 +425,21 @@ function getXPath(el, options = {}) {
       return arr;
     } catch {
       return null;
+    }
+  }
+
+  function matchesElement(xpath, el, doc) {
+    try {
+      const result = doc.evaluate(
+        xpath,
+        doc,
+        null,
+        XPathResult.FIRST_ORDERED_NODE_TYPE,
+        null
+      );
+      return result.singleNodeValue === el;
+    } catch {
+      return false;
     }
   }
 
@@ -476,7 +491,7 @@ function getXPath(el, options = {}) {
       const leafCandidate = [...parts.slice(0, leafIdx), withLeafNoIdx].join(
         "/"
       );
-      if (isUnique(leafCandidate)) {
+      if (isUnique(leafCandidate) && matchesElement(leafCandidate, el, d)) {
         parts[leafIdx] = withLeafNoIdx;
       }
     }
@@ -587,11 +602,22 @@ function getCssSelector(el, options = {}) {
 
   const isUnique = (sel) => {
     try {
-      return d.querySelectorAll(sel).length === 1;
+      const count = d.querySelectorAll(sel).length;
+      console.log(`Checking uniqueness for Selector: ${sel} → Count: ${count}`);
+      return count === 1;
     } catch {
       return false;
     }
   };
+  
+  function matchesElementByCss(selector, el, root = document) {
+    try {
+      const matched = root.querySelector(selector);
+      return matched === el;
+    } catch (e) {
+      return false;
+    }
+  }
 
   const tagOf = (node) => (node.tagName || "").toLowerCase();
 
@@ -695,7 +721,7 @@ function getCssSelector(el, options = {}) {
 
     for (const p of sorted) {
       const cand = p + accumulated;
-      if (isUnique(cand)) {
+      if (isUnique(cand) && matchesElementByCss(cand, el, d)) {
         console.log("Unique selector found (bottom-up):", cand);
         return cand;
       }
@@ -714,7 +740,7 @@ function getCssSelector(el, options = {}) {
     const nth = `${tag}:nth-of-type(${nthOfType(n)})`;
     absolute.unshift(nth);
     const sel = absolute.join(" > ");
-    if (isUnique(sel)) {
+    if (isUnique(sel) && matchesElementByCss(sel, el, d)) {
       console.log("Unique selector found (absolute path):", sel);
       return sel;
     }
