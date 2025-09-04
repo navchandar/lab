@@ -46,7 +46,7 @@ export function getTagOf(node) {
  * @param {Object} config Configuration object.
  * @returns {Array<[string, string]>} A list of [key, value] pairs for stable attributes.
  */
-export function findStableAttributePairs(node, config) {
+export function stableAttrPairs(node, config) {
   const pairs = [];
   for (const attr of config.attrWhitelist) {
     if (!node.hasAttribute?.(attr)) {
@@ -61,59 +61,101 @@ export function findStableAttributePairs(node, config) {
   return pairs;
 }
 
-// --- Configuration Module ---
+// --- Configuration Module Constants ---
 /**
- * Provides a common, extensible configuration for selector generation.
+ * Prefer attributes explicitly added for testing first (data-*),
+ * then accessibility attributes (ARIA), then a few semantic fallbacks.
+ * Order matters: earlier attributes are tried first.
  */
-export const DefaultConfig = {
-  root: document,
-  maxDepth: 8,
-  preferShort: true,
-  classLimit: 2,
-  useText: false,
-  textMaxLen: 40,
-  allowIndexOnAncestors: false,
-  allowIndexOnLeaf: true,
-  useId: true, // CSS Selector specific
+export const AttributeWhitelist = [
+  // Test IDs (widely used by Playwright, Cypress, Testing Library)
+  "data-testid",
+  "data-test-id",
+  "data-test",
+  "data-cy",
+  "data-qa",
+  "data-qa-id",
+  "data-automation-id",
+  "data-automationid",
+  "data-automation",
+  "data-qe-id",
+  // Accessibility & semantics (stable, user-facing)
+  "aria-label",
+  "aria-labelledby",
+  "aria-describedby",
+  "role",
+  "name",
+  "placeholder",
+  "title",
+  "alt",
+  // Lowest-priority fallbacks (use sparingly)
+  "type",
+  "href",
+  "id",
+];
 
-  // Attributes considered "stable" (ordered by preference)
-  attrWhitelist: [
-    "data-testid",
-    "data-test-id",
-    "data-test",
-    "data-cy",
-    "data-qa",
-    "data-qa-id",
-    "data-automation-id",
-    "data-automationid",
-    "data-automation",
-    "data-qe-id",
-    "aria-label",
-    "aria-labelledby",
-    "aria-describedby",
-    "role",
-    "name",
-    "placeholder",
-    "title",
-    "alt",
-    "type",
-    "href",
-    "id",
-  ],
+/**
+ * Avoid using classes/ids/values that look auto-generated or runtime-volatile
+ */
+export const AttributeBlacklist = [
+  // All-numeric tokens (ids/classes like "12345")
+  (v) => /^\d{3,}$/.test(v),
 
-  // Patterns to ignore (auto-generated / volatile)
-  unstableMatchers: [
-    (v) => /^\d{3,}$/.test(v),
-    (v) =>
-      /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v),
-    (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v),
-    (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v),
-    (v) => /^css-[a-z0-9]{4,}/.test(v),
-    (v) => /^sc-[a-zA-Z0-9]+/.test(v),
-    (v) => /^ng-/.test(v),
-    (v) => /^svelte-[a-zA-Z0-9]+/.test(v),
-  ],
-};
+  // UUID/GUIDs
+  (v) =>
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v),
+
+  // Long hex-ish chunks surrounded by delimiters (common in build hashes)
+  (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v),
+
+  // CSS Modules patterns: name__local___hash / local___hash
+  (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v),
+
+  // Emotion/MUI runtime classes: css-<hash>
+  (v) => /^css-[a-z0-9]{4,}/.test(v),
+
+  // styled-components: sc-*
+  (v) => /^sc-[a-zA-Z0-9]+/.test(v),
+
+  // Angular runtime/state classes: ng-*
+  (v) => /^ng-/.test(v),
+
+  // Svelte scoping: svelte-<hash>
+  (v) => /^svelte-[a-zA-Z0-9]+/.test(v),
+
+  // Tailwind JIT-generated classes (e.g., tw-abc123)
+  (v) => /^tw-[a-z0-9]{4,}$/i.test(v),
+
+  // Webpack module identifiers (e.g., module__abc123)
+  (v) => /^module__[\w-]{6,}$/.test(v),
+
+  // Vite/Parcel hashed class names (e.g., v-abc123, p-xyz456)
+  (v) => /^[vp]-[a-z0-9]{5,}$/i.test(v),
+
+  // React DevTools auto-generated keys (e.g., .r123456)
+  (v) => /^\.r\d{5,}$/.test(v),
+
+  // Next.js image optimization keys (e.g., __next_image__hash)
+  (v) => /^__next_image__/.test(v),
+
+  // Astro scoped styles (e.g., astro-abc123)
+  (v) => /^astro-[a-z0-9]{5,}$/i.test(v),
+
+  // Shopify Polaris or similar design system hashes (e.g., Polaris-abc123)
+  (v) => /^Polaris-[a-z0-9]{5,}$/i.test(v),
+
+  // Random alphanumeric strings (e.g., abc123xyz456)
+  (v) => /^[a-z0-9]{10,}$/i.test(v),
+
+  // Short, random-looking strings (e.g., yZiJbe, gLFyf, Alh6id)
+  (v) => /^[a-zA-Z]{3,6}$/.test(v), // 3–6 alphabetic characters
+
+  // Mixed-case alphanumeric strings (e.g., Alh6id)
+  (v) => /^[a-zA-Z0-9]{5,8}$/.test(v),
+
+  // Google-style JS name attributes (e.g., jsname="yZiJbe")
+  (v) => /^[a-zA-Z]{2,6}$/.test(v) && /[A-Z]/.test(v), // must include uppercase
+];
 
 // --- XPath Specific Utilities ---
 /**
@@ -205,12 +247,14 @@ const isUnique = (locator, d, type = "XPATH") => {
   let count = 0;
   if (type === "XPATH") {
     const count = countXpathElems(locator, d);
-    console.log(`Checking uniqueness for XPath: ${xp} → Count: ${count}`);
+    console.log(`Checking uniqueness for XPath: ${locator} → Count: ${count}`);
   } else if (type === "CSS") {
     const count = countCssElems(locator, d);
-    console.log(`Checking uniqueness for Selector: ${sel} → Count: ${count}`);
+    console.log(
+      `Checking uniqueness for Selector: ${locator} → Count: ${count}`
+    );
   } else {
-    console.warning("Invalid isUnique type");
+    console.warning(`Invalid type ${type} for locator: ${locator}`);
   }
 
   return count === 1;

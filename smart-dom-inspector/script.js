@@ -2,8 +2,9 @@ import {
   isDomElement,
   isUnstable,
   getTagOf,
-  findStableAttributePairs,
-  DefaultConfig,
+  stableAttrPairs,
+  AttributeWhitelist,
+  AttributeBlacklist,
   xpathString,
   getIndexOfTag,
   cssEscape,
@@ -165,46 +166,11 @@ function getXPath(el, options = {}) {
     classLimit: 2,
 
     // Attributes considered "stable" (ordered by preference).
-    attrWhitelist: [
-      "data-testid",
-      "data-test-id",
-      "data-test",
-      "data-cy",
-      "data-qa",
-      "data-qa-id",
-      "data-automation-id",
-      "data-automationid",
-      "data-automation",
-      "data-qe-id",
+    attrWhitelist: AttributeWhitelist,
 
-      // Accessibility & semantics (user-facing and relatively stable)
-      "aria-label",
-      "aria-labelledby",
-      "aria-describedby",
-      "role",
-      "name",
-      "placeholder",
-      "title",
-      "alt",
+    // Avoid using classes/ids/values that are auto-generated or volatile
+    unstableMatchers: AttributeBlacklist,
 
-      // Low-priority fallbacks
-      "type",
-      "href",
-      "id",
-    ],
-
-    // Patterns to ignore (auto-generated / volatile)
-    unstableMatchers: [
-      (v) => /^\d{3,}$/.test(v), // all numeric
-      (v) =>
-        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v), // UUID
-      (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v), // long hex shards
-      (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v), // CSS Modules ___hash
-      (v) => /^css-[a-z0-9]{4,}/.test(v), // Emotion/MUI
-      (v) => /^sc-[a-zA-Z0-9]+/.test(v), // styled-components
-      (v) => /^ng-/.test(v), // Angular state/runtime
-      (v) => /^svelte-[a-zA-Z0-9]+/.test(v), // Svelte scoping
-    ],
     ...options,
   };
 
@@ -486,7 +452,7 @@ function getXPath(el, options = {}) {
     return "/" + segs.join("/");
   }
 
-  function pruneAbsolute(xp, doc) {
+  function pruneAbsolute(xp, d) {
     // Greedily remove redundant [1]s while maintaining uniqueness, left-to-right
     const parts = xp.split("/");
     for (let i = 1; i < parts.length - 1; i++) {
@@ -532,64 +498,15 @@ function getCssSelector(el, options = {}) {
   const cfg = {
     root: el.ownerDocument,
     maxDepth: 5,
-    useId: true,
-
-    /**
-     * Prefer attributes explicitly added for testing first (data-*),
-     * then accessibility attributes (ARIA), then a few semantic fallbacks.
-     *
-     * Order matters: earlier attributes are tried first.
-     */
-    attrWhitelist: [
-      // Test IDs (widely used by Playwright, Cypress, Testing Library)
-      "data-testid",
-      "data-test-id",
-      "data-test",
-      "data-cy",
-      "data-qa",
-      "data-qa-id",
-      "data-automation-id",
-      "data-automationid",
-      "data-automation",
-      "data-qe-id",
-
-      // Accessibility & semantics (stable, user-facing)
-      "aria-label",
-      "aria-labelledby",
-      "aria-describedby",
-      "role",
-      "name",
-      "placeholder",
-      "title",
-      "alt",
-
-      // Lowest-priority fallbacks (use sparingly)
-      "type",
-      "href",
-    ],
-
-    // Avoid using classes/ids/values that look auto-generated or runtime-volatile
-    unstableMatchers: [
-      // All-numeric tokens (ids/classes like "12345")
-      (v) => /^\d{3,}$/.test(v),
-      // UUID/GUIDs
-      (v) =>
-        /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(v),
-      // Long hex-ish chunks surrounded by delimiters (common in build hashes)
-      (v) => /(^|[_-])[a-f0-9]{6,}($|[_-])/i.test(v),
-      // CSS Modules patterns: name__local___hash / local___hash
-      (v) => /__{2,3}[A-Za-z0-9_-]{4,}$/.test(v),
-      // Emotion/MUI runtime classes: css-<hash>
-      (v) => /^css-[a-z0-9]{4,}/.test(v),
-      // styled-components: sc-*
-      (v) => /^sc-[a-zA-Z0-9]+/.test(v),
-      // Angular runtime/state classes: ng-*
-      (v) => /^ng-/.test(v),
-      // Svelte scoping: svelte-<hash>
-      (v) => /^svelte-[a-zA-Z0-9]+/.test(v),
-    ],
     classLimit: 3,
     preferShort: true,
+    useId: true,
+
+    // Attributes considered "stable" (ordered by preference).
+    attrWhitelist: AttributeWhitelist,
+
+    // Avoid using classes/ids/values that are auto-generated or volatile
+    unstableMatchers: AttributeBlacklist,
     ...options,
   };
 
