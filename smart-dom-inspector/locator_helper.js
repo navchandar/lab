@@ -202,6 +202,14 @@ export function getIndexOfTag(node) {
   return i;
 }
 
+/**
+ * Checks if a given XPath expression matches a specific DOM element.
+ *
+ * @param {string} xpath - The XPath expression to evaluate.
+ * @param {Element} el - The DOM element to compare against.
+ * @param {Document} doc - The document context in which to evaluate the XPath.
+ * @returns {boolean} - True if the XPath resolves to the given element, false otherwise.
+ */
 export function XpathMatch(xpath, el, doc) {
   try {
     const result = doc.evaluate(
@@ -217,6 +225,14 @@ export function XpathMatch(xpath, el, doc) {
   }
 }
 
+/**
+ * Checks if a given CSS selector matches a specific DOM element.
+ *
+ * @param {string} selector - The CSS selector to evaluate.
+ * @param {Element} el - The DOM element to compare against.
+ * @param {Document} doc - The document context in which to query the selector.
+ * @returns {boolean} - True if the selector resolves to the given element, false otherwise.
+ */
 export function CssMatch(selector, el, doc) {
   try {
     const matched = doc.querySelector(selector);
@@ -226,6 +242,13 @@ export function CssMatch(selector, el, doc) {
   }
 }
 
+/**
+ * Counts the number of elements matched by an XPath expression.
+ *
+ * @param {string} xp - The XPath expression to evaluate.
+ * @param {Document} d - The document context in which to evaluate the XPath.
+ * @returns {number} - The number of matching elements, or NaN if evaluation fails.
+ */
 function countXpathElems(xp, d) {
   try {
     return d.evaluate(`count(${xp})`, d, null, XPathResult.NUMBER_TYPE, null)
@@ -235,6 +258,13 @@ function countXpathElems(xp, d) {
   }
 }
 
+/**
+ * Counts the number of elements matched by a CSS selector.
+ *
+ * @param {string} sel - The CSS selector to evaluate.
+ * @param {Document} d - The document context in which to query the selector.
+ * @returns {number} - The number of matching elements, or NaN if query fails.
+ */
 function countCssElems(sel, d) {
   try {
     return d.querySelectorAll(sel).length;
@@ -243,18 +273,27 @@ function countCssElems(sel, d) {
   }
 }
 
-const isUnique = (locator, d, type = "XPATH") => {
+/**
+ * Determines whether a locator (XPath or CSS selector) uniquely identifies a single element.
+ *
+ * @param {string} locator - The XPath or CSS selector to evaluate.
+ * @param {Document} d - The document context in which to evaluate the locator.
+ * @param {string} type - The type of locator: "XPATH" or "CSS".
+ * @returns {boolean} - True if the locator matches exactly one element, false otherwise.
+ */
+export const isUnique = (locator, d, type = "XPATH") => {
   let count = 0;
+
   if (type === "XPATH") {
-    const count = countXpathElems(locator, d);
+    count = countXpathElems(locator, d);
     console.log(`Checking uniqueness for XPath: ${locator} → Count: ${count}`);
   } else if (type === "CSS") {
-    const count = countCssElems(locator, d);
+    count = countCssElems(locator, d);
     console.log(
       `Checking uniqueness for Selector: ${locator} → Count: ${count}`
     );
   } else {
-    console.warning(`Invalid type ${type} for locator: ${locator}`);
+    console.warn(`Invalid type ${type} for locator: ${locator}`);
   }
 
   return count === 1;
