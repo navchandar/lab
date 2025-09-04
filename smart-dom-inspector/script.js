@@ -1,3 +1,17 @@
+import {
+  isDomElement,
+  isUnstable,
+  getTagOf,
+  findStableAttributePairs,
+  DefaultConfig,
+  xpathString,
+  getIndexOfTag,
+  cssEscape,
+  XpathMatch,
+  CssMatch,
+  isUnique,
+} from "./locator_helper.js";
+
 /**
  * copy given text from elementId when button is clicked
  */
@@ -124,9 +138,6 @@ function sanitizeHTML(htmlString) {
   return container.innerHTML;
 }
 
-//Node type check to detect instanceof Element
-const isDomElement = (el) => !!el && el.nodeType === Node.ELEMENT_NODE;
-
 /**
  * Generates a simplified and maintainable XPath for a given DOM element.
  * Prioritizes ID-based paths and avoids overly specific indexing when possible.
@@ -200,76 +211,12 @@ function getXPath(el, options = {}) {
   const d = cfg.root;
 
   // ==== helper functions ====
-  const isUnstable = (v) =>
-    !v ||
-    cfg.unstableMatchers.some((fn) => {
-      try {
-        return fn(v);
-      } catch {
-        return false;
-      }
-    });
-
-  const tagOf = (node) => (node.tagName || "").toLowerCase();
-
-  const idxAmongType = (node) => {
-    let i = 1,
-      sib = node,
-      tag = node.localName;
-    while ((sib = sib.previousElementSibling)) {
-      if (sib.localName === tag) {
-        i++;
-      }
-    }
-    return i;
-  };
-
-  const xpathString = (s) => {
-    if (s.indexOf('"') === -1) {
-      return `"${s}"`;
-    }
-    if (s.indexOf("'") === -1) {
-      return `'${s}'`;
-    }
-    return 'concat("' + s.replace(/"/g, '",\'"\',"') + '")';
-  };
-
-  const countNodes = (xp) => {
-    try {
-      return d.evaluate(`count(${xp})`, d, null, XPathResult.NUMBER_TYPE, null)
-        .numberValue;
-    } catch {
-      return NaN;
-    }
-  };
-
-  const isUnique = (xp) => {
-    const count = countNodes(xp);
-    console.log(`Checking uniqueness for XPath: ${xp} → Count: ${count}`);
-    return count === 1;
-  };
-
-  const stableAttrPairs = (node) => {
-    const pairs = [];
-    for (const a of cfg.attrWhitelist) {
-      if (!node.hasAttribute?.(a)) {
-        continue;
-      }
-      const val = node.getAttribute(a);
-      if (!val || isUnstable(val)) {
-        continue;
-      }
-      pairs.push([a, val]);
-    }
-    return pairs;
-  };
-
   const stableClasses = (node) => {
     if (!node.classList?.length) {
       return [];
     }
     return Array.from(node.classList)
-      .filter((c) => !isUnstable(c))
+      .filter((c) => !isUnstable(c, cfg.unstableMatchers))
       .slice(0, cfg.classLimit);
   };
 
@@ -292,17 +239,17 @@ function getXPath(el, options = {}) {
 
   // --- Build leaf predicate variants (strongest to weakest)
   const buildLeafPredicates = (node) => {
-    const tag = tagOf(node) || "*";
+    const tag = getTagOf(node) || "*";
     const preds = [];
 
     // id first if stable
     const id = node.getAttribute?.("id");
-    if (id && !isUnstable(id)) {
+    if (id && !isUnstable(id, cfg.unstableMatchers)) {
       preds.push([tag, [`@id=${xpathString(id)}`]]);
     }
 
     // test/ARIA/semantic attributes
-    const attrs = stableAttrPairs(node);
+    const attrs = stableAttrPairs(node, cfg);
     for (const [k, v] of attrs) {
       preds.push([tag, [`@${k}=${xpathString(v)}`]]);
     }
@@ -354,13 +301,13 @@ function getXPath(el, options = {}) {
       depth = 0;
 
     while (cur && depth < cfg.maxDepth) {
-      const tag = tagOf(cur) || "*";
-      const attrs = stableAttrPairs(cur);
+      const tag = getTagOf(cur) || "*";
+      const attrs = stableAttrPairs(cur, cfg);
       const id = cur.getAttribute?.("id");
       const classes = stableClasses(cur);
 
       // prefer id, then stable attributes, then tag+classes
-      if (id && !isUnstable(id)) {
+      if (id && !isUnstable(id, cfg.unstableMatchers)) {
         anchors.push(`//*[@id=${xpathString(id)}]`);
       }
 
@@ -388,14 +335,14 @@ function getXPath(el, options = {}) {
 
   for (const A of anchors) {
     for (const L of leafCandidates) {
-      const tag = tagOf(el) || "*";
+      const tag = getTagOf(el) || "*";
       // normalize leaf L into [tag, predicate] again for consistent index handling
       const m = L.match(/^\/\/([^[]+)(\[.+\])?$/);
       const leafTag = m ? m[1] : tag;
       const leafPred = m && m[2] ? m[2] : "";
       let candidate = `${A}//${leafTag}${leafPred}`;
 
-      if (isUnique(candidate) && matchesElement(candidate, el, d)) {
+      if (isUnique(candidate, d) && XpathMatch(candidate, el, d)) {
         console.log("XPath found using ancestor + leaf:", candidate);
         return candidate;
       }
@@ -407,7 +354,7 @@ function getXPath(el, options = {}) {
           const index = indexWithinNodeSet(nodes, el);
           if (index > 0) {
             candidate = `${A}//${leafTag}${leafPred}[${index}]`;
-            if (isUnique(candidate) && matchesElement(candidate, el, d)) {
+            if (isUnique(candidate, d) && XpathMatch(candidate, el, d)) {
               console.log(
                 "XPath found using ancestor + leaf + index:",
                 candidate
@@ -422,7 +369,7 @@ function getXPath(el, options = {}) {
 
   // Step 2: Try leaf-level XPath alone
   for (const xp of leafCandidates) {
-    if (isUnique(xp) && matchesElement(xp, el, d)) {
+    if (isUnique(xp, d) && XpathMatch(xp, el, d)) {
       console.log("XPath found using leaf-level attributes:", xp);
       return xp;
     }
@@ -432,11 +379,11 @@ function getXPath(el, options = {}) {
   function findStableAncestor(node) {
     let cur = node.parentElement;
     while (cur) {
-      const attrs = stableAttrPairs(cur);
+      const attrs = stableAttrPairs(cur, cfg);
       if (attrs.length > 0) {
         const [key, val] = attrs[0];
         return {
-          tag: tagOf(cur),
+          tag: getTagOf(cur),
           attr: key,
           value: val,
           node: cur,
@@ -449,7 +396,7 @@ function getXPath(el, options = {}) {
 
   const ancestor = findStableAncestor(el);
   if (ancestor) {
-    const targetTag = tagOf(el);
+    const targetTag = getTagOf(el);
     const classList = stableClasses(el);
 
     let classFilter = "";
@@ -465,7 +412,7 @@ function getXPath(el, options = {}) {
     )}]//${targetTag}${classFilter}`;
     const wrappedXPath = `(${baseXPath})[1]`;
 
-    if (isUnique(wrappedXPath) && matchesElement(wrappedXPath, el, d)) {
+    if (isUnique(wrappedXPath, d) && XpathMatch(wrappedXPath, el, d)) {
       console.log("Generic scoped XPath found:", wrappedXPath);
       return wrappedXPath;
     }
@@ -476,7 +423,7 @@ function getXPath(el, options = {}) {
       const index = indexWithinNodeSet(nodes, el);
       if (index > 0) {
         const indexedXPath = `(${baseXPath})[${index}]`;
-        if (isUnique(indexedXPath) && matchesElement(indexedXPath, el, d)) {
+        if (isUnique(indexedXPath, d) && XpathMatch(indexedXPath, el, d)) {
           console.log("Generic scoped XPath with index found:", indexedXPath);
           return indexedXPath;
         }
@@ -510,21 +457,6 @@ function getXPath(el, options = {}) {
     }
   }
 
-  function matchesElement(xpath, el, doc) {
-    try {
-      const result = doc.evaluate(
-        xpath,
-        doc,
-        null,
-        XPathResult.FIRST_ORDERED_NODE_TYPE,
-        null
-      );
-      return result.singleNodeValue === el;
-    } catch {
-      return false;
-    }
-  }
-
   function indexWithinNodeSet(nodes, target) {
     let i = 0;
     for (const n of nodes) {
@@ -539,16 +471,16 @@ function getXPath(el, options = {}) {
   function buildAbsolute(node) {
     const segs = [];
     for (let n = node; n && n.nodeType === 1; n = n.parentElement) {
-      const tg = tagOf(n) || "*";
+      const tg = getTagOf(n) || "*";
       // try stable attribute in segment
-      const attrs = stableAttrPairs(n);
+      const attrs = stableAttrPairs(n, cfg);
       if (attrs.length) {
         const [k, v] = attrs[0];
         segs.unshift(`${tg}[@${k}=${xpathString(v)}]`);
         continue;
       }
       // else positional among same tag
-      const idx = idxAmongType(n);
+      const idx = getIndexOfTag(n);
       segs.unshift(`${tg}[${idx}]`);
     }
     return "/" + segs.join("/");
@@ -561,7 +493,7 @@ function getXPath(el, options = {}) {
       // skip leading '' and leave leaf index intact
       parts[i] = parts[i].replace(/\[1\]$/, "");
       const candidate = parts.join("/");
-      if (!isUnique(candidate)) {
+      if (!isUnique(candidate, d)) {
         // revert if uniqueness broke
         parts[i] = parts[i] + "[1]";
       }
@@ -573,7 +505,7 @@ function getXPath(el, options = {}) {
       const leafCandidate = [...parts.slice(0, leafIdx), withLeafNoIdx].join(
         "/"
       );
-      if (isUnique(leafCandidate) && matchesElement(leafCandidate, el, d)) {
+      if (isUnique(leafCandidate, d) && XpathMatch(leafCandidate, el, d)) {
         parts[leafIdx] = withLeafNoIdx;
       }
     }
@@ -597,11 +529,6 @@ function getCssSelector(el, options = {}) {
   }
 
   // Step 2: Initialize configuration
-  const cssEscape = (v) =>
-    typeof CSS !== "undefined" && CSS.escape
-      ? CSS.escape(v)
-      : String(v).replace(/["\\]/g, "\\$&");
-
   const cfg = {
     root: el.ownerDocument,
     maxDepth: 5,
@@ -669,77 +596,16 @@ function getCssSelector(el, options = {}) {
   const d = cfg.root;
 
   // Step 3: Define utility functions
-  const isUnstable = (value) => {
-    if (!value) {
-      return true;
-    }
-    return cfg.unstableMatchers.some((fn) => {
-      try {
-        return fn(value);
-      } catch {
-        return false;
-      }
-    });
-  };
-
-  const isUnique = (sel) => {
-    try {
-      const count = d.querySelectorAll(sel).length;
-      console.log(`Checking uniqueness for Selector: ${sel} → Count: ${count}`);
-      return count === 1;
-    } catch {
-      return false;
-    }
-  };
-
-  function matchesElementByCss(selector, el, root = document) {
-    try {
-      const matched = root.querySelector(selector);
-      return matched === el;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  const tagOf = (node) => (node.tagName || "").toLowerCase();
-
-  const nthOfType = (node) => {
-    let i = 1,
-      sib = node;
-    const tag = tagOf(node);
-    while ((sib = sib.previousElementSibling)) {
-      if (tagOf(sib) === tag) {
-        i++;
-      }
-    }
-    return i;
-  };
-
   const uniqueId = (node) => {
     if (!cfg.useId || !node.getAttribute) {
       return null;
     }
     const id = node.getAttribute("id");
-    if (!id || isUnstable(id)) {
+    if (!id || isUnstable(id, cfg.unstableMatchers)) {
       return null;
     }
     const found = d.getElementById ? d.getElementById(id) : null;
     return found === node ? id : null;
-  };
-
-  const stableAttrPairs = (node) => {
-    const pairs = [];
-    for (const attr of cfg.attrWhitelist) {
-      if (!node.hasAttribute || !node.hasAttribute(attr)) {
-        continue;
-      }
-      const val = node.getAttribute(attr);
-      if (!val || isUnstable(val)) {
-        continue;
-      }
-      pairs.push([attr, cssEscape(val)]);
-    }
-    return pairs;
   };
 
   const classSelectors = (node) => {
@@ -747,16 +613,16 @@ function getCssSelector(el, options = {}) {
       return [];
     }
     return Array.from(node.classList)
-      .filter((c) => !isUnstable(c))
+      .filter((c) => !isUnstable(c, cfg.unstableMatchers))
       .slice(0, cfg.classLimit)
       .map((c) => "." + cssEscape(c));
   };
 
   // Build candidate fragments for this node, from strongest to weakest
   const nodeCandidates = (node) => {
-    const tag = tagOf(node);
+    const tag = getTagOf(node);
     const id = uniqueId(node);
-    const attrs = stableAttrPairs(node);
+    const attrs = stableAttrPairs(node, cfg);
     const classes = classSelectors(node);
     const candidates = [];
 
@@ -781,7 +647,7 @@ function getCssSelector(el, options = {}) {
     }
     // Finally, tag:nth-of-type(n)
     if (tag) {
-      candidates.push(`${tag}:nth-of-type(${nthOfType(node)})`);
+      candidates.push(`${tag}:nth-of-type(${getIndexOfTag(node)})`);
     }
 
     console.log("Generated candidates for node:", candidates);
@@ -803,7 +669,7 @@ function getCssSelector(el, options = {}) {
 
     for (const p of sorted) {
       const cand = p + accumulated;
-      if (isUnique(cand) && matchesElementByCss(cand, el, d)) {
+      if (isUnique(cand, d, "CSS") && CssMatch(cand, el, d)) {
         console.log("Unique selector found (bottom-up):", cand);
         return cand;
       }
@@ -818,11 +684,11 @@ function getCssSelector(el, options = {}) {
   // Step 5: Fallback to absolute path using nth-of-type
   const absolute = [];
   for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-    const tag = tagOf(n) || "*";
-    const nth = `${tag}:nth-of-type(${nthOfType(n)})`;
+    const tag = getTagOf(n) || "*";
+    const nth = `${tag}:nth-of-type(${getIndexOfTag(n)})`;
     absolute.unshift(nth);
     const sel = absolute.join(" > ");
-    if (isUnique(sel) && matchesElementByCss(sel, el, d)) {
+    if (isUnique(sel, d, "CSS") && CssMatch(sel, el, d)) {
       console.log("Unique selector found (absolute path):", sel);
       return sel;
     }
@@ -834,14 +700,16 @@ function getCssSelector(el, options = {}) {
   return fallback;
 }
 
+/**
+ * Highlights elements in the iframe on mouse hover.
+ */
 function highlightElement(element, iframe) {
   const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+  const iframeWin = iframe.contentWindow;
 
   // Remove any existing highlight box
-  const existingHighlight = iframeDoc.querySelector(".highlight-box");
-  if (existingHighlight) {
-    existingHighlight.remove();
-  }
+  const existingHighlights = iframeDoc.querySelectorAll(".highlight-box");
+  existingHighlights.forEach((el) => el.remove());
 
   // Create a new highlight box
   const highlight = iframeDoc.createElement("div");
@@ -849,16 +717,16 @@ function highlightElement(element, iframe) {
 
   // Get bounding box of the element
   const rect = element.getBoundingClientRect();
+  const scrollTop = iframeWin.scrollY;
+  const scrollLeft = iframeWin.scrollX;
 
   // Style the highlight box to overlay the element
   highlight.style.position = "absolute";
   highlight.style.border = "2px dashed red";
   highlight.style.pointerEvents = "none";
   highlight.style.zIndex = "9999";
-  highlight.style.top = `${rect.top + iframeDoc.documentElement.scrollTop}px`;
-  highlight.style.left = `${
-    rect.left + iframeDoc.documentElement.scrollLeft
-  }px`;
+  highlight.style.top = `${rect.top + scrollTop}px`;
+  highlight.style.left = `${rect.left + scrollLeft}px`;
   highlight.style.width = `${rect.width}px`;
   highlight.style.height = `${rect.height}px`;
 
@@ -885,6 +753,8 @@ function highlightElement(element, iframe) {
  * @param {string} type - Type of locator: "ID", "CSS", or "XPATH".
  */
 function highlightDuplicates(locator, doc, clickedElement, type) {
+  const win = doc.defaultView;
+
   // Remove any existing duplicate highlights
   const existingHighlights = doc.querySelectorAll(".duplicate-highlight");
   existingHighlights.forEach((el) => el.remove());
@@ -917,21 +787,23 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
     return;
   }
 
-  // No duplicates to highlight
   if (matches.length <= 1) {
     return;
   }
 
   matches.forEach((el) => {
     const rect = el.getBoundingClientRect();
+    const scrollTop = win.scrollY;
+    const scrollLeft = win.scrollX;
+
     const highlight = doc.createElement("div");
     highlight.className = "duplicate-highlight";
     highlight.style.position = "absolute";
     highlight.style.border = "2px dashed orange";
     highlight.style.pointerEvents = "none";
     highlight.style.zIndex = "9998";
-    highlight.style.top = `${rect.top + doc.documentElement.scrollTop}px`;
-    highlight.style.left = `${rect.left + doc.documentElement.scrollLeft}px`;
+    highlight.style.top = `${rect.top + scrollTop}px`;
+    highlight.style.left = `${rect.left + scrollLeft}px`;
     highlight.style.width = `${rect.width}px`;
     highlight.style.height = `${rect.height}px`;
 
