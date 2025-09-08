@@ -145,7 +145,7 @@ export const AttributeBlacklist = [
   (v) => /^Polaris-[a-z0-9]{5,}$/i.test(v),
 
   // Random alphanumeric strings (e.g., abc123xyz456)
-  (v) => /^[a-z0-9]{10,}$/i.test(v),
+  (v) => /(?=.*\d)^[a-z0-9]{10,}$/i.test(v),
 
   // Short, random-looking strings (e.g., yZiJbe, gLFyf, Alh6id)
   (v) => /^[a-zA-Z]{3,6}$/.test(v), // 3–6 alphabetic characters
@@ -155,6 +155,7 @@ export const AttributeBlacklist = [
 
   // Google-style JS name attributes (e.g., jsname="yZiJbe")
   (v) => /^[a-zA-Z]{2,6}$/.test(v) && /[A-Z]/.test(v), // must include uppercase
+
 ];
 
 // --- XPath Specific Utilities ---
