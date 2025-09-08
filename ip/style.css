@@ -85,9 +85,9 @@ h1 {
     transition: opacity 0.5s ease, transform 0.5s ease;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    background-color: #f0f0f0;
+    background-color: #87cefabd;
     padding: 12px 20px;
-    color: #333;
+    color: #1c1c1c;
     font-family: sans-serif;
 }
 
@@ -99,11 +99,11 @@ h1 {
 
 .ip-toast-close {
     cursor: pointer;
+    margin: 0;
     margin-left: 10px;
     border: none;
     background: none;
     color: #333;
-    ;
     font-size: 18px;
 }
 
@@ -131,8 +131,14 @@ button {
 
 @media (max-width: 768px) {
     .ip-toast {
-        bottom: 30px;
+        bottom: 100px;
         transform: translateX(-50%);
+        padding: 8px;
+        font-size: smaller;
+    }
+
+    .ip-toast-close {
+        margin: 0;
     }
 }
 
@@ -142,12 +148,13 @@ button {
         right: 20px;
         transform: translateY(-20px);
     }
+
 }
 
 @media (max-width: 600px) {
     header {
         margin-top: 10%;
-        margin-bottom: 10vh;
+        margin-bottom: 5vh;
     }
 
     h1 {
@@ -201,7 +208,7 @@ button {
 
 
     .ip-toast {
-        background-color: #3b3b3b;
+        background-color: #484848;
         color: #fff;
     }
 

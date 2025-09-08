@@ -226,6 +226,31 @@ export function XpathMatch(xpath, el, doc) {
 }
 
 /**
+ * Evaluates an XPath expression and returns an array of matching nodes.
+ * @param {string} xpath - The XPath expression to evaluate.
+ * @returns {Node[]} An array of DOM nodes.
+ */
+export function evaluateXpath(xpath) {
+  try {
+    const result = doc.evaluate(
+      xpath,
+      doc,
+      null,
+      XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+      null
+    );
+    const nodes = [];
+    for (let i = 0; i < result.snapshotLength; i++) {
+      nodes.push(result.snapshotItem(i));
+    }
+    return nodes;
+  } catch (e) {
+    console.warn(`Error evaluating XPath: ${xpath}`, e);
+    return [];
+  }
+}
+
+/**
  * Checks if a given CSS selector matches a specific DOM element.
  *
  * @param {string} selector - The CSS selector to evaluate.

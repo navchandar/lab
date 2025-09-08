@@ -8,7 +8,7 @@ import {
   xpathString,
   getIndexOfTag,
   cssEscape,
-  XpathMatch,
+  evaluateXpath,
   CssMatch,
   isUnique,
 } from "./locator_helper.js";
@@ -140,10 +140,17 @@ function sanitizeHTML(htmlString) {
 }
 
 /**
- * Generates a simplified and maintainable XPath for a given DOM element.
+ * Calculates a stable and efficient XPath for a given DOM element.
  * Prioritizes ID-based paths and avoids overly specific indexing when possible.
- *
- * @param {Element} element - The DOM element to generate XPath for.
+ * The algorithm follows these steps in order:
+ * 1.  **ID-based XPath**: If the element has a stable ID, use it (`//*[@id='...']`).
+ * 2.  **Indexed ID-based XPath**: If the ID is not unique, use an index (`(//*[@id='...'])[n]`).
+ * 3.  **Attribute-based XPath**: If no ID, use other stable, whitelisted attributes (`//tag[@attr='...']`).
+ * 4.  **Indexed Attribute-based XPath**: If the attribute locator is not unique, use an index.
+ * 5.  **Relative XPath from Stable Ancestor**: Traverse up the DOM to find an ancestor with a stable ID or attribute.
+ * It then builds a precise path from that ancestor to the target element. It stops searching upwards as soon as an ancestor with an ID is found.
+ * 6.  **Absolute XPath**: As a final fallback, it generates the full, absolute XPath from the root of the document.
+ * @param {Element} el - The DOM element to generate XPath for.
  * @returns {string} - The XPath string.
  */
 function getXPath(el, options = {}) {
@@ -173,311 +180,126 @@ function getXPath(el, options = {}) {
 
     ...options,
   };
+  const doc = cfg.root;
 
-  const d = cfg.root;
+  // ## Helper Functions ##
 
-  // ==== helper functions ====
-  const stableClasses = (node) => {
-    if (!node.classList?.length) {
-      return [];
-    }
-    return Array.from(node.classList)
-      .filter((c) => !isUnstable(c, cfg.unstableMatchers))
-      .slice(0, cfg.classLimit);
+  /**
+   * Finds the 1-based index of an element within an array of nodes.
+   * @param {Node[]} nodes - The array of nodes to search within.
+   * @param {Node} element - The element to find.
+   * @returns {number} The 1-based index, or 0 if not found.
+   */
+  const findIndex = (nodes, element) => {
+    const index = nodes.findIndex((node) => node === element);
+    return index !== -1 ? index + 1 : 0;
   };
 
-  const classPredicates = (classes) =>
-    classes.map(
-      (c) => `contains(concat(' ', normalize-space(@class), ' '), ' ${c} ')`
-    );
+  /**
+   * Tests a candidate XPath. If it uniquely identifies the target element, it's returned.
+   * If it matches multiple elements, it attempts to create an indexed XPath.
+   * @param {string} xpath - The candidate XPath.
+   * @returns {string|null} The valid XPath or null.
+   */
+  const testCandidate = (xpath) => {
+    const nodes = evaluateXpath(xpath);
 
-  const textPredicate = (node) => {
-    if (!cfg.useText) {
-      return null;
-    }
-    const t = (node.textContent || "").trim();
-    // avoid pure numbers
-    if (!t || t.length > cfg.textMaxLen || /^\d{1,}$/.test(t)) {
-      return null;
-    }
-    return `normalize-space()=${xpathString(t)}`;
-  };
-
-  // --- Build leaf predicate variants (strongest to weakest)
-  const buildLeafPredicates = (node) => {
-    const tag = getTagOf(node) || "*";
-    const preds = [];
-
-    // id first if stable
-    const id = node.getAttribute?.("id");
-    if (id && !isUnstable(id, cfg.unstableMatchers)) {
-      preds.push([tag, [`@id=${xpathString(id)}`]]);
+    if (nodes.length === 1 && nodes[0] === el) {
+      return xpath; // Uniquely found
     }
 
-    // test/ARIA/semantic attributes
-    const attrs = stableAttrPairs(node, cfg);
-    for (const [k, v] of attrs) {
-      preds.push([tag, [`@${k}=${xpathString(v)}`]]);
-    }
-
-    // combine up to two attributes
-    for (let i = 0; i < Math.min(attrs.length, cfg.maxLeafPredicates); i++) {
-      for (
-        let j = i + 1;
-        j < Math.min(attrs.length, cfg.maxLeafPredicates + 1);
-        j++
-      ) {
-        const [k1, v1] = attrs[i],
-          [k2, v2] = attrs[j];
-        preds.push([
-          tag,
-          [`@${k1}=${xpathString(v1)}`, `@${k2}=${xpathString(v2)}`],
-        ]);
-      }
-    }
-
-    const classes = stableClasses(node);
-    if (classes.length) {
-      preds.push([tag, classPredicates(classes)]);
-    }
-
-    const tp = textPredicate(node);
-    if (tp) {
-      preds.push([tag, [tp]]);
-    }
-
-    preds.push([tag, []]);
-
-    // Turn into concrete XPath snippets //tag[preds] and //*[@attr=val]
-    const out = [];
-    for (const [tg, arr] of preds) {
-      if (arr.length) {
-        out.push(`//${tg}[${arr.join(" and ")}]`);
-      } else {
-        out.push(`//${tg}`);
-      }
-    }
-    return cfg.preferShort ? out.sort((a, b) => a.length - b.length) : out;
-  };
-
-  // --- Build anchor candidates from ancestors (closest first)
-  const buildAnchorCandidates = (node) => {
-    const anchors = [];
-    let cur = node.parentElement,
-      depth = 0;
-
-    while (cur && depth < cfg.maxDepth) {
-      const tag = getTagOf(cur) || "*";
-      const attrs = stableAttrPairs(cur, cfg);
-      const id = cur.getAttribute?.("id");
-      const classes = stableClasses(cur);
-
-      // prefer id, then stable attributes, then tag+classes
-      if (id && !isUnstable(id, cfg.unstableMatchers)) {
-        anchors.push(`//*[@id=${xpathString(id)}]`);
-      }
-
-      for (const [k, v] of attrs) {
-        anchors.push(`//*[@${k}=${xpathString(v)}]`);
-        anchors.push(`//${tag}[@${k}=${xpathString(v)}]`);
-      }
-
-      if (classes.length) {
-        anchors.push(`//${tag}[${classPredicates(classes).join(" and ")}]`);
-      }
-
-      anchors.push(`//${tag}`);
-      cur = cur.parentElement;
-      depth++;
-    }
-    // de-dup & prefer shorter strings
-    const uniq = Array.from(new Set(anchors));
-    return cfg.preferShort ? uniq.sort((a, b) => a.length - b.length) : uniq;
-  };
-
-  // Step 1: Try ancestor-based XPath first
-  const anchors = buildAnchorCandidates(el);
-  const leafCandidates = buildLeafPredicates(el);
-
-  for (const A of anchors) {
-    for (const L of leafCandidates) {
-      const tag = getTagOf(el) || "*";
-      // normalize leaf L into [tag, predicate] again for consistent index handling
-      const m = L.match(/^\/\/([^[]+)(\[.+\])?$/);
-      const leafTag = m ? m[1] : tag;
-      const leafPred = m && m[2] ? m[2] : "";
-      let candidate = `${A}//${leafTag}${leafPred}`;
-
-      if (isUnique(candidate, d) && XpathMatch(candidate, el, d)) {
-        console.log("XPath found using ancestor + leaf:", candidate);
-        return candidate;
-      }
-
-      // As a last try within anchor, add index on leaf only
-      if (cfg.allowIndexOnLeaf) {
-        const nodes = evaluateNodes(`${A}//${leafTag}${leafPred}`, d);
-        if (nodes && nodes.length > 1) {
-          const index = indexWithinNodeSet(nodes, el);
-          if (index > 0) {
-            candidate = `${A}//${leafTag}${leafPred}[${index}]`;
-            if (isUnique(candidate, d) && XpathMatch(candidate, el, d)) {
-              console.log(
-                "XPath found using ancestor + leaf + index:",
-                candidate
-              );
-              return candidate;
-            }
-          }
+    if (nodes.length > 1) {
+      const index = findIndex(nodes, el);
+      if (index > 0) {
+        const indexedXpath = `(${xpath})[${index}]`;
+        const indexedNodes = evaluateXpath(indexedXpath);
+        if (indexedNodes.length === 1 && indexedNodes[0] === el) {
+          return indexedXpath; // Found with index
         }
       }
-    }
-  }
-
-  // Step 2: Try leaf-level XPath alone
-  for (const xp of leafCandidates) {
-    if (isUnique(xp, d) && XpathMatch(xp, el, d)) {
-      console.log("XPath found using leaf-level attributes:", xp);
-      return xp;
-    }
-  }
-
-  // Step 3: Try generic scoped XPath with optional class filtering and indexing
-  function findStableAncestor(node) {
-    let cur = node.parentElement;
-    while (cur) {
-      const attrs = stableAttrPairs(cur, cfg);
-      if (attrs.length > 0) {
-        const [key, val] = attrs[0];
-        return {
-          tag: getTagOf(cur),
-          attr: key,
-          value: val,
-          node: cur,
-        };
-      }
-      cur = cur.parentElement;
     }
     return null;
+  };
+
+  // ## XPath Generation Algorithm ##
+
+  // **Step 1: Check for ID on the element itself**
+  const id = el.getAttribute("id");
+  if (id && !isUnstable(id, cfg.unstableMatchers)) {
+    const idXpath = `//*[@id=${xpathString(id)}]`;
+    const result = testCandidate(idXpath);
+    if (result) return result;
   }
 
-  const ancestor = findStableAncestor(el);
-  if (ancestor) {
-    const targetTag = getTagOf(el);
-    const classList = stableClasses(el);
-
-    let classFilter = "";
-    if (classList.length === 1) {
-      // Use exact match if there's only one stable class
-      classFilter = `[@class=${xpathString(classList[0])}]`;
-    } else if (classList.length > 1) {
-      // Use contains() for partial match if multiple classes
-      classFilter = `[contains(concat(' ', normalize-space(@class), ' '), ' ${classList[0]} ')]`;
+  // **Step 2: Check for other stable whitelisted properties on the element**
+  const attrs = stableAttrPairs(el, cfg).filter(([key]) => key !== "id");
+  if (attrs.length > 0) {
+    const tag = getTagOf(el) || "*";
+    for (const [key, value] of attrs) {
+      const attrXpath = `//${tag}[@${key}=${xpathString(value)}]`;
+      const result = testCandidate(attrXpath);
+      if (result) return result;
     }
-    const baseXPath = `//${ancestor.tag}[@${ancestor.attr}=${xpathString(
-      ancestor.value
-    )}]//${targetTag}${classFilter}`;
-    const wrappedXPath = `(${baseXPath})[1]`;
+  }
 
-    if (isUnique(wrappedXPath, d) && XpathMatch(wrappedXPath, el, d)) {
-      console.log("Generic scoped XPath found:", wrappedXPath);
-      return wrappedXPath;
+  // **Step 3: Traverse up the DOM, looking for a stable parent to create a relative XPath**
+  let pathFromAncestor = "";
+  let current = el;
+
+  while (
+    current &&
+    current.parentElement &&
+    current.parentElement.nodeType === Node.ELEMENT_NODE
+  ) {
+    const parent = current.parentElement;
+    const tag = getTagOf(current);
+    const index = getIndexOfTag(current);
+    pathFromAncestor = `/${tag}[${index}]` + pathFromAncestor;
+
+    // **Priority 1: Parent with an ID**
+    const parentId = parent.getAttribute("id");
+    if (parentId && !isUnstable(parentId, cfg.unstableMatchers)) {
+      const anchorXpath = `//*[@id=${xpathString(parentId)}]`;
+      const candidate = anchorXpath + pathFromAncestor;
+      const result = testCandidate(candidate);
+      if (result) return result;
+      // Stop ascending if an ID is found, as it's the most stable anchor.
+      break;
     }
 
-    // If not unique, find index
-    const nodes = evaluateNodes(baseXPath, d);
-    if (nodes && nodes.length > 1) {
-      const index = indexWithinNodeSet(nodes, el);
-      if (index > 0) {
-        const indexedXPath = `(${baseXPath})[${index}]`;
-        if (isUnique(indexedXPath, d) && XpathMatch(indexedXPath, el, d)) {
-          console.log("Generic scoped XPath with index found:", indexedXPath);
-          return indexedXPath;
-        }
+    // **Priority 2: Parent with other stable attributes**
+    const parentAttrs = stableAttrPairs(parent, cfg).filter(
+      ([key]) => key !== "id"
+    );
+    if (parentAttrs.length > 0) {
+      const parentTag = getTagOf(parent) || "*";
+      for (const [key, value] of parentAttrs) {
+        const anchorXpath = `//${parentTag}[@${key}=${xpathString(value)}]`;
+        const candidate = anchorXpath + pathFromAncestor;
+        const result = testCandidate(candidate);
+        if (result) return result;
       }
     }
+
+    current = parent;
+    if (current === doc.documentElement) break;
   }
 
-  // Step 4: Fallback to absolute XPath
-  const absolute = buildAbsolute(el);
-  const pruned = pruneAbsolute(absolute, d);
-  console.log("Fallback to pruned absolute XPath:", pruned);
-  return pruned;
-
-  // === local helper functions ===
-  function evaluateNodes(xp, doc) {
-    try {
-      const r = doc.evaluate(
-        xp,
-        doc,
-        null,
-        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-        null
-      );
-      const arr = [];
-      for (let i = 0; i < r.snapshotLength; i++) {
-        arr.push(r.snapshotItem(i));
-      }
-      return arr;
-    } catch {
-      return null;
-    }
-  }
-
-  function indexWithinNodeSet(nodes, target) {
-    let i = 0;
-    for (const n of nodes) {
-      i++;
-      if (n === target) {
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  function buildAbsolute(node) {
+  // **Step 4: Fallback to full absolute XPath**
+  const buildAbsolute = (node) => {
     const segs = [];
-    for (let n = node; n && n.nodeType === 1; n = n.parentElement) {
-      const tg = getTagOf(n) || "*";
-      // try stable attribute in segment
-      const attrs = stableAttrPairs(n, cfg);
-      if (attrs.length) {
-        const [k, v] = attrs[0];
-        segs.unshift(`${tg}[@${k}=${xpathString(v)}]`);
-        continue;
-      }
-      // else positional among same tag
-      const idx = getIndexOfTag(n);
-      segs.unshift(`${tg}[${idx}]`);
+    let n = node;
+    while (n && n.nodeType === Node.ELEMENT_NODE) {
+      const tag = getTagOf(n);
+      const index = getIndexOfTag(n);
+      segs.unshift(`${tag}[${index}]`);
+      n = n.parentElement;
     }
-    return "/" + segs.join("/");
-  }
+    return segs.length > 0 ? "/" + segs.join("/") : "";
+  };
 
-  function pruneAbsolute(xp, d) {
-    // Greedily remove redundant [1]s while maintaining uniqueness, left-to-right
-    const parts = xp.split("/");
-    for (let i = 1; i < parts.length - 1; i++) {
-      // skip leading '' and leave leaf index intact
-      parts[i] = parts[i].replace(/\[1\]$/, "");
-      const candidate = parts.join("/");
-      if (!isUnique(candidate, d)) {
-        // revert if uniqueness broke
-        parts[i] = parts[i] + "[1]";
-      }
-    }
-    // Also try removing [1] on leaf if still unique
-    const leafIdx = parts.length - 1;
-    const withLeafNoIdx = parts[leafIdx].replace(/\[1\]$/, "");
-    if (withLeafNoIdx !== parts[leafIdx]) {
-      const leafCandidate = [...parts.slice(0, leafIdx), withLeafNoIdx].join(
-        "/"
-      );
-      if (isUnique(leafCandidate, d) && XpathMatch(leafCandidate, el, d)) {
-        parts[leafIdx] = withLeafNoIdx;
-      }
-    }
-
-    return parts.join("/");
-  }
+  const absoluteXpath = buildAbsolute(el);
+  return absoluteXpath;
 }
 
 /**
