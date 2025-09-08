@@ -94,6 +94,40 @@ export const AttributeWhitelist = [
   "id",
 ];
 
+// Prefer high-signal, semantic containers first; 'div' is a last-resort fallback.
+export const TagWhitelist = [
+  // Data / tabular structures
+  "table",
+  "tbody",
+
+  // Lists & groups
+  "ul",
+  "ol",
+  "dl",
+
+  // Forms & controls grouping
+  "form",
+  "fieldset",
+
+  // Page landmarks & content sections
+  "main",
+  "section",
+  "article",
+  "nav",
+  "aside",
+
+  // Overlays & disclosures
+  "dialog",
+  "details",
+
+  // Page chrome containers
+  "header",
+  "footer",
+
+  // Generic fallback
+  "div",
+];
+
 /**
  * Avoid using classes/ids/values that look auto-generated or runtime-volatile
  */
@@ -155,7 +189,6 @@ export const AttributeBlacklist = [
 
   // Google-style JS name attributes (e.g., jsname="yZiJbe")
   (v) => /^[a-zA-Z]{2,6}$/.test(v) && /[A-Z]/.test(v), // must include uppercase
-
 ];
 
 // --- XPath Specific Utilities ---

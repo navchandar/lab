@@ -4,6 +4,7 @@ import {
   getTagOf,
   stableAttrPairs,
   AttributeWhitelist,
+  TagWhitelist,
   AttributeBlacklist,
   xpathString,
   getIndexOfTag,
@@ -178,7 +179,7 @@ function getXPath(el, options = {}) {
     // Avoid using classes/ids/values that are auto-generated or volatile
     unstableMatchers: AttributeBlacklist,
     scopeToClosestRepeatingAncestor: true,
-    scopeTags: null, // e.g., ['table','ul','ol','section','article','form','div'] or null = any tag
+    scopeTags: TagWhitelist, // null = any tag
     ...options,
   };
 
