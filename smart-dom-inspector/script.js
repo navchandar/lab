@@ -183,7 +183,6 @@ function getXPath(el, options = {}) {
   const doc = cfg.root;
 
   // ## Helper Functions ##
-
   /**
    * Finds the 1-based index of an element within an array of nodes.
    * @param {Node[]} nodes - The array of nodes to search within.
@@ -203,17 +202,14 @@ function getXPath(el, options = {}) {
    */
   const testCandidate = (xpath) => {
     const nodes = evaluateXpath(xpath);
-
     if (nodes.length === 1 && nodes[0] === el) {
       return xpath; // Uniquely found
     }
-
     if (nodes.length > 1) {
       const index = findIndex(nodes, el);
       if (index > 0) {
         const indexedXpath = `(${xpath})[${index}]`;
-        const indexedNodes = evaluateXpath(indexedXpath);
-        if (indexedNodes.length === 1 && indexedNodes[0] === el) {
+        if (evaluateXpath(indexedXpath)[0] === el) {
           return indexedXpath; // Found with index
         }
       }
@@ -228,7 +224,10 @@ function getXPath(el, options = {}) {
   if (id && !isUnstable(id, cfg.unstableMatchers)) {
     const idXpath = `//*[@id=${xpathString(id)}]`;
     const result = testCandidate(idXpath);
-    if (result) return result;
+    if (result) {
+      console.log("XPath found using element's ID:", result);
+      return result;
+    }
   }
 
   // **Step 2: Check for other stable whitelisted properties on the element**
@@ -238,7 +237,10 @@ function getXPath(el, options = {}) {
     for (const [key, value] of attrs) {
       const attrXpath = `//${tag}[@${key}=${xpathString(value)}]`;
       const result = testCandidate(attrXpath);
-      if (result) return result;
+      if (result) {
+        console.log(`XPath found using element's attribute [${key}]:`, result);
+        return result;
+      }
     }
   }
 
@@ -262,9 +264,14 @@ function getXPath(el, options = {}) {
       const anchorXpath = `//*[@id=${xpathString(parentId)}]`;
       const candidate = anchorXpath + pathFromAncestor;
       const result = testCandidate(candidate);
-      if (result) return result;
-      // Stop ascending if an ID is found, as it's the most stable anchor.
-      break;
+      if (result) {
+        console.log(
+          `XPath found using relative path from an ancestor with ID [${parentId}]:`,
+          result
+        );
+        return result;
+      }
+      break; // Stop ascending if an ID is found, as it's the most stable anchor.
     }
 
     // **Priority 2: Parent with other stable attributes**
@@ -277,29 +284,72 @@ function getXPath(el, options = {}) {
         const anchorXpath = `//${parentTag}[@${key}=${xpathString(value)}]`;
         const candidate = anchorXpath + pathFromAncestor;
         const result = testCandidate(candidate);
-        if (result) return result;
+        if (result) {
+          console.log(
+            `XPath found using relative path from an ancestor with attribute [${key}]:`,
+            result
+          );
+          return result;
+        }
       }
     }
-
     current = parent;
-    if (current === doc.documentElement) break;
+    if (current === doc.documentElement) {
+      break;
+    }
   }
 
-  // **Step 4: Fallback to full absolute XPath**
-  const buildAbsolute = (node) => {
-    const segs = [];
-    let n = node;
-    while (n && n.nodeType === Node.ELEMENT_NODE) {
-      const tag = getTagOf(n);
-      const index = getIndexOfTag(n);
-      segs.unshift(`${tag}[${index}]`);
-      n = n.parentElement;
+  // **Step 4: Fallback to an optimized, short absolute XPath**
+  console.log(
+    "No stable unique locator found. Falling back to optimized absolute XPath generation..."
+  );
+  const buildOptimizedAbsolute = (node) => {
+    let segments = [];
+    let current = node;
+    while (current && current.nodeType === Node.ELEMENT_NODE) {
+      const tag = getTagOf(current);
+      const index = getIndexOfTag(current);
+      segments.unshift({ tag, index });
+
+      // Attempt 1: Path with tags only (e.g., //div/p)
+      const tagsOnlyPath = "//" + segments.map((s) => s.tag).join("/");
+      let result = testCandidate(tagsOnlyPath);
+      if (result) {
+        console.log("Found optimized absolute XPath (tags only):", result);
+        return result;
+      }
+
+      // Attempt 2: Path with an index on the leaf element only (e.g., //div/p[1])
+      if (segments.length > 1) {
+        const segmentsForIndexedLeaf = segments.map((s) => s.tag);
+        segmentsForIndexedLeaf[segments.length - 1] += `[${
+          segments[segments.length - 1].index
+        }]`;
+        const indexedLeafPath = "//" + segmentsForIndexedLeaf.join("/");
+        result = testCandidate(indexedLeafPath);
+        if (result) {
+          console.log("Found optimized absolute XPath (indexed leaf):", result);
+          return result;
+        }
+      }
+
+      if (
+        !current.parentElement ||
+        current.parentElement.nodeType !== Node.ELEMENT_NODE
+      ) {
+        break;
+      }
+      current = current.parentElement;
     }
-    return segs.length > 0 ? "/" + segs.join("/") : "";
+
+    // Attempt 3: As a last resort, build the full indexed path
+    const fullIndexedPath =
+      "/" + segments.map((s) => `${s.tag}[${s.index}]`).join("/");
+    console.log("Fallback to full indexed path:", fullIndexedPath);
+    return fullIndexedPath;
   };
 
-  const absoluteXpath = buildAbsolute(el);
-  return absoluteXpath;
+  return buildOptimizedAbsolute(el);
 }
 
 /**
