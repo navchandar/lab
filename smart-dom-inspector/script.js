@@ -409,37 +409,54 @@ function buildScopedPathThroughRepeatingAncestor(el, doc, cfg, testCandidate) {
 }
 
 function findClosestRepeatingAncestor(el, doc, cfg) {
+  const tagPriority = (cfg.scopeTags || []).map((t) => t.toLowerCase());
+  const candidates = [];
+
   let cur = el.parentElement;
-  const tagFilter =
-    cfg.scopeTags && new Set(cfg.scopeTags.map((t) => t.toLowerCase()));
-
+  let depth = 0;
   while (cur && cur !== doc.documentElement) {
-    const tag = getTagOf(cur);
-    if (!tag) {
-      cur = cur.parentElement;
-      continue;
-    }
+    const tag = cur.tagName && cur.tagName.toLowerCase();
+    if (tag) {
+      const priorityIdx = tagPriority.length ? tagPriority.indexOf(tag) : -1;
 
-    const tagOK = !tagFilter || tagFilter.has(tag);
-    if (tagOK) {
-      // Consider it "repeating" if there is more than one such tag in the document
-      const countInDoc = doc.getElementsByTagName(tag).length;
-      if (countInDoc > 1) {
-        return cur;
-      }
-      // Or if it has siblings of the same tag (repeating at that level)
-      if (cur.parentElement) {
-        const sibSameTag = Array.from(cur.parentElement.children).filter(
-          (n) => n.tagName && n.tagName.toLowerCase() === tag
-        );
-        if (sibSameTag.length > 1) {
-          return cur;
+      // Consider only tags in the scope list if provided; otherwise, any tag
+      const tagAllowed = tagPriority.length ? priorityIdx !== -1 : true;
+
+      if (tagAllowed) {
+        const sameTagInDoc = doc.getElementsByTagName(tag).length;
+        const sibSameTag = cur.parentElement
+          ? Array.from(cur.parentElement.children).filter(
+              (n) => n.tagName && n.tagName.toLowerCase() === tag
+            ).length
+          : 0;
+
+        const isRepeating = sameTagInDoc > 1 || sibSameTag > 1;
+        if (isRepeating) {
+          candidates.push({
+            node: cur,
+            tag,
+            depth, // smaller = closer
+            priorityIdx:
+              priorityIdx === -1 ? Number.MAX_SAFE_INTEGER : priorityIdx,
+          });
         }
       }
     }
     cur = cur.parentElement;
+    depth++;
   }
-  return null;
+
+  if (!candidates.length) {
+    return null;
+  }
+
+  // Sort by (priority ascending) then (depth ascending)
+  candidates.sort((a, b) => {
+    if (a.priorityIdx !== b.priorityIdx) return a.priorityIdx - b.priorityIdx;
+    return a.depth - b.depth;
+  });
+
+  return candidates[0].node;
 }
 
 function buildAnchorForAncestor(node, doc, cfg, testCandidate) {
