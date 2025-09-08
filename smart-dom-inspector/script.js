@@ -177,9 +177,11 @@ function getXPath(el, options = {}) {
 
     // Avoid using classes/ids/values that are auto-generated or volatile
     unstableMatchers: AttributeBlacklist,
-
+    scopeToClosestRepeatingAncestor: true,
+    scopeTags: null, // e.g., ['table','ul','ol','section','article','form','div'] or null = any tag
     ...options,
   };
+
   const doc = cfg.root;
 
   // ## Helper Functions ##
@@ -247,7 +249,6 @@ function getXPath(el, options = {}) {
   // **Step 3: Traverse up the DOM, looking for a stable parent to create a relative XPath**
   let pathFromAncestor = "";
   let current = el;
-
   while (
     current &&
     current.parentElement &&
@@ -293,13 +294,31 @@ function getXPath(el, options = {}) {
         }
       }
     }
+
     current = parent;
     if (current === doc.documentElement) {
       break;
     }
   }
 
-  // **Step 4: Fallback to an optimized, short absolute XPath**
+  // Priority 4: Scope to the closest repeating ancestor
+  if (cfg.scopeToClosestRepeatingAncestor) {
+    const scoped = buildScopedPathThroughRepeatingAncestor(
+      el,
+      doc,
+      cfg,
+      testCandidate
+    );
+    if (scoped) {
+      console.log(
+        "Found scoped XPath using closest repeating ancestor:",
+        scoped
+      );
+      return scoped;
+    }
+  }
+
+  // Priority 5 Fallback: optimized absolute (existing behavior)
   console.log(
     "No stable unique locator found. Falling back to optimized absolute XPath generation..."
   );
@@ -350,6 +369,137 @@ function getXPath(el, options = {}) {
   };
 
   return buildOptimizedAbsolute(el);
+}
+
+/** ===================== Helpers for scoping ===================== **/
+
+function buildScopedPathThroughRepeatingAncestor(el, doc, cfg, testCandidate) {
+  const scopeAncestor = findClosestRepeatingAncestor(el, doc, cfg);
+  if (!scopeAncestor) {
+    return null;
+  }
+
+  // Build an anchor for the ancestor (prefer stable unique attribute; else doc-indexed tag)
+  const anchor = buildAnchorForAncestor(scopeAncestor, doc, cfg, testCandidate);
+  if (!anchor) {
+    return null;
+  } // If we can’t build a unique anchor, abort scoping.
+
+  // Build the shortest reliable relative path from ancestor -> leaf
+  const relative = buildRelativePath(scopeAncestor, el);
+
+  // Try short variants first
+  const candidates = [
+    // tags only (no indices) from ancestor — sometimes sufficient
+    `${anchor}//${relative.tagsOnly}`,
+    // indexed leaf only within the ancestor
+    `${anchor}//${relative.indexedLeaf}`,
+    // fully indexed from ancestor — most specific
+    `${anchor}/${relative.indexedFull}`,
+  ].filter(Boolean);
+
+  for (const xp of candidates) {
+    const res = testCandidate(xp);
+    if (res) {
+      return res;
+    }
+  }
+  return null;
+}
+
+function findClosestRepeatingAncestor(el, doc, cfg) {
+  let cur = el.parentElement;
+  const tagFilter =
+    cfg.scopeTags && new Set(cfg.scopeTags.map((t) => t.toLowerCase()));
+
+  while (cur && cur !== doc.documentElement) {
+    const tag = getTagOf(cur);
+    if (!tag) {
+      cur = cur.parentElement;
+      continue;
+    }
+
+    const tagOK = !tagFilter || tagFilter.has(tag);
+    if (tagOK) {
+      // Consider it "repeating" if there is more than one such tag in the document
+      const countInDoc = doc.getElementsByTagName(tag).length;
+      if (countInDoc > 1) {
+        return cur;
+      }
+      // Or if it has siblings of the same tag (repeating at that level)
+      if (cur.parentElement) {
+        const sibSameTag = Array.from(cur.parentElement.children).filter(
+          (n) => n.tagName && n.tagName.toLowerCase() === tag
+        );
+        if (sibSameTag.length > 1) {
+          return cur;
+        }
+      }
+    }
+    cur = cur.parentElement;
+  }
+  return null;
+}
+
+function buildAnchorForAncestor(node, doc, cfg, testCandidate) {
+  const tag = getTagOf(node);
+  if (!tag) {
+    return null;
+  }
+
+  // 1) Try stable attribute on ancestor (unique across doc)
+  const attrs = stableAttrPairs(node, cfg).filter(([k]) => k !== "id");
+  for (const [k, v] of attrs) {
+    const xp = `//${tag}[@${k}=${xpathString(v)}]`;
+    const res = testCandidate(xp);
+    if (res) {
+      return res;
+    }
+  }
+  const id = node.getAttribute && node.getAttribute("id");
+  if (id && !isUnstable(id, cfg.unstableMatchers)) {
+    const xp = `//*[@id=${xpathString(id)}]`;
+    const res = testCandidate(xp);
+    if (res) {
+      return res;
+    }
+  }
+
+  // 2) Fallback: index this ancestor among all tags of same type in the document
+  const all = Array.from(doc.getElementsByTagName(tag));
+  const idx = all.indexOf(node);
+  if (idx >= 0) {
+    return `(//${tag})[${idx + 1}]`;
+  }
+  return null;
+}
+
+function buildRelativePath(ancestor, leaf) {
+  // Build segments from ancestor (exclusive) to leaf (inclusive)
+  const segments = [];
+  let cur = leaf;
+  while (cur && cur !== ancestor && cur.nodeType === Node.ELEMENT_NODE) {
+    const tag = getTagOf(cur);
+    const index = getIndexOfTag(cur); // index among same-tag siblings
+    segments.unshift({ tag, index });
+    cur = cur.parentElement;
+  }
+
+  // 1) tagsOnly: //a/b/c
+  const tagsOnly = segments.map((s) => s.tag).join("/");
+
+  // 2) indexedLeaf: //a/b/c[3]  (only the leaf is indexed)
+  const indexedLeafParts = segments.map((s) => s.tag);
+  if (segments.length > 0) {
+    const last = segments[segments.length - 1];
+    indexedLeafParts[indexedLeafParts.length - 1] += `[${last.index}]`;
+  }
+  const indexedLeaf = indexedLeafParts.join("/");
+
+  // 3) indexedFull: /a[1]/b[2]/c[3]
+  const indexedFull = segments.map((s) => `${s.tag}[${s.index}]`).join("/");
+
+  return { tagsOnly, indexedLeaf, indexedFull };
 }
 
 /**
