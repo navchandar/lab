@@ -201,7 +201,7 @@ function getXPath(el, options = {}) {
    * @returns {string|null} The valid XPath or null.
    */
   const testCandidate = (xpath) => {
-    const nodes = evaluateXpath(xpath);
+    const nodes = evaluateXpath(xpath, doc);
     if (nodes.length === 1 && nodes[0] === el) {
       return xpath; // Uniquely found
     }
@@ -209,7 +209,7 @@ function getXPath(el, options = {}) {
       const index = findIndex(nodes, el);
       if (index > 0) {
         const indexedXpath = `(${xpath})[${index}]`;
-        if (evaluateXpath(indexedXpath)[0] === el) {
+        if (evaluateXpath(indexedXpath, doc)[0] === el) {
           return indexedXpath; // Found with index
         }
       }

@@ -230,7 +230,7 @@ export function XpathMatch(xpath, el, doc) {
  * @param {string} xpath - The XPath expression to evaluate.
  * @returns {Node[]} An array of DOM nodes.
  */
-export function evaluateXpath(xpath) {
+export function evaluateXpath(xpath, doc) {
   try {
     const result = doc.evaluate(
       xpath,
