@@ -86,7 +86,7 @@ function testLocator(elementId, button) {
 
   // Remove previous status classes
   button.classList.remove("success", "error", "warning");
-  if (warnEmpty(button, value)) {
+  if (warnEmpty(button, locator)) {
     return;
   }
 
