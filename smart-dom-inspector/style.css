@@ -64,23 +64,10 @@ iframe {
     pointer-events: auto;
 }
 
-#selectorInfo {
-    display: flex;
-    align-items: center;
-    gap: 1%;
-    margin-top: 30px;
-    padding: 0 10px;
-}
-
-#selectorInfo label {
-    display: block;
-    margin-bottom: 5px;
-}
-
 footer {
     position: relative;
     bottom: 5px;
-    margin-top: 10rem;
+    margin-top: 7rem;
     width: 100%;
     font-size: 0.8em;
     text-align: center;
@@ -104,6 +91,20 @@ footer p {
     pointer-events: none;
 }
 
+
+#selectorInfo {
+    display: grid;
+    align-items: center;
+    gap: 10%;
+    margin-top: 30px;
+    padding: 0 10px;
+}
+
+#selectorInfo label {
+    display: block;
+    margin-bottom: 5px;
+}
+
 .locator-row {
     display: block;
     align-items: center;
@@ -119,16 +120,29 @@ footer p {
     border-width: 1px;
     border-radius: 5px;
     padding: 5px;
-    min-width: 400px;
+    min-width: 50%;
 }
 
 .locator-row button {
     cursor: pointer;
+    margin: 0 5px;
     padding: 5px 10px;
     /* Disallow selecting text in button */
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+#cssSelector {
+    margin-left: 10px;
+}
+
+#xpathSelector {
+    margin-left: 3px;
+}
+
+#idSelector {
+    margin-left: 28px;
 }
 
 .copy-btn {
@@ -150,15 +164,34 @@ footer p {
     background-color: #0056b3;
 }
 
-.copy-btn.success {
+.test-btn {
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+    box-sizing: border-box;
+    border: none;
+    border-radius: 5px;
+    background-color: #00922b;
+    padding: 8px 16px;
+    width: 6em;
+    color: white;
+    font-size: 14px;
+}
+
+.test-btn:hover, .test-btn:focus {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: #01671f;
+}
+
+.success {
     background-color: #28a745;
 }
 
-.copy-btn.error {
+.error {
     background-color: #dc3545;
 }
 
-.copy-btn.warning {
+.warning {
     background-color: #a8ab06;
 }
 
@@ -197,7 +230,7 @@ footer p {
 
     footer {
         bottom: 1rem;
-        margin-top: 4rem;
+        margin-top: 3rem;
     }
 
 }

@@ -14,23 +14,30 @@ import {
   isUnique,
 } from "./locator_helper.js";
 
+function warnEmtpy(button, value) {
+  if (!value) {
+    btnText = button.textContent;
+    console.warn("Input is empty");
+    if (button) {
+      button.textContent = "Empty!";
+      button.classList.add("warning");
+      setTimeout(() => {
+        button.textContent = btnText;
+        button.classList.remove("warning");
+      }, 2000);
+    }
+  }
+}
 /**
  * copy given text from elementId when button is clicked
  */
 function copyToClipboard(elementId, button) {
   const input = document.getElementById(elementId);
   const value = input.value.trim();
-
+  // Remove previous status classes
+  button.classList.remove("success", "error", "warning");
+  warnEmtpy(button, value);
   if (!value) {
-    console.warn("Nothing to copy: input is empty.");
-    if (button) {
-      button.textContent = "Empty!";
-      button.classList.add("warning");
-      setTimeout(() => {
-        button.textContent = "Copy";
-        button.classList.remove("warning");
-      }, 2000);
-    }
     return;
   }
 
@@ -60,15 +67,63 @@ function copyToClipboard(elementId, button) {
     });
 }
 
+function testLocator(elementId, button) {
+  // Verify if locator is identifying unique element
+  const input = document.getElementById(elementId);
+  const locator = input.value.trim();
+  let isValid = false;
+  let element = null;
+  // Remove previous status classes
+  button.classList.remove("success", "error", "warning");
+  warnEmtpy(button, value);
+  if (!value) {
+    return;
+  }
+
+  const iframe = document.getElementById("renderFrame");
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  if (elementId === "cssSelector") {
+    isValid = isUnique(locator, doc, "CSS");
+    element = doc.querySelector(locator);
+  } else if (elementId === "xpathSelector") {
+    isValid = isUnique(locator, doc, "CSS");
+    element = doc.querySelector(locator);
+  } else if (elementId === "idSelector") {
+    isValid = isUnique(locator, doc, "ID");
+    element = doc.getElementById(locator);
+  }
+
+  // Add appropriate class based on result
+  if (isValid && element) {
+    button.classList.add("success");
+    button.textContent = "Found";
+    highlightElement(element, doc);
+  } else {
+    button.textContent = "Not Found";
+    button.classList.add("error");
+  }
+
+  // Remove the class after 2 seconds
+  setTimeout(() => {
+    button.textContent = "Check Locator";
+    button.classList.remove("success", "error", "warning");
+  }, 2000);
+}
+
 // Add listeners to the copy buttons
 function updateButtons() {
   document.querySelectorAll(".locator-row").forEach((container) => {
-    const button = container.querySelector(".copy-btn");
+    const copyButton = container.querySelector(".copy-btn");
+    const testBtn = container.querySelectorAll(".test-btn");
     const inputEl = container.querySelector("[type='text']");
     const inputId = inputEl.id;
 
-    button.addEventListener("click", function () {
+    copyButton.addEventListener("click", function () {
       copyToClipboard(inputId, this);
+    });
+
+    testBtn.addEventListener("click", function () {
+      testLocator(inputId, this);
     });
   });
 }
@@ -790,6 +845,9 @@ function validateID(id, doc, clickedElement) {
 function updateSelectors(element) {
   const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
+  const cssEl = document.getElementById("cssSelector");
+  const xpathEl = document.getElementById("xpathSelector");
+  const idEl = document.getElementById("idSelector");
 
   // Generate locators
   let cssSelector = getCssSelector(element);
@@ -799,17 +857,16 @@ function updateSelectors(element) {
   // Validate CSS Selector
   const cssMatches = doc.querySelectorAll(cssSelector);
   if (cssMatches.length === 1) {
-    document.getElementById("cssSelector").value = cssSelector;
+    cssEl.value = cssSelector;
   } else if (cssMatches.length === 0) {
-    document.getElementById("cssSelector").value =
-      "⚠️ Valid Locator could not be found";
+    cssEl.value = "⚠️ Valid Locator could not be found";
   } else {
     highlightDuplicates(cssSelector, doc, element, "CSS");
     // Adjust to uniquely target the clicked element
     cssSelector = `${cssSelector}:nth-of-type(${
       Array.from(cssMatches).indexOf(element) + 1
     })`;
-    document.getElementById("cssSelector").value = cssSelector;
+    cssEl.value = cssSelector;
   }
 
   // Validate XPath
@@ -821,10 +878,9 @@ function updateSelectors(element) {
     null
   );
   if (xpathResult.snapshotLength === 1) {
-    document.getElementById("xpathSelector").value = xpathSelector;
+    xpathEl.value = xpathSelector;
   } else if (xpathResult.snapshotLength === 0) {
-    document.getElementById("xpathSelector").value =
-      "⚠️ Valid Locator could not be found";
+    xpathEl.value = "⚠️ Valid Locator could not be found";
   } else {
     highlightDuplicates(xpathSelector, doc, element, "XPATH");
     // Adjust XPath to match the specific element
@@ -833,12 +889,12 @@ function updateSelectors(element) {
     ).indexOf(element);
 
     xpathSelector = `(${xpathSelector})[${index + 1}]`;
-    document.getElementById("xpathSelector").value = xpathSelector;
+    xpathEl.value = xpathSelector;
   }
 
   // ID is usually direct and unique but check for duplicates
   idSelector = validateID(idSelector, doc, element);
-  document.getElementById("idSelector").value = idSelector;
+  idEl.value = idSelector;
 }
 
 function attachListeners(iframe) {

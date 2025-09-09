@@ -337,7 +337,7 @@ function countCssElems(sel, d) {
  *
  * @param {string} locator - The XPath or CSS selector to evaluate.
  * @param {Document} d - The document context in which to evaluate the locator.
- * @param {string} type - The type of locator: "XPATH" or "CSS".
+ * @param {string} type - The type of locator: "XPATH" or "CSS" or "ID".
  * @returns {boolean} - True if the locator matches exactly one element, false otherwise.
  */
 export const isUnique = (locator, d, type = "XPATH") => {
@@ -351,6 +351,9 @@ export const isUnique = (locator, d, type = "XPATH") => {
     console.log(
       `Checking uniqueness for Selector: ${locator} → Count: ${count}`
     );
+  } else if (type === "ID") {
+    count = countCssElems(`#${locator}`, d);
+    console.log(`Checking uniqueness for ID: ${locator} → Count: ${count}`);
   } else {
     console.warn(`Invalid type ${type} for locator: ${locator}`);
   }
