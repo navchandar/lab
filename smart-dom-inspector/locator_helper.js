@@ -371,7 +371,7 @@ export const isUnique = (locator, d, type = "XPATH") => {
  * @param {Object} [opts]
  * @param {boolean} [opts.center=true] - Center the element in the viewport.
  */
-function scrollElementInIframe(el, doc, iframe, opts = {}) {
+export function scrollElementInIframe(el, doc, iframe, opts = {}) {
   const { center = true, behavior = "smooth" } = opts;
 
   try {

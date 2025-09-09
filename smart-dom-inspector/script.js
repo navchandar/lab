@@ -292,7 +292,9 @@ function sanitizeHTML(htmlString, opts = {}) {
       // Remove javascript: URLs from common URL-bearing attributes.
       container.querySelectorAll("[src],[xlink\\:href]").forEach((el) => {
         ["src", "xlink:href"].forEach((attr) => {
-          if (!el.hasAttribute(attr)) return;
+          if (!el.hasAttribute(attr)) {
+            return;
+          }
           const val = (el.getAttribute(attr) || "").trim();
           if (/^javascript\s*:/i.test(val)) {
             el.removeAttribute(attr);
