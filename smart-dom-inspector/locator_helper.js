@@ -343,19 +343,25 @@ function countCssElems(sel, d) {
 export const isUnique = (locator, d, type = "XPATH") => {
   let count = 0;
 
-  if (type === "XPATH") {
-    count = countXpathElems(locator, d);
-    console.log(`Checking uniqueness for XPath: ${locator} → Count: ${count}`);
-  } else if (type === "CSS") {
-    count = countCssElems(locator, d);
-    console.log(
-      `Checking uniqueness for Selector: ${locator} → Count: ${count}`
-    );
-  } else if (type === "ID") {
-    count = countCssElems(`#${locator}`, d);
-    console.log(`Checking uniqueness for ID: ${locator} → Count: ${count}`);
-  } else {
-    console.warn(`Invalid type ${type} for locator: ${locator}`);
+  try {
+    if (type === "XPATH") {
+      count = countXpathElems(locator, d);
+      console.log(
+        `Checking uniqueness for XPath: ${locator} → Count: ${count}`
+      );
+    } else if (type === "CSS") {
+      count = countCssElems(locator, d);
+      console.log(
+        `Checking uniqueness for Selector: ${locator} → Count: ${count}`
+      );
+    } else if (type === "ID") {
+      count = countCssElems(`#${locator}`, d);
+      console.log(`Checking uniqueness for ID: ${locator} → Count: ${count}`);
+    } else {
+      console.warn(`Invalid type ${type} for locator: ${locator}`);
+    }
+  } catch (e) {
+    console.error(e);
   }
 
   return count === 1;

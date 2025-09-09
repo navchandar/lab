@@ -77,8 +77,11 @@ function testLocator(elementId, button) {
   // Verify if locator is identifying unique element
   const input = document.getElementById(elementId);
   const locator = input.value.trim();
-  let isValid = false;
+
   let element = null;
+  let isValidSyntax = true;
+  let foundCount = 0;
+
   // Remove previous status classes
   button.classList.remove("success", "error", "warning");
   warnEmtpy(button, locator);
@@ -94,31 +97,43 @@ function testLocator(elementId, button) {
   }
 
   const doc = iframe.contentDocument || iframe.contentWindow.document;
-  if (elementId === "cssSelector") {
-    isValid = isUnique(locator, doc, "CSS");
-    element = doc.querySelector(locator);
-  } else if (elementId === "xpathSelector") {
-    isValid = isUnique(locator, doc, "XPATH");
-    let result = doc.evaluate(
-      locator,
-      doc,
-      null,
-      XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
-    );
-    if (result) {
-      element = result.singleNodeValue;
+
+  try {
+    if (elementId === "cssSelector") {
+      const matches = doc.querySelectorAll(locator);
+      foundCount = matches.length;
+      element = foundCount ? matches[0] : null;
+    } else if (elementId === "xpathSelector") {
+      const result = doc.evaluate(
+        locator,
+        doc,
+        null,
+        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
+        null
+      );
+      foundCount = result.snapshotLength;
+      element = foundCount ? result.snapshotItem(0) : null;
+    } else if (elementId === "idSelector") {
+      // Basic ID validation: no spaces
+      if (/\s/.test(locator)) throw new Error("Invalid ID syntax");
+      const matches = doc.querySelectorAll(`[id="${locator}"]`);
+      foundCount = matches.length;
+      element = doc.getElementById(locator);
     }
-  } else if (elementId === "idSelector") {
-    isValid = isUnique(locator, doc, "ID");
-    element = doc.getElementById(locator);
+  } catch (e) {
+    isValidSyntax = false;
   }
 
   // Add appropriate class based on result
-  if (isValid && element) {
-    button.classList.add("success");
-    button.textContent = "Found!";
-
+  if (!isValidSyntax) {
+    button.textContent = "Invalid locator";
+    button.classList.add("error");
+  } else if (foundCount === 0) {
+    button.textContent = "Not Found!";
+    button.classList.add("error");
+  } else if (foundCount > 1) {
+    button.textContent = `Found ${foundCount}!`;
+    button.classList.add("warning");
     try {
       // Scroll inside the iframe so the element becomes visible
       scrollElementInIframe(element, doc, iframe);
@@ -128,15 +143,23 @@ function testLocator(elementId, button) {
       console.error(e);
     }
   } else {
-    button.textContent = "Not Found";
-    button.classList.add("error");
+    button.textContent = "Found!";
+    button.classList.add("success");
+    try {
+      // Scroll inside the iframe so the element becomes visible
+      scrollElementInIframe(element, doc, iframe);
+      // Highlight after scrolling to ensure the outline is visible
+      highlightElement(element, iframe, { mode: "once", durationMs: 5000 });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  // Remove the class after 2 seconds
+  // Remove the class after 5 seconds
   setTimeout(() => {
     button.textContent = "Check Locator";
     button.classList.remove("success", "error", "warning");
-  }, 2000);
+  }, 5000);
 }
 
 // Add listeners to the copy buttons
@@ -907,7 +930,9 @@ function highlightElement(element, iframe, opts = {}) {
     boxShadow = "rgba(255,0,0,0.25) 0 0 0 2px inset",
   } = opts;
 
-  if (!element || !iframe) return;
+  if (!element || !iframe) {
+    return;
+  }
 
   // Access the iframe's document/window (same-origin required)
   let iframeDoc, iframeWin;
@@ -918,8 +943,11 @@ function highlightElement(element, iframe, opts = {}) {
     // Cross-origin iframe; cannot highlight
     return;
   }
-  if (!iframeDoc || !iframeWin) return;
+  if (!iframeDoc || !iframeWin) {
+    return;
+  }
 
+  let overlayRef = null;
   // Create an overlay, position it over the element, and keep it in sync on scroll/resize
   const createOverlay = () => {
     // Remove previous highlight overlays to avoid stacking
@@ -990,7 +1018,9 @@ function highlightElement(element, iframe, opts = {}) {
         childList: true,
         subtree: true,
       });
-    } catch {}
+    } catch (e) {
+      console.warning(e);
+    }
 
     const cleanup = () => {
       try {
@@ -998,7 +1028,9 @@ function highlightElement(element, iframe, opts = {}) {
         iframeWin.removeEventListener("resize", onResize);
         mo.disconnect();
         highlight.remove();
-      } catch {}
+      } catch (e) {
+        console.warning(e);
+      }
     };
 
     // Insert into the iframe body
@@ -1019,7 +1051,6 @@ function highlightElement(element, iframe, opts = {}) {
 
     // Store refs on the element to avoid duplicate handlers
     if (!element.__hl_hoverBound) {
-      let overlayRef = null;
       element.addEventListener("mouseenter", onEnter);
       element.addEventListener("mouseleave", onLeave);
       element.__hl_hoverBound = true;
@@ -1038,7 +1069,9 @@ function highlightElement(element, iframe, opts = {}) {
           childList: true,
           subtree: true,
         });
-      } catch {}
+      } catch (e) {
+        console.warning(e);
+      }
     }
   } else if (mode === "once") {
     // Highlight immediately and auto-remove after durationMs
