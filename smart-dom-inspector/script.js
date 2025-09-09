@@ -16,7 +16,7 @@ import {
 
 function warnEmtpy(button, value) {
   if (!value) {
-    btnText = button.textContent;
+    let btnText = button.textContent;
     console.warn("Input is empty");
     if (button) {
       button.textContent = "Empty!";
@@ -75,8 +75,8 @@ function testLocator(elementId, button) {
   let element = null;
   // Remove previous status classes
   button.classList.remove("success", "error", "warning");
-  warnEmtpy(button, value);
-  if (!value) {
+  warnEmtpy(button, locator);
+  if (!locator) {
     return;
   }
 
@@ -507,7 +507,9 @@ function findClosestRepeatingAncestor(el, doc, cfg) {
 
   // Sort by (priority ascending) then (depth ascending)
   candidates.sort((a, b) => {
-    if (a.priorityIdx !== b.priorityIdx) return a.priorityIdx - b.priorityIdx;
+    if (a.priorityIdx !== b.priorityIdx) {
+      return a.priorityIdx - b.priorityIdx;
+    }
     return a.depth - b.depth;
   });
 
