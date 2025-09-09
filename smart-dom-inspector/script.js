@@ -395,14 +395,17 @@ function sanitizeHTML(htmlString, opts = {}) {
 
       // Add a default viewBox if missing; derive from numeric width/height when possible.
       if (!svg.hasAttribute("viewBox")) {
-        const wNum = parseFloat(String(svg.getAttribute("width") || widthVal));
-        const hNum = parseFloat(
-          String(svg.getAttribute("height") || heightVal)
-        );
-        const vw = Number.isFinite(wNum) ? wNum : 20;
-        const vh = Number.isFinite(hNum) ? hNum : 20;
-        svg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
+        const w = parseFloat(String(svg.getAttribute("width") || widthVal));
+        const h = parseFloat(String(svg.getAttribute("height") || heightVal));
+        const vw = Number.isFinite(w) ? w : 20;
+        const vh = Number.isFinite(h) ? h : 20;
+        svg.setAttribute("viewBox", `0 0 ${Math.round(vw)} ${Math.round(vh)}`);
       }
+
+      svg.removeAttribute("width");
+      svg.removeAttribute("height");
+      svg.style.width = "1em";
+      svg.style.height = "1em";
     });
 
     // Return sanitized result
