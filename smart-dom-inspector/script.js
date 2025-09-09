@@ -115,7 +115,9 @@ function testLocator(elementId, button) {
       element = foundCount ? result.snapshotItem(0) : null;
     } else if (elementId === "idSelector") {
       // Basic ID validation: no spaces
-      if (/\s/.test(locator)) throw new Error("Invalid ID syntax");
+      if (/\s/.test(locator)) {
+        throw new Error("Invalid ID syntax");
+      }
       const matches = doc.querySelectorAll(`[id="${locator}"]`);
       foundCount = matches.length;
       element = doc.getElementById(locator);
@@ -194,6 +196,14 @@ function cleanInputs() {
     document.getElementById("cssSelector").value = "";
     document.getElementById("xpathSelector").value = "";
     document.getElementById("idSelector").value = "";
+    document.querySelectorAll(".copy-btn").forEach((button) => {
+      button.textContent = "Copy";
+      button.classList.remove("success", "error", "warning");
+    });
+    document.querySelectorAll(".test-btn").forEach((button) => {
+      button.textContent = "Check Locator";
+      button.classList.remove("success", "error", "warning");
+    });
   } catch (e) {
     console.error(e);
   }
@@ -1172,6 +1182,7 @@ function validateID(id, doc, clickedElement) {
 }
 
 function updateSelectors(element) {
+  cleanInputs();
   const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   const cssEl = document.getElementById("cssSelector");
@@ -1235,6 +1246,7 @@ function attachListeners(iframe) {
   doc.body.addEventListener("click", function (e) {
     e.preventDefault();
     e.stopPropagation();
+
     updateSelectors(e.target);
   });
 }
