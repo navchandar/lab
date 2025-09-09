@@ -117,13 +117,16 @@ function testLocator(elementId, button) {
   // Add appropriate class based on result
   if (isValid && element) {
     button.classList.add("success");
-    button.textContent = "Found";
+    button.textContent = "Found!";
 
-    // Scroll inside the iframe so the element becomes visible
-    scrollElementInIframe(element, doc, iframe);
-
-    // Highlight after scrolling to ensure the outline is visible
-    highlightElement(element, doc);
+    try {
+      // Scroll inside the iframe so the element becomes visible
+      scrollElementInIframe(element, doc, iframe);
+      // Highlight after scrolling to ensure the outline is visible
+      highlightElement(element, iframe, { mode: "once", durationMs: 5000 });
+    } catch (e) {
+      console.error(e);
+    }
   } else {
     button.textContent = "Not Found";
     button.classList.add("error");
@@ -881,46 +884,171 @@ function getCssSelector(el, options = {}) {
 }
 
 /**
- * Highlights elements in the iframe on mouse hover.
+ * Highlights an element inside an iframe either on hover or on-demand for a duration.
+ *
+ * Usage:
+ *   // On-demand (once): highlight for 5 seconds
+ *   highlightElement(el, iframe, { mode: "once", durationMs: 5000 });
+ *
+ *   // Hover-based (existing behavior)
+ *   highlightElement(el, iframe, { mode: "hover" });
+ *
+ * @param {Element} element - The target element inside the iframe document.
+ * @param {HTMLIFrameElement} iframe - The iframe element.
+ * @param {Object} [opts]
  */
-function highlightElement(element, iframe) {
-  const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-  const iframeWin = iframe.contentWindow;
+function highlightElement(element, iframe, opts = {}) {
+  const {
+    mode = "hover",
+    durationMs = 5000,
+    border = "2px dashed red",
+    zIndex = 9999,
+    borderRadius = "2px",
+    boxShadow = "rgba(255,0,0,0.25) 0 0 0 2px inset",
+  } = opts;
 
-  // Remove any existing highlight box
-  const existingHighlights = iframeDoc.querySelectorAll(".highlight-box");
-  existingHighlights.forEach((el) => el.remove());
+  if (!element || !iframe) return;
 
-  // Create a new highlight box
-  const highlight = iframeDoc.createElement("div");
-  highlight.className = "highlight-box";
+  // Access the iframe's document/window (same-origin required)
+  let iframeDoc, iframeWin;
+  try {
+    iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    iframeWin = iframe.contentWindow;
+  } catch (e) {
+    // Cross-origin iframe; cannot highlight
+    return;
+  }
+  if (!iframeDoc || !iframeWin) return;
 
-  // Get bounding box of the element
-  const rect = element.getBoundingClientRect();
-  const scrollTop = iframeWin.scrollY;
-  const scrollLeft = iframeWin.scrollX;
+  // Create an overlay, position it over the element, and keep it in sync on scroll/resize
+  const createOverlay = () => {
+    // Remove previous highlight overlays to avoid stacking
+    iframeDoc.querySelectorAll(".highlight-box").forEach((el) => el.remove());
 
-  // Style the highlight box to overlay the element
-  highlight.style.position = "absolute";
-  highlight.style.border = "2px dashed red";
-  highlight.style.pointerEvents = "none";
-  highlight.style.zIndex = "9999";
-  highlight.style.top = `${rect.top + scrollTop}px`;
-  highlight.style.left = `${rect.left + scrollLeft}px`;
-  highlight.style.width = `${rect.width}px`;
-  highlight.style.height = `${rect.height}px`;
+    const highlight = iframeDoc.createElement("div");
+    highlight.className = "highlight-box";
+    // Base styles
+    Object.assign(highlight.style, {
+      position: "absolute",
+      border: border,
+      pointerEvents: "none",
+      zIndex: String(zIndex),
+      borderRadius,
+      boxShadow,
+      margin: "0",
+      padding: "0",
+    });
 
-  // Append the highlight box to the iframe's body
-  iframeDoc.body.appendChild(highlight);
+    // Compute and set position
+    const positionOverlay = () => {
+      const rect = element.getBoundingClientRect();
 
-  // Remove highlight when mouse leaves the element
-  element.addEventListener(
-    "mouseout",
-    () => {
-      highlight.remove();
-    },
-    { once: true }
-  );
+      // Fallbacks for scroll in iframe context
+      const scrollTop =
+        iframeWin.pageYOffset ||
+        iframeDoc.documentElement.scrollTop ||
+        iframeDoc.body.scrollTop ||
+        0;
+      const scrollLeft =
+        iframeWin.pageXOffset ||
+        iframeDoc.documentElement.scrollLeft ||
+        iframeDoc.body.scrollLeft ||
+        0;
+
+      // Use integers for crisp borders on most displays
+      const top = Math.max(0, Math.round(rect.top + scrollTop));
+      const left = Math.max(0, Math.round(rect.left + scrollLeft));
+      const width = Math.max(1, Math.round(rect.width));
+      const height = Math.max(1, Math.round(rect.height));
+
+      highlight.style.top = `${top}px`;
+      highlight.style.left = `${left}px`;
+      highlight.style.width = `${width}px`;
+      highlight.style.height = `${height}px`;
+    };
+
+    // Initial draw
+    positionOverlay();
+
+    // Keep overlay aligned if the iframe content scrolls or resizes.
+    // Using capture phase to catch scroll events from nested containers.
+    const onAnyScroll = () => positionOverlay();
+    const onResize = () => positionOverlay();
+
+    iframeDoc.addEventListener("scroll", onAnyScroll, true);
+    iframeWin.addEventListener("resize", onResize);
+
+    // If the element detaches, remove overlay
+    const mo = new iframeWin.MutationObserver(() => {
+      if (!iframeDoc.contains(element)) {
+        cleanup();
+      }
+    });
+
+    try {
+      mo.observe(iframeDoc.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+    } catch {}
+
+    const cleanup = () => {
+      try {
+        iframeDoc.removeEventListener("scroll", onAnyScroll, true);
+        iframeWin.removeEventListener("resize", onResize);
+        mo.disconnect();
+        highlight.remove();
+      } catch {}
+    };
+
+    // Insert into the iframe body
+    iframeDoc.body.appendChild(highlight);
+
+    return { cleanup, positionOverlay, el: highlight };
+  };
+
+  if (mode === "hover") {
+    // Attach listeners only once per element
+    const onEnter = () => {
+      overlayRef = createOverlay();
+    };
+    const onLeave = () => {
+      overlayRef?.cleanup?.();
+      overlayRef = null;
+    };
+
+    // Store refs on the element to avoid duplicate handlers
+    if (!element.__hl_hoverBound) {
+      let overlayRef = null;
+      element.addEventListener("mouseenter", onEnter);
+      element.addEventListener("mouseleave", onLeave);
+      element.__hl_hoverBound = true;
+      // Clean up when element is removed later (best-effort)
+      const ro = new (iframeWin.MutationObserver || MutationObserver)(() => {
+        if (!iframeDoc.contains(element)) {
+          element.removeEventListener("mouseenter", onEnter);
+          element.removeEventListener("mouseleave", onLeave);
+          overlayRef?.cleanup?.();
+          ro.disconnect();
+          delete element.__hl_hoverBound;
+        }
+      });
+      try {
+        ro.observe(iframeDoc.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+      } catch {}
+    }
+  } else if (mode === "once") {
+    // Highlight immediately and auto-remove after durationMs
+    const { cleanup } = createOverlay() || {};
+    if (typeof durationMs === "number" && durationMs > 0) {
+      iframeWin.setTimeout(() => {
+        cleanup?.();
+      }, durationMs);
+    }
+  }
 }
 
 /**
