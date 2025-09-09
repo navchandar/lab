@@ -140,7 +140,7 @@ function testLocator(elementId, button) {
       // Scroll inside the iframe so the element becomes visible
       scrollElementInIframe(element, doc, iframe);
       // Highlight after scrolling to ensure the outline is visible
-      highlightElement(element, iframe, { mode: "once", durationMs: 5000 });
+      highlightElement(element, iframe, { mode: "once", durationMs: 3000 });
     } catch (e) {
       console.error(e);
     }
@@ -151,7 +151,7 @@ function testLocator(elementId, button) {
       // Scroll inside the iframe so the element becomes visible
       scrollElementInIframe(element, doc, iframe);
       // Highlight after scrolling to ensure the outline is visible
-      highlightElement(element, iframe, { mode: "once", durationMs: 5000 });
+      highlightElement(element, iframe, { mode: "once", durationMs: 3000 });
     } catch (e) {
       console.error(e);
     }
@@ -161,7 +161,7 @@ function testLocator(elementId, button) {
   setTimeout(() => {
     button.textContent = "Check Locator";
     button.classList.remove("success", "error", "warning");
-  }, 5000);
+  }, 3000);
 }
 
 // Add listeners to the copy buttons
@@ -197,12 +197,16 @@ function cleanInputs() {
     document.getElementById("xpathSelector").value = "";
     document.getElementById("idSelector").value = "";
     document.querySelectorAll(".copy-btn").forEach((button) => {
-      button.textContent = "Copy";
-      button.classList.remove("success", "error", "warning");
+      if (button.textContent !== "Copy") {
+        button.textContent = "Copy";
+        button.classList.remove("success", "error", "warning");
+      }
     });
     document.querySelectorAll(".test-btn").forEach((button) => {
-      button.textContent = "Check Locator";
-      button.classList.remove("success", "error", "warning");
+      if (button.textContent !== "Check Locator") {
+        button.textContent = "Check Locator";
+        button.classList.remove("success", "error", "warning");
+      }
     });
   } catch (e) {
     console.error(e);
@@ -216,7 +220,7 @@ function cleanInputs() {
  * @param {string} htmlString - Third‑party or dynamic HTML string to sanitize.
  * @param {Object} [opts]
  * @param {string[]} [opts.disallowedInlineProps] - CSS properties to remove from inline `style` attributes (case-insensitive).
- * @param {boolean} [opts.removeDisplayNone=true] - If true, remove `display: none` from inline styles and <style> tags.
+ * @param {boolean} [opts.removeDisplayNone=false] - If true, remove `display: none` from inline styles and <style> tags.
  * @param {boolean} [opts.scrubEventHandlers=true] - If true, removes attributes that start with "on" (onclick, onmouseover, …).
  * @param {boolean} [opts.stripScripts=true] - If true, removes <script> tags and javascript: URLs from href/src/xlink:href.
  * @returns {string} - Sanitized HTML string.
@@ -234,7 +238,7 @@ function sanitizeHTML(htmlString, opts = {}) {
         "clip",
         "overflow",
       ],
-      removeDisplayNone = true,
+      removeDisplayNone = false,
       scrubEventHandlers = true,
       stripScripts = true,
       svgSize = { width: 20, height: 20 },
@@ -921,7 +925,7 @@ function getCssSelector(el, options = {}) {
  *
  * Usage:
  *   // On-demand (once): highlight for 5 seconds
- *   highlightElement(el, iframe, { mode: "once", durationMs: 5000 });
+ *   highlightElement(el, iframe, { mode: "once", durationMs: 2000 });
  *
  *   // Hover-based (existing behavior)
  *   highlightElement(el, iframe, { mode: "hover" });
