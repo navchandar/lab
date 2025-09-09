@@ -16,19 +16,21 @@ import {
 } from "./locator_helper.js";
 
 /** Display warning in the button if the input is Empty */
-function warnEmtpy(button, value) {
+function warnEmpty(button, value) {
+  const btnText = button.dataset.originalText || "";
   if (!value) {
-    let btnText = button.textContent;
     console.warn("Input is empty");
-    if (button) {
-      button.textContent = "Empty!";
-      button.classList.add("warning");
-      setTimeout(() => {
-        button.textContent = btnText;
-        button.classList.remove("warning");
-      }, 2000);
-    }
+    button.textContent = "Empty!";
+    button.classList.add("warning");
+    setTimeout(() => {
+      button.textContent = btnText;
+      button.classList.remove("warning");
+    }, 2000);
+    // Return true if empty
+    return true;
   }
+  // Return false if not empty
+  return false;
 }
 
 /**
@@ -39,8 +41,7 @@ function copyToClipboard(elementId, button) {
   const value = input.value.trim();
   // Remove previous status classes
   button.classList.remove("success", "error", "warning");
-  warnEmtpy(button, value);
-  if (!value) {
+  if (warnEmpty(button, value)) {
     return;
   }
 
@@ -81,11 +82,11 @@ function testLocator(elementId, button) {
   let element = null;
   let isValidSyntax = true;
   let foundCount = 0;
+  let type = null;
 
   // Remove previous status classes
   button.classList.remove("success", "error", "warning");
-  warnEmtpy(button, locator);
-  if (!locator) {
+  if (warnEmpty(button, value)) {
     return;
   }
 
@@ -100,10 +101,12 @@ function testLocator(elementId, button) {
 
   try {
     if (elementId === "cssSelector") {
+      type = "CSS";
       const matches = doc.querySelectorAll(locator);
       foundCount = matches.length;
       element = foundCount ? matches[0] : null;
     } else if (elementId === "xpathSelector") {
+      type = "XPATH";
       const result = doc.evaluate(
         locator,
         doc,
@@ -114,6 +117,7 @@ function testLocator(elementId, button) {
       foundCount = result.snapshotLength;
       element = foundCount ? result.snapshotItem(0) : null;
     } else if (elementId === "idSelector") {
+      type = "ID";
       // Basic ID validation: no spaces
       if (/\s/.test(locator)) {
         throw new Error("Invalid ID syntax");
@@ -126,6 +130,12 @@ function testLocator(elementId, button) {
     isValidSyntax = false;
   }
 
+  const originalText = button.dataset.originalText || "Check Locator";
+  const resetState = () => {
+    button.textContent = originalText;
+    button.classList.remove("success", "error", "warning");
+  };
+
   // Add appropriate class based on result
   if (!isValidSyntax) {
     button.textContent = "Invalid locator";
@@ -137,10 +147,12 @@ function testLocator(elementId, button) {
     button.textContent = `Found ${foundCount}!`;
     button.classList.add("warning");
     try {
-      // Scroll inside the iframe so the element becomes visible
-      scrollElementInIframe(element, doc, iframe);
-      // Highlight after scrolling to ensure the outline is visible
-      highlightElement(element, iframe, { mode: "once", durationMs: 3000 });
+      if (element) {
+        // Scroll inside the iframe so the element becomes visible
+        scrollElementInIframe(element, doc, iframe);
+        // Highlight after scrolling to ensure the outline is visible
+        highlightDuplicates(locator, doc, element, type);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -148,20 +160,19 @@ function testLocator(elementId, button) {
     button.textContent = "Found!";
     button.classList.add("success");
     try {
-      // Scroll inside the iframe so the element becomes visible
-      scrollElementInIframe(element, doc, iframe);
-      // Highlight after scrolling to ensure the outline is visible
-      highlightElement(element, iframe, { mode: "once", durationMs: 3000 });
+      if (element) {
+        // Scroll inside the iframe so the element becomes visible
+        scrollElementInIframe(element, doc, iframe);
+        // Highlight after scrolling to ensure the outline is visible
+        highlightElement(element, iframe, { mode: "once", durationMs: 3000 });
+      }
     } catch (e) {
       console.error(e);
     }
   }
 
-  // Remove the class after 5 seconds
-  setTimeout(() => {
-    button.textContent = "Check Locator";
-    button.classList.remove("success", "error", "warning");
-  }, 3000);
+  // Remove the class after 3 seconds
+  setTimeout(resetState, 3000);
 }
 
 // Add listeners to the copy buttons
@@ -170,20 +181,21 @@ function updateButtons() {
     const inputEl = container.querySelector("[type='text']");
     const inputId = inputEl.id;
 
+    const copyButton = container.querySelector(".copy-btn");
+    const testBtn = container.querySelector(".test-btn");
+
     try {
-      const copyButton = container.querySelector(".copy-btn");
-      copyButton.addEventListener("click", function () {
-        copyToClipboard(inputId, copyButton);
-      });
+      copyButton.dataset.originalText = copyButton.textContent;
+      copyButton.addEventListener("click", () =>
+        copyToClipboard(inputId, copyButton)
+      );
     } catch (e) {
       console.error(e);
     }
 
     try {
-      const testBtn = container.querySelector(".test-btn");
-      testBtn.addEventListener("click", function () {
-        testLocator(inputId, testBtn);
-      });
+      testBtn.dataset.originalText = testBtn.textContent;
+      testBtn.addEventListener("click", () => testLocator(inputId, testBtn));
     } catch (e) {
       console.error(e);
     }
@@ -1111,8 +1123,7 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
   const win = doc.defaultView;
 
   // Remove any existing duplicate highlights
-  const existingHighlights = doc.querySelectorAll(".duplicate-highlight");
-  existingHighlights.forEach((el) => el.remove());
+  doc.querySelectorAll(".duplicate-highlight").forEach((el) => el.remove());
 
   if (!locator) {
     return;
@@ -1162,8 +1173,17 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
     highlight.style.width = `${rect.width}px`;
     highlight.style.height = `${rect.height}px`;
 
+    // Add a class for the clicked element to make it stand out
+    if (el === clickedElement) {
+      highlight.style.border = "2px dashed red";
+    }
+
     doc.body.appendChild(highlight);
   });
+
+  win.setTimeout(() => {
+    doc.querySelectorAll(".duplicate-highlight").forEach((el) => el.remove());
+  }, 2000);
 }
 
 function validateID(id, doc, clickedElement) {
