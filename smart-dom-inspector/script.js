@@ -12,8 +12,10 @@ import {
   evaluateXpath,
   CssMatch,
   isUnique,
+  scrollElementInIframe,
 } from "./locator_helper.js";
 
+/** Display warning in the button if the input is Empty */
 function warnEmtpy(button, value) {
   if (!value) {
     let btnText = button.textContent;
@@ -28,6 +30,7 @@ function warnEmtpy(button, value) {
     }
   }
 }
+
 /**
  * copy given text from elementId when button is clicked
  */
@@ -67,6 +70,9 @@ function copyToClipboard(elementId, button) {
     });
 }
 
+/**
+ * Locate, Scroll element into view and highlighe element within iframe
+ */
 function testLocator(elementId, button) {
   // Verify if locator is identifying unique element
   const input = document.getElementById(elementId);
@@ -81,13 +87,28 @@ function testLocator(elementId, button) {
   }
 
   const iframe = document.getElementById("renderFrame");
+  if (!iframe) {
+    button.textContent = "Iframe not found";
+    button.classList.add("error");
+    return;
+  }
+
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   if (elementId === "cssSelector") {
     isValid = isUnique(locator, doc, "CSS");
     element = doc.querySelector(locator);
   } else if (elementId === "xpathSelector") {
-    isValid = isUnique(locator, doc, "CSS");
-    element = doc.querySelector(locator);
+    isValid = isUnique(locator, doc, "XPATH");
+    let result = doc.evaluate(
+      locator,
+      doc,
+      null,
+      XPathResult.FIRST_ORDERED_NODE_TYPE,
+      null
+    );
+    if (result) {
+      element = result.singleNodeValue;
+    }
   } else if (elementId === "idSelector") {
     isValid = isUnique(locator, doc, "ID");
     element = doc.getElementById(locator);
@@ -97,6 +118,11 @@ function testLocator(elementId, button) {
   if (isValid && element) {
     button.classList.add("success");
     button.textContent = "Found";
+
+    // Scroll inside the iframe so the element becomes visible
+    scrollElementInIframe(element, doc, iframe);
+
+    // Highlight after scrolling to ensure the outline is visible
     highlightElement(element, doc);
   } else {
     button.textContent = "Not Found";
@@ -113,86 +139,224 @@ function testLocator(elementId, button) {
 // Add listeners to the copy buttons
 function updateButtons() {
   document.querySelectorAll(".locator-row").forEach((container) => {
-    const copyButton = container.querySelector(".copy-btn");
-    const testBtn = container.querySelectorAll(".test-btn");
     const inputEl = container.querySelector("[type='text']");
     const inputId = inputEl.id;
 
-    copyButton.addEventListener("click", function () {
-      copyToClipboard(inputId, this);
-    });
+    try {
+      const copyButton = container.querySelector(".copy-btn");
+      copyButton.addEventListener("click", function () {
+        copyToClipboard(inputId, copyButton);
+      });
+    } catch (e) {
+      console.error(e);
+    }
 
-    testBtn.addEventListener("click", function () {
-      testLocator(inputId, this);
-    });
+    try {
+      const testBtn = container.querySelector(".test-btn");
+      testBtn.addEventListener("click", function () {
+        testLocator(inputId, testBtn);
+      });
+    } catch (e) {
+      console.error(e);
+    }
   });
 }
 
 function cleanInputs() {
   // clear previously selected locators
-  document.getElementById("cssSelector").value = "";
-  document.getElementById("xpathSelector").value = "";
-  document.getElementById("idSelector").value = "";
+  try {
+    document.getElementById("cssSelector").value = "";
+    document.getElementById("xpathSelector").value = "";
+    document.getElementById("idSelector").value = "";
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 /**
- * Function to sanitize styles affecting mouse hover and click behavior
- * Read given HTML string and return cleaned HTML string
+ * Sanitize styles and attributes that can interfere with hover/click behavior,
+ * with optional hardening against scripts and inline event handlers.
+ * *
+ * @param {string} htmlString - Third‑party or dynamic HTML string to sanitize.
+ * @param {Object} [opts]
+ * @param {string[]} [opts.disallowedInlineProps] - CSS properties to remove from inline `style` attributes (case-insensitive).
+ * @param {boolean} [opts.removeDisplayNone=true] - If true, remove `display: none` from inline styles and <style> tags.
+ * @param {boolean} [opts.scrubEventHandlers=true] - If true, removes attributes that start with "on" (onclick, onmouseover, …).
+ * @param {boolean} [opts.stripScripts=true] - If true, removes <script> tags and javascript: URLs from href/src/xlink:href.
+ * @returns {string} - Sanitized HTML string.
  */
-function sanitizeHTML(htmlString) {
-  // Create a temporary DOM container
-  const container = document.createElement("div");
-  container.innerHTML = htmlString;
+function sanitizeHTML(htmlString, opts = {}) {
+  try {
+    const {
+      // remove inline properties that can affect with mouse hover/click
+      disallowedInlineProps = [
+        "pointer-events",
+        "z-index",
+        "opacity",
+        "visibility",
+        "position",
+        "clip",
+        "overflow",
+      ],
+      removeDisplayNone = true,
+      scrubEventHandlers = true,
+      stripScripts = true,
+      svgSize = { width: 20, height: 20 },
+      onlySetSvgSizeIfMissing = false,
+    } = opts;
 
-  // Remove inline styles that affect interactivity
-  container.querySelectorAll("[style]").forEach((el) => {
-    const style = el.getAttribute("style");
-    const sanitizedStyle = style
-      .split(";")
-      .filter((rule) => {
-        const prop = rule.trim().split(":")[0]?.trim().toLowerCase();
-        return ![
-          "pointer-events",
-          "z-index",
-          "opacity",
-          "visibility",
-          // "display",
-          "position",
-          "clip",
-          "overflow",
-        ].includes(prop);
-      })
-      .join(";");
-    if (sanitizedStyle) {
-      el.setAttribute("style", sanitizedStyle);
+    // Normalize the disallowed property names (lowercase + hyphenated).
+    const blockedProps = new Set(
+      disallowedInlineProps.map((p) => String(p).trim().toLowerCase())
+    );
+
+    // ---- Build a DOM container safely ----
+    const container = document.createElement("div");
+    container.innerHTML = htmlString;
+
+    // ---- Helper: Escape strings for RegExp construction ----
+    const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+    // ---- (A) Sanitize inline styles: remove problematic properties ----
+    // Use the CSSOM API for correctness (avoids brittle string parsing).
+    container.querySelectorAll("[style]").forEach((el) => {
+      const style = el.style;
+      // Collect property names first to avoid index shift during removal.
+      const propNames = Array.from({ length: style.length }, (_, i) =>
+        style.item(i)
+      );
+
+      propNames.forEach((prop) => {
+        const lowerProp = prop.toLowerCase();
+
+        // Remove blocked properties
+        if (blockedProps.has(lowerProp)) {
+          style.removeProperty(prop);
+          return;
+        }
+
+        // Optionally remove only "display: none"
+        if (removeDisplayNone && lowerProp === "display") {
+          const val = style.getPropertyValue(prop);
+          if (/\bnone\b/i.test(val)) {
+            style.removeProperty(prop);
+          }
+        }
+      });
+
+      // If no styles remain, drop the attribute entirely.
+      if (style.length === 0) {
+        el.removeAttribute("style");
+      }
+    });
+
+    // ---- (B) Sanitize <style> blocks by removing only offending declarations ----
+    // This is a pragmatic approach (regex) that targets declarations without a full CSS parser.
+    const basePropPatterns = Array.from(blockedProps).map((prop) => {
+      // Matches: [start delimiter]prop: any value;  -> replace with delimiter only
+      // Delimiters include start-of-text, ;, {, or whitespace, to avoid accidental partial matches.
+      return new RegExp(
+        `(^|[;{\\s])${escapeRegExp(prop)}\\s*:\\s*[^;}{]+;?`,
+        "gi"
+      );
+    });
+
+    const extraPatterns = [];
+    if (removeDisplayNone) {
+      // Remove only display:none (not all display values).
+      extraPatterns.push(/(^|[;{\s])display\s*:\s*none\s*!?important?;?/gi);
     }
-  });
 
-  // Remove <style> tags that contain problematic rules
-  container.querySelectorAll("style").forEach((styleTag) => {
-    const cssText = styleTag.textContent;
-    if (
-      /pointer-events|clip|opacity|visibility|display\s*:\s*none|position\s*:\s*absolute/.test(
-        cssText
-      )
-    ) {
-      styleTag.remove();
+    container.querySelectorAll("style").forEach((styleTag) => {
+      let cssText = styleTag.textContent || "";
+
+      // Remove all blocked property declarations.
+      [...basePropPatterns, ...extraPatterns].forEach((rx) => {
+        cssText = cssText.replace(rx, "$1");
+      });
+
+      // If only comments/whitespace left, remove the <style> tag entirely.
+      const stripped = cssText.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+      if (stripped.length === 0) {
+        styleTag.remove();
+      } else {
+        styleTag.textContent = cssText;
+      }
+    });
+
+    // ---- (C) Optional: strip scripts and javascript: URLs for extra safety ----
+    if (stripScripts) {
+      // Remove <script> tags completely.
+      container.querySelectorAll("script").forEach((s) => s.remove());
+
+      // Remove javascript: URLs from common URL-bearing attributes.
+      container.querySelectorAll("[src],[xlink\\:href]").forEach((el) => {
+        ["src", "xlink:href"].forEach((attr) => {
+          if (!el.hasAttribute(attr)) return;
+          const val = (el.getAttribute(attr) || "").trim();
+          if (/^javascript\s*:/i.test(val)) {
+            el.removeAttribute(attr);
+          }
+        });
+      });
     }
-  });
 
-  //target SVGs to ensure they have proper sizing
-  container.querySelectorAll("svg").forEach((svg) => {
-    svg.setAttribute("width", "20px");
-    svg.setAttribute("height", "20px");
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-
-    // Optionally add a default viewBox if missing
-    if (!svg.hasAttribute("viewBox")) {
-      svg.setAttribute("viewBox", "0 0 20 20");
+    // ---- (D) Optional: scrub inline DOM event handlers (onclick, onmouseover, …) ----
+    if (scrubEventHandlers) {
+      container.querySelectorAll("*").forEach((el) => {
+        // Copy attributes first; live removal mutates the NamedNodeMap.
+        Array.from(el.attributes).forEach((attr) => {
+          if (/^on/i.test(attr.name)) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
     }
-  });
 
-  return container.innerHTML;
+    // ---- (E) Normalize SVG sizing (without distorting aspect ratio) ----
+    const normalizeUnit = (v) => {
+      if (typeof v === "number") {
+        return `${v}px`;
+      }
+      // Allow "20", "20px", "1em", etc.; append px only if it's purely numeric.
+      return /^\d+(\.\d+)?$/.test(v) ? `${v}px` : String(v);
+    };
+
+    const widthVal = normalizeUnit(svgSize?.width ?? 20);
+    const heightVal = normalizeUnit(svgSize?.height ?? 20);
+
+    container.querySelectorAll("svg").forEach((svg) => {
+      // Respect existing width/height when onlySetSvgSizeIfMissing is true.
+      if (!onlySetSvgSizeIfMissing || !svg.hasAttribute("width")) {
+        svg.setAttribute("width", widthVal);
+      }
+      if (!onlySetSvgSizeIfMissing || !svg.hasAttribute("height")) {
+        svg.setAttribute("height", heightVal);
+      }
+
+      // Preserve aspect ratio unless explicitly set.
+      if (!svg.hasAttribute("preserveAspectRatio")) {
+        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      }
+
+      // Add a default viewBox if missing; derive from numeric width/height when possible.
+      if (!svg.hasAttribute("viewBox")) {
+        const wNum = parseFloat(String(svg.getAttribute("width") || widthVal));
+        const hNum = parseFloat(
+          String(svg.getAttribute("height") || heightVal)
+        );
+        const vw = Number.isFinite(wNum) ? wNum : 20;
+        const vh = Number.isFinite(hNum) ? hNum : 20;
+        svg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
+      }
+    });
+
+    // Return sanitized result
+    return container.innerHTML;
+  } catch (err) {
+    console.error("sanitizeHTML failed:", err);
+    return htmlString;
+  }
 }
 
 /**
@@ -931,6 +1095,18 @@ function renderHTML(content = null) {
   setTimeout(() => attachListeners(iframe), 500);
 }
 
+function renderDefaultPreview() {
+  let style =
+    "font-family:sans-serif; padding:10px;\
+  color:#555; font-size:25px; line-height:120%;";
+
+  let defaultMsg =
+    "Preview will appear here once you paste HTML content.\
+ Hover & click on any element to get the locator.";
+
+  renderHTML(`<p id='preview' style='${style}'>${defaultMsg}</p>`);
+}
+
 function setupIframe({
   textareaId = "htmlInput",
   renderBtnId = "renderBtn",
@@ -939,16 +1115,8 @@ function setupIframe({
   const renderBtn = document.getElementById(renderBtnId);
   renderBtn.addEventListener("click", renderHTML);
 
-  let defaultMessage =
-    "Preview will appear here once you paste HTML content. Hover & click on any element to get the locator.";
-
-  let style =
-    "font-family:sans-serif; padding:10px; color:#555; font-size:25px; line-height:120%;";
-
-  // Show default message on loadß
-  window.addEventListener("load", () => {
-    renderHTML(`<p id='preview' style='${style}'>${defaultMessage}</p>`);
-  });
+  // Show default message on load
+  window.addEventListener("load", renderDefaultPreview);
 
   // Clear iframe when user starts typing
   textarea.addEventListener("input", () => {
@@ -964,7 +1132,7 @@ function setupIframe({
         renderHTML();
       }
     } else {
-      renderHTML(`<p id='preview' style='${style}'>${defaultMessage}</p>`);
+      renderDefaultPreview();
       // Hide render button
       renderBtn.style.display = "none";
       cleanInputs();

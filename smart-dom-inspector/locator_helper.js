@@ -360,3 +360,66 @@ export const isUnique = (locator, d, type = "XPATH") => {
 
   return count === 1;
 };
+
+/**
+ * Scroll an element into view *within an iframe document*, and ensure the iframe
+ * is visible in the parent page as well.
+ *
+ * @param {Element} el - Element inside the iframe document.
+ * @param {Document} doc - The iframe's document.
+ * @param {HTMLIFrameElement} iframe - The iframe element in the parent DOM.
+ * @param {Object} [opts]
+ * @param {boolean} [opts.center=true] - Center the element in the viewport.
+ */
+function scrollElementInIframe(el, doc, iframe, opts = {}) {
+  const { center = true, behavior = "smooth" } = opts;
+
+  try {
+    // 1) Scroll the iframe element into view in the parent page .
+    if (iframe && typeof iframe.scrollIntoView === "function") {
+      iframe.scrollIntoView({ behavior, block: "nearest", inline: "nearest" });
+    }
+
+    // 2) Scroll the target element into view inside the iframe.
+    // Prefer standards-based API first:
+    if (typeof el.scrollIntoView === "function") {
+      el.scrollIntoView({
+        behavior,
+        block: center ? "center" : "nearest",
+        inline: "nearest",
+      });
+      return;
+    }
+
+    // 3) Fallback: compute and scroll using the iframe's window.
+    const win = doc.defaultView || (iframe ? iframe.contentWindow : null);
+    if (win) {
+      const rect = el.getBoundingClientRect();
+      const currentY = win.pageYOffset || doc.documentElement.scrollTop || 0;
+      const viewportH =
+        win.innerHeight || doc.documentElement.clientHeight || 0;
+
+      // Centering logic; if not centering, align to nearest edge.
+      let targetY = currentY + rect.top;
+      if (center) {
+        const visibleH = Math.min(rect.height, viewportH);
+        targetY = currentY + rect.top - (viewportH / 2 - visibleH / 2);
+      }
+
+      // Clamp to >= 0 to avoid negative positions
+      targetY = Math.max(0, targetY);
+
+      if (typeof win.scrollTo === "function") {
+        win.scrollTo({ top: targetY, behavior });
+      } else if (typeof win.scroll === "function") {
+        win.scroll(0, targetY);
+      } else {
+        // Very old fallback
+        doc.documentElement.scrollTop = targetY;
+        doc.body && (doc.body.scrollTop = targetY);
+      }
+    }
+  } catch (e) {
+    console.warn("scrollElementInIframe failed:", e);
+  }
+}
