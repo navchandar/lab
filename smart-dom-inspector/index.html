@@ -17,7 +17,7 @@
 
     <meta
       name="keywords"
-      content="DOM Inspector, HTML Renderer, CSS Selector Generator, XPath Generator, Element Locator Tool, QA Automation, Web Testing Tools, DOM Explorer, Frontend Debugging, Developer Utilities, Smart DOM Inspector"
+      content="DOM Inspector, CSS Selector Generator, XPath Generator, HTML Renderer, web element locator, QA automation tool, HTML debugging, web testing tools, Selenium helper tool"
     />
 
     <!-- Open Graph -->
@@ -67,9 +67,9 @@
           <iframe id="renderFrame" sandbox="allow-same-origin"></iframe>
         </div>
       </div>
-      <div id="selectorInfo">
+      <section id="selectorInfo">
         <div class="locator-row">
-          <label
+          <label for="cssSelector"
             >CSS Selector:
             <input type="text" id="cssSelector" autocomplete="off" />
             <button class="test-btn">Check Locator</button>
@@ -77,7 +77,7 @@
           </label>
         </div>
         <div class="locator-row">
-          <label
+          <label for="xpathSelector"
             >XPath Locator:
             <input type="text" id="xpathSelector" autocomplete="off" />
             <button class="test-btn">Check Locator</button>
@@ -85,14 +85,14 @@
           </label>
         </div>
         <div class="locator-row">
-          <label
+          <label for="idSelector"
             >ID Attribute:
             <input type="text" id="idSelector" autocomplete="off" />
             <button class="test-btn">Check Locator</button>
             <button class="copy-btn">Copy</button>
           </label>
         </div>
-      </div>
+      </section>
     </main>
     <footer>
       <p>
@@ -101,6 +101,7 @@
         <a
           href="https://github.com/navchandar/lab/tree/main/smart-dom-inspector"
           target="_blank"
+          rel="noopener noreferrer"
           >GitHub</a
         >
         | Copyright &copy;
@@ -111,7 +112,7 @@
         <a
           href="https://github.com/navchandar/lab/blob/main/LICENSE"
           target="_blank"
-          rel="license"
+          rel="noopener noreferrer license"
         >
           GNU GPLv3</a
         >.

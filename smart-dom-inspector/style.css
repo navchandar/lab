@@ -27,11 +27,13 @@ header {
     width: 100%;
     height: 100%;
     resize: none;
+    font-size: 14px;
 }
 
 .input-panel textarea::placeholder,
 .input-panel textarea::-moz-placeholder,
 .input-panel textarea:-moz-placeholder {
+    opacity: 1;
     font-size: 20px;
     line-height: 2;
 }
