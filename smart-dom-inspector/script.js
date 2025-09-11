@@ -16,7 +16,6 @@ import {
 } from "./locator_helper.js";
 
 // --- DOM elements ---
-const htmlInput = document.getElementById("htmlInput");
 const iframe = document.getElementById("renderFrame");
 const checkboxes = document.querySelectorAll(
   ".render-options input[type='checkbox']"
@@ -356,7 +355,7 @@ function sanitizeHTML(htmlString, opts = {}) {
           margin: 0 !important;
           padding: 0 !important;
         }`;
-      container.prepend(style);
+      container.prepend(globalStyle);
 
       // Traverse and inject into shadow roots
       const injectIntoShadowRoots = (root) => {
