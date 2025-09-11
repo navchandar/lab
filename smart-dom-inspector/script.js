@@ -490,6 +490,8 @@ function sanitizeHTML(htmlString, opts = {}) {
       });
     }
 
+    // ---- (F) Hide pseudo elements ----
+    // This is skipped if stripSvg is false.
     // Return sanitized result
     return container.innerHTML;
   } catch (err) {
@@ -1591,6 +1593,7 @@ function renderHTML(content = null) {
       stripSvg: document.getElementById("hideSvg").checked,
       stripStyles: document.getElementById("hideCss").checked,
       stripIframe: document.getElementById("hideIframe").checked,
+      stripPseudo: document.getElementById("hidePseudo").checked,
     };
     const cleanedHtml = sanitizeHTML(html, options);
     doc.write(cleanedHtml);
