@@ -275,6 +275,7 @@ function cleanInputs() {
  * @param {boolean} [opts.stripImages=false] - If true, removes <img> and <picture> tags.
  * @param {boolean} [opts.stripSvg=false] - If true, removes <svg> tags.
  * @param {boolean} [opts.stripStyles=false] - If true, removes <style> tags and inline `style` attributes.
+ * @param {boolean} [opts.stripIframes=false] - If true, removes <iframe> tags within the pasted code
  * @returns {string} - Sanitized HTML string.
  */
 function sanitizeHTML(htmlString, opts = {}) {
@@ -298,6 +299,7 @@ function sanitizeHTML(htmlString, opts = {}) {
       stripImages = false,
       stripSvg = false,
       stripStyles = false,
+      stripIframes = false,
     } = opts;
 
     // Normalize the disallowed property names (lowercase + hyphenated).
@@ -331,6 +333,10 @@ function sanitizeHTML(htmlString, opts = {}) {
           el.remove();
         }
       });
+    }
+
+    if (stripIframes) {
+      container.querySelectorAll("iframe").forEach((el) => el.remove());
     }
 
     // ---- (A) Sanitize inline styles: remove problematic properties ----
@@ -1584,6 +1590,7 @@ function renderHTML(content = null) {
       stripImages: document.getElementById("hideImg").checked,
       stripSvg: document.getElementById("hideSvg").checked,
       stripStyles: document.getElementById("hideCss").checked,
+      stripIframe: document.getElementById("hideIframe").checked,
     };
     const cleanedHtml = sanitizeHTML(html, options);
     doc.write(cleanedHtml);
