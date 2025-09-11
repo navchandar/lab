@@ -38,15 +38,6 @@ header {
     line-height: 2;
 }
 
-.input-panel button {
-    display: none;
-    box-sizing: border-box;
-    margin-top: 3px;
-    margin-left: 35%;
-    padding: 1px 10px;
-    width: 100px;
-    font-weight: bold;
-}
 
 .render-panel {
     position: relative;
@@ -55,6 +46,18 @@ header {
     width: 50%;
     zoom: 75%;
 }
+
+input[type='checkbox'] {
+    vertical-align: middle;
+    zoom: 1;
+    cursor: pointer;
+    accent-color: seagreen;
+}
+
+.render-options label {
+    margin: 0 10px;
+}
+
 
 iframe {
     z-index: 9999;

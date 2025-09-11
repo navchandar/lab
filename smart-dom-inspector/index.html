@@ -60,8 +60,23 @@
             autofocus
             id="htmlInput"
             placeholder="Paste your HTML content here..."
+            aria-label="HTML content input"
           ></textarea>
-          <button id="renderBtn" style="display:none;">Render</button>
+
+          <div class="render-options">
+            <label for="hideImg">
+              <input type="checkbox" id="hideImg" checked name="hideOptions" />
+              Remove Images
+            </label>
+            <label for="hideSvg">
+              <input type="checkbox" id="hideSvg" checked name="hideOptions" />
+              Remove SVG
+            </label>
+            <label for="hideCss">
+              <input type="checkbox" id="hideCss" name="hideOptions" />
+              Remove Styles
+            </label>
+          </div>
         </div>
         <div class="render-panel">
           <iframe id="renderFrame" sandbox="allow-same-origin"></iframe>

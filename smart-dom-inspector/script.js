@@ -15,6 +15,16 @@ import {
   scrollElementInIframe,
 } from "./locator_helper.js";
 
+// --- DOM elements ---
+const htmlInput = document.getElementById("htmlInput");
+const iframe = document.getElementById("renderFrame");
+const checkboxes = document.querySelectorAll(
+  ".render-options input[type='checkbox']"
+);
+
+// --- localStorage key for options ---
+const OPTIONS_KEY = "renderOptions";
+
 /** Display warning in the button if the input is Empty */
 function warnEmpty(button, value) {
   const btnText = button.dataset.originalText || "";
@@ -72,6 +82,34 @@ function copyToClipboard(elementId, button) {
 }
 
 /**
+ * Saves the current state of checkboxes to localStorage.
+ */
+function saveOptions() {
+  const options = {};
+  checkboxes.forEach((checkbox) => {
+    options[checkbox.id] = checkbox.checked;
+  });
+  localStorage.setItem(OPTIONS_KEY, JSON.stringify(options));
+}
+
+/**
+ * Loads the saved state from localStorage and updates checkboxes.
+ */
+function loadOptions() {
+  try {
+    const savedOptions = JSON.parse(localStorage.getItem(OPTIONS_KEY));
+    if (savedOptions) {
+      checkboxes.forEach((checkbox) => {
+        // Set the checkbox's state based on the saved value, defaulting to its original state if not found.
+        checkbox.checked = savedOptions[checkbox.id] ?? checkbox.checked;
+      });
+    }
+  } catch (e) {
+    console.error("Failed to load options from localStorage", e);
+  }
+}
+
+/**
  * Locate, Scroll element into view and highlighe element within iframe
  */
 function testLocator(elementId, button) {
@@ -90,7 +128,6 @@ function testLocator(elementId, button) {
     return;
   }
 
-  const iframe = document.getElementById("renderFrame");
   if (!iframe) {
     button.textContent = "Iframe not found";
     button.classList.add("error");
@@ -235,6 +272,9 @@ function cleanInputs() {
  * @param {boolean} [opts.removeDisplayNone=false] - If true, remove `display: none` from inline styles and <style> tags.
  * @param {boolean} [opts.scrubEventHandlers=true] - If true, removes attributes that start with "on" (onclick, onmouseover, …).
  * @param {boolean} [opts.stripScripts=true] - If true, removes <script> tags and javascript: URLs from href/src/xlink:href.
+ * @param {boolean} [opts.stripImages=false] - If true, removes <img> and <picture> tags.
+ * @param {boolean} [opts.stripSvg=false] - If true, removes <svg> tags.
+ * @param {boolean} [opts.stripStyles=false] - If true, removes <style> tags and inline `style` attributes.
  * @returns {string} - Sanitized HTML string.
  */
 function sanitizeHTML(htmlString, opts = {}) {
@@ -255,6 +295,9 @@ function sanitizeHTML(htmlString, opts = {}) {
       stripScripts = true,
       svgSize = { width: 20, height: 20 },
       onlySetSvgSizeIfMissing = false,
+      stripImages = false,
+      stripSvg = false,
+      stripStyles = false,
     } = opts;
 
     // Normalize the disallowed property names (lowercase + hyphenated).
@@ -269,72 +312,99 @@ function sanitizeHTML(htmlString, opts = {}) {
     // ---- Helper: Escape strings for RegExp construction ----
     const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    // ---- (A) Sanitize inline styles: remove problematic properties ----
-    // Use the CSSOM API for correctness (avoids brittle string parsing).
-    container.querySelectorAll("[style]").forEach((el) => {
-      const style = el.style;
-      // Collect property names first to avoid index shift during removal.
-      const propNames = Array.from({ length: style.length }, (_, i) =>
-        style.item(i)
-      );
+    // ---- Handle removal options based on checkboxes ----
+    if (stripImages) {
+      container
+        .querySelectorAll("img, picture, source")
+        .forEach((el) => el.remove());
+    }
 
-      propNames.forEach((prop) => {
-        const lowerProp = prop.toLowerCase();
+    if (stripSvg) {
+      container.querySelectorAll("svg").forEach((el) => el.remove());
+    }
 
-        // Remove blocked properties
-        if (blockedProps.has(lowerProp)) {
-          style.removeProperty(prop);
-          return;
-        }
-
-        // Optionally remove only "display: none"
-        if (removeDisplayNone && lowerProp === "display") {
-          const val = style.getPropertyValue(prop);
-          if (/\bnone\b/i.test(val)) {
-            style.removeProperty(prop);
-          }
+    // If stripStyles is true, remove all <style> tags and inline style attributes.
+    if (stripStyles) {
+      container.querySelectorAll("style, [style]").forEach((el) => {
+        el.removeAttribute("style");
+        if (el.tagName.toLowerCase() === "style") {
+          el.remove();
         }
       });
+    }
 
-      // If no styles remain, drop the attribute entirely.
-      if (style.length === 0) {
-        el.removeAttribute("style");
-      }
-    });
+    // ---- (A) Sanitize inline styles: remove problematic properties ----
+    // Use the CSSOM API for correctness (avoids brittle string parsing).
+    // This part is skipped if stripStyles is true.
+    if (!stripStyles) {
+      container.querySelectorAll("[style]").forEach((el) => {
+        const style = el.style;
+        // Collect property names first to avoid index shift during removal.
+        const propNames = Array.from({ length: style.length }, (_, i) =>
+          style.item(i)
+        );
+
+        propNames.forEach((prop) => {
+          const lowerProp = prop.toLowerCase();
+
+          // Remove blocked properties
+          if (blockedProps.has(lowerProp)) {
+            style.removeProperty(prop);
+            return;
+          }
+
+          // Optionally remove only "display: none"
+          if (removeDisplayNone && lowerProp === "display") {
+            const val = style.getPropertyValue(prop);
+            if (/\bnone\b/i.test(val)) {
+              style.removeProperty(prop);
+            }
+          }
+        });
+
+        // If no styles remain, drop the attribute entirely.
+        if (style.length === 0) {
+          el.removeAttribute("style");
+        }
+      });
+    }
 
     // ---- (B) Sanitize <style> blocks by removing only offending declarations ----
     // This is a pragmatic approach (regex) that targets declarations without a full CSS parser.
-    const basePropPatterns = Array.from(blockedProps).map((prop) => {
-      // Matches: [start delimiter]prop: any value;  -> replace with delimiter only
-      // Delimiters include start-of-text, ;, {, or whitespace, to avoid accidental partial matches.
-      return new RegExp(
-        `(^|[;{\\s])${escapeRegExp(prop)}\\s*:\\s*[^;}{]+;?`,
-        "gi"
-      );
-    });
-
-    const extraPatterns = [];
-    if (removeDisplayNone) {
-      // Remove only display:none (not all display values).
-      extraPatterns.push(/(^|[;{\s])display\s*:\s*none\s*!?important?;?/gi);
-    }
-
-    container.querySelectorAll("style").forEach((styleTag) => {
-      let cssText = styleTag.textContent || "";
-
-      // Remove all blocked property declarations.
-      [...basePropPatterns, ...extraPatterns].forEach((rx) => {
-        cssText = cssText.replace(rx, "$1");
+    // This part is skipped if stripStyles is true.
+    if (!stripStyles) {
+      const basePropPatterns = Array.from(blockedProps).map((prop) => {
+        // Matches: [start delimiter]prop: any value;  -> replace with delimiter only
+        // Delimiters include start-of-text, ;, {, or whitespace, to avoid accidental partial matches.
+        return new RegExp(
+          `(^|[;{\\s])${escapeRegExp(prop)}\\s*:\\s*[^;}{]+;?`,
+          "gi"
+        );
       });
 
-      // If only comments/whitespace left, remove the <style> tag entirely.
-      const stripped = cssText.replace(/\/\*[\s\S]*?\*\//g, "").trim();
-      if (stripped.length === 0) {
-        styleTag.remove();
-      } else {
-        styleTag.textContent = cssText;
+      const extraPatterns = [];
+      if (removeDisplayNone) {
+        // Remove only display:none (not all display values).
+        extraPatterns.push(/(^|[;{\s])display\s*:\s*none\s*!?important?;?/gi);
       }
-    });
+
+      container.querySelectorAll("style").forEach((styleTag) => {
+        let cssText = styleTag.textContent || "";
+
+        // Remove all blocked property declarations.
+        [...basePropPatterns, ...extraPatterns].forEach((rx) => {
+          cssText = cssText.replace(rx, "$1");
+        });
+
+        // If only comments/whitespace left, remove the <style> tag entirely.
+        const stripped = cssText.replace(/\/\*[\s\S]*?\*\//g, "").trim();
+        if (stripped.length === 0) {
+          styleTag.remove();
+        } else {
+          styleTag.textContent = cssText;
+        }
+      });
+    }
 
     // ---- (C) Optional: strip scripts and javascript: URLs for extra safety ----
     if (stripScripts) {
@@ -368,45 +438,51 @@ function sanitizeHTML(htmlString, opts = {}) {
     }
 
     // ---- (E) Normalize SVG sizing (without distorting aspect ratio) ----
-    const normalizeUnit = (v) => {
-      if (typeof v === "number") {
-        return `${v}px`;
-      }
-      // Allow "20", "20px", "1em", etc.; append px only if it's purely numeric.
-      return /^\d+(\.\d+)?$/.test(v) ? `${v}px` : String(v);
-    };
+    // This is skipped if stripSvg is true.
+    if (!stripSvg) {
+      const normalizeUnit = (v) => {
+        if (typeof v === "number") {
+          return `${v}px`;
+        }
+        // Allow "20", "20px", "1em", etc.; append px only if it's purely numeric.
+        return /^\d+(\.\d+)?$/.test(v) ? `${v}px` : String(v);
+      };
 
-    const widthVal = normalizeUnit(svgSize?.width ?? 20);
-    const heightVal = normalizeUnit(svgSize?.height ?? 20);
+      const widthVal = normalizeUnit(svgSize?.width ?? 20);
+      const heightVal = normalizeUnit(svgSize?.height ?? 20);
 
-    container.querySelectorAll("svg").forEach((svg) => {
-      // Respect existing width/height when onlySetSvgSizeIfMissing is true.
-      if (!onlySetSvgSizeIfMissing || !svg.hasAttribute("width")) {
-        svg.setAttribute("width", widthVal);
-      }
-      if (!onlySetSvgSizeIfMissing || !svg.hasAttribute("height")) {
-        svg.setAttribute("height", heightVal);
-      }
+      container.querySelectorAll("svg").forEach((svg) => {
+        // Respect existing width/height when onlySetSvgSizeIfMissing is true.
+        if (!onlySetSvgSizeIfMissing || !svg.hasAttribute("width")) {
+          svg.setAttribute("width", widthVal);
+        }
+        if (!onlySetSvgSizeIfMissing || !svg.hasAttribute("height")) {
+          svg.setAttribute("height", heightVal);
+        }
 
-      // Preserve aspect ratio unless explicitly set.
-      if (!svg.hasAttribute("preserveAspectRatio")) {
-        svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-      }
+        // Preserve aspect ratio unless explicitly set.
+        if (!svg.hasAttribute("preserveAspectRatio")) {
+          svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        }
 
-      // Add a default viewBox if missing; derive from numeric width/height when possible.
-      if (!svg.hasAttribute("viewBox")) {
-        const w = parseFloat(String(svg.getAttribute("width") || widthVal));
-        const h = parseFloat(String(svg.getAttribute("height") || heightVal));
-        const vw = Number.isFinite(w) ? w : 20;
-        const vh = Number.isFinite(h) ? h : 20;
-        svg.setAttribute("viewBox", `0 0 ${Math.round(vw)} ${Math.round(vh)}`);
-      }
+        // Add a default viewBox if missing; derive from numeric width/height when possible.
+        if (!svg.hasAttribute("viewBox")) {
+          const w = parseFloat(String(svg.getAttribute("width") || widthVal));
+          const h = parseFloat(String(svg.getAttribute("height") || heightVal));
+          const vw = Number.isFinite(w) ? w : 20;
+          const vh = Number.isFinite(h) ? h : 20;
+          svg.setAttribute(
+            "viewBox",
+            `0 0 ${Math.round(vw)} ${Math.round(vh)}`
+          );
+        }
 
-      svg.removeAttribute("width");
-      svg.removeAttribute("height");
-      svg.style.width = "1em";
-      svg.style.height = "1em";
-    });
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+        svg.style.width = "1em";
+        svg.style.height = "1em";
+      });
+    }
 
     // Return sanitized result
     return container.innerHTML;
@@ -1431,7 +1507,6 @@ function validateID(id, doc, clickedElement) {
 
 function updateSelectors(element) {
   cleanInputs();
-  const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   const cssEl = document.getElementById("cssSelector");
   const xpathEl = document.getElementById("xpathSelector");
@@ -1501,11 +1576,16 @@ function attachListeners(iframe) {
 
 function renderHTML(content = null) {
   const html = document.getElementById("htmlInput").value.trim();
-  const iframe = document.getElementById("renderFrame");
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open();
   if (null !== html && html !== "") {
-    const cleanedHtml = sanitizeHTML(html);
+    // Get current checkbox states
+    const options = {
+      stripImages: document.getElementById("hideImg").checked,
+      stripSvg: document.getElementById("hideSvg").checked,
+      stripStyles: document.getElementById("hideCss").checked,
+    };
+    const cleanedHtml = sanitizeHTML(html, options);
     doc.write(cleanedHtml);
   } else if (
     null !== content &&
@@ -1530,36 +1610,32 @@ function renderDefaultPreview() {
   renderHTML(`<p id='preview' style='${style}'>${defaultMsg}</p>`);
 }
 
-function setupIframe({
-  textareaId = "htmlInput",
-  renderBtnId = "renderBtn",
-} = {}) {
+function setupIframe({ textareaId = "htmlInput" } = {}) {
   const textarea = document.getElementById(textareaId);
-  const renderBtn = document.getElementById(renderBtnId);
-  renderBtn.addEventListener("click", renderHTML);
 
   // Show default message on load
-  window.addEventListener("load", renderDefaultPreview);
+  window.addEventListener("load", () => {
+    renderDefaultPreview();
+    loadOptions();
+  });
 
   // Clear iframe when user starts typing
   textarea.addEventListener("input", () => {
     const content = textarea.value.trim();
     if (content && content.length > 0) {
-      // If the content is large (more than 10000 characters)
-      if (content.length > 10000) {
-        // Show the "Render" button
-        renderBtn.style.display = "inline-block";
-      } else {
-        // Hide the button and render immediately
-        renderBtn.style.display = "none";
-        renderHTML();
-      }
+      renderHTML();
     } else {
-      renderDefaultPreview();
-      // Hide render button
-      renderBtn.style.display = "none";
       cleanInputs();
+      renderDefaultPreview();
     }
+  });
+
+  // Listen for changes on all checkboxes.
+  checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      saveOptions();
+      renderHTML();
+    });
   });
 }
 
