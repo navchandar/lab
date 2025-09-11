@@ -515,11 +515,37 @@ function getXPath(el, options = {}) {
   if (attrs.length > 0) {
     const tag = getTagOf(el) || "*";
     for (const [key, value] of attrs) {
-      const attrXpath = `//${tag}[@${key}=${xpathString(value)}]`;
-      const result = testCandidate(attrXpath);
-      if (result) {
-        console.log(`XPath found using element's attribute [${key}]:`, result);
-        return result;
+      if (value.length <= cfg.textMaxLen) {
+        const attrXpath = `//${tag}[@${key}=${xpathString(value)}]`;
+        const result = testCandidate(attrXpath);
+        if (result) {
+          console.log(
+            `XPath found using element's attribute [${key}]:`,
+            result
+          );
+          return result;
+        }
+      }
+
+      // **Step 2.2: Add special handling for URL attributes like href**
+      const urlParts = getStableUrlParts(key, value);
+      for (const part of urlParts) {
+        // Avoid testing very short, generic parts of a URL
+        if (part.length < 5) {
+          continue;
+        }
+
+        const urlContainsXpath = `//${tag}[contains(@${key}, ${xpathString(
+          part
+        )})]`;
+        const resultUrlContains = testCandidate(urlContainsXpath);
+        if (resultUrlContains) {
+          console.log(
+            `XPath found using partial URL in [${key}]:`,
+            resultUrlContains
+          );
+          return resultUrlContains;
+        }
       }
 
       // **Step 2.5: Add starts-with() and contains() on attributes**
@@ -936,6 +962,62 @@ function getPathSegment(el) {
   const index = getIndexOfTag(el);
   return `${tag}[${index}]`;
 }
+
+/**
+ * Tries to parse a URL attribute (like href) and extract stable, meaningful parts
+ * from its path, ignoring query strings and fragments. It returns candidates
+ * from most specific to least specific.
+ * E.g., for "/users/123/profile?action=edit", it might return:
+ * ['users/123/profile', '123/profile', 'profile']
+ *
+ * @param {string} key - The attribute name (e.g., 'href').
+ * @param {string} value - The attribute value (the URL string).
+ * @returns {string[]} An array of stable URL parts to test, or an empty array.
+ */
+const getStableUrlParts = (key, value) => {
+  // Only apply this logic to attributes that typically hold URLs.
+  const urlAttributes = ["href", "src", "action"];
+  if (!urlAttributes.includes(key.toLowerCase())) {
+    return [];
+  }
+
+  // Basic check to see if the value is a URL-like string.
+  if (!value || (!value.startsWith("http") && !value.startsWith("/"))) {
+    return [];
+  }
+
+  try {
+    // Use the URL constructor for robust parsing. A base is needed for relative URLs.
+    const url = new URL(value, window.location.origin);
+    let pathname = url.pathname;
+
+    // Clean the pathname by removing any trailing slash to keep segments consistent.
+    if (pathname.endsWith("/")) {
+      pathname = pathname.slice(0, -1);
+    }
+
+    // Remove common file extensions that are often not descriptive.
+    pathname = pathname.replace(/\.(html|htm|php|aspx|jsp)$/, "");
+
+    // Split the path into non-empty segments.
+    const segments = pathname.split("/").filter((part) => part.length > 0);
+    if (segments.length === 0) {
+      return [];
+    }
+
+    // Generate candidate parts, starting from the end of the path (most specific).
+    const candidates = [];
+    for (let i = 0; i < segments.length; i++) {
+      candidates.push(segments.slice(i).join("/"));
+    }
+
+    // Return the candidates, which are already ordered from most specific to least.
+    return candidates;
+  } catch (e) {
+    // The URL constructor can fail on malformed strings; ignore them.
+    return [];
+  }
+};
 
 /**
  * Generates a maintainable CSS selector for a given DOM element.

@@ -129,13 +129,23 @@ async function retrieveIPAddress({
 }
 
 async function fetchValidIPAddress(url, ipVersion) {
-  const response = await fetch(url);
-  const ip = (await response.text()).trim();
-  if (!isIPAddressValid(ip, ipVersion)) {
-    console.error(`Invalid ${ipVersion} format: ${ip}`);
-    throw new Error(`Invalid ${ipVersion} format: ${ip}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const ip = (await response.text()).trim();
+    
+    if (!isIPAddressValid(ip, ipVersion)) {
+      console.error(`Invalid ${ipVersion} format: ${ip}`);
+      throw new Error(`Invalid ${ipVersion} format: ${ip}`);
+    }
+
+    return ip;
+  } catch (error) {
+    console.error("Failed to fetch a valid IP address:", error);
+    throw error;
   }
-  return ip;
 }
 
 function isIPAddressValid(ip, version) {
