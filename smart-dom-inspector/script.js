@@ -1670,8 +1670,7 @@ function setupIframe({ textareaId = "htmlInput" } = {}) {
     loadOptions();
   });
 
-  // Clear iframe when user starts typing
-  textarea.addEventListener("input", () => {
+  const updateFrame = () => {
     const content = textarea.value.trim();
     if (content && content.length > 0) {
       renderHTML();
@@ -1679,13 +1678,16 @@ function setupIframe({ textareaId = "htmlInput" } = {}) {
       cleanInputs();
       renderDefaultPreview();
     }
-  });
+  };
+
+  // Clear iframe when user starts typing
+  textarea.addEventListener("input", updateFrame);
 
   // Listen for changes on all checkboxes.
   checkboxes.forEach((checkbox) => {
     checkbox.addEventListener("change", () => {
       saveOptions();
-      renderHTML();
+      updateFrame();
     });
   });
 }
