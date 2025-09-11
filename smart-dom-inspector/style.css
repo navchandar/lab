@@ -47,17 +47,21 @@ header {
     zoom: 75%;
 }
 
+.render-options {
+    margin: 5px auto;
+}
+
+.render-options label {
+    display: inline;
+    margin: 0 10px;
+}
+
 input[type='checkbox'] {
     vertical-align: middle;
     zoom: 1;
     cursor: pointer;
     accent-color: seagreen;
 }
-
-.render-options label {
-    margin: 0 10px;
-}
-
 
 iframe {
     z-index: 9999;
@@ -72,7 +76,7 @@ iframe {
 footer {
     position: relative;
     bottom: 5px;
-    margin-top: 7rem;
+    margin-top: 6rem;
     width: 100%;
     font-size: 0.8em;
     text-align: center;
@@ -101,7 +105,7 @@ footer p {
     display: grid;
     align-items: center;
     gap: 10%;
-    margin-top: 30px;
+    margin-top: 50px;
     padding: 0 10px;
 }
 
@@ -211,7 +215,7 @@ footer p {
         display: grid;
         align-items: center;
         margin: 10px;
-        padding-top: 30px;
+        padding-top: 125px;
         padding-bottom: 30px;
     }
 
@@ -220,7 +224,7 @@ footer p {
         border-width: 1px;
         border-radius: 3px;
         padding: 5px;
-        width: 50%;
+        width: 60%;
         min-width: 100px;
     }
 
@@ -238,6 +242,12 @@ footer p {
     #selectorInfo label {
         font-size: 0.85em;
     }
+
+    .render-options label {
+        display: flex;
+        width: 150%;
+    }
+
 
     footer {
         bottom: 1rem;
