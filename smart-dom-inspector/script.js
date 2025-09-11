@@ -422,6 +422,7 @@ function sanitizeHTML(htmlString, opts = {}) {
  * The algorithm follows these steps in order:
  * 1.  **ID-based XPath**: If the element has a stable ID, use it (`//*[@id='...']`).
  * 2.  **Indexed ID-based XPath**: If the ID is not unique, use an index (`(//*[@id='...'])[n]`).
+ * Uses "smart indexing", avoiding `[1]` when an element is the only one of its type under its parent.
  * 3.  **Attribute-based XPath**: If no ID, use other stable, whitelisted attributes (`//tag[@attr='...']`).
  * 4.  **Indexed Attribute-based XPath**: If the attribute locator is not unique, use an index.
  * 5.  **Relative XPath from Stable Ancestor**: Traverse up the DOM to find an ancestor with a stable ID or attribute.
@@ -569,9 +570,9 @@ function getXPath(el, options = {}) {
     current.parentElement.nodeType === Node.ELEMENT_NODE
   ) {
     const parent = current.parentElement;
-    const tag = getTagOf(current);
-    const index = getIndexOfTag(current);
-    pathFromAncestor = `/${tag}[${index}]` + pathFromAncestor;
+    // Use the smart-indexing helper function.
+    const segment = getPathSegment(current);
+    pathFromAncestor = `/${segment}` + pathFromAncestor;
 
     // **Priority 1: Parent with an ID**
     const parentId = parent.getAttribute("id");
@@ -665,9 +666,13 @@ function getXPath(el, options = {}) {
     let segments = [];
     let current = node;
     while (current && current.nodeType === Node.ELEMENT_NODE) {
+      // Store the smart segment and the raw tag separately.
+      const segment = getPathSegment(current);
       const tag = getTagOf(current);
-      const index = getIndexOfTag(current);
-      segments.unshift({ tag, index });
+      segments.unshift({
+        segment,
+        tag,
+      });
 
       // Attempt 1: Path with tags only (e.g., //div/p)
       const tagsOnlyPath = "//" + segments.map((s) => s.tag).join("/");
@@ -679,11 +684,10 @@ function getXPath(el, options = {}) {
 
       // Attempt 2: Path with an index on the leaf element only (e.g., //div/p[1])
       if (segments.length > 1) {
-        const segmentsForIndexedLeaf = segments.map((s) => s.tag);
-        segmentsForIndexedLeaf[segments.length - 1] += `[${
-          segments[segments.length - 1].index
-        }]`;
-        const indexedLeafPath = "//" + segmentsForIndexedLeaf.join("/");
+        const parts = segments.map((s) => s.tag);
+        // Use the pre-calculated smart segment for the leaf node.
+        parts[parts.length - 1] = segments[segments.length - 1].segment;
+        const indexedLeafPath = "//" + parts.join("/");
         result = testCandidate(indexedLeafPath);
         if (result) {
           console.log("Found optimized absolute XPath (indexed leaf):", result);
@@ -701,8 +705,8 @@ function getXPath(el, options = {}) {
     }
 
     // Attempt 3: As a last resort, build the full indexed path
-    const fullIndexedPath =
-      "/" + segments.map((s) => `${s.tag}[${s.index}]`).join("/");
+    // Use the smart segments to build the final path.
+    const fullIndexedPath = "/" + segments.map((s) => s.segment).join("/");
     console.log("Fallback to full indexed path:", fullIndexedPath);
     return fullIndexedPath;
   };
@@ -867,9 +871,13 @@ function buildRelativePath(ancestor, leaf) {
   const segments = [];
   let cur = leaf;
   while (cur && cur !== ancestor && cur.nodeType === Node.ELEMENT_NODE) {
+    // Use smart segment
+    const segment = getPathSegment(cur);
     const tag = getTagOf(cur);
-    const index = getIndexOfTag(cur); // index among same-tag siblings
-    segments.unshift({ tag, index });
+    segments.unshift({
+      segment,
+      tag,
+    });
     cur = cur.parentElement;
   }
 
@@ -879,15 +887,54 @@ function buildRelativePath(ancestor, leaf) {
   // 2) indexedLeaf: //a/b/c[3]  (only the leaf is indexed)
   const indexedLeafParts = segments.map((s) => s.tag);
   if (segments.length > 0) {
-    const last = segments[segments.length - 1];
-    indexedLeafParts[indexedLeafParts.length - 1] += `[${last.index}]`;
+    indexedLeafParts[indexedLeafParts.length - 1] =
+      segments[segments.length - 1].segment;
   }
   const indexedLeaf = indexedLeafParts.join("/");
 
-  // 3) indexedFull: /a[1]/b[2]/c[3]
-  const indexedFull = segments.map((s) => `${s.tag}[${s.index}]`).join("/");
+  // 3) indexedFull: /a/b[2]/c[3]
+  const indexedFull = segments.map((s) => s.segment).join("/");
 
-  return { tagsOnly, indexedLeaf, indexedFull };
+  return {
+    tagsOnly,
+    indexedLeaf,
+    indexedFull,
+  };
+}
+
+/**
+ * Generates an XPath segment for a single element, adding a positional index `[n]`
+ * only if the element is not the unique child of its type under its parent.
+ * @param {Element} el The DOM element for which to create a segment.
+ * @returns {string} The XPath segment (e.g., 'div' or 'table[2]').
+ */
+function getPathSegment(el) {
+  const tag = getTagOf(el);
+  const parent = el.parentElement;
+
+  // If there's no parent, we can't determine siblings, so just return the tag.
+  if (!parent) {
+    return tag;
+  }
+
+  // Check if there are other siblings with the same tag name.
+  // This is more efficient than filtering and counting all children.
+  let hasSiblingOfSameTag = false;
+  for (const child of parent.children) {
+    if (child !== el && getTagOf(child) === tag) {
+      hasSiblingOfSameTag = true;
+      break;
+    }
+  }
+
+  // If there are no other siblings with this tag, no index is needed.
+  if (!hasSiblingOfSameTag) {
+    return tag;
+  }
+
+  // Otherwise, this element is one of several; calculate its 1-based index.
+  const index = getIndexOfTag(el);
+  return `${tag}[${index}]`;
 }
 
 /**
