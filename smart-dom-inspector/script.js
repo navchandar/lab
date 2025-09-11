@@ -276,6 +276,7 @@ function cleanInputs() {
  * @param {boolean} [opts.stripSvg=false] - If true, removes <svg> tags.
  * @param {boolean} [opts.stripStyles=false] - If true, removes <style> tags and inline `style` attributes.
  * @param {boolean} [opts.stripIframes=false] - If true, removes <iframe> tags within the pasted code
+ * @param {boolean} [opts.stripPseudo=false] - If true, removes before after tags within the pasted code
  * @returns {string} - Sanitized HTML string.
  */
 function sanitizeHTML(htmlString, opts = {}) {
@@ -300,6 +301,7 @@ function sanitizeHTML(htmlString, opts = {}) {
       stripSvg = false,
       stripStyles = false,
       stripIframes = false,
+      stripPseudo = false,
     } = opts;
 
     // Normalize the disallowed property names (lowercase + hyphenated).
@@ -337,6 +339,46 @@ function sanitizeHTML(htmlString, opts = {}) {
 
     if (stripIframes) {
       container.querySelectorAll("iframe").forEach((el) => el.remove());
+    }
+
+    if (stripPseudo) {
+      const globalStyle = document.createElement("style");
+      globalStyle.textContent = `
+        *::before,
+        *::after {
+          content: '' !important;
+          display: none !important;
+          background: none !important;
+          border: none !important;
+          color: transparent !important;
+          width: 0 !important;
+          height: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }`;
+      container.prepend(style);
+
+      // Traverse and inject into shadow roots
+      const injectIntoShadowRoots = (root) => {
+        const walker = document.createTreeWalker(
+          root,
+          NodeFilter.SHOW_ELEMENT,
+          null,
+          false
+        );
+        // Recursively handle nested shadow roots
+        while (walker.nextNode()) {
+          const node = walker.currentNode;
+          if (node.shadowRoot) {
+            const shadowStyle = document.createElement("style");
+            shadowStyle.textContent = globalStyle.textContent;
+            node.shadowRoot.appendChild(shadowStyle);
+            injectIntoShadowRoots(node.shadowRoot);
+          }
+        }
+      };
+
+      injectIntoShadowRoots(container);
     }
 
     // ---- (A) Sanitize inline styles: remove problematic properties ----
@@ -1592,7 +1634,7 @@ function renderHTML(content = null) {
       stripImages: document.getElementById("hideImg").checked,
       stripSvg: document.getElementById("hideSvg").checked,
       stripStyles: document.getElementById("hideCss").checked,
-      stripIframe: document.getElementById("hideIframe").checked,
+      stripIframes: document.getElementById("hideIframe").checked,
       stripPseudo: document.getElementById("hidePseudo").checked,
     };
     const cleanedHtml = sanitizeHTML(html, options);
