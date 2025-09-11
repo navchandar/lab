@@ -445,7 +445,7 @@ function getXPath(el, options = {}) {
     allowIndexOnAncestors: false,
     allowIndexOnLeaf: true,
     preferShort: true,
-    useText: false,
+    useText: true,
     textMaxLen: 40,
     classLimit: 2,
 
@@ -520,6 +520,43 @@ function getXPath(el, options = {}) {
         console.log(`XPath found using element's attribute [${key}]:`, result);
         return result;
       }
+
+      // **Step 2.5: Add starts-with() and contains() on attributes**
+      // Remove numeric prefix/suffix and split on common delimiters
+      const cleanedParts = value
+        .replace(/^\d+|\d+$/g, "") // Remove leading/trailing numbers
+        .split(/[-_]/) // Split on chars like -, _ in the property values
+        .filter((part) => part.length > 2 && !/^\d+$/.test(part));
+      // Keep meaningful non-numeric parts
+
+      if (cleanedParts.length > 0) {
+        const firstPart = cleanedParts[0];
+
+        // Apply starts-with only to the first part
+        const startsWithXpath = `//${tag}[starts-with(@${key}, ${xpathString(
+          firstPart
+        )})]`;
+        const resultStartsWith = testCandidate(startsWithXpath);
+        if (resultStartsWith) {
+          console.log(
+            `XPath found using starts-with [${key}]:`,
+            resultStartsWith
+          );
+          return resultStartsWith;
+        }
+
+        // Apply contains to all parts
+        for (const part of cleanedParts) {
+          const containsXpath = `//${tag}[contains(@${key}, ${xpathString(
+            part
+          )})]`;
+          const resultContains = testCandidate(containsXpath);
+          if (resultContains) {
+            console.log(`XPath found using contains [${key}]:`, resultContains);
+            return resultContains;
+          }
+        }
+      }
     }
   }
 
@@ -575,6 +612,31 @@ function getXPath(el, options = {}) {
     current = parent;
     if (current === doc.documentElement) {
       break;
+    }
+  }
+
+  // ** Priority 3: Use normalize-space() for Text-Based Locators
+  if (cfg.useText && el.textContent) {
+    const rawText = el.textContent.trim();
+    const cleanedText = rawText.replace(/\s+/g, " "); // Normalize internal whitespace
+
+    if (
+      cleanedText &&
+      cleanedText.length <= cfg.textMaxLen &&
+      cleanedText.length < rawText.length
+    ) {
+      const tag = getTagOf(el) || "*";
+      const textXpath = `//${tag}[normalize-space(text())=${xpathString(
+        cleanedText
+      )}]`;
+      const resultText = testCandidate(textXpath);
+      if (resultText) {
+        console.log(
+          `XPath found using normalize-space [${cleanedText}]:`,
+          resultText
+        );
+        return resultText;
+      }
     }
   }
 
@@ -761,7 +823,37 @@ function buildAnchorForAncestor(node, doc, cfg, testCandidate) {
     }
   }
 
-  // 2) Fallback: index this ancestor among all tags of same type in the document
+  // 2) Applying starts-with() and contains() to these attributes
+  for (const [key, value] of attrs) {
+    const cleanedParts = value
+      .replace(/^\d+|\d+$/g, "")
+      .split(/[-_]/)
+      .filter((part) => part.length > 2 && !/^\d+$/.test(part));
+
+    if (cleanedParts.length > 0) {
+      const firstPart = cleanedParts[0];
+
+      const startsWithXpath = `//${tag}[starts-with(@${key}, ${xpathString(
+        firstPart
+      )})]`;
+      const resultStartsWith = testCandidate(startsWithXpath);
+      if (resultStartsWith) {
+        return resultStartsWith;
+      }
+
+      for (const part of cleanedParts) {
+        const containsXpath = `//${tag}[contains(@${key}, ${xpathString(
+          part
+        )})]`;
+        const resultContains = testCandidate(containsXpath);
+        if (resultContains) {
+          return resultContains;
+        }
+      }
+    }
+  }
+
+  // 3) Fallback: index this ancestor among all tags of same type in the document
   const all = Array.from(doc.getElementsByTagName(tag));
   const idx = all.indexOf(node);
   if (idx >= 0) {
