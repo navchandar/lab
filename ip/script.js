@@ -186,7 +186,7 @@ function updateIPAddressDisplay(ip, elementId) {
 function updateButtons() {
   document.querySelectorAll(".ip-container").forEach((container) => {
     const button = container.querySelector(".copy-btn");
-    const ipSpan = container.querySelector(".ip-text span");
+    const ipSpan = container.querySelector(".ip-text span:not(.spinner)");
     const ipId = ipSpan.id;
 
     button.addEventListener("click", function () {
