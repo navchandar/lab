@@ -3,7 +3,12 @@ let activeNotification = null;
 let lastRefreshTime = new Date();
 
 function showText(elementId, message) {
-  document.getElementById(elementId).textContent = message;
+  const element = document.getElementById(elementId);
+  if (element) {
+    element.textContent = message;
+  } else {
+    console.error(`Element with ID ${elementId} not found!`);
+  }
 }
 
 function updateRefreshTimeDisplay() {
@@ -162,11 +167,13 @@ function updateIPAddressDisplay(ip, elementId) {
     spinnerElement.style.opacity = 0;
     setTimeout(() => {
       spinnerElement.style.display = "none";
+      // update the IP content
+      ipElement.textContent = ip;
     }, 200);
+  } else {
+    // Fallback if spinner doesn't exist
+    ipElement.textContent = ip;
   }
-
-  // update the IP content
-  ipElement.textContent = ip;
 
   if (elementId === "ip1") {
     if (previousIP && previousIP !== ip) {
@@ -203,19 +210,26 @@ function setupChangeListeners() {
   }
 }
 
+function showSpinnerAndText(elementId, message) {
+  const spinner = document.getElementById(`spinner-${elementId}`);
+  if (spinner) {
+    spinner.style.display = "inline-block";
+    spinner.style.opacity = 1;
+  }
+  if (message) {
+    showText(elementId, message);
+  }
+}
+
 // Network change detection
 function setupNetworkListeners() {
   window.addEventListener("online", () => {
     console.log("Network connected. Refreshing IPs...");
 
     // display spinner
-    document.getElementById("spinner-ip1").style.display = "inline-block";
-    document.getElementById("spinner-ip2").style.display = "inline-block";
-    document.getElementById("spinner-ip1").style.opacity = 1;
-    document.getElementById("spinner-ip2").style.opacity = 1;
+    showSpinnerAndText("ip1", "Network Online");
+    showSpinnerAndText("ip2", "Network Online");
 
-    showText("ip1", "Network Online");
-    showText("ip2", "Network Online");
     document.title = "IP Finder";
     refreshIPAddresses();
   });
