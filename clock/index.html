@@ -10,7 +10,6 @@
   <meta name="keywords" content="learn clock, tell time, kids, analog clock, digital clock, education" />
   <meta name="author" content="Learn the Clock" />
   <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="https://example.com/learn-the-clock" />
 
   <style>
     :root {
@@ -19,7 +18,7 @@
       --text: #123;
       --accent-hour: #ff7b7b;
       --accent-minute: #6ee7b7;
-      --border: rgba(0,0,0,0.15);
+      --border: rgba(0,0,0,0.2);
       --shadow: 0 6px 16px rgba(0,0,0,0.15);
     }
     @media (prefers-color-scheme: dark) {
@@ -29,7 +28,7 @@
         --text: #eee;
         --accent-hour: #ff9f9f;
         --accent-minute: #5ce0b9;
-        --border: rgba(255,255,255,0.15);
+        --border: rgba(255,255,255,0.2);
         --shadow: 0 6px 16px rgba(0,0,0,0.6);
       }
     }
@@ -53,15 +52,8 @@
       max-width: 600px;
       width: 90%;
     }
-    h1 {
-      margin: 0 0 10px;
-      font-size: 1.8rem;
-    }
-    p {
-      margin: 0 0 20px;
-      font-size: 1rem;
-      opacity: 0.85;
-    }
+    h1 { margin: 0 0 10px; font-size: 1.8rem; }
+    p { margin: 0 0 20px; font-size: 1rem; opacity: 0.8; }
 
     .clock-area {
       display: flex;
@@ -92,44 +84,26 @@
       touch-action: none;
       transition: transform 0.3s ease-in-out;
     }
-    .hand.hour {
-      width: 10px;
-      height: 80px;
-      background: var(--accent-hour);
-      z-index: 2;
-    }
-    .hand.minute {
-      width: 6px;
-      height: 110px;
-      background: var(--accent-minute);
-      z-index: 1;
-    }
-    .center {
-      width: 16px;
-      height: 16px;
-      background: var(--text);
-      border-radius: 50%;
+    .hand.hour { width: 10px; height: 80px; background: var(--accent-hour); z-index: 2; }
+    .hand.minute { width: 6px; height: 110px; background: var(--accent-minute); z-index: 1; }
+    .center { width: 16px; height: 16px; background: var(--text); border-radius: 50%;
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+
+    .number {
       position: absolute;
-      top: 50%;
-      left: 50%;
+      font-size: 1.2rem;
+      font-weight: bold;
       transform: translate(-50%, -50%);
     }
 
-    /* Numbers around clock */
-    .number {
+    .tick {
       position: absolute;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 1rem;
-      color: var(--text);
-    }
-    .number span {
-      position: absolute;
-      transform: translate(-50%, -50%);
+      width: 2px;
+      height: 10px;
+      background: var(--text);
+      left: 50%;
+      top: 10px;
+      transform-origin: center 130px;
     }
 
     /* Digital input */
@@ -140,14 +114,13 @@
       border-radius: 8px;
       background: var(--card);
       color: var(--text);
-      transition: background 0.3s, color 0.3s;
     }
 
     @media (max-width: 500px) {
       .clock { width: 220px; height: 220px; }
       .hand.hour { height: 60px; }
       .hand.minute { height: 90px; }
-      .number { font-size: 0.9rem; }
+      .tick { transform-origin: center 100px; }
     }
   </style>
 </head>
@@ -159,12 +132,6 @@
     <div class="clock-area">
       <!-- Analog -->
       <div class="clock" id="analog">
-        <!-- Numbers 1–12 -->
-        ${Array.from({length: 12}, (_, i) => `
-          <div class="number" style="transform: rotate(${i*30}deg)">
-            <span style="transform: rotate(-${i*30}deg) translate(0,-115px)">${i === 0 ? 12 : i}</span>
-          </div>
-        `).join('')}
         <div class="hand hour" id="hourHand" data-hand="hour"></div>
         <div class="hand minute" id="minuteHand" data-hand="minute"></div>
         <div class="center"></div>
@@ -185,27 +152,35 @@
     let isDragging = false;
     let dragHand = null;
 
-    // Generate numbers dynamically (JS replaces ${} placeholders)
-    (function insertNumbers(){
-      const template = clock.innerHTML;
-      if (template.includes("${")) {
-        clock.innerHTML = "";
-        for (let i=0; i<12; i++) {
-          const deg = i*30;
-          const num = (i===0?12:i);
-          const div = document.createElement("div");
-          div.className = "number";
-          div.style.transform = `rotate(${deg}deg)`;
-          div.innerHTML = `<span style="transform: rotate(-${deg}deg) translate(0,-115px)">${num}</span>`;
-          clock.appendChild(div);
-        }
-        clock.appendChild(hourHand);
-        clock.appendChild(minuteHand);
-        clock.appendChild(document.querySelector(".center"));
+    // Place numbers 1–12
+    function insertNumbers() {
+      for (let i = 1; i <= 12; i++) {
+        const angle = (i * 30) - 90; // 30° per hour
+        const num = document.createElement("div");
+        num.className = "number";
+        const radius = 120;
+        const x = 140 + radius * Math.cos(angle * Math.PI/180);
+        const y = 140 + radius * Math.sin(angle * Math.PI/180);
+        num.style.left = `${x}px`;
+        num.style.top = `${y}px`;
+        num.textContent = i;
+        clock.appendChild(num);
       }
-    })();
+    }
+
+    // Place tick marks (every 5 min)
+    function insertTicks() {
+      for (let i = 0; i < 60; i += 5) {
+        const tick = document.createElement("div");
+        tick.className = "tick";
+        tick.style.transform = `rotate(${i*6}deg)`;
+        clock.appendChild(tick);
+      }
+    }
 
     function init() {
+      insertNumbers();
+      insertTicks();
       const now = new Date();
       current.hours = now.getHours();
       current.minutes = now.getMinutes();
@@ -257,15 +232,14 @@
         current.minutes = Math.round(deg / 6) % 60;
       } else {
         const totalHours = deg / 30;
-        let h = Math.floor(totalHours) % 12;
-        if (h === 0) h = 12;
-        current.hours = (current.hours >= 12 ? 12 : 0) + h % 12;
-        current.minutes = Math.round((totalHours % 1) * 60) % 60;
+        current.hours = Math.floor(totalHours) % 12;
+        if (current.hours === 0) current.hours = 12;
+        current.minutes = Math.round((totalHours % 1) * 60);
       }
       updateClocks();
     }
 
-    function endDrag(e) {
+    function endDrag() {
       isDragging = false;
       dragHand = null;
       document.removeEventListener("pointermove", onDrag);
@@ -275,4 +249,4 @@
     init();
   </script>
 </body>
-  </html>
+</html>
