@@ -72,6 +72,17 @@ function notifyIPChange(previousIP, newIP) {
 
 function copyIP(elementId, button) {
   const ipText = document.getElementById(elementId).textContent;
+  if (!ipText || ipText.trim() === "") {
+    console.error(`IP not found from ${elementId} element`);
+    button.textContent = "Error!";
+    button.classList.add("error");
+    setTimeout(() => {
+      button.textContent = "Copy";
+      button.classList.remove("error");
+    }, 2000);
+    return;
+  }
+
   navigator.clipboard
     .writeText(ipText)
     .then(() => {
