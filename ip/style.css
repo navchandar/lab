@@ -132,7 +132,10 @@ button {
 .spinner {
     display: inline-block;
     vertical-align: middle;
+    opacity: 1;
     animation: spin 0.6s linear infinite;
+    transition: opacity 0.3s ease;
+    box-sizing: content-box;
     margin-right: 0.5em;
     border: 0.2em solid rgba(0, 0, 0, 0.1);
     border-top: 0.2em solid #333;
@@ -191,8 +194,6 @@ button {
     }
 
     .copy-btn {
-        margin: 10px 0px 10px 10px;
-        padding: 6px 12px;
         font-size: 11px;
     }
 

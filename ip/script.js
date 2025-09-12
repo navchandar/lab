@@ -135,7 +135,7 @@ async function fetchValidIPAddress(url, ipVersion) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const ip = (await response.text()).trim();
-    
+
     if (!isIPAddressValid(ip, ipVersion)) {
       console.error(`Invalid ${ipVersion} format: ${ip}`);
       throw new Error(`Invalid ${ipVersion} format: ${ip}`);
@@ -155,7 +155,19 @@ function isIPAddressValid(ip, version) {
 }
 
 function updateIPAddressDisplay(ip, elementId) {
-  document.getElementById(elementId).textContent = ip;
+  const ipElement = document.getElementById(elementId);
+  const spinnerElement = document.getElementById(`spinner-${elementId}`);
+  // Hide spinner
+  if (spinnerElement) {
+    spinnerElement.style.opacity = 0;
+    setTimeout(() => {
+      spinnerElement.style.display = "none";
+    }, 200);
+  }
+
+  // update the IP content
+  ipElement.textContent = ip;
+
   if (elementId === "ip1") {
     if (previousIP && previousIP !== ip) {
       notifyIPChange(previousIP, ip);
@@ -195,6 +207,13 @@ function setupChangeListeners() {
 function setupNetworkListeners() {
   window.addEventListener("online", () => {
     console.log("Network connected. Refreshing IPs...");
+
+    // display spinner
+    document.getElementById("spinner-ip1").style.display = "inline-block";
+    document.getElementById("spinner-ip2").style.display = "inline-block";
+    document.getElementById("spinner-ip1").style.opacity = 1;
+    document.getElementById("spinner-ip2").style.opacity = 1;
+
     showText("ip1", "Network Online");
     showText("ip2", "Network Online");
     document.title = "IP Finder";
