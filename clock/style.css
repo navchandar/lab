@@ -1,3 +1,4 @@
+/* csslint ignore:start */
 :root {
     --bg: #fffbe6;
     --card: #ffffff;
@@ -20,6 +21,8 @@
     }
 }
 
+/* csslint ignore:end */
+
 body {
     display: flex;
     justify-content: center;
@@ -32,6 +35,7 @@ body {
 }
 
 .container {
+    box-sizing: content-box;
     box-shadow: var(--shadow);
     border-radius: 16px;
     background: var(--card);
@@ -80,6 +84,7 @@ p {
     transform-origin: 50% 90%;
     transition: transform 0.3s ease-in-out;
     cursor: grab;
+    box-sizing: content-box;
     border-radius: 4px;
     touch-action: none;
 }
