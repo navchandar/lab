@@ -34,6 +34,31 @@
 
     <meta name="theme-color" content="#000000" id="theme-color" />
 
+    <style>
+      /* cs~slint ignore:start */
+      :root {
+          --bg: #fffbe6;
+          --card: #ffffff;
+          --text: #123;
+          --accent-hour: #ff7b7b;
+          --accent-minute: #6ee7b7;
+          --border: rgba(0, 0, 0, 0.2);
+          --shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      @media (prefers-color-scheme: dark) {
+          :root {
+              --bg: #121212;
+              --card: #1e1e1e;
+              --text: #eee;
+              --accent-hour: #ff9f9f;
+              --accent-minute: #5ce0b9;
+              --border: rgba(255, 255, 255, 0.2);
+              --shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+          }
+      }
+      /* csslint ignore:end */
+    </style>
     <link rel="stylesheet" href="../static/settings.css" />
     <link rel="stylesheet" href="style.css" />
 

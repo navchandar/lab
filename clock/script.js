@@ -8,6 +8,7 @@ const clock = document.getElementById("analog");
 let current = { hours: 0, minutes: 0 };
 let isDragging = false;
 let dragHand = null;
+let lastAngle = null;
 
 /**
  * Converts degrees to radians
