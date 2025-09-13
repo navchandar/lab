@@ -1,252 +1,88 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>🕒 Learn the Clock</title>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Learn the Clock</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="shortcut icon"
+      href="data:image/png;base64,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"
+    />
 
-  <!-- SEO -->
-  <meta name="description" content="Interactive analog and digital clock to teach time-telling for kids. Move hands or edit digital time and both stay in sync." />
-  <meta name="keywords" content="learn clock, tell time, kids, analog clock, digital clock, education" />
-  <meta name="author" content="Learn the Clock" />
-  <meta name="robots" content="index, follow" />
+    <meta
+      name="description"
+      content="Interactive analog and digital clock to teach time-telling for kids. Move hands or edit digital time and tell the time."
+    />
+    <meta
+      name="keywords"
+      content="learn clock, tell time, kids, analog clock, digital clock, education"
+    />
+    <meta name="author" content="Naveenchandar" />
+    <meta
+      property="article:author"
+      content="https://www.linkedin.com/in/naveenchandar"
+    />
 
-  <style>
-    :root {
-      --bg: #fffbe6;
-      --card: #ffffff;
-      --text: #123;
-      --accent-hour: #ff7b7b;
-      --accent-minute: #6ee7b7;
-      --border: rgba(0,0,0,0.2);
-      --shadow: 0 6px 16px rgba(0,0,0,0.15);
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #121212;
-        --card: #1e1e1e;
-        --text: #eee;
-        --accent-hour: #ff9f9f;
-        --accent-minute: #5ce0b9;
-        --border: rgba(255,255,255,0.2);
-        --shadow: 0 6px 16px rgba(0,0,0,0.6);
-      }
-    }
+    <meta name="title" property="og:title" content="Learn the Clock" />
+    <meta
+      name="description"
+      property="og:description"
+      content="Interactive analog and digital clock to teach time-telling for kids. Move hands or edit digital time and tell the time."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/clock" />
 
-    body {
-      margin: 0;
-      font-family: "Segoe UI", Arial, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .container {
-      text-align: center;
-      padding: 20px;
-      background: var(--card);
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      max-width: 600px;
-      width: 90%;
-    }
-    h1 { margin: 0 0 10px; font-size: 1.8rem; }
-    p { margin: 0 0 20px; font-size: 1rem; opacity: 0.8; }
+    <meta name="theme-color" content="#000000" id="theme-color" />
 
-    .clock-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-    }
+    <link rel="stylesheet" href="../static/settings.css" />
+    <link rel="stylesheet" href="style.css" />
 
-    /* Analog clock */
-    .clock {
-      position: relative;
-      width: 280px;
-      height: 280px;
-      border: 8px solid var(--border);
-      border-radius: 50%;
-      background: var(--card);
-      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
-      margin: 0 auto;
-    }
-    .hand {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      transform-origin: 50% 90%;
-      transform: translate(-50%, -90%) rotate(0deg);
-      border-radius: 4px;
-      cursor: grab;
-      touch-action: none;
-      transition: transform 0.3s ease-in-out;
-    }
-    .hand.hour { width: 10px; height: 80px; background: var(--accent-hour); z-index: 2; }
-    .hand.minute { width: 6px; height: 110px; background: var(--accent-minute); z-index: 1; }
-    .center { width: 16px; height: 16px; background: var(--text); border-radius: 50%;
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    <link rel="preload" as="image" href="../static/icons/settings.svg" />
+    <link rel="preload" as="image" href="../static/icons/settings-open.svg" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+        Learn the Clock
+        <span class="info-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#555" stroke-width="2" />
+            <line
+              x1="12"
+              y1="8"
+              x2="12"
+              y2="8"
+              stroke="#555"
+              stroke-width="2"
+            />
+            <line
+              x1="12"
+              y1="10"
+              x2="12"
+              y2="16"
+              stroke="#555"
+              stroke-width="2"
+            />
+          </svg>
+          <span class="tooltip"
+            >Move the Clock hands or edit the digital time!</span
+          >
+        </span>
+      </h1>
 
-    .number {
-      position: absolute;
-      font-size: 1.2rem;
-      font-weight: bold;
-      transform: translate(-50%, -50%);
-    }
+      <div class="clock-area">
+        <!-- Analog -->
+        <div class="clock" id="analog">
+          <div class="hand hour" id="hourHand" data-hand="hour"></div>
+          <div class="hand minute" id="minuteHand" data-hand="minute"></div>
+          <div class="center"></div>
+        </div>
 
-    .tick {
-      position: absolute;
-      width: 2px;
-      height: 10px;
-      background: var(--text);
-      left: 50%;
-      top: 10px;
-      transform-origin: center 130px;
-    }
-
-    /* Digital input */
-    input[type="time"] {
-      font-size: 1.4rem;
-      padding: 8px 12px;
-      border: 2px solid var(--border);
-      border-radius: 8px;
-      background: var(--card);
-      color: var(--text);
-    }
-
-    @media (max-width: 500px) {
-      .clock { width: 220px; height: 220px; }
-      .hand.hour { height: 60px; }
-      .hand.minute { height: 90px; }
-      .tick { transform-origin: center 100px; }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>🕒 Learn the Clock</h1>
-    <p>Move the hands or edit the digital time — both stay in sync!</p>
-
-    <div class="clock-area">
-      <!-- Analog -->
-      <div class="clock" id="analog">
-        <div class="hand hour" id="hourHand" data-hand="hour"></div>
-        <div class="hand minute" id="minuteHand" data-hand="minute"></div>
-        <div class="center"></div>
+        <!-- Digital -->
+        <input type="time" id="timeInput" step="60" />
       </div>
-
-      <!-- Digital -->
-      <input type="time" id="timeInput" step="60">
     </div>
-  </div>
 
-  <script>
-    const hourHand = document.getElementById("hourHand");
-    const minuteHand = document.getElementById("minuteHand");
-    const timeInput = document.getElementById("timeInput");
-    const clock = document.getElementById("analog");
-
-    let current = { hours: 0, minutes: 0 };
-    let isDragging = false;
-    let dragHand = null;
-
-    // Place numbers 1–12
-    function insertNumbers() {
-      for (let i = 1; i <= 12; i++) {
-        const angle = (i * 30) - 90; // 30° per hour
-        const num = document.createElement("div");
-        num.className = "number";
-        const radius = 120;
-        const x = 140 + radius * Math.cos(angle * Math.PI/180);
-        const y = 140 + radius * Math.sin(angle * Math.PI/180);
-        num.style.left = `${x}px`;
-        num.style.top = `${y}px`;
-        num.textContent = i;
-        clock.appendChild(num);
-      }
-    }
-
-    // Place tick marks (every 5 min)
-    function insertTicks() {
-      for (let i = 0; i < 60; i += 5) {
-        const tick = document.createElement("div");
-        tick.className = "tick";
-        tick.style.transform = `rotate(${i*6}deg)`;
-        clock.appendChild(tick);
-      }
-    }
-
-    function init() {
-      insertNumbers();
-      insertTicks();
-      const now = new Date();
-      current.hours = now.getHours();
-      current.minutes = now.getMinutes();
-      updateClocks();
-      setupDrag(hourHand);
-      setupDrag(minuteHand);
-      timeInput.addEventListener("change", onDigitalChange);
-    }
-
-    function updateClocks() {
-      const h12 = current.hours % 12;
-      const hourAngle = h12 * 30 + current.minutes * 0.5;
-      const minuteAngle = current.minutes * 6;
-      hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
-      minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
-      timeInput.value = `${String(current.hours).padStart(2, "0")}:${String(current.minutes).padStart(2, "0")}`;
-    }
-
-    function onDigitalChange(e) {
-      const [h, m] = e.target.value.split(":").map(Number);
-      if (!isNaN(h) && !isNaN(m)) {
-        current.hours = h;
-        current.minutes = m;
-        updateClocks();
-      }
-    }
-
-    function setupDrag(hand) {
-      hand.addEventListener("pointerdown", e => {
-        isDragging = true;
-        dragHand = hand.dataset.hand;
-        hand.setPointerCapture(e.pointerId);
-        document.addEventListener("pointermove", onDrag);
-        document.addEventListener("pointerup", endDrag);
-      });
-    }
-
-    function onDrag(e) {
-      if (!isDragging) return;
-      const rect = clock.getBoundingClientRect();
-      const cx = rect.left + rect.width/2;
-      const cy = rect.top + rect.height/2;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
-      let deg = Math.atan2(dy, dx) * 180 / Math.PI + 90;
-      if (deg < 0) deg += 360;
-
-      if (dragHand === "minute") {
-        current.minutes = Math.round(deg / 6) % 60;
-      } else {
-        const totalHours = deg / 30;
-        current.hours = Math.floor(totalHours) % 12;
-        if (current.hours === 0) current.hours = 12;
-        current.minutes = Math.round((totalHours % 1) * 60);
-      }
-      updateClocks();
-    }
-
-    function endDrag() {
-      isDragging = false;
-      dragHand = null;
-      document.removeEventListener("pointermove", onDrag);
-      document.removeEventListener("pointerup", endDrag);
-    }
-
-    init();
-  </script>
-</body>
+    <script type="module" src="script.js"></script>
+  </body>
 </html>
