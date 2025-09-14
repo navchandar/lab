@@ -255,8 +255,11 @@ function onDrag(e) {
 
     if (previousMinutes !== null) {
       const diff = newMinutes - previousMinutes;
-      if (diff > 30) current.hours = (current.hours - 1 + 24) % 24;
-      else if (diff < -30) current.hours = (current.hours + 1) % 24;
+      if (diff > 30) {
+        current.hours = (current.hours - 1 + 24) % 24;
+      } else if (diff < -30) {
+        current.hours = (current.hours + 1) % 24;
+      }
     }
 
     current.minutes = newMinutes;
