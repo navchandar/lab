@@ -11,7 +11,7 @@ let dragHand = null;
 let lastAngle = null;
 let totalAngle = 0;
 let selectedHand = null;
-let tickNum = -1;
+let previousMinutes = null;
 
 /**
  * Update the info icon text to display on click/touch
@@ -87,42 +87,34 @@ function insertTicks() {
   for (let i = 0; i < 60; i += 5) {
     const tick = document.createElement("div");
     tick.className = "tick";
-    tickNum = tickNum + 1;
-    tick.id = String(tickNum);
+    tick.dataset.index = i / 5;
     tick.style.transform = `rotate(${i * 6}deg)`;
     clock.appendChild(tick);
   }
 }
 
 function updateClockHands() {
-  hourHand.addEventListener("click", () => {
-    selectedHand = "hour";
-  });
-  minuteHand.addEventListener("click", () => {
-    selectedHand = "minute";
-  });
+  hourHand.addEventListener("click", () => (selectedHand = "hour"));
+  minuteHand.addEventListener("click", () => (selectedHand = "minute"));
 
   document.querySelectorAll(".number").forEach((num) => {
     num.addEventListener("click", () => {
-      const value = num.textContent;
-      const hour = parseInt(value);
+      const value = parseInt(num.textContent);
       if (selectedHand === "hour") {
-        current.hours = hour % 12;
+        current.hours = value % 12;
       } else if (selectedHand === "minute") {
-        current.minutes = hour * 5;
+        current.minutes = value * 5;
       }
       updateClockDisplay();
     });
   });
 
-  document.querySelectorAll(".tick").forEach((tick) => {
+  document.querySelectorAll(".tick").forEach((tick, i) => {
     tick.addEventListener("click", () => {
-      const value = tick.id;
-      const hour = parseInt(value);
-      if (selectedHand === "hour") {
-        current.hours = hour % 12;
-      } else if (selectedHand === "minute") {
-        current.minutes = hour * 5;
+      if (selectedHand === "minute") {
+        current.minutes = i * 5;
+      } else if (selectedHand === "hour") {
+        current.hours = i % 12;
       }
       updateClockDisplay();
     });
@@ -217,6 +209,7 @@ function enableDrag(hand) {
     dragHand = hand.dataset.hand;
     lastAngle = null;
     totalAngle = 0;
+    previousMinutes = null;
     hand.setPointerCapture(e.pointerId);
     document.addEventListener("pointermove", onDrag);
     document.addEventListener("pointerup", endDrag);
@@ -246,26 +239,30 @@ function onDrag(e) {
 
   if (lastAngle !== null) {
     let delta = angle - lastAngle;
-
-    // Correct for wrap-around
-    if (delta > 180) delta -= 360;
-    if (delta < -180) delta += 360;
-
+    if (delta > 180) {
+      delta -= 360;
+    }
+    if (delta < -180) {
+      delta += 360;
+    }
     totalAngle += delta;
   }
 
   lastAngle = angle;
 
   if (dragHand === "minute") {
-    const newMinutes = Math.round((totalAngle % 360) / 6);
-    current.minutes = (newMinutes + 60) % 60;
+    const newMinutes = Math.round(angle / 6) % 60;
 
-    // Calculate hour change based on minute rotation
+    if (previousMinutes !== null) {
+      const diff = newMinutes - previousMinutes;
+      if (diff > 30) current.hours = (current.hours - 1 + 24) % 24;
+      else if (diff < -30) current.hours = (current.hours + 1) % 24;
+    }
 
-    const hourChange = Math.floor(totalAngle / 360);
-    current.hours = (current.hours + hourChange) % 24;
+    current.minutes = newMinutes;
+    previousMinutes = newMinutes;
   } else if (dragHand === "hour") {
-    const newHour = Math.round((totalAngle % 360) / 30) % 12;
+    const newHour = Math.round(angle / 30) % 12;
     const isPM = current.hours >= 12;
     current.hours = (isPM ? 12 : 0) + newHour;
   }
