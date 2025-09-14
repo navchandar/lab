@@ -10,6 +10,7 @@ let isDragging = false;
 let dragHand = null;
 let lastAngle = null;
 let selectedHand = null;
+let tickNum = -1;
 
 /**
  * Update the info icon text to display on click/touch
@@ -29,8 +30,11 @@ function updateInfoIcon() {
     });
 
     // Close tooltip on outside click
-    document.addEventListener("click", () => {
+    document.addEventListener("click", (e) => {
       infoIcons.forEach((icon) => icon.classList.remove("active"));
+      if (!clock.contains(e.target)) {
+        selectedHand = null;
+      }
     });
 
     // Close tooltip on Escape key
@@ -79,11 +83,10 @@ function insertNumbers() {
  * Inserts tick marks every 5 minutes
  */
 function insertTicks() {
-  let num = -1;
   for (let i = 0; i < 60; i += 5) {
     const tick = document.createElement("div");
     tick.className = "tick";
-    tick.id = String(num + 1);
+    tick.id = String(tickNum + 1);
     tick.style.transform = `rotate(${i * 6}deg)`;
     clock.appendChild(tick);
   }
@@ -151,28 +154,56 @@ function setCurrentTime(date) {
  * Updates both analog and digital displays
  */
 function updateClockDisplay() {
+  // Normalize time values
+  current.minutes = ((current.minutes % 60) + 60) % 60;
+  current.hours = ((current.hours % 24) + 24) % 24;
+
+  // Calculate angles
   const h12 = current.hours % 12;
   const hourAngle = h12 * 30 + current.minutes * 0.5;
   const minuteAngle = current.minutes * 6;
 
+  // Update analog hands
   hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
   minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
 
-  timeInput.value = `${String(current.hours).padStart(2, "0")}:${String(
-    current.minutes
-  ).padStart(2, "0")}`;
+  // Update digital input
+  const hh = String(current.hours).padStart(2, "0");
+  const mm = String(current.minutes).padStart(2, "0");
+  timeInput.value = `${hh}:${mm}`;
+  console.log(timeInput.value);
 }
 
 /**
  * Handles digital input change
  */
 function onDigitalChange(e) {
-  const [h, m] = e.target.value.split(":").map(Number);
-  if (!isNaN(h) && !isNaN(m)) {
-    current.hours = h;
-    current.minutes = m;
-    updateClockDisplay();
+  const value = e.target.value.trim();
+  const match = /^(\d{1,2}):(\d{1,2})$/.exec(value);
+
+  // Invalid format
+  if (!match) {
+    console.warn(`Invalid value: ${value}`);
+    return;
   }
+
+  let [_, h, m] = match.map(Number);
+
+  if (isNaN(h) || isNaN(m)) {
+    return;
+  }
+
+  if (h === 24 && m === 0) {
+    h = 0;
+  }
+
+  if (h < 0 || h > 23 || m < 0 || m > 59) {
+    return;
+  }
+
+  current.hours = h;
+  current.minutes = m;
+  updateClockDisplay();
 }
 
 /**
