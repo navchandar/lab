@@ -11,6 +11,9 @@ let dragHand = null;
 let lastAngle = null;
 let selectedHand = null;
 
+/**
+ * Update the info icon text to display on click/touch
+ */
 function updateInfoIcon() {
   document.addEventListener("DOMContentLoaded", () => {
     const infoIcons = document.querySelectorAll(".info-icon");
@@ -86,7 +89,7 @@ function insertTicks() {
   }
 }
 
-function updateHands() {
+function updateClockHands() {
   hourHand.addEventListener("click", () => {
     selectedHand = "hour";
   });
@@ -96,8 +99,9 @@ function updateHands() {
 
   document.querySelectorAll(".number").forEach((num) => {
     num.addEventListener("click", () => {
+      const value = num.textContent;
+      const hour = parseInt(value);
       if (selectedHand === "hour") {
-        const hour = parseInt(num.textContent);
         current.hours = hour % 12;
       } else if (selectedHand === "minute") {
         current.minutes = hour * 5;
@@ -106,11 +110,11 @@ function updateHands() {
     });
   });
 
-  document.querySelectorAll(".tick").forEach((tick, i) => {
+  document.querySelectorAll(".tick").forEach((tick) => {
     tick.addEventListener("click", () => {
+      const value = tick.id;
+      const hour = parseInt(value);
       if (selectedHand === "hour") {
-        let num = tick.id;
-        const hour = parseInt(num);
         current.hours = hour % 12;
       } else if (selectedHand === "minute") {
         current.minutes = hour * 5;
@@ -119,6 +123,7 @@ function updateHands() {
     });
   });
 }
+
 /**
  * Initializes the clock
  */
@@ -131,7 +136,7 @@ function initClock() {
   enableDrag(minuteHand);
   timeInput.addEventListener("change", onDigitalChange);
   updateInfoIcon();
-  updateHands();
+  updateClockHands();
 }
 
 /**
