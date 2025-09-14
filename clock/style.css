@@ -141,9 +141,10 @@ input[type="time"] {
     white-space: nowrap;
 }
 
-.info-icon:hover .tooltip {
+.info-icon.active .tooltip {
     transform: translateY(0);
     opacity: 1;
+    pointer-events: auto;
 }
 
 @media (max-width: 500px) {
@@ -163,4 +164,14 @@ input[type="time"] {
     .tick {
         transform-origin: center 100px;
     }
+
+    .tooltip {
+        bottom: -35px;
+        left: -280px;
+    }
+
+    input[type="time"] {
+        font-size: 2rem;
+    }
+
 }

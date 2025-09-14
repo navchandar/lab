@@ -10,6 +10,34 @@ let isDragging = false;
 let dragHand = null;
 let lastAngle = null;
 
+function updateInfoIcon() {
+  document.addEventListener("DOMContentLoaded", () => {
+    const infoIcons = document.querySelectorAll(".info-icon");
+
+    infoIcons.forEach((icon) => {
+      icon.addEventListener("click", (e) => {
+        e.stopPropagation();
+        // Close other tooltips
+        infoIcons.forEach((i) => i.classList.remove("active"));
+        // Toggle current tooltip
+        icon.classList.toggle("active");
+      });
+    });
+
+    // Close tooltip on outside click
+    document.addEventListener("click", () => {
+      infoIcons.forEach((icon) => icon.classList.remove("active"));
+    });
+
+    // Close tooltip on Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        infoIcons.forEach((icon) => icon.classList.remove("active"));
+      }
+    });
+  });
+}
+
 /**
  * Converts degrees to radians
  */
@@ -60,12 +88,13 @@ function insertTicks() {
  */
 function initClock() {
   insertNumbers();
-  insertTicks();
+  // insertTicks();
   setCurrentTime(new Date());
   updateClockDisplay();
   enableDrag(hourHand);
   enableDrag(minuteHand);
   timeInput.addEventListener("change", onDigitalChange);
+  updateInfoIcon();
 }
 
 /**
