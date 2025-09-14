@@ -9,6 +9,7 @@ let current = { hours: 0, minutes: 0 };
 let isDragging = false;
 let dragHand = null;
 let lastAngle = null;
+let totalAngle = 0;
 let selectedHand = null;
 let tickNum = -1;
 
@@ -86,7 +87,8 @@ function insertTicks() {
   for (let i = 0; i < 60; i += 5) {
     const tick = document.createElement("div");
     tick.className = "tick";
-    tick.id = String(tickNum + 1);
+    tickNum = tickNum + 1;
+    tick.id = String(tickNum);
     tick.style.transform = `rotate(${i * 6}deg)`;
     clock.appendChild(tick);
   }
@@ -214,6 +216,7 @@ function enableDrag(hand) {
     isDragging = true;
     dragHand = hand.dataset.hand;
     lastAngle = null;
+    totalAngle = 0;
     hand.setPointerCapture(e.pointerId);
     document.addEventListener("pointermove", onDrag);
     document.addEventListener("pointerup", endDrag);
@@ -240,30 +243,31 @@ function onDrag(e) {
   }
 
   // Prevent jumpiness when crossing 0°/360°
-  if (lastAngle !== null && Math.abs(angle - lastAngle) > 300) {
-    if (angle < lastAngle) {
-      angle += 360;
-    } else {
-      angle -= 360;
-    }
+
+  if (lastAngle !== null) {
+    let delta = angle - lastAngle;
+
+    // Correct for wrap-around
+    if (delta > 180) delta -= 360;
+    if (delta < -180) delta += 360;
+
+    totalAngle += delta;
   }
+
   lastAngle = angle;
 
   if (dragHand === "minute") {
-    const newMinutes = Math.round(angle / 6) % 60;
+    const newMinutes = Math.round((totalAngle % 360) / 6);
+    current.minutes = (newMinutes + 60) % 60;
 
     // Calculate hour change based on minute rotation
-    const minuteDiff = newMinutes - current.minutes;
-    if (Math.abs(minuteDiff) > 30) {
-      // Handle wrap-around (e.g., 59 to 0 or 0 to 59)
-      current.hours += minuteDiff > 0 ? -1 : 1;
-    }
-    current.minutes = newMinutes;
-    current.hours = (current.hours + Math.floor(current.minutes / 60)) % 24;
+
+    const hourChange = Math.floor(totalAngle / 360);
+    current.hours = (current.hours + hourChange) % 24;
   } else if (dragHand === "hour") {
-    const totalHours = angle / 30;
-    current.hours = Math.floor(totalHours) % 12 || 12;
-    current.minutes = Math.round((totalHours % 1) * 60);
+    const newHour = Math.round((totalAngle % 360) / 30) % 12;
+    const isPM = current.hours >= 12;
+    current.hours = (isPM ? 12 : 0) + newHour;
   }
 
   updateClockDisplay();
@@ -276,6 +280,11 @@ function endDrag() {
   isDragging = false;
   dragHand = null;
   lastAngle = null;
+
+  // Sync totalAngle to current hand position
+  totalAngle =
+    dragHand === "minute" ? current.minutes * 6 : (current.hours % 12) * 30;
+
   document.removeEventListener("pointermove", onDrag);
   document.removeEventListener("pointerup", endDrag);
 }
