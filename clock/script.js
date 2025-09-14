@@ -80,7 +80,7 @@ function insertTicks() {
   for (let i = 0; i < 60; i += 5) {
     const tick = document.createElement("div");
     tick.className = "tick";
-    tick.id = str(num + 1);
+    tick.id = String(num + 1);
     tick.style.transform = `rotate(${i * 6}deg)`;
     clock.appendChild(tick);
   }
@@ -100,7 +100,7 @@ function updateHands() {
         const hour = parseInt(num.textContent);
         current.hours = hour % 12;
       } else if (selectedHand === "minute") {
-        current.minutes = i * 5;
+        current.minutes = hour * 5;
       }
       updateClockDisplay();
     });
@@ -113,7 +113,7 @@ function updateHands() {
         const hour = parseInt(num);
         current.hours = hour % 12;
       } else if (selectedHand === "minute") {
-        current.minutes = i * 5;
+        current.minutes = hour * 5;
       }
       updateClockDisplay();
     });
