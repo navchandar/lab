@@ -58,7 +58,7 @@ p {
     left: 50%;
     transform: translate(-50%, -90%) rotate(0deg);
     transform-origin: 50% 90%;
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.1s ease-in-out;
     cursor: grab;
     box-sizing: content-box;
     border-radius: 4px;
@@ -75,8 +75,8 @@ p {
 .hand.minute {
     z-index: 1;
     background: var(--accent-minute);
-    width: 6px;
-    height: 110px;
+    width: 5px;
+    height: 115px
 }
 
 .center {
@@ -84,6 +84,7 @@ p {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 10;
     border-radius: 50%;
     background: var(--text);
     width: 16px;
@@ -148,11 +149,6 @@ input[type="time"] {
 }
 
 @media (max-width: 500px) {
-    .clock {
-        width: 220px;
-        height: 220px;
-    }
-
     .hand.hour {
         height: 60px;
     }
