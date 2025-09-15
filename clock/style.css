@@ -7,6 +7,9 @@ body {
     height: 100vh;
     color: var(--text);
     font-family: "Segoe UI", Arial, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
 }
 
 .container {
@@ -79,6 +82,12 @@ p {
     width: 5px;
     height: 115px
 }
+
+#hourHand,
+#minuteHand {
+    touch-action: none;
+}
+
 
 .center {
     position: absolute;

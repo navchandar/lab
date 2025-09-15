@@ -10,6 +10,7 @@ let isDragging = false;
 let dragHand = null;
 let lastAngle = null;
 let selectedHand = null;
+let cumulativeRotation = 0;
 
 /**
  * Update the info icon text to display on click/touch
@@ -215,6 +216,7 @@ function enableDrag(hand) {
     isDragging = true;
     dragHand = hand.dataset.hand;
     lastAngle = null;
+    cumulativeRotation = 0;
     hand.setPointerCapture(e.pointerId);
     document.addEventListener("pointermove", onDrag);
     document.addEventListener("pointerup", endDrag);
@@ -250,21 +252,17 @@ function onDrag(e) {
       delta += 360;
     }
 
+    cumulativeRotation += delta;
+
     if (dragHand === "minute") {
-      // The minute hand moves 6 degrees per minute.
-      const minuteChange = delta / 6;
+      const minuteChange = cumulativeRotation / 6;
+      current.minutes = minuteChange;
 
-      // Get current time as a single float value of total minutes.
-      let totalMinutes = current.hours * 60 + current.minutes;
-      totalMinutes += minuteChange;
-
-      // Convert back to hours and minutes for the state.
-      current.hours = Math.floor(totalMinutes / 60);
-      current.minutes = Math.round(totalMinutes); // No longer modulo 60 here
+      // Update hours based on minute overflow
+      current.hours += Math.floor(current.minutes / 60);
     } else if (dragHand === "hour") {
-      // The hour hand moves 30 degrees per hour.
-      const hourChange = delta / 30;
-      current.hours += hourChange;
+      const hourChange = cumulativeRotation / 30;
+      current.hours = hourChange;
     }
 
     updateClockDisplay();
@@ -277,10 +275,15 @@ function onDrag(e) {
 /**
  * Ends dragging interaction
  */
-function endDrag() {
+function endDrag(e) {
   isDragging = false;
   dragHand = null;
   lastAngle = null;
+  cumulativeRotation = 0;
+
+  if (e.target.releasePointerCapture) {
+    e.target.releasePointerCapture(e.pointerId);
+  }
 
   document.removeEventListener("pointermove", onDrag);
   document.removeEventListener("pointerup", endDrag);
