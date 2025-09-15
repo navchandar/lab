@@ -9,9 +9,7 @@ let current = { hours: 0, minutes: 0 };
 let isDragging = false;
 let dragHand = null;
 let lastAngle = null;
-let totalAngle = 0;
 let selectedHand = null;
-let previousMinutes = null;
 
 /**
  * Update the info icon text to display on click/touch
@@ -208,8 +206,6 @@ function enableDrag(hand) {
     isDragging = true;
     dragHand = hand.dataset.hand;
     lastAngle = null;
-    totalAngle = 0;
-    previousMinutes = null;
     hand.setPointerCapture(e.pointerId);
     document.addEventListener("pointermove", onDrag);
     document.addEventListener("pointerup", endDrag);
@@ -238,6 +234,7 @@ function onDrag(e) {
   // Prevent jumpiness when crossing 0°/360°
 
   if (lastAngle !== null) {
+    // Calculate the change in angle, handling the 360 -> 0 degree wrap-around
     let delta = angle - lastAngle;
     if (delta > 180) {
       delta -= 360;
@@ -245,32 +242,32 @@ function onDrag(e) {
     if (delta < -180) {
       delta += 360;
     }
-    totalAngle += delta;
-  }
 
-  lastAngle = angle;
-
-  if (dragHand === "minute") {
-    const newMinutes = Math.round(angle / 6) % 60;
-
-    if (previousMinutes !== null) {
-      const diff = newMinutes - previousMinutes;
-      if (diff > 30) {
-        current.hours = (current.hours - 1 + 24) % 24;
-      } else if (diff < -30) {
-        current.hours = (current.hours + 1) % 24;
-      }
+    // Convert the change in angle to a change in minutes
+    let minuteChange = 0;
+    if (dragHand === "minute") {
+      // The minute hand moves 6 degrees per minute (360 / 60)
+      minuteChange = delta / 6;
+    } else if (dragHand === "hour") {
+      // The hour hand moves 0.5 degrees per minute (360 / (12 * 60))
+      minuteChange = delta / 0.5;
     }
 
-    current.minutes = newMinutes;
-    previousMinutes = newMinutes;
-  } else if (dragHand === "hour") {
-    const newHour = Math.round(angle / 30) % 12;
-    const isPM = current.hours >= 12;
-    current.hours = (isPM ? 12 : 0) + newHour;
+    // Get the current time as a single float value of total minutes
+    let totalMinutes = current.hours * 60 + current.minutes;
+
+    // Add the change and convert back to hours and minutes
+    totalMinutes += minuteChange;
+
+    current.hours = Math.floor(totalMinutes / 60);
+    // Use Math.round on the minute part for snapping to the nearest minute
+    current.minutes = Math.round(totalMinutes % 60);
+
+    updateClockDisplay();
   }
 
-  updateClockDisplay();
+  // Store the last angle for the next movement calculation
+  lastAngle = angle;
 }
 
 /**
@@ -280,10 +277,6 @@ function endDrag() {
   isDragging = false;
   dragHand = null;
   lastAngle = null;
-
-  // Sync totalAngle to current hand position
-  totalAngle =
-    dragHand === "minute" ? current.minutes * 6 : (current.hours % 12) * 30;
 
   document.removeEventListener("pointermove", onDrag);
   document.removeEventListener("pointerup", endDrag);
