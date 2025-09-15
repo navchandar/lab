@@ -146,22 +146,31 @@ function setCurrentTime(date) {
  * Updates both analog and digital displays
  */
 function updateClockDisplay() {
-  // Normalize time values
-  current.minutes = ((current.minutes % 60) + 60) % 60;
-  current.hours = ((current.hours % 24) + 24) % 24;
+  // We now handle continuous hours/minutes, so we normalize them for display.
+  // The operator handles the wrap-around for both positive and negative values.
+  const displayMinutes = Math.round(current.minutes) % 60;
+  const minuteCarryOver = Math.floor(current.minutes / 60);
+
+  // Important: Use floating point hours for accurate hand positioning
+  const totalHours = current.hours + minuteCarryOver;
+  const displayHours = Math.floor(totalHours) % 24;
+
+  // Normalize for negative values
+  const finalMinutes = (displayMinutes + 60) % 60;
+  const finalHours = (displayHours + 24) % 24;
 
   // Calculate angles
-  const h12 = current.hours % 12;
-  const hourAngle = h12 * 30 + current.minutes * 0.5;
-  const minuteAngle = current.minutes * 6;
+  const h12 = totalHours % 12;
+  const hourAngle = h12 * 30 + finalMinutes * 0.5;
+  const minuteAngle = finalMinutes * 6;
 
   // Update analog hands
   hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
   minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
 
   // Update digital input
-  const hh = String(current.hours).padStart(2, "0");
-  const mm = String(current.minutes).padStart(2, "0");
+  const hh = String(finalHours).padStart(2, "0");
+  const mm = String(finalMinutes).padStart(2, "0");
   timeInput.value = `${hh}:${mm}`;
   console.log(timeInput.value);
 }
@@ -231,8 +240,6 @@ function onDrag(e) {
     angle += 360;
   }
 
-  // Prevent jumpiness when crossing 0°/360°
-
   if (lastAngle !== null) {
     // Calculate the change in angle, handling the 360 -> 0 degree wrap-around
     let delta = angle - lastAngle;
@@ -243,25 +250,22 @@ function onDrag(e) {
       delta += 360;
     }
 
-    // Convert the change in angle to a change in minutes
-    let minuteChange = 0;
     if (dragHand === "minute") {
-      // The minute hand moves 6 degrees per minute (360 / 60)
-      minuteChange = delta / 6;
+      // The minute hand moves 6 degrees per minute.
+      const minuteChange = delta / 6;
+
+      // Get current time as a single float value of total minutes.
+      let totalMinutes = current.hours * 60 + current.minutes;
+      totalMinutes += minuteChange;
+
+      // Convert back to hours and minutes for the state.
+      current.hours = Math.floor(totalMinutes / 60);
+      current.minutes = Math.round(totalMinutes); // No longer modulo 60 here
     } else if (dragHand === "hour") {
-      // The hour hand moves 0.5 degrees per minute (360 / (12 * 60))
-      minuteChange = delta / 0.5;
+      // The hour hand moves 30 degrees per hour.
+      const hourChange = delta / 30;
+      current.hours += hourChange;
     }
-
-    // Get the current time as a single float value of total minutes
-    let totalMinutes = current.hours * 60 + current.minutes;
-
-    // Add the change and convert back to hours and minutes
-    totalMinutes += minuteChange;
-
-    current.hours = Math.floor(totalMinutes / 60);
-    // Use Math.round on the minute part for snapping to the nearest minute
-    current.minutes = Math.round(totalMinutes % 60);
 
     updateClockDisplay();
   }
