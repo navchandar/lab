@@ -37,24 +37,28 @@
     <style>
       /* cs~slint ignore:start */
       :root {
-          --bg: #fffbe6;
-          --card: #ffffff;
+          --bg: #4e4e4e;
+          --card: lightgrey;
           --text: #123;
+          --clock-bg: whitesmoke;
+          --clock-bgimg: radial-gradient(white, white, #e0e0e0);
           --accent-hour: #ff7b7b;
           --accent-minute: #6ee7b7;
-          --border: rgba(0, 0, 0, 0.2);
-          --shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+          --border: rgba(0, 0, 0, 0.6);
+          --shadow: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 16px rgba(0, 0, 0, 0.5);
       }
 
       @media (prefers-color-scheme: dark) {
           :root {
               --bg: #121212;
-              --card: #1e1e1e;
+              --card: #242424;
               --text: #eee;
+              --clock-bg: #333;
+              --clock-bgimg: radial-gradient(grey, grey, black);
               --accent-hour: #ff9f9f;
               --accent-minute: #5ce0b9;
-              --border: rgba(255, 255, 255, 0.2);
-              --shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+              --border: rgba(255, 255, 255, 0.6);
+              --shadow:  0 1px 1px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.9);
           }
       }
       /* csslint ignore:end */

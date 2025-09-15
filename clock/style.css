@@ -47,7 +47,8 @@ p {
     box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
     border: 8px solid var(--border);
     border-radius: 50%;
-    background: var(--card);
+    background: var(--clock-bg);
+    background-image: var(--clock-bgimg);
     width: 280px;
     height: 280px;
 }
@@ -129,8 +130,8 @@ input[type="time"] {
 
 .tooltip {
     position: absolute;
-    bottom: -40px;
-    left: -250px;
+    bottom: -35px;
+    left: -290px;
     transform: translateY(5px);
     opacity: 0;
     z-index: 5;
