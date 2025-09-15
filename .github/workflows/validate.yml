@@ -41,7 +41,7 @@ jobs:
           args: --base . --verbose --no-progress "./**/*.md" "./**/*.html"
 
       - name: Validate Spelling
-        uses: rojopolis/spellcheck-github-actions@0.51.0
+        uses: rojopolis/spellcheck-github-actions@0.52.0
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
