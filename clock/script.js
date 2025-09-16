@@ -11,6 +11,7 @@ let dragHand = null;
 let lastAngle = null;
 let selectedHand = null;
 let cumulativeRotation = 0;
+let previousMinutes = 0;
 
 /**
  * Update the info icon text to display on click/touch
@@ -256,10 +257,21 @@ function onDrag(e) {
 
     if (dragHand === "minute") {
       const minuteChange = cumulativeRotation / 6;
-      current.minutes = minuteChange;
+      const newMinutes = minuteChange;
 
-      // Update hours based on minute overflow
-      current.hours += Math.floor(current.minutes / 60);
+      // Detect wrap-around
+      const minuteDiff = newMinutes - previousMinutes;
+
+      if (minuteDiff > 50) {
+        // Wrapped backward (e.g., from 0 to 59)
+        current.hours = (current.hours - 1 + 24) % 24;
+      } else if (minuteDiff < -50) {
+        // Wrapped forward (e.g., from 59 to 0)
+        current.hours = (current.hours + 1) % 24;
+      }
+
+      current.minutes = newMinutes;
+      previousMinutes = newMinutes;
     } else if (dragHand === "hour") {
       const hourChange = cumulativeRotation / 30;
       current.hours = hourChange;
@@ -280,6 +292,7 @@ function endDrag(e) {
   dragHand = null;
   lastAngle = null;
   cumulativeRotation = 0;
+  previousMinutes = 0;
 
   if (e.target.releasePointerCapture) {
     e.target.releasePointerCapture(e.pointerId);
