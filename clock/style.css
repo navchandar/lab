@@ -116,24 +116,33 @@ p {
 
 .tick {
     position: absolute;
-    top: 10px;
+    top: 50%;
     left: 50%;
-    transform-origin: center 130px;
+    transform: translate(-50%, -50%) rotate(0deg) translateY(-130px);
+    transform-origin: center center;
     cursor: pointer;
     background: var(--text);
+    background-clip: content-box;
+    padding: 10px;
     width: 2px;
     height: 10px;
 }
 
 /* Digital input */
 input[type="time"] {
+    appearance: none;
     box-shadow: 0 5px 8px rgba(0, 0, 0, 0.5);
     border: 2px solid var(--border);
     border-radius: 8px;
     background: var(--card);
     padding: 8px 12px;
+    height: 40px;
     color: var(--text);
-    font-size: 1.4rem;
+    font-weight: bold;
+    font-size: 1rem;
+    line-height: 1.4;
+    -webkit-appearance: none;
+    -moz-appearance: none;
 }
 
 .info-icon {
@@ -176,7 +185,7 @@ input[type="time"] {
     }
 
     .tick {
-        transform-origin: center 100px;
+        transform: translate(-50%, -50%) rotate(0deg) translateY(-100px);
     }
 
     .tooltip {

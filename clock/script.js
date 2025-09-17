@@ -100,6 +100,7 @@ function updateClockHands() {
 
   document.querySelectorAll(".number").forEach((num) => {
     num.addEventListener("click", () => {
+      addTransition();
       const value = parseInt(num.textContent);
       if (selectedHand === "hour") {
         current.hours = value % 12;
@@ -107,17 +108,20 @@ function updateClockHands() {
         current.minutes = value * 5;
       }
       updateClockDisplay();
+      removeTransition();
     });
   });
 
   document.querySelectorAll(".tick").forEach((tick, i) => {
     tick.addEventListener("click", () => {
+      addTransition();
       if (selectedHand === "minute") {
         current.minutes = i * 5;
       } else if (selectedHand === "hour") {
         current.hours = i % 12;
       }
       updateClockDisplay();
+      removeTransition();
     });
   });
 }
@@ -126,6 +130,7 @@ function updateCurrentTime() {
   // Start at 00:00
   current.hours = 0;
   current.minutes = 0;
+  addTransition();
   updateClockDisplay();
 
   // Update clock to current time after small delay
@@ -193,6 +198,10 @@ function updateClockDisplay() {
   const mm = String(finalMinutes).padStart(2, "0");
   timeInput.value = `${hh}:${mm}`;
   console.log(timeInput.value);
+
+  // Sync internal state with displayed values
+  current.hours = finalHours;
+  current.minutes = finalMinutes;
 }
 
 /**
@@ -223,8 +232,7 @@ function onDigitalChange(e) {
   }
 
   // Remove animation blocker
-  hourHand.classList.remove("no-transition");
-  minuteHand.classList.remove("no-transition");
+  addTransition();
 
   // Update time and animate
   current.hours = h;
@@ -254,6 +262,12 @@ function getTransitionDurationInMs(element) {
     : parseFloat(delay) * 1000;
 
   return durationMs + delayMs;
+}
+
+// Remove animation blocking class
+function addTransition() {
+  hourHand.classList.remove("no-transition");
+  minuteHand.classList.remove("no-transition");
 }
 
 function removeTransition() {
