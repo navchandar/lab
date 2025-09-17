@@ -48,24 +48,6 @@ function updateInfoIcon() {
   });
 }
 
-function animateRotation(hand, fromAngle, toAngle, duration = 300) {
-  const startTime = performance.now();
-
-  function step(currentTime) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-
-    const angle = fromAngle + (toAngle - fromAngle) * progress;
-    hand.style.transform = `translate(-50%, -90%) rotate(${angle}deg)`;
-
-    if (progress < 1) {
-      requestAnimationFrame(step);
-    }
-  }
-
-  requestAnimationFrame(step);
-}
-
 /**
  * Converts degrees to radians
  */
@@ -186,18 +168,8 @@ function updateClockDisplay() {
   const minuteAngle = finalMinutes * 6;
 
   // Update analog hands
-  // hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
-  // minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
-
-  const currentHourAngle = parseFloat(
-    hourHand.style.transform?.match(/rotate\(([^)]+)deg\)/)?.[1] || 0
-  );
-  const currentMinuteAngle = parseFloat(
-    minuteHand.style.transform?.match(/rotate\(([^)]+)deg\)/)?.[1] || 0
-  );
-
-  animateRotation(hourHand, currentHourAngle, hourAngle);
-  animateRotation(minuteHand, currentMinuteAngle, minuteAngle);
+  hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
+  minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
 
   // Update digital input
   const hh = String(finalHours).padStart(2, "0");
