@@ -172,21 +172,24 @@ function setCurrentTime(date) {
  */
 function updateClockDisplay() {
   // We now handle continuous hours/minutes, so we normalize them for display.
-  // The operator handles the wrap-around for both positive and negative values.
-  const displayMinutes = Math.round(current.minutes) % 60;
-  const minuteCarryOver = Math.floor(current.minutes / 60);
+  // First, round the current minutes to the nearest whole number. This is the key fix.
+  const roundedMinutes = Math.round(current.minutes);
 
-  // Important: Use floating point hours for accurate hand positioning
+  // Calculate the final minutes for display (0-59), handling potential negative values.
+  const finalMinutes = ((roundedMinutes % 60) + 60) % 60;
+
+  // Calculate how many full hours to carry over based on the *rounded* minutes.
+  const minuteCarryOver = Math.floor(roundedMinutes / 60);
+
+  // Add the carry-over to the current hours (which can be a float).
   const totalHours = current.hours + minuteCarryOver;
-  const displayHours = Math.floor(totalHours) % 24;
 
-  // Normalize for negative values
-  const finalMinutes = (displayMinutes + 60) % 60;
-  const finalHours = (displayHours + 24) % 24;
+  // Get the final integer hours for display (0-23).
+  const finalHours = ((Math.floor(totalHours) % 24) + 24) % 24;
 
   // Calculate angles
-  const h12 = totalHours % 12;
-  const hourAngle = h12 * 30 + finalMinutes * 0.5;
+  // For a smooth hour hand, base its angle on the precise totalHours value.
+  const hourAngle = (totalHours % 12) * 30;
   const minuteAngle = finalMinutes * 6;
 
   // Update analog hands
@@ -199,9 +202,6 @@ function updateClockDisplay() {
   timeInput.value = `${hh}:${mm}`;
   console.log(timeInput.value);
 
-  // Sync internal state with displayed values
-  current.hours = finalHours;
-  current.minutes = finalMinutes;
 }
 
 /**

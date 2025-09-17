@@ -121,6 +121,7 @@ p {
     transform: translate(-50%, -50%) rotate(0deg) translateY(-130px);
     transform-origin: center center;
     cursor: pointer;
+    box-sizing: content-box;
     background: var(--text);
     background-clip: content-box;
     padding: 10px;
@@ -131,6 +132,7 @@ p {
 /* Digital input */
 input[type="time"] {
     appearance: none;
+    box-sizing: content-box;
     box-shadow: 0 5px 8px rgba(0, 0, 0, 0.5);
     border: 2px solid var(--border);
     border-radius: 8px;
