@@ -122,14 +122,31 @@ function updateClockHands() {
   });
 }
 
+function updateCurrentTime() {
+  // Start at 00:00
+  current.hours = 0;
+  current.minutes = 0;
+  updateClockDisplay();
+
+  // Update clock to current time after small delay
+  setTimeout(() => {
+    const now = new Date();
+    current.hours = now.getHours();
+    current.minutes = now.getMinutes();
+    updateClockDisplay();
+
+    // Remove transition after animation completes
+    removeTransition();
+  }, 100);
+}
+
 /**
  * Initializes the clock
  */
 function initClock() {
   insertNumbers();
   insertTicks();
-  setCurrentTime(new Date());
-  updateClockDisplay();
+  updateCurrentTime();
   enableDrag(hourHand);
   enableDrag(minuteHand);
   timeInput.addEventListener("change", onDigitalChange);
@@ -205,9 +222,24 @@ function onDigitalChange(e) {
     return;
   }
 
+  // Remove animation blocker
+  hourHand.classList.remove("no-transition");
+  minuteHand.classList.remove("no-transition");
+
+  // Update time and animate
   current.hours = h;
   current.minutes = m;
   updateClockDisplay();
+
+  // Remove transition after animation completes
+  removeTransition();
+}
+
+function removeTransition() {
+  setTimeout(() => {
+    hourHand.classList.add("no-transition");
+    minuteHand.classList.add("no-transition");
+  }, 2000); // match transition duration
 }
 
 /**
@@ -264,7 +296,7 @@ function onDrag(e) {
         dragStartTime.hours * 60 + dragStartTime.minutes;
       const totalNewMinutes = totalStartMinutes + minuteChange;
 
-      const newHours = (Math.floor(totalNewMinutes / 60) + 24) % 24;
+      const newHours = (totalNewMinutes / 60 + 24) % 24;
       const newMinutes = ((totalNewMinutes % 60) + 60) % 60;
 
       current.hours = newHours;

@@ -62,6 +62,7 @@ p {
     left: 50%;
     transform: translate(-50%, -90%) rotate(0deg);
     transform-origin: 50% 90%;
+    transition: transform 2s ease-in-out;
     cursor: grab;
     box-sizing: content-box;
     border-radius: 4px;
@@ -85,6 +86,11 @@ p {
 #hourHand,
 #minuteHand {
     touch-action: none;
+}
+
+/* Disable animation after initial transition */
+.no-transition {
+    transition: none !important;
 }
 
 
