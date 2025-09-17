@@ -235,11 +235,33 @@ function onDigitalChange(e) {
   removeTransition();
 }
 
+function getTransitionDurationInMs(element) {
+  const computedStyle = window.getComputedStyle(element);
+
+  let duration = computedStyle.transitionDuration || "0s";
+  let delay = computedStyle.transitionDelay || "0s";
+
+  // Handle multiple transitions (e.g., "0.3s, 0.2s")
+  duration = duration.split(",")[0].trim();
+  delay = delay.split(",")[0].trim();
+
+  const durationMs = duration.endsWith("ms")
+    ? parseFloat(duration)
+    : parseFloat(duration) * 1000;
+
+  const delayMs = delay.endsWith("ms")
+    ? parseFloat(delay)
+    : parseFloat(delay) * 1000;
+
+  return durationMs + delayMs;
+}
+
 function removeTransition() {
+  const duration = getTransitionDurationInMs(hourHand);
   setTimeout(() => {
     hourHand.classList.add("no-transition");
     minuteHand.classList.add("no-transition");
-  }, 2000); // match transition duration
+  }, duration); // match transition duration
 }
 
 /**
