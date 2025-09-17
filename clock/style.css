@@ -136,7 +136,7 @@ input[type="time"] {
     border-radius: 8px;
     background: var(--card);
     padding: 8px 12px;
-    width: 9.5ch;
+    width: 12ch;
     min-width: 0;
     height: 40px;
     min-inline-size: 0;
@@ -155,6 +155,11 @@ input[type="time"]::-webkit-datetime-edit-minute-field,
 input[type="time"]::-webkit-datetime-edit-ampm-field {
     padding: 0;
 }
+/* 'X' button for resetting/clearing time */
+input[type=time]::-webkit-clear-button {
+  display: none;
+}
+
 
 /* Make sure digits/readability look consistent */
 input[type="time"] {
