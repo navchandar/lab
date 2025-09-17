@@ -48,6 +48,24 @@ function updateInfoIcon() {
   });
 }
 
+function animateRotation(hand, fromAngle, toAngle, duration = 300) {
+  const startTime = performance.now();
+
+  function step(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+
+    const angle = fromAngle + (toAngle - fromAngle) * progress;
+    hand.style.transform = `translate(-50%, -90%) rotate(${angle}deg)`;
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    }
+  }
+
+  requestAnimationFrame(step);
+}
+
 /**
  * Converts degrees to radians
  */
@@ -168,8 +186,18 @@ function updateClockDisplay() {
   const minuteAngle = finalMinutes * 6;
 
   // Update analog hands
-  hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
-  minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
+  // hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
+  // minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
+
+  const currentHourAngle = parseFloat(
+    hourHand.style.transform?.match(/rotate\(([^)]+)deg\)/)?.[1] || 0
+  );
+  const currentMinuteAngle = parseFloat(
+    minuteHand.style.transform?.match(/rotate\(([^)]+)deg\)/)?.[1] || 0
+  );
+
+  animateRotation(hourHand, currentHourAngle, hourAngle);
+  animateRotation(minuteHand, currentMinuteAngle, minuteAngle);
 
   // Update digital input
   const hh = String(finalHours).padStart(2, "0");
@@ -259,12 +287,16 @@ function onDrag(e) {
 
     if (dragHand === "minute") {
       const minuteChange = cumulativeRotation / 6; // 6° per minute
-      const newMinutes = (dragStartTime.minutes + minuteChange + 60) % 60;
-      const hourOffset = (dragStartTime.minutes + minuteChange) / 60;
-      const newHours = (dragStartTime.hours + hourOffset + 24) % 24;
 
-      current.minutes = newMinutes;
+      const totalStartMinutes =
+        dragStartTime.hours * 60 + dragStartTime.minutes;
+      const totalNewMinutes = totalStartMinutes + minuteChange;
+
+      const newHours = (Math.floor(totalNewMinutes / 60) + 24) % 24;
+      const newMinutes = ((totalNewMinutes % 60) + 60) % 60;
+
       current.hours = newHours;
+      current.minutes = newMinutes;
     } else if (dragHand === "hour") {
       const hourChange = cumulativeRotation / 30; // 30° per hour
       const newHours = (dragStartTime.hours + hourChange + 24) % 24;
