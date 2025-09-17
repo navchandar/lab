@@ -12,6 +12,7 @@ let lastAngle = null;
 let selectedHand = null;
 let cumulativeRotation = 0;
 let previousMinutes = 0;
+let dragStartTime = { hours: 0, minutes: 0 };
 
 /**
  * Update the info icon text to display on click/touch
@@ -218,6 +219,7 @@ function enableDrag(hand) {
     dragHand = hand.dataset.hand;
     lastAngle = null;
     cumulativeRotation = 0;
+    dragStartTime = { ...current };
     hand.setPointerCapture(e.pointerId);
     document.addEventListener("pointermove", onDrag);
     document.addEventListener("pointerup", endDrag);
@@ -256,19 +258,16 @@ function onDrag(e) {
     cumulativeRotation += delta;
 
     if (dragHand === "minute") {
-      const minuteChange = cumulativeRotation / 6;
-      const newMinutes = (minuteChange + 60) % 60;
-
-      const totalMinutes = current.hours * 60 + newMinutes;
-      const newHours = (totalMinutes / 60) % 24;
+      const minuteChange = cumulativeRotation / 6; // 6° per minute
+      const newMinutes = (dragStartTime.minutes + minuteChange + 60) % 60;
+      const hourOffset = (dragStartTime.minutes + minuteChange) / 60;
+      const newHours = (dragStartTime.hours + hourOffset + 24) % 24;
 
       current.minutes = newMinutes;
       current.hours = newHours;
-
-      previousMinutes = newMinutes;
     } else if (dragHand === "hour") {
-      const hourChange = cumulativeRotation / 30;
-      const newHours = (hourChange + 24) % 24;
+      const hourChange = cumulativeRotation / 30; // 30° per hour
+      const newHours = (dragStartTime.hours + hourChange + 24) % 24;
       current.hours = newHours;
     }
 
