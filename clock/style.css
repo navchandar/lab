@@ -62,7 +62,7 @@ p {
     left: 50%;
     transform: translate(-50%, -90%) rotate(0deg);
     transform-origin: 50% 90%;
-    transition: transform 1s ease-in-out;
+    transition: transform 0.35s ease-in-out;
     cursor: grab;
     box-sizing: content-box;
     border-radius: 4px;
@@ -199,4 +199,11 @@ input[type="time"] {
         font-size: 2rem;
     }
 
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+    .hand {
+        transition: none !important;
+    }
 }

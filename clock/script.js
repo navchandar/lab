@@ -1,379 +1,426 @@
-// DOM Elements
-const hourHand = document.getElementById("hourHand");
-const minuteHand = document.getElementById("minuteHand");
-const timeInput = document.getElementById("timeInput");
-const clock = document.getElementById("analog");
+(function () {
+  // ---------- Small utilities ----------
+  const mod = (n, m) => ((n % m) + m) % m;
+  const degToRad = (deg) => (deg * Math.PI) / 180;
 
-// State
-let current = { hours: 0, minutes: 0 };
-let isDragging = false;
-let dragHand = null;
-let lastAngle = null;
-let selectedHand = null;
-let cumulativeRotation = 0;
-let previousMinutes = 0;
-let dragStartTime = { hours: 0, minutes: 0 };
+  function angleFromCenter(e, rect) {
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dx = e.clientX - cx;
+    const dy = e.clientY - cy;
+    // 0° at 12 o'clock, increase clockwise
+    let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+    if (angle < 0) {
+      angle += 360;
+    }
+    return angle;
+  }
 
-/**
- * Update the info icon text to display on click/touch
- */
-function updateInfoIcon() {
-  document.addEventListener("DOMContentLoaded", () => {
-    const infoIcons = document.querySelectorAll(".info-icon");
+  class AnalogClock {
+    /**
+     * @param {Object} opts
+     * @param {HTMLElement} opts.clockEl
+     * @param {HTMLElement} opts.hourHandEl
+     * @param {HTMLElement} opts.minuteHandEl
+     * @param {HTMLInputElement} opts.timeInputEl
+     * @param {Object} [opts.behavior]
+     *   hourDragMode: 'snap' | 'smooth' (default: 'snap')
+     *   roundToMinuteOnRelease: boolean (default: true)
+     */
+    constructor({
+      clockEl,
+      hourHandEl,
+      minuteHandEl,
+      timeInputEl,
+      behavior = {},
+    }) {
+      // DOM
+      this.clock = clockEl;
+      this.hourHand = hourHandEl;
+      this.minuteHand = minuteHandEl;
+      this.timeInput = timeInputEl;
 
-    infoIcons.forEach((icon) => {
-      icon.addEventListener("click", (e) => {
-        e.stopPropagation();
-        // Close other tooltips
-        infoIcons.forEach((i) => i.classList.remove("active"));
-        // Toggle current tooltip
-        icon.classList.toggle("active");
+      // Config
+      this.behavior = {
+        hourDragMode: behavior.hourDragMode || "snap", // 'snap' is least surprising
+        roundToMinuteOnRelease:
+          behavior.roundToMinuteOnRelease !== undefined
+            ? behavior.roundToMinuteOnRelease
+            : true,
+      };
+
+      // Single source of truth: minutes since midnight (can be fractional while dragging)
+      this.totalMinutes = 0;
+
+      // Drag state
+      this.isDragging = false;
+      this.dragHand = null; // 'hour' | 'minute'
+      this.lastAngle = null;
+      this.cumulativeRotation = 0; // degrees accumulated
+      this.dragStartTotalMinutes = 0;
+
+      // UI state
+      this.selectedHand = "hour"; // default selection for numbers/ticks
+
+      // Bind handlers
+      this.onPointerDown = this.onPointerDown.bind(this);
+      this.onPointerMove = this.onPointerMove.bind(this);
+      this.onPointerUp = this.onPointerUp.bind(this);
+      this.onDigitalChange = this.onDigitalChange.bind(this);
+      this.onDocumentClick = this.onDocumentClick.bind(this);
+      this.onKeyDown = this.onKeyDown.bind(this);
+    }
+
+    // ---------- Lifecycle ----------
+    init() {
+      this.insertNumbers(); // 1–12 around the face
+      this.insertTicks(); // 12 major ticks (every 5 minutes)
+      this.attachHandSelection();
+      this.attachClicksForNumbersAndTicks();
+      this.attachDigitalInput();
+      this.attachInfoIconBehavior();
+      this.attachDrag(this.hourHand);
+      this.attachDrag(this.minuteHand);
+
+      this.updateCurrentTime(); // animate from 00:00 to now
+    }
+
+    // ---------- Rendering ----------
+    render() {
+      const total = this.totalMinutes;
+
+      // Minute hand angle: minutes within current hour
+      const minuteInHour = mod(total, 60); // [0, 60)
+      const minuteAngle = minuteInHour * 6; // 6° per minute
+
+      // Hour hand angle: 0.5° per minute within 12h cycle
+      const minuteIn12h = mod(total, 720); // [0, 720)
+      const hourAngle = minuteIn12h * 0.5; // 0.5° per minute
+      this.hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
+      this.minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
+
+      // Digital display: rounded to nearest minute (user-facing)
+      const rounded = Math.round(total);
+      const hh = String(Math.floor(mod(rounded, 1440) / 60)).padStart(2, "0");
+      const mm = String(mod(rounded, 60)).padStart(2, "0");
+      this.timeInput.value = `${hh}:${mm}`;
+    }
+
+    // Transition helpers (to reuse your CSS transitions nicely)
+    addTransition() {
+      this.hourHand.classList.remove("no-transition");
+      this.minuteHand.classList.remove("no-transition");
+    }
+    removeTransition() {
+      const duration = this.getTransitionDurationInMs(this.hourHand);
+      setTimeout(() => {
+        this.hourHand.classList.add("no-transition");
+        this.minuteHand.classList.add("no-transition");
+      }, duration);
+    }
+    getTransitionDurationInMs(el) {
+      const cs = window.getComputedStyle(el);
+      let dur = cs.transitionDuration || "0s";
+      let del = cs.transitionDelay || "0s";
+      dur = dur.split(",")[0].trim();
+      del = del.split(",")[0].trim();
+      const dMs = dur.endsWith("ms") ? parseFloat(dur) : parseFloat(dur) * 1000;
+      const lMs = del.endsWith("ms") ? parseFloat(del) : parseFloat(del) * 1000;
+      return dMs + lMs;
+    }
+
+    // ---------- Build clock face ----------
+    insertNumbers() {
+      // Your clock is 280x280, center at (140,140)
+      // We'll place numbers on radius 120 (matches your existing visuals)
+      const center = 140;
+      const radius = 120;
+
+      for (let i = 1; i <= 12; i++) {
+        const angle = i * 30 - 90; // place with 12 at top
+        const x = center + radius * Math.cos(degToRad(angle));
+        const y = center + radius * Math.sin(degToRad(angle));
+
+        const num = document.createElement("div");
+        num.className = "number";
+        num.style.left = `${x}px`;
+        num.style.top = `${y}px`;
+        num.textContent = i;
+        this.clock.appendChild(num);
+      }
+    }
+
+    insertTicks() {
+      // We add 12 major ticks (every 5 minutes).
+      // CSS already positions tick with translateY(-130px); we only set the rotation here.
+      for (let i = 0; i < 60; i += 5) {
+        const tick = document.createElement("div");
+        tick.className = "tick";
+        tick.dataset.index = i / 5; // 0..11
+        tick.style.setProperty("--rotation", `${i * 6}deg`);
+        this.clock.appendChild(tick);
+      }
+    }
+
+    // ---------- Event wires ----------
+    attachHandSelection() {
+      this.hourHand.addEventListener(
+        "click",
+        () => (this.selectedHand = "hour")
+      );
+      this.minuteHand.addEventListener(
+        "click",
+        () => (this.selectedHand = "minute")
+      );
+
+      document.addEventListener("click", this.onDocumentClick);
+      document.addEventListener("keydown", this.onKeyDown);
+    }
+
+    attachClicksForNumbersAndTicks() {
+      // Numbers: when selectedHand='hour' set hour; when 'minute' set minute=(n*5)
+      this.clock.querySelectorAll(".number").forEach((num) => {
+        num.addEventListener("click", () => {
+          if (!this.selectedHand) {
+            return;
+          }
+          this.addTransition();
+
+          const value = parseInt(num.textContent, 10); // 1..12
+          const rounded = Math.round(this.totalMinutes);
+          let hours = Math.floor(mod(rounded, 1440) / 60);
+          let minutes = mod(rounded, 60);
+
+          if (this.selectedHand === "hour") {
+            // Map 12 -> 0, preserve AM/PM block
+            const h12 = value % 12;
+            const ampmBlock = Math.floor(hours / 12) * 12;
+            hours = mod(ampmBlock + h12, 24);
+          } else if (this.selectedHand === "minute") {
+            minutes = (value % 12) * 5;
+          }
+
+          this.totalMinutes = hours * 60 + minutes;
+          this.render();
+          this.removeTransition();
+        });
       });
-    });
 
-    // Close tooltip on outside click
-    document.addEventListener("click", (e) => {
-      infoIcons.forEach((icon) => icon.classList.remove("active"));
-      if (!clock.contains(e.target)) {
-        selectedHand = null;
-      }
-    });
+      // Ticks: 12 major ticks (every 5 mins)
+      this.clock.querySelectorAll(".tick").forEach((tick, i) => {
+        tick.addEventListener("click", () => {
+          if (!this.selectedHand) {
+            return;
+          }
+          this.addTransition();
 
-    // Close tooltip on Escape key
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") {
+          const rounded = Math.round(this.totalMinutes);
+          let hours = Math.floor(mod(rounded, 1440) / 60);
+          let minutes = mod(rounded, 60);
+
+          if (this.selectedHand === "minute") {
+            minutes = (i * 5) % 60;
+          } else if (this.selectedHand === "hour") {
+            const h12 = i % 12;
+            const ampmBlock = Math.floor(hours / 12) * 12;
+            hours = mod(ampmBlock + h12, 24);
+          }
+
+          this.totalMinutes = hours * 60 + minutes;
+          this.render();
+          this.removeTransition();
+        });
+      });
+    }
+
+    attachDigitalInput() {
+      this.timeInput.addEventListener("change", this.onDigitalChange);
+    }
+
+    attachInfoIconBehavior() {
+      // Attach immediately (no nested DOMContentLoaded to avoid missing the event)
+      const infoIcons = document.querySelectorAll(".info-icon");
+      infoIcons.forEach((icon) => {
+        icon.addEventListener("click", (e) => {
+          e.stopPropagation();
+          infoIcons.forEach((i) => i.classList.remove("active"));
+          icon.classList.toggle("active");
+        });
+      });
+      document.addEventListener("click", () => {
         infoIcons.forEach((icon) => icon.classList.remove("active"));
-      }
-    });
-  });
-}
-
-/**
- * Converts degrees to radians
- */
-function degToRad(deg) {
-  return (deg * Math.PI) / 180;
-}
-
-/**
- * Creates and positions a clock number (1–12)
- */
-function createClockNumber(i) {
-  const angle = i * 30 - 90; // 30° per hour, offset to start at top
-  const radius = 120;
-  const x = 140 + radius * Math.cos(degToRad(angle));
-  const y = 140 + radius * Math.sin(degToRad(angle));
-
-  const num = document.createElement("div");
-  num.className = "number";
-  num.style.left = `${x}px`;
-  num.style.top = `${y}px`;
-  num.textContent = i;
-  clock.appendChild(num);
-}
-
-/**
- * Inserts all clock numbers
- */
-function insertNumbers() {
-  for (let i = 1; i <= 12; i++) {
-    createClockNumber(i);
-  }
-}
-
-/**
- * Inserts tick marks every 5 minutes
- */
-function insertTicks() {
-  for (let i = 0; i < 60; i += 5) {
-    const tick = document.createElement("div");
-    tick.className = "tick";
-    tick.dataset.index = i / 5;
-    tick.style.setProperty('--rotation', `${i * 6}deg`);
-    clock.appendChild(tick);
-  }
-}
-
-function updateClockHands() {
-  hourHand.addEventListener("click", () => (selectedHand = "hour"));
-  minuteHand.addEventListener("click", () => (selectedHand = "minute"));
-
-  document.querySelectorAll(".number").forEach((num) => {
-    num.addEventListener("click", () => {
-      addTransition();
-      const value = parseInt(num.textContent);
-      if (selectedHand === "hour") {
-        current.hours = value % 12;
-      } else if (selectedHand === "minute") {
-        current.minutes = value * 5;
-      }
-      updateClockDisplay();
-      removeTransition();
-    });
-  });
-
-  document.querySelectorAll(".tick").forEach((tick, i) => {
-    tick.addEventListener("click", () => {
-      addTransition();
-      if (selectedHand === "minute") {
-        current.minutes = i * 5;
-      } else if (selectedHand === "hour") {
-        current.hours = i % 12;
-      }
-      updateClockDisplay();
-      removeTransition();
-    });
-  });
-}
-
-function updateCurrentTime() {
-  // Start at 00:00
-  current.hours = 0;
-  current.minutes = 0;
-  addTransition();
-  updateClockDisplay();
-
-  // Update clock to current time after small delay
-  setTimeout(() => {
-    const now = new Date();
-    current.hours = now.getHours();
-    current.minutes = now.getMinutes();
-    updateClockDisplay();
-
-    // Remove transition after animation completes
-    removeTransition();
-  }, 100);
-}
-
-/**
- * Initializes the clock
- */
-function initClock() {
-  insertNumbers();
-  insertTicks();
-  updateCurrentTime();
-  enableDrag(hourHand);
-  enableDrag(minuteHand);
-  timeInput.addEventListener("change", onDigitalChange);
-  updateInfoIcon();
-  updateClockHands();
-}
-
-/**
- * Sets the current time from a Date object
- */
-function setCurrentTime(date) {
-  current.hours = date.getHours();
-  current.minutes = date.getMinutes();
-}
-
-/**
- * Updates both analog and digital displays
- */
-function updateClockDisplay() {
-  // We now handle continuous hours/minutes, so we normalize them for display.
-  // First, round the current minutes to the nearest whole number. This is the key fix.
-  const roundedMinutes = Math.round(current.minutes);
-
-  // Calculate the final minutes for display (0-59), handling potential negative values.
-  const finalMinutes = ((roundedMinutes % 60) + 60) % 60;
-
-  // Calculate how many full hours to carry over based on the *rounded* minutes.
-  const minuteCarryOver = Math.floor(roundedMinutes / 60);
-
-  // Add the carry-over to the current hours (which can be a float).
-  const totalHours = current.hours + minuteCarryOver;
-
-  // Get the final integer hours for display (0-23).
-  const finalHours = ((Math.floor(totalHours) % 24) + 24) % 24;
-
-  // Calculate angles
-  // For a smooth hour hand, base its angle on the precise totalHours value.
-  const hourAngle = (totalHours % 12) * 30;
-  const minuteAngle = finalMinutes * 6;
-
-  // Update analog hands
-  hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
-  minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
-
-  // Update digital input
-  const hh = String(finalHours).padStart(2, "0");
-  const mm = String(finalMinutes).padStart(2, "0");
-  timeInput.value = `${hh}:${mm}`;
-  console.log(timeInput.value);
-}
-
-/**
- * Handles digital input change
- */
-function onDigitalChange(e) {
-  const value = e.target.value.trim();
-  const match = /^(\d{1,2}):(\d{1,2})$/.exec(value);
-
-  // Invalid format
-  if (!match) {
-    console.warn(`Invalid value: ${value}`);
-    return;
-  }
-
-  let [_, h, m] = match.map(Number);
-
-  if (isNaN(h) || isNaN(m)) {
-    return;
-  }
-
-  if (h === 24 && m === 0) {
-    h = 0;
-  }
-
-  if (h < 0 || h > 23 || m < 0 || m > 59) {
-    return;
-  }
-
-  // Remove animation blocker
-  addTransition();
-
-  // Update time and animate
-  current.hours = h;
-  current.minutes = m;
-  updateClockDisplay();
-
-  // Remove transition after animation completes
-  removeTransition();
-}
-
-function getTransitionDurationInMs(element) {
-  const computedStyle = window.getComputedStyle(element);
-
-  let duration = computedStyle.transitionDuration || "0s";
-  let delay = computedStyle.transitionDelay || "0s";
-
-  // Handle multiple transitions (e.g., "0.3s, 0.2s")
-  duration = duration.split(",")[0].trim();
-  delay = delay.split(",")[0].trim();
-
-  const durationMs = duration.endsWith("ms")
-    ? parseFloat(duration)
-    : parseFloat(duration) * 1000;
-
-  const delayMs = delay.endsWith("ms")
-    ? parseFloat(delay)
-    : parseFloat(delay) * 1000;
-
-  return durationMs + delayMs;
-}
-
-// Remove animation blocking class
-function addTransition() {
-  hourHand.classList.remove("no-transition");
-  minuteHand.classList.remove("no-transition");
-}
-
-function removeTransition() {
-  const duration = getTransitionDurationInMs(hourHand);
-  setTimeout(() => {
-    hourHand.classList.add("no-transition");
-    minuteHand.classList.add("no-transition");
-  }, duration); // match transition duration
-}
-
-/**
- * Enables dragging for a clock hand
- */
-function enableDrag(hand) {
-  hand.addEventListener("pointerdown", (e) => {
-    isDragging = true;
-    dragHand = hand.dataset.hand;
-    lastAngle = null;
-    cumulativeRotation = 0;
-    dragStartTime = { ...current };
-    hand.setPointerCapture(e.pointerId);
-    document.addEventListener("pointermove", onDrag);
-    document.addEventListener("pointerup", endDrag);
-  });
-}
-
-/**
- * Handles dragging movement
- */
-function onDrag(e) {
-  if (!isDragging) {
-    return;
-  }
-
-  const rect = clock.getBoundingClientRect();
-  const cX = rect.left + rect.width / 2;
-  const cY = rect.top + rect.height / 2;
-  const dx = e.clientX - cX;
-  const dy = e.clientY - cY;
-
-  let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-  if (angle < 0) {
-    angle += 360;
-  }
-
-  if (lastAngle !== null) {
-    // Calculate the change in angle, handling the 360 -> 0 degree wrap-around
-    let delta = angle - lastAngle;
-    if (delta > 180) {
-      delta -= 360;
-    }
-    if (delta < -180) {
-      delta += 360;
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          infoIcons.forEach((icon) => icon.classList.remove("active"));
+        }
+      });
     }
 
-    cumulativeRotation += delta;
-
-    if (dragHand === "minute") {
-      const minuteChange = cumulativeRotation / 6; // 6° per minute
-
-      const totalStartMinutes =
-        dragStartTime.hours * 60 + dragStartTime.minutes;
-      const totalNewMinutes = totalStartMinutes + minuteChange;
-
-      const newHours = (totalNewMinutes / 60 + 24) % 24;
-      const newMinutes = ((totalNewMinutes % 60) + 60) % 60;
-
-      current.hours = newHours;
-      current.minutes = newMinutes;
-    } else if (dragHand === "hour") {
-      const hourChange = cumulativeRotation / 30; // 30° per hour
-      const newHours = (dragStartTime.hours + hourChange + 24) % 24;
-      current.hours = newHours;
+    attachDrag(handEl) {
+      handEl.addEventListener("pointerdown", this.onPointerDown);
     }
 
-    updateClockDisplay();
+    // ---------- Handlers ----------
+    onPointerDown(e) {
+      const hand = e.currentTarget.dataset.hand; // 'hour' | 'minute'
+      this.isDragging = true;
+      this.dragHand = hand;
+      this.lastAngle = null;
+      this.cumulativeRotation = 0;
+      this.dragStartTotalMinutes = this.totalMinutes;
+
+      e.currentTarget.setPointerCapture(e.pointerId);
+      document.addEventListener("pointermove", this.onPointerMove);
+      document.addEventListener("pointerup", this.onPointerUp);
+    }
+
+    onPointerMove(e) {
+      if (!this.isDragging) {
+        return;
+      }
+
+      const rect = this.clock.getBoundingClientRect();
+      const angle = angleFromCenter(e, rect);
+
+      if (this.lastAngle !== null) {
+        let delta = angle - this.lastAngle;
+        if (delta > 180) {
+          delta -= 360;
+        }
+        if (delta < -180) {
+          delta += 360;
+        }
+        this.cumulativeRotation += delta;
+
+        if (this.dragHand === "minute") {
+          // 6° per minute
+          const deltaMinutes = this.cumulativeRotation / 6;
+          this.totalMinutes = this.dragStartTotalMinutes + deltaMinutes;
+        } else if (this.dragHand === "hour") {
+          if (this.behavior.hourDragMode === "snap") {
+            // 30° per hour => snap by full-hours
+            const hourSteps = Math.round(this.cumulativeRotation / 30);
+            const deltaMinutes = hourSteps * 60;
+            this.totalMinutes = this.dragStartTotalMinutes + deltaMinutes;
+          } else {
+            // Smooth: 0.5° per minute => minutes = degrees * 2
+            const deltaMinutes = this.cumulativeRotation * 2;
+            this.totalMinutes = this.dragStartTotalMinutes + deltaMinutes;
+          }
+        }
+
+        this.render();
+      }
+      this.lastAngle = angle;
+    }
+
+    onPointerUp(e) {
+      if (!this.isDragging) {
+        return;
+      }
+
+      if (this.behavior.roundToMinuteOnRelease) {
+        this.totalMinutes = Math.round(this.totalMinutes);
+      }
+      this.render();
+
+      this.isDragging = false;
+      this.dragHand = null;
+      this.lastAngle = null;
+      this.cumulativeRotation = 0;
+
+      if (e.target.releasePointerCapture) {
+        e.target.releasePointerCapture(e.pointerId);
+      }
+      document.removeEventListener("pointermove", this.onPointerMove);
+      document.removeEventListener("pointerup", this.onPointerUp);
+    }
+
+    onDigitalChange(e) {
+      const value = e.target.value.trim();
+      const match = /^(\d{1,2}):(\d{1,2})$/.exec(value);
+      if (!match) {
+        return;
+      }
+
+      let [, hStr, mStr] = match;
+      let h = Number(hStr);
+      let m = Number(mStr);
+      if (Number.isNaN(h) || Number.isNaN(m)) {
+        return;
+      }
+
+      // Permit 24:00 -> 00:00
+      if (h === 24 && m === 0) {
+        h = 0;
+      }
+      if (h < 0 || h > 23 || m < 0 || m > 59) {
+        return;
+      }
+
+      this.addTransition();
+      this.totalMinutes = h * 60 + m;
+      this.render();
+      this.removeTransition();
+    }
+
+    onDocumentClick(e) {
+      if (!this.clock.contains(e.target)) {
+        this.selectedHand = null;
+      }
+    }
+
+    onKeyDown(e) {
+      if (e.key === "Escape") {
+        this.selectedHand = null;
+      }
+    }
+
+    // ---------- Helpers ----------
+    updateCurrentTime() {
+      // Simple entry animation: 00:00 -> current time
+      this.totalMinutes = 0;
+      this.addTransition();
+      this.render();
+
+      setTimeout(() => {
+        const now = new Date();
+        const h = now.getHours();
+        const m = now.getMinutes();
+        this.totalMinutes = h * 60 + m;
+        this.render();
+        this.removeTransition();
+      }, 100);
+    }
+
+    setCurrentTime(date) {
+      this.totalMinutes = date.getHours() * 60 + date.getMinutes();
+      this.render();
+    }
   }
 
-  // Store the last angle for the next movement calculation
-  lastAngle = angle;
-}
+  // ---------- Boot ----------
+  document.addEventListener("DOMContentLoaded", () => {
+    const clockEl = document.getElementById("analog");
+    const hourHandEl = document.getElementById("hourHand");
+    const minuteHandEl = document.getElementById("minuteHand");
+    const timeInputEl = document.getElementById("timeInput");
 
-/**
- * Ends dragging interaction
- */
-function endDrag(e) {
-  // Combine the fractional hours and minutes into a single value
-  const totalMinutes = current.hours * 60 + current.minutes;
-  const roundedTotalMinutes = Math.round(totalMinutes);
-  // Recalculate the final, clean state
-  current.hours = Math.floor(roundedTotalMinutes / 60) % 24;
-  current.minutes = roundedTotalMinutes % 60;
-  updateClockDisplay();
+    const clock = new AnalogClock({
+      clockEl,
+      hourHandEl,
+      minuteHandEl,
+      timeInputEl,
+      behavior: {
+        hourDragMode: "smooth", // 'snap' or 'smooth'
+        roundToMinuteOnRelease: true, // keep display aligned to minute
+      },
+    });
 
-  isDragging = false;
-  dragHand = null;
-  lastAngle = null;
-  cumulativeRotation = 0;
-  previousMinutes = 0;
+    clock.init();
 
-  if (e.target.releasePointerCapture) {
-    e.target.releasePointerCapture(e.pointerId);
-  }
-
-  document.removeEventListener("pointermove", onDrag);
-  document.removeEventListener("pointerup", endDrag);
-}
-
-// Initialize everything
-initClock();
+    // For console debugging if you want:
+    window.__analogClock = clock;
+  });
+})();
