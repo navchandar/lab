@@ -101,9 +101,16 @@
 
       // Digital display: rounded to nearest minute (user-facing)
       const rounded = Math.round(total);
-      const hh = String(Math.floor(mod(rounded, 1440) / 60)).padStart(2, "0");
-      const mm = String(mod(rounded, 60)).padStart(2, "0");
+      const minutes = mod(rounded, 60);
+      const hours24 = Math.floor((((rounded % 1440) + 1440) % 1440) / 60);
+
+      // Convert to 12-hour format
+      const hours12 = ((hours24 + 11) % 12) + 1;
+      const hh = String(hours12).padStart(2, "0");
+      const mm = String(minutes).padStart(2, "0");
+
       this.timeInput.value = `${hh}:${mm}`;
+      console.log(this.timeInput.value);
     }
 
     // Transition helpers (to reuse your CSS transitions nicely)
