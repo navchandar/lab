@@ -118,7 +118,7 @@ p {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) rotate(0deg) translateY(-130px);
+    transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-130px);
     transform-origin: center center;
     cursor: pointer;
     box-sizing: content-box;
@@ -187,7 +187,7 @@ input[type="time"] {
     }
 
     .tick {
-        transform: translate(-50%, -50%) rotate(0deg) translateY(-100px);
+        transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-100px);
     }
 
     .tooltip {

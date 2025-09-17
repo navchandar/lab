@@ -89,7 +89,7 @@ function insertTicks() {
     const tick = document.createElement("div");
     tick.className = "tick";
     tick.dataset.index = i / 5;
-    tick.style.transform = `rotate(${i * 6}deg)`;
+    tick.style.setProperty('--rotation', `${i * 6}deg`);
     clock.appendChild(tick);
   }
 }
@@ -201,7 +201,6 @@ function updateClockDisplay() {
   const mm = String(finalMinutes).padStart(2, "0");
   timeInput.value = `${hh}:${mm}`;
   console.log(timeInput.value);
-
 }
 
 /**
@@ -354,11 +353,14 @@ function onDrag(e) {
  * Ends dragging interaction
  */
 function endDrag(e) {
-  if (dragHand === "hour") {
-    const snappedHour = Math.floor(current.hours) + current.minutes / 60;
-    current.hours = snappedHour % 24;
-  }
+  // Combine the fractional hours and minutes into a single value
+  const totalMinutes = current.hours * 60 + current.minutes;
+  const roundedTotalMinutes = Math.round(totalMinutes);
+  // Recalculate the final, clean state
+  current.hours = Math.floor(roundedTotalMinutes / 60) % 24;
+  current.minutes = roundedTotalMinutes % 60;
   updateClockDisplay();
+
   isDragging = false;
   dragHand = null;
   lastAngle = null;
