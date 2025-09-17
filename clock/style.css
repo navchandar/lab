@@ -131,21 +131,36 @@ p {
 
 /* Digital input */
 input[type="time"] {
-    appearance: none;
-    box-sizing: content-box;
-    box-shadow: 0 5px 8px rgba(0, 0, 0, 0.5);
+    box-sizing: border-box;
     border: 2px solid var(--border);
     border-radius: 8px;
     background: var(--card);
     padding: 8px 12px;
+    width: 9.5ch;
+    min-width: 0;
     height: 40px;
+    min-inline-size: 0;
     color: var(--text);
     font-weight: bold;
     font-size: 1rem;
-    line-height: 1.4;
-    -webkit-appearance: none;
-    -moz-appearance: none;
+    line-height: normal;
 }
+
+/* Chrome/Blink: don’t let inner segments add extra width */
+input[type="time"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit-fields-wrapper,
+input[type="time"]::-webkit-datetime-edit-text,
+input[type="time"]::-webkit-datetime-edit-hour-field,
+input[type="time"]::-webkit-datetime-edit-minute-field,
+input[type="time"]::-webkit-datetime-edit-ampm-field {
+    padding: 0;
+}
+
+/* Make sure digits/readability look consistent */
+input[type="time"] {
+    font-variant-numeric: tabular-nums;
+}
+
 
 .info-icon {
     display: inline-block;
@@ -196,7 +211,7 @@ input[type="time"] {
     }
 
     input[type="time"] {
-        font-size: 2rem;
+        font-size: 0.95rem
     }
 
 }
