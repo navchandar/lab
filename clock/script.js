@@ -257,24 +257,19 @@ function onDrag(e) {
 
     if (dragHand === "minute") {
       const minuteChange = cumulativeRotation / 6;
-      const newMinutes = minuteChange;
+      const newMinutes = (minuteChange + 60) % 60;
 
-      // Detect wrap-around
-      const minuteDiff = newMinutes - previousMinutes;
-
-      if (minuteDiff > 50) {
-        // Wrapped backward (e.g., from 0 to 59)
-        current.hours = (current.hours - 1 + 24) % 24;
-      } else if (minuteDiff < -50) {
-        // Wrapped forward (e.g., from 59 to 0)
-        current.hours = (current.hours + 1) % 24;
-      }
+      const totalMinutes = current.hours * 60 + newMinutes;
+      const newHours = (totalMinutes / 60) % 24;
 
       current.minutes = newMinutes;
+      current.hours = newHours;
+
       previousMinutes = newMinutes;
     } else if (dragHand === "hour") {
       const hourChange = cumulativeRotation / 30;
-      current.hours = hourChange;
+      const newHours = (hourChange + 24) % 24;
+      current.hours = newHours;
     }
 
     updateClockDisplay();
@@ -288,6 +283,11 @@ function onDrag(e) {
  * Ends dragging interaction
  */
 function endDrag(e) {
+  if (dragHand === "hour") {
+    const snappedHour = Math.floor(current.hours) + current.minutes / 60;
+    current.hours = snappedHour % 24;
+  }
+  updateClockDisplay();
   isDragging = false;
   dragHand = null;
   lastAngle = null;
