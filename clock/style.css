@@ -155,9 +155,10 @@ input[type="time"]::-webkit-datetime-edit-minute-field,
 input[type="time"]::-webkit-datetime-edit-ampm-field {
     padding: 0;
 }
+
 /* 'X' button for resetting/clearing time */
 input[type=time]::-webkit-clear-button {
-  display: none;
+    display: none;
 }
 
 
@@ -198,6 +199,14 @@ input[type="time"] {
 }
 
 @media (max-width: 500px) {
+    body {
+        height: 95vh;
+    }
+
+    .container {
+        width: 80%;
+    }
+
     .hand.hour {
         height: 60px;
     }
@@ -216,7 +225,9 @@ input[type="time"] {
     }
 
     input[type="time"] {
-        font-size: 0.95rem
+        width: 9ch;
+        height: 50px;
+        font-size: 2rem;
     }
 
 }
