@@ -80,7 +80,7 @@ p {
     z-index: 1;
     background: var(--accent-minute);
     width: 5px;
-    height: 115px
+    height: 120px
 }
 
 #hourHand,
@@ -107,6 +107,7 @@ p {
 }
 
 .number {
+    display: block;
     position: absolute;
     transform: translate(-50%, -50%);
     cursor: pointer;
@@ -116,18 +117,19 @@ p {
 }
 
 .tick {
+    display: none;
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-130px);
+    transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-120px);
     transform-origin: center center;
     cursor: pointer;
     box-sizing: content-box;
     background: var(--text);
     background-clip: content-box;
     padding: 10px;
-    width: 2px;
-    height: 10px;
+    width: 4px;
+    height: 15px;
 }
 
 /* Digital input */
@@ -213,15 +215,17 @@ input[type="time"] {
     }
 
     .hand.hour {
-        height: 60px;
+        height: 70px;
     }
 
     .hand.minute {
-        height: 90px;
+        height: 100px
     }
 
     .tick {
         transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-100px);
+        width: 2px;
+        height: 10px;
     }
 
     .tooltip {
@@ -240,7 +244,7 @@ input[type="time"] {
     }
 
     .clock {
-        margin: 0 0 20px 0;
+        margin: 40px 0 30px 0;
     }
 
 }
