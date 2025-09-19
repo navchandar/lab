@@ -1,31 +1,64 @@
 (function () {
-  // ---------- Small utilities ----------
-  const mod = (n, m) => ((n % m) + m) % m;
-  const degToRad = (deg) => (deg * Math.PI) / 180;
+  /**
+   * A collection of utility functions.
+   */
+  const utils = {
+    /**
+     * Performs a true modulo operation, ensuring the result is always positive.
+     * @param {number} n The dividend.
+     * @param {number} m The divisor.
+     * @returns {number} The non-negative remainder.
+     */
+    mod: (n, m) => ((n % m) + m) % m,
 
-  function angleFromCenter(e, rect) {
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const dx = e.clientX - cx;
-    const dy = e.clientY - cy;
-    // 0° at 12 o'clock, increase clockwise
-    let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-    if (angle < 0) {
-      angle += 360;
-    }
-    return angle;
-  }
+    /**
+     * Converts an angle from degrees to radians.
+     * @param {number} deg The angle in degrees.
+     * @returns {number} The angle in radians.
+     */
+    degToRad: (deg) => (deg * Math.PI) / 180,
+
+    /**
+     * Calculates the angle in degrees from the center of an element to a mouse event.
+     * 0° is at the 12 o'clock position, increasing clockwise.
+     * @param {PointerEvent} e The mouse event.
+     * @param {DOMRect} rect The bounding rectangle of the reference element.
+     * @returns {number} The angle in degrees [0, 360).
+     */
+    angleFromCenter: (e, rect) => {
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = e.clientX - cx;
+      const dy = e.clientY - cy;
+      let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
+      return utils.mod(angle, 360);
+    },
+  };
+
+  /**
+   * Defines fixed values used in clock calculations to avoid "magic numbers".
+   */
+  const CONSTANTS = {
+    DEGREES_PER_MINUTE: 6, // 360° / 60 minutes
+    DEGREES_PER_HOUR: 30, // 360° / 12 hours
+    MINUTES_PER_DEGREE_HOUR_HAND: 2, // 1 / 0.5°
+    MINUTES_IN_12_HOURS: 720,
+    MINUTES_IN_24_HOURS: 1440,
+    CLOCK_FACE_RADIUS: 120,
+    CLOCK_CENTER_COORD: 140,
+  };
 
   class AnalogClock {
     /**
-     * @param {Object} opts
-     * @param {HTMLElement} opts.clockEl
-     * @param {HTMLElement} opts.hourHandEl
-     * @param {HTMLElement} opts.minuteHandEl
-     * @param {HTMLInputElement} opts.timeInputEl
-     * @param {Object} [opts.behavior]
-     *   hourDragMode: 'snap' | 'smooth' (default: 'snap')
-     *   roundToMinuteOnRelease: boolean (default: true)
+     * Creates an interactive analog clock component.
+     * @param {object} options - Configuration for the clock.
+     * @param {HTMLElement} options.clockEl - The main clock container element.
+     * @param {HTMLElement} options.hourHandEl - The hour hand element.
+     * @param {HTMLElement} options.minuteHandEl - The minute hand element.
+     * @param {HTMLInputElement} options.timeInputEl - The input element for digital time.
+     * @param {object} [options.behavior={}] - Custom behavior settings.
+     * @param {'snap'|'smooth'} [options.behavior.hourDragMode='snap'] - How the hour hand behaves when dragged.
+     * @param {boolean} [options.behavior.roundToMinuteOnRelease=true] - Whether to round to the nearest minute after dragging.
      */
     constructor({
       clockEl,
@@ -34,317 +67,353 @@
       timeInputEl,
       behavior = {},
     }) {
-      // DOM
-      this.clock = clockEl;
-      this.hourHand = hourHandEl;
-      this.minuteHand = minuteHandEl;
-      this.timeInput = timeInputEl;
-
-      // Config
-      this.behavior = {
-        hourDragMode: behavior.hourDragMode || "snap", // 'snap' is least surprising
-        roundToMinuteOnRelease:
-          behavior.roundToMinuteOnRelease !== undefined
-            ? behavior.roundToMinuteOnRelease
-            : true,
+      // Group DOM elements for easy access
+      this.elements = {
+        clock: clockEl,
+        hourHand: hourHandEl,
+        minuteHand: minuteHandEl,
+        timeInput: timeInputEl,
       };
 
-      // Single source of truth: minutes since midnight (can be fractional while dragging)
-      this.totalMinutes = 0;
+      // Configuration settings with defaults
+      this.config = {
+        hourDragMode: behavior.hourDragMode || "snap",
+        roundToMinuteOnRelease: behavior.roundToMinuteOnRelease !== false,
+      };
 
-      // Drag state
-      this.isDragging = false;
-      this.dragHand = null; // 'hour' | 'minute'
-      this.lastAngle = null;
-      this.cumulativeRotation = 0; // degrees accumulated
-      this.dragStartTotalMinutes = 0;
+      // Internal state of the clock
+      this.state = {
+        totalMinutes: 0, // Single source of truth: minutes since midnight
+        isDragging: false,
+        dragHand: null, // 'hour' | 'minute'
+        lastAngle: 0,
+        cumulativeRotation: 0,
+        dragStartTotalMinutes: 0,
+        selectedHand: "hour", // 'hour' or 'minute' for number/tick clicks
+      };
 
-      // UI state
-      this.selectedHand = "hour"; // default selection for numbers/ticks
-
-      // Bind handlers
-      this.onPointerDown = this.onPointerDown.bind(this);
-      this.onPointerMove = this.onPointerMove.bind(this);
-      this.onPointerUp = this.onPointerUp.bind(this);
-      this.onDigitalChange = this.onDigitalChange.bind(this);
-      this.onDocumentClick = this.onDocumentClick.bind(this);
-      this.onKeyDown = this.onKeyDown.bind(this);
+      // Bind 'this' context for all event handlers
+      this._bindEventHandlers();
     }
 
-    // ---------- Lifecycle ----------
+    // --- Public API ---
+
+    /**
+     * Initializes the clock by creating the face and attaching event listeners.
+     */
     init() {
-      this.insertNumbers(); // 1–12 around the face
-      this.insertTicks(); // 12 major ticks (every 5 minutes)
-      this.attachHandSelection();
-      this.attachClicksForNumbersAndTicks();
-      this.attachDigitalInput();
-      this.attachInfoIconBehavior();
-      this.attachDrag(this.hourHand);
-      this.attachDrag(this.minuteHand);
-
-      this.updateCurrentTime(); // animate from 00:00 to now
+      this._createClockFace();
+      this._attachEventListeners();
+      this._animateToCurrentTime();
     }
 
-    // ---------- Rendering ----------
+    /**
+     * Sets the clock's time based on a Date object.
+     * @param {Date} date - The date and time to set.
+     */
+    setDate(date) {
+      const hours = date.getHours();
+      const minutes = date.getMinutes();
+      this.setTime(hours, minutes);
+    }
+
+    /**
+     * Sets the clock's time based on hours and minutes.
+     * @param {number} hours - The hour (0-23).
+     * @param {number} minutes - The minute (0-59).
+     * @param {boolean} [withTransition=false] - Whether to animate the hands to the new time.
+     */
+    setTime(hours, minutes, withTransition = false) {
+      if (withTransition) {
+        this._addTransition();
+      }
+
+      this.state.totalMinutes = hours * 60 + minutes;
+      this.render();
+
+      if (withTransition) {
+        this._removeTransition();
+      }
+    }
+
+    // --- Rendering and UI Updates ---
+
+    /**
+     * Updates the clock hands and digital input based on the current state.
+     */
     render() {
-      const total = this.totalMinutes;
+      const { totalMinutes } = this.state;
 
-      // Minute hand angle: minutes within current hour
-      const minuteInHour = mod(total, 60); // [0, 60)
-      const minuteAngle = minuteInHour * 6; // 6° per minute
+      // Calculate hand angles
+      const minuteInHour = utils.mod(totalMinutes, 60);
+      const minuteAngle = minuteInHour * CONSTANTS.DEGREES_PER_MINUTE;
 
-      // Hour hand angle: 0.5° per minute within 12h cycle
-      const minuteIn12h = mod(total, 720); // [0, 720)
-      const hourAngle = minuteIn12h * 0.5; // 0.5° per minute
-      this.hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
-      this.minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
+      const minuteIn12h = utils.mod(
+        totalMinutes,
+        CONSTANTS.MINUTES_IN_12_HOURS
+      );
+      const hourAngle = minuteIn12h / CONSTANTS.MINUTES_PER_DEGREE_HOUR_HAND;
 
-      // Digital display: rounded to nearest minute (user-facing)
-      const rounded = Math.round(total);
-      const minutes = mod(rounded, 60);
-      const hours24 = Math.floor((((rounded % 1440) + 1440) % 1440) / 60);
+      // Apply transformations to the DOM
+      this.elements.hourHand.style.transform = `translate(-50%, -90%) rotate(${hourAngle}deg)`;
+      this.elements.minuteHand.style.transform = `translate(-50%, -90%) rotate(${minuteAngle}deg)`;
 
-      // Convert to 12-hour format
+      // Update the digital time input, rounding to the nearest minute
+      const { hh, mm } = this._formatTimeForDisplay(totalMinutes);
+      this.elements.timeInput.value = `${hh}:${mm}`;
+    }
+
+    /**
+     * Formats the total minutes into a 12-hour display string.
+     * @param {number} totalMinutes - The total minutes from midnight.
+     * @returns {{hh: string, mm: string}} The formatted hours and minutes.
+     */
+    _formatTimeForDisplay(totalMinutes) {
+      const roundedTotal = Math.round(totalMinutes);
+      const minutes = utils.mod(roundedTotal, 60);
+      const hours24 = Math.floor(
+        utils.mod(roundedTotal, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+      );
+
+      // Convert 24-hour format to 12-hour format for display
       const hours12 = ((hours24 + 11) % 12) + 1;
       const hh = String(hours12).padStart(2, "0");
       const mm = String(minutes).padStart(2, "0");
 
-      this.timeInput.value = `${hh}:${mm}`;
-      console.log(this.timeInput.value);
+      return {
+        hh,
+        mm,
+      };
     }
 
-    // Transition helpers (to reuse your CSS transitions nicely)
-    addTransition() {
-      this.hourHand.classList.remove("no-transition");
-      this.minuteHand.classList.remove("no-transition");
-    }
-    removeTransition() {
-      const duration = this.getTransitionDurationInMs(this.hourHand);
-      setTimeout(() => {
-        this.hourHand.classList.add("no-transition");
-        this.minuteHand.classList.add("no-transition");
-      }, duration);
-    }
-    getTransitionDurationInMs(el) {
-      const cs = window.getComputedStyle(el);
-      let dur = cs.transitionDuration || "0s";
-      let del = cs.transitionDelay || "0s";
-      dur = dur.split(",")[0].trim();
-      del = del.split(",")[0].trim();
-      const dMs = dur.endsWith("ms") ? parseFloat(dur) : parseFloat(dur) * 1000;
-      const lMs = del.endsWith("ms") ? parseFloat(del) : parseFloat(del) * 1000;
-      return dMs + lMs;
+    // --- Clock Face Generation ---
+
+    /**
+     * Generates the clock numbers and ticks and adds them to the DOM.
+     */
+    _createClockFace() {
+      this._createClockNumbers();
+      this._createClockTicks();
     }
 
-    // ---------- Build clock face ----------
-    insertNumbers() {
-      // Your clock is 280x280, center at (140,140)
-      // We'll place numbers on radius 120 (matches your existing visuals)
-      const center = 140;
-      const radius = 120;
-
+    /**
+     * Creates and positions the 1-12 numbers around the clock face.
+     */
+    _createClockNumbers() {
+      const { CLOCK_CENTER_COORD, CLOCK_FACE_RADIUS } = CONSTANTS;
       for (let i = 1; i <= 12; i++) {
-        const angle = i * 30 - 90; // place with 12 at top
-        const x = center + radius * Math.cos(degToRad(angle));
-        const y = center + radius * Math.sin(degToRad(angle));
+        const angle = i * CONSTANTS.DEGREES_PER_HOUR - 90; // Adjust for 12 at top
+        const x =
+          CLOCK_CENTER_COORD +
+          CLOCK_FACE_RADIUS * Math.cos(utils.degToRad(angle));
+        const y =
+          CLOCK_CENTER_COORD +
+          CLOCK_FACE_RADIUS * Math.sin(utils.degToRad(angle));
 
-        const num = document.createElement("div");
-        num.className = "number";
-        num.style.left = `${x}px`;
-        num.style.top = `${y}px`;
-        num.textContent = i;
-        this.clock.appendChild(num);
+        const numEl = document.createElement("div");
+        numEl.className = "number";
+        numEl.style.left = `${x}px`;
+        numEl.style.top = `${y}px`;
+        numEl.textContent = i;
+        numEl.dataset.value = i;
+        this.elements.clock.appendChild(numEl);
       }
     }
 
-    insertTicks() {
-      // We add 12 major ticks (every 5 minutes).
-      // CSS already positions tick with translateY(-130px); we only set the rotation here.
-      for (let i = 0; i < 60; i += 5) {
-        const tick = document.createElement("div");
-        tick.className = "tick";
-        tick.dataset.index = i / 5; // 0..11
-        tick.style.setProperty("--rotation", `${i * 6}deg`);
-        this.clock.appendChild(tick);
+    /**
+     * Creates and positions the 12 major ticks for every 5 minutes.
+     */
+    _createClockTicks() {
+      for (let i = 0; i < 12; i++) {
+        const tickEl = document.createElement("div");
+        tickEl.className = "tick";
+        tickEl.dataset.value = i === 0 ? 12 : i; // Use 12 for the 0th tick
+        const rotation = i * CONSTANTS.DEGREES_PER_HOUR;
+        tickEl.style.setProperty("--rotation", `${rotation}deg`);
+        this.elements.clock.appendChild(tickEl);
       }
     }
 
-    // ---------- Event wires ----------
-    attachHandSelection() {
-      this.hourHand.addEventListener(
-        "click",
-        () => (this.selectedHand = "hour")
+    // --- Event Listener Setup ---
+
+    /**
+     * Binds the 'this' context to all event handler methods.
+     */
+    _bindEventHandlers() {
+      this._onPointerDown = this._onPointerDown.bind(this);
+      this._onPointerMove = this._onPointerMove.bind(this);
+      this._onPointerUp = this._onPointerUp.bind(this);
+      this._onDigitalChange = this._onDigitalChange.bind(this);
+      this._onDocumentClick = this._onDocumentClick.bind(this);
+      this._onKeyDown = this._onKeyDown.bind(this);
+    }
+
+    /**
+     * Attaches all necessary event listeners to the DOM elements.
+     */
+    _attachEventListeners() {
+      // Drag listeners for hands
+      this.elements.hourHand.addEventListener(
+        "pointerdown",
+        this._onPointerDown
       );
-      this.minuteHand.addEventListener(
-        "click",
-        () => (this.selectedHand = "minute")
+      this.elements.minuteHand.addEventListener(
+        "pointerdown",
+        this._onPointerDown
       );
 
-      document.addEventListener("click", this.onDocumentClick);
-      document.addEventListener("keydown", this.onKeyDown);
-    }
+      // Hand selection listeners
+      this.elements.hourHand.addEventListener(
+        "click",
+        () => (this.state.selectedHand = "hour")
+      );
+      this.elements.minuteHand.addEventListener(
+        "click",
+        () => (this.state.selectedHand = "minute")
+      );
 
-    attachClicksForNumbersAndTicks() {
-      // Numbers: when selectedHand='hour' set hour; when 'minute' set minute=(n*5)
-      this.clock.querySelectorAll(".number").forEach((num) => {
-        num.addEventListener("click", () => {
-          if (!this.selectedHand) {
-            return;
-          }
-          this.addTransition();
-
-          const value = parseInt(num.textContent, 10); // 1..12
-          const rounded = Math.round(this.totalMinutes);
-          let hours = Math.floor(mod(rounded, 1440) / 60);
-          let minutes = mod(rounded, 60);
-
-          if (this.selectedHand === "hour") {
-            // Map 12 -> 0, preserve AM/PM block
-            const h12 = value % 12;
-            const ampmBlock = Math.floor(hours / 12) * 12;
-            hours = mod(ampmBlock + h12, 24);
-          } else if (this.selectedHand === "minute") {
-            minutes = (value % 12) * 5;
-          }
-
-          this.totalMinutes = hours * 60 + minutes;
-          this.render();
-          this.removeTransition();
-        });
-      });
-
-      // Ticks: 12 major ticks (every 5 mins)
-      this.clock.querySelectorAll(".tick").forEach((tick, i) => {
-        tick.addEventListener("click", () => {
-          if (!this.selectedHand) {
-            return;
-          }
-          this.addTransition();
-
-          const rounded = Math.round(this.totalMinutes);
-          let hours = Math.floor(mod(rounded, 1440) / 60);
-          let minutes = mod(rounded, 60);
-
-          if (this.selectedHand === "minute") {
-            minutes = (i * 5) % 60;
-          } else if (this.selectedHand === "hour") {
-            const h12 = i % 12;
-            const ampmBlock = Math.floor(hours / 12) * 12;
-            hours = mod(ampmBlock + h12, 24);
-          }
-
-          this.totalMinutes = hours * 60 + minutes;
-          this.render();
-          this.removeTransition();
-        });
-      });
-    }
-
-    attachDigitalInput() {
-      this.timeInput.addEventListener("change", this.onDigitalChange);
-    }
-
-    attachInfoIconBehavior() {
-      // Attach immediately (no nested DOMContentLoaded to avoid missing the event)
-      const infoIcons = document.querySelectorAll(".info-icon");
-      infoIcons.forEach((icon) => {
-        icon.addEventListener("click", (e) => {
-          e.stopPropagation();
-          infoIcons.forEach((i) => i.classList.remove("active"));
-          icon.classList.toggle("active");
-        });
-      });
-      document.addEventListener("click", () => {
-        infoIcons.forEach((icon) => icon.classList.remove("active"));
-      });
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          infoIcons.forEach((icon) => icon.classList.remove("active"));
+      // Click listeners for numbers and ticks on the clock face
+      this.elements.clock.addEventListener("click", (e) => {
+        const target = e.target;
+        if (target.matches(".number, .tick") && target.dataset.value) {
+          this._handleFaceClick(parseInt(target.dataset.value, 10));
         }
       });
+
+      // Digital input change
+      this.elements.timeInput.addEventListener("change", this._onDigitalChange);
+
+      // Global listeners
+      document.addEventListener("click", this._onDocumentClick);
+      document.addEventListener("keydown", this._onKeyDown);
+
+      this._attachInfoIconBehavior(); // Can remain separate if it's a distinct feature
     }
 
-    attachDrag(handEl) {
-      handEl.addEventListener("pointerdown", this.onPointerDown);
-    }
+    // --- Event Handlers ---
 
-    // ---------- Handlers ----------
-    onPointerDown(e) {
-      const hand = e.currentTarget.dataset.hand; // 'hour' | 'minute'
-      this.isDragging = true;
-      this.dragHand = hand;
-      this.lastAngle = null;
-      this.cumulativeRotation = 0;
-      this.dragStartTotalMinutes = this.totalMinutes;
-
-      e.currentTarget.setPointerCapture(e.pointerId);
-      document.addEventListener("pointermove", this.onPointerMove);
-      document.addEventListener("pointerup", this.onPointerUp);
-    }
-
-    onPointerMove(e) {
-      if (!this.isDragging) {
+    /**
+     * Handles clicks on the clock face numbers or ticks to set the time.
+     * @param {number} value - The numeric value of the clicked element (1-12).
+     */
+    _handleFaceClick(value) {
+      if (!this.state.selectedHand) {
         return;
       }
 
-      const rect = this.clock.getBoundingClientRect();
-      const angle = angleFromCenter(e, rect);
+      const rounded = Math.round(this.state.totalMinutes);
+      let hours = Math.floor(
+        utils.mod(rounded, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+      );
+      let minutes = utils.mod(rounded, 60);
 
-      if (this.lastAngle !== null) {
-        let delta = angle - this.lastAngle;
+      if (this.state.selectedHand === "hour") {
+        const h12 = value % 12; // Map 12 to 0 for calculation
+        const isAm = hours < 12;
+        hours = isAm ? h12 : h12 + 12;
+      } else {
+        // 'minute'
+        minutes = (value % 12) * 5;
+      }
+
+      this.setTime(hours, minutes, true);
+    }
+
+    /**
+     * Handles the start of a drag operation on a clock hand.
+     * @param {PointerEvent} e - The pointer down event.
+     */
+    _onPointerDown(e) {
+      this.state.isDragging = true;
+      this.state.dragHand = e.currentTarget.dataset.hand;
+      this.state.dragStartTotalMinutes = this.state.totalMinutes;
+      this.state.lastAngle = null;
+      this.state.cumulativeRotation = 0;
+
+      e.currentTarget.setPointerCapture(e.pointerId);
+      document.addEventListener("pointermove", this._onPointerMove);
+      document.addEventListener("pointerup", this._onPointerUp);
+    }
+
+    /**
+     * Handles the pointer movement during a drag operation.
+     * @param {PointerEvent} e - The pointer move event.
+     */
+    _onPointerMove(e) {
+      if (!this.state.isDragging) {
+        return;
+      }
+
+      const rect = this.elements.clock.getBoundingClientRect();
+      const angle = utils.angleFromCenter(e, rect);
+
+      if (this.state.lastAngle !== null) {
+        let delta = angle - this.state.lastAngle;
+        // Handle angle wrapping (e.g., from 359° to 1°)
         if (delta > 180) {
           delta -= 360;
         }
         if (delta < -180) {
           delta += 360;
         }
-        this.cumulativeRotation += delta;
 
-        if (this.dragHand === "minute") {
-          // 6° per minute
-          const deltaMinutes = this.cumulativeRotation / 6;
-          this.totalMinutes = this.dragStartTotalMinutes + deltaMinutes;
-        } else if (this.dragHand === "hour") {
-          if (this.behavior.hourDragMode === "snap") {
-            // 30° per hour => snap by full-hours
-            const hourSteps = Math.round(this.cumulativeRotation / 30);
-            const deltaMinutes = hourSteps * 60;
-            this.totalMinutes = this.dragStartTotalMinutes + deltaMinutes;
+        this.state.cumulativeRotation += delta;
+        let deltaMinutes = 0;
+
+        if (this.state.dragHand === "minute") {
+          deltaMinutes =
+            this.state.cumulativeRotation / CONSTANTS.DEGREES_PER_MINUTE;
+        } else {
+          // 'hour'
+          if (this.config.hourDragMode === "snap") {
+            const hourSteps = Math.round(
+              this.state.cumulativeRotation / CONSTANTS.DEGREES_PER_HOUR
+            );
+            deltaMinutes = hourSteps * 60;
           } else {
-            // Smooth: 0.5° per minute => minutes = degrees * 2
-            const deltaMinutes = this.cumulativeRotation * 2;
-            this.totalMinutes = this.dragStartTotalMinutes + deltaMinutes;
+            // 'smooth'
+            deltaMinutes =
+              this.state.cumulativeRotation *
+              CONSTANTS.MINUTES_PER_DEGREE_HOUR_HAND;
           }
         }
-
+        this.state.totalMinutes =
+          this.state.dragStartTotalMinutes + deltaMinutes;
         this.render();
       }
-      this.lastAngle = angle;
+      this.state.lastAngle = angle;
     }
 
-    onPointerUp(e) {
-      if (!this.isDragging) {
+    /**
+     * Handles the end of a drag operation.
+     * @param {PointerEvent} e - The pointer up event.
+     */
+    _onPointerUp(e) {
+      if (!this.state.isDragging) {
         return;
       }
 
-      if (this.behavior.roundToMinuteOnRelease) {
-        this.totalMinutes = Math.round(this.totalMinutes);
+      if (this.config.roundToMinuteOnRelease) {
+        this.state.totalMinutes = Math.round(this.state.totalMinutes);
+        this.render();
       }
-      this.render();
 
-      this.isDragging = false;
-      this.dragHand = null;
-      this.lastAngle = null;
-      this.cumulativeRotation = 0;
+      // Reset drag state
+      this.state.isDragging = false;
+      this.state.dragHand = null;
 
       if (e.target.releasePointerCapture) {
         e.target.releasePointerCapture(e.pointerId);
       }
-      document.removeEventListener("pointermove", this.onPointerMove);
-      document.removeEventListener("pointerup", this.onPointerUp);
+      document.removeEventListener("pointermove", this._onPointerMove);
+      document.removeEventListener("pointerup", this._onPointerUp);
     }
 
-    onDigitalChange(e) {
+    /**
+     * Handles changes to the digital time input field.
+     * @param {Event} e - The change event.
+     */
+    _onDigitalChange(e) {
       const value = e.target.value.trim();
       const match = /^(\d{1,2}):(\d{1,2})$/.exec(value);
       if (!match) {
@@ -352,67 +421,133 @@
       }
 
       let [, hStr, mStr] = match;
-      let h = Number(hStr);
-      let m = Number(mStr);
-      if (Number.isNaN(h) || Number.isNaN(m)) {
+      let hours = Number(hStr);
+      let minutes = Number(mStr);
+
+      if (isNaN(hours) || isNaN(minutes) || hours > 23 || minutes > 59) {
+        // Re-render to revert to the last valid time if input is invalid
+        this.render();
         return;
       }
 
-      // Permit 24:00 -> 00:00
-      if (h === 24 && m === 0) {
-        h = 0;
-      }
-      if (h < 0 || h > 23 || m < 0 || m > 59) {
-        return;
-      }
-
-      this.addTransition();
-      this.totalMinutes = h * 60 + m;
-      this.render();
-      this.removeTransition();
+      this.setTime(hours, minutes, true);
     }
 
-    onDocumentClick(e) {
-      if (!this.clock.contains(e.target)) {
-        this.selectedHand = null;
+    /**
+     * Deselects the active hand if a click occurs outside the clock.
+     * @param {MouseEvent} e - The click event.
+     */
+    _onDocumentClick(e) {
+      if (!this.elements.clock.contains(e.target)) {
+        this.state.selectedHand = null;
       }
     }
 
-    onKeyDown(e) {
+    /**
+     * Deselects the active hand when the Escape key is pressed.
+     * @param {KeyboardEvent} e - The keydown event.
+     */
+    _onKeyDown(e) {
       if (e.key === "Escape") {
-        this.selectedHand = null;
+        this.state.selectedHand = null;
       }
     }
 
-    // ---------- Helpers ----------
-    updateCurrentTime() {
-      // Simple entry animation: 00:00 -> current time
-      this.totalMinutes = 0;
-      this.addTransition();
-      this.render();
+    // --- Helper Methods ---
+
+    /**
+     * Animates the clock from 00:00 to the current time on initialization.
+     */
+    _animateToCurrentTime() {
+      this.setTime(0, 0); // Start at 00:00
+      this._addTransition();
 
       setTimeout(() => {
         const now = new Date();
-        const h = now.getHours();
-        const m = now.getMinutes();
-        this.totalMinutes = h * 60 + m;
-        this.render();
-        this.removeTransition();
-      }, 100);
+        this.setDate(now);
+        this._removeTransition();
+      }, 100); // A small delay to ensure the initial state is rendered
     }
 
-    setCurrentTime(date) {
-      this.totalMinutes = date.getHours() * 60 + date.getMinutes();
-      this.render();
+    /** Enables CSS transitions on the clock hands. */
+    _addTransition() {
+      this.elements.hourHand.classList.remove("no-transition");
+      this.elements.minuteHand.classList.remove("no-transition");
+    }
+
+    /**
+     * Disables CSS transitions after they have completed.
+     * This prevents unwanted animations during drag operations.
+     */
+    _removeTransition() {
+      const duration = this._getTransitionDurationInMs(this.elements.hourHand);
+      setTimeout(() => {
+        this.elements.hourHand.classList.add("no-transition");
+        this.elements.minuteHand.classList.add("no-transition");
+      }, duration);
+    }
+
+    /**
+     * Reads the transition duration from a CSS property.
+     * @param {HTMLElement} el - The element to inspect.
+     * @returns {number} The total transition duration in milliseconds.
+     */
+    _getTransitionDurationInMs(el) {
+      const style = window.getComputedStyle(el);
+      const durationStr = style.transitionDuration || "0s";
+      const delayStr = style.transitionDelay || "0s";
+      const parse = (str) =>
+        str.endsWith("ms") ? parseFloat(str) : parseFloat(str) * 1000;
+      return parse(durationStr) + parse(delayStr);
+    }
+
+    /**
+     * Attaches behavior for info icons. This is kept separate as it might
+     * not be core to the clock's time-telling functionality.
+     */
+    _attachInfoIconBehavior() {
+      const infoIcons = document.querySelectorAll(".info-icon");
+      const deactivateAll = () =>
+        infoIcons.forEach((i) => i.classList.remove("active"));
+
+      infoIcons.forEach((icon) => {
+        icon.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const wasActive = icon.classList.contains("active");
+          deactivateAll();
+          if (!wasActive) {
+            icon.classList.add("active");
+          }
+        });
+      });
+
+      document.addEventListener("click", deactivateAll);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          deactivateAll();
+        }
+      });
     }
   }
 
-  // ---------- Boot ----------
+  // --- Bootstrapping ---
+
+  /**
+   * Initializes the clock when the DOM is fully loaded.
+   */
   document.addEventListener("DOMContentLoaded", () => {
     const clockEl = document.getElementById("analog");
     const hourHandEl = document.getElementById("hourHand");
     const minuteHandEl = document.getElementById("minuteHand");
     const timeInputEl = document.getElementById("timeInput");
+
+    // Ensure all required elements are found before initializing
+    if (!clockEl || !hourHandEl || !minuteHandEl || !timeInputEl) {
+      console.error(
+        "One or more required clock elements are missing from the DOM."
+      );
+      return;
+    }
 
     const clock = new AnalogClock({
       clockEl,
@@ -421,13 +556,13 @@
       timeInputEl,
       behavior: {
         hourDragMode: "smooth", // 'snap' or 'smooth'
-        roundToMinuteOnRelease: true, // keep display aligned to minute
+        roundToMinuteOnRelease: true,
       },
     });
 
     clock.init();
 
-    // For console debugging if you want:
+    // Expose the clock instance for debugging purposes
     window.__analogClock = clock;
   });
 })();

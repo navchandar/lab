@@ -110,6 +110,7 @@ p {
     position: absolute;
     transform: translate(-50%, -50%);
     cursor: pointer;
+    padding: 10px;
     font-weight: bold;
     font-size: 1.2rem;
 }
@@ -199,6 +200,10 @@ input[type="time"] {
 }
 
 @media (max-width: 500px) {
+    h1 {
+        margin: 0;
+    }
+
     body {
         height: 95vh;
     }
@@ -228,6 +233,14 @@ input[type="time"] {
         width: 9ch;
         height: 50px;
         font-size: 2rem;
+    }
+
+    .clock-area {
+        margin: 0;
+    }
+
+    .clock {
+        margin: 0 0 20px 0;
     }
 
 }
