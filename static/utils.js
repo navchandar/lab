@@ -247,12 +247,29 @@ export function updateSettingsIcon() {
   const settingsIcon = document.getElementById("settings-icon");
   const settingsMenu = document.getElementById("settings-menu");
   const isOpen = settingsMenu.classList.contains("show");
+  settingsIcon.classList.remove("is-swapping");
 
-  if (isOpen) {
-    settingsIcon.src = "../static/icons/settings-open.svg";
-  } else {
-    settingsIcon.src = "../static/icons/settings.svg";
-  }
+  // Start fade-out
+  settingsIcon.classList.add("is-swapping");
+
+  const src = isOpen
+    ? "../static/icons/settings-open.svg"
+    : "../static/icons/settings.svg";
+
+  const onTransitionEnd = () => {
+    // Swap the image when fully transparent
+    settingsIcon.src = src;
+    // On the next frame, fade back in
+    requestAnimationFrame(() => {
+      settingsIcon.classList.remove("is-swapping");
+    });
+    settingsIcon.removeEventListener("transitionend", onTransitionEnd);
+  };
+
+  // Listen for the opacity transition end
+  settingsIcon.addEventListener("transitionend", onTransitionEnd, {
+    once: true,
+  });
 }
 
 /**
