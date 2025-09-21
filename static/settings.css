@@ -125,7 +125,6 @@
 
 #settings-menu.show {
     display: block;
-    transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
 }
@@ -135,7 +134,7 @@
 }
 
 #settings-icon.is-swapping {
-    transform: rotate(90deg) scale(0.95);
+    transform: rotate(0deg) scale(1.2) translateY(0);
     opacity: 0;
 }
 
