@@ -246,10 +246,9 @@ export function onClickSettings() {
   updateSettingsIcon();
 }
 
-function updateMenuPosition() {
+function updateSettingsMenuPosition(isOpen) {
   const settingsBtn = document.getElementById("settings-btn");
   const settingsMenu = document.getElementById("settings-menu");
-  const isOpen = settingsMenu.classList.contains("show");
   if (isOpen) {
     // Get button position
     const btnPosition = settingsBtn.getBoundingClientRect();
@@ -269,30 +268,31 @@ export function updateSettingsIcon() {
   const settingsIcon = document.getElementById("settings-icon");
   const settingsMenu = document.getElementById("settings-menu");
   const isOpen = settingsMenu.classList.contains("show");
-  settingsIcon.classList.remove("is-swapping");
-  updateMenuPosition();
-
-  // Start fade-out
-  settingsIcon.classList.add("is-swapping");
-
   const src = isOpen
     ? "../static/icons/settings-open.svg"
     : "../static/icons/settings.svg";
 
-  const onTransitionEnd = () => {
-    // Swap the image when fully transparent
+  settingsIcon.classList.remove("is-swapping");
+  updateSettingsMenuPosition(isOpen);
+
+  // Force reflow to ensure transition is registered
+  void settingsIcon.offsetWidth;
+
+  // Add transition class to start fade-out
+  settingsIcon.classList.add("is-swapping");
+
+  // Get transition duration from computed styles in milliseconds
+  const transitionDuration = getComputedStyle(settingsIcon).transitionDuration;
+  const duration = parseFloat(transitionDuration) * 1000;
+
+  // Wait for the transition to complete
+  setTimeout(() => {
     settingsIcon.src = src;
-    // On the next frame, fade back in
+    // Fade back in
     requestAnimationFrame(() => {
       settingsIcon.classList.remove("is-swapping");
     });
-    settingsIcon.removeEventListener("transitionend", onTransitionEnd);
-  };
-
-  // Listen for the opacity transition end
-  settingsIcon.addEventListener("transitionend", onTransitionEnd, {
-    once: true,
-  });
+  }, duration);
 }
 
 /**
