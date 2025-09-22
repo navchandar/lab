@@ -195,6 +195,7 @@ function updateIPAddressDisplay(ip, elementId) {
 }
 
 function updateButtons() {
+  // Attach click listeners to each copy button
   document.querySelectorAll(".ip-container").forEach((container) => {
     const button = container.querySelector(".copy-btn");
     const ipSpan = container.querySelector(".ip-text span:not(.spinner)");
@@ -203,6 +204,22 @@ function updateButtons() {
     button.addEventListener("click", function () {
       copyIP(ipId, this);
     });
+  });
+
+  // Attach keyboard shortcut listeners
+  document.addEventListener("keydown", function (event) {
+    const key = event.key.toLowerCase();
+    if (key === "c") {
+      const button = document.getElementById("copy-ipv4");
+      if (button) {
+        button.click();
+      }
+    } else if (key === "x") {
+      const button = document.getElementById("copy-ipv6");
+      if (button) {
+        button.click();
+      }
+    }
   });
 }
 
