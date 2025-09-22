@@ -192,6 +192,7 @@ export function isInteractiveElement(target) {
   const selectors = [
     "a",
     "button",
+    "button img",
     "svg",
     "path",
     "input",
@@ -199,7 +200,9 @@ export function isInteractiveElement(target) {
     "select",
     "option",
     "textarea",
+    "#settings-btn",
     "#settings-menu",
+    "#settings-icon",
     ".allow-click",
   ];
   return target.closest(selectors.join(","));
