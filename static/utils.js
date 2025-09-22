@@ -249,13 +249,15 @@ export function onClickSettings() {
 function updateMenuPosition() {
   const settingsBtn = document.getElementById("settings-btn");
   const settingsMenu = document.getElementById("settings-menu");
-
-  // Get button position
-  const btnPosition = settingsBtn.getBoundingClientRect();
-  // Position the menu just below the icon
-  settingsMenu.style.position = "fixed";
-  // Add 10px from button bottom to account for margin/padding
-  settingsMenu.style.top = `${btnPosition.bottom + 10}px`;
+  const isOpen = settingsMenu.classList.contains("show");
+  if (isOpen) {
+    // Get button position
+    const btnPosition = settingsBtn.getBoundingClientRect();
+    // Position the menu just below the icon
+    settingsMenu.style.position = "fixed";
+    // Add 10px from button bottom to account for margin/padding
+    settingsMenu.style.top = `${btnPosition.bottom + 10}px`;
+  }
 }
 
 /**
@@ -309,4 +311,5 @@ export function toggleSettings() {
 export function hideSettings() {
   const settingsMenu = document.getElementById("settings-menu");
   settingsMenu.classList.remove("show");
+  updateSettingsIcon();
 }
