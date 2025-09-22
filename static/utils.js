@@ -246,6 +246,18 @@ export function onClickSettings() {
   updateSettingsIcon();
 }
 
+function updateMenuPosition() {
+  const settingsBtn = document.getElementById("settings-btn");
+  const settingsMenu = document.getElementById("settings-menu");
+
+  // Get button position
+  const btnPosition = settingsBtn.getBoundingClientRect();
+  // Position the menu just below the icon
+  settingsMenu.style.position = "fixed";
+  // Add 10px from button bottom to account for margin/padding
+  settingsMenu.style.top = `${btnPosition.bottom + 10}px`;
+}
+
 /**
  * Updates the settings icon based on the visibility of the settings menu.
  * If the menu is opened (has the 'show' class), it sets the icon to 'settings-open.svg'.
@@ -256,13 +268,7 @@ export function updateSettingsIcon() {
   const settingsMenu = document.getElementById("settings-menu");
   const isOpen = settingsMenu.classList.contains("show");
   settingsIcon.classList.remove("is-swapping");
-
-  // Get icon position
-  const iconPos = settingsIcon.getBoundingClientRect();
-  // Position the menu just below the icon
-  settingsMenu.style.position = "fixed";
-  settingsMenu.style.top = `${iconPos.bottom + 2}px`;
-  settingsMenu.style.right = `${iconPos.right}px`;
+  updateMenuPosition();
 
   // Start fade-out
   settingsIcon.classList.add("is-swapping");
