@@ -203,7 +203,7 @@ function updateButtons() {
     const ipSpan = container.querySelector(".ip-text span:not(.spinner)");
     const ipId = ipSpan.id;
 
-    button.dataset.originalHtml = btn.innerHTML;
+    button.dataset.originalHtml = button.innerHTML;
     button.addEventListener("click", function () {
       copyIP(ipId, this);
     });
@@ -217,7 +217,7 @@ function updateButtons() {
       if (button) {
         button.click();
       }
-    } else if (key === "x") {
+    } else if (key === "p") {
       const button = document.getElementById("copy-ipv6");
       if (button) {
         button.click();
