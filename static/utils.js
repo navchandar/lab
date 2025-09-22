@@ -257,6 +257,13 @@ export function updateSettingsIcon() {
   const isOpen = settingsMenu.classList.contains("show");
   settingsIcon.classList.remove("is-swapping");
 
+  // Get icon position
+  const iconPos = settingsIcon.getBoundingClientRect();
+  // Position the menu just below the icon
+  settingsMenu.style.position = "fixed";
+  settingsMenu.style.top = `${iconPos.bottom + 2}px`;
+  settingsMenu.style.right = `${iconPos.right}px`;
+
   // Start fade-out
   settingsIcon.classList.add("is-swapping");
 

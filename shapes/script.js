@@ -178,7 +178,7 @@ function handleKeydown(event) {
       break;
     case "KeyS":
       event.preventDefault();
-      utils.toggleSettings();
+      utils.onClickSettings();
       break;
     case "Escape":
       utils.hideSettings();
