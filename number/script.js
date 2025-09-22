@@ -8,6 +8,7 @@ const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
 
 const settingsBtn = document.getElementById("settings-btn");
+const settingsIcon = document.getElementById("settings-icon");
 
 let number = 1;
 let currentColor = null;
@@ -192,7 +193,8 @@ function updateSettingsMenu() {
 
   // Toggle menu visibility
   settingsBtn.style.display = "block";
-  utils.addListeners(settingsBtn, utils.toggleSettings);
+  utils.addListeners(settingsBtn, utils.onClickSettings);
+  utils.addListeners(settingsIcon, utils.onClickSettings);
 
   setIsRandomNum(randomizeCheckbox.checked);
   utils.addUnifiedListeners(randomizeCheckbox, () => {

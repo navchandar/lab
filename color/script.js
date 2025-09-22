@@ -5,6 +5,7 @@ const colorNameEl = document.getElementById("color-name");
 const muteButton = document.getElementById("muteButton");
 
 const settingsBtn = document.getElementById("settings-btn");
+const settingsIcon = document.getElementById("settings-icon");
 
 // --- Application State & Configuration ---
 
@@ -157,7 +158,8 @@ function updateSettingsMenu() {
 
   // Toggle menu visibility
   settingsBtn.style.display = "block";
-  utils.addListeners(settingsBtn, utils.toggleSettings);
+  utils.addListeners(settingsBtn, utils.onClickSettings);
+  utils.addListeners(settingsIcon, utils.onClickSettings);
 
   // Populate dropdown
   Object.keys(window.colors).forEach((lang) => {

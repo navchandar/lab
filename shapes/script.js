@@ -6,6 +6,7 @@ const shapeElement = document.getElementById("shape");
 const shapeNameElement = document.getElementById("shapename");
 
 const settingsBtn = document.getElementById("settings-btn");
+const settingsIcon = document.getElementById("settings-icon");
 
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
@@ -124,7 +125,8 @@ function updateSettingsMenu() {
 
   // Toggle menu visibility
   settingsBtn.style.display = "block";
-  utils.addListeners(settingsBtn, utils.toggleSettings);
+  utils.addListeners(settingsBtn, utils.onClickSettings);
+  utils.addListeners(settingsIcon, utils.onClickSettings);
 
   utils.setIsRandom(randomizeCheckbox.checked);
   utils.addUnifiedListeners(randomizeCheckbox, () => {

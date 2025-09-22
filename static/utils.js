@@ -241,6 +241,11 @@ export function getNewColor(colorsList, previousColor, currentColor) {
   return newColor;
 }
 
+export function onClickSettings() {
+  toggleSettings();
+  updateSettingsIcon();
+}
+
 /**
  * Updates the settings icon based on the visibility of the settings menu.
  * If the menu is opened (has the 'show' class), it sets the icon to 'settings-open.svg'.
@@ -282,7 +287,6 @@ export function updateSettingsIcon() {
 export function toggleSettings() {
   const settingsMenu = document.getElementById("settings-menu");
   settingsMenu.classList.toggle("show");
-  updateSettingsIcon();
 }
 
 /**
@@ -292,5 +296,4 @@ export function toggleSettings() {
 export function hideSettings() {
   const settingsMenu = document.getElementById("settings-menu");
   settingsMenu.classList.remove("show");
-  updateSettingsIcon();
 }

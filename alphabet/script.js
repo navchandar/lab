@@ -8,6 +8,7 @@ const numberElement = document.getElementById("number");
 const muteButton = document.getElementById("muteButton");
 
 const settingsBtn = document.getElementById("settings-btn");
+const settingsIcon = document.getElementById("settings-icon");
 const languageSelect = document.getElementById("language-select");
 const randomizeCheckbox = document.getElementById("randomize-alphabet");
 
@@ -292,7 +293,8 @@ function handleKeydown(event) {
 }
 
 // Toggle menu visibility
-utils.addListeners(settingsBtn, utils.toggleSettings);
+utils.addListeners(settingsBtn, utils.onClickSettings);
+utils.addListeners(settingsIcon, utils.onClickSettings);
 
 // --- Language Select Listeners ---
 languageSelect.addEventListener("change", (e) => {
