@@ -72,12 +72,14 @@ function notifyIPChange(previousIP, newIP) {
 
 function copyIP(elementId, button) {
   const ipText = document.getElementById(elementId).textContent;
+  const originalHTML = button.dataset.originalHtml || button.innerHTML;
+
   if (!ipText || ipText.trim() === "") {
     console.error(`IP not found from ${elementId} element`);
     button.textContent = "Error!";
     button.classList.add("error");
     setTimeout(() => {
-      button.textContent = "Copy";
+      button.innerHTML = originalHTML;
       button.classList.remove("error");
     }, 2000);
     return;
@@ -89,7 +91,7 @@ function copyIP(elementId, button) {
       button.textContent = "Copied!";
       button.classList.add("success");
       setTimeout(() => {
-        button.textContent = "Copy";
+        button.innerHTML = originalHTML;
         button.classList.remove("success");
       }, 2000);
     })
@@ -97,7 +99,7 @@ function copyIP(elementId, button) {
       button.textContent = "Error!";
       button.classList.add("error");
       setTimeout(() => {
-        button.textContent = "Copy";
+        button.innerHTML = originalHTML;
         button.classList.remove("error");
       }, 2000);
     });
@@ -201,6 +203,7 @@ function updateButtons() {
     const ipSpan = container.querySelector(".ip-text span:not(.spinner)");
     const ipId = ipSpan.id;
 
+    button.dataset.originalHtml = btn.innerHTML;
     button.addEventListener("click", function () {
       copyIP(ipId, this);
     });
