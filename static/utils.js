@@ -267,32 +267,35 @@ function updateSettingsMenuPosition(isOpen) {
 export function updateSettingsIcon() {
   const settingsIcon = document.getElementById("settings-icon");
   const settingsMenu = document.getElementById("settings-menu");
-  const isOpen = settingsMenu.classList.contains("show");
-  const src = isOpen
-    ? "../static/icons/settings-open.svg"
-    : "../static/icons/settings.svg";
-
   settingsIcon.classList.remove("is-swapping");
-  updateSettingsMenuPosition(isOpen);
 
-  // Force reflow to ensure transition is registered
-  void settingsIcon.offsetWidth;
+  const isOpen = settingsMenu.classList.contains("show");
+  const icon = isOpen ? "settings-open.svg" : "settings.svg";
+  const currentIcon = settingsIcon.src.includes(icon);
+  const src = "../static/icons/" + icon;
 
-  // Add transition class to start fade-out
-  settingsIcon.classList.add("is-swapping");
+  if (currentIcon !== icon) {
+    updateSettingsMenuPosition(isOpen);
+    // Force reflow to ensure transition is registered
+    void settingsIcon.offsetWidth;
 
-  // Get transition duration from computed styles in milliseconds
-  const transitionDuration = getComputedStyle(settingsIcon).transitionDuration;
-  const duration = parseFloat(transitionDuration) * 1000;
+    // Add transition class to start fade-out
+    settingsIcon.classList.add("is-swapping");
 
-  // Wait for the transition to complete
-  setTimeout(() => {
-    settingsIcon.src = src;
-    // Fade back in
-    requestAnimationFrame(() => {
-      settingsIcon.classList.remove("is-swapping");
-    });
-  }, duration);
+    // Get transition duration from computed styles in milliseconds
+    const transitionDuration =
+      getComputedStyle(settingsIcon).transitionDuration;
+    const duration = parseFloat(transitionDuration) * 1000;
+
+    // Wait for the transition to complete
+    setTimeout(() => {
+      settingsIcon.src = src;
+      // Fade back in
+      requestAnimationFrame(() => {
+        settingsIcon.classList.remove("is-swapping");
+      });
+    }, duration);
+  }
 }
 
 /**
