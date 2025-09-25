@@ -115,9 +115,18 @@ h1 {
 
 footer {
     position: fixed;
-    bottom: 20px;
+    bottom: 0;
+    box-sizing: border-box;
+    border-top: 1px solid #ddd;
+    background-color: lightsteelblue;
+    padding: 10px;
+    width: 100%;
     font-size: 0.9em;
     text-align: center;
+}
+
+footer p {
+    margin: 0;
 }
 
 a {
@@ -182,8 +191,8 @@ button {
 
 @media (max-width: 600px) {
     header {
-        margin-top: 10%;
-        margin-bottom: 5vh;
+        margin: 0;
+        color: #e0e0e0;
     }
 
     h1 {
@@ -197,7 +206,7 @@ button {
     }
 
     .ip-container {
-        margin-bottom: 10%;
+        margin-top: 15%;
         width: 80%;
     }
 
@@ -214,11 +223,14 @@ button {
     }
 
     .last-refresh {
-        margin: 20px 0 0 0;
+        margin: 20% 0 0 0;
+        width: 90%;
+        text-align: center;
     }
 
     footer {
-        width: 80%;
+        padding: 20px;
+        width: 100%;
     }
 
     .spinner {

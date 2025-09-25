@@ -85,6 +85,17 @@ function copyIP(elementId, button) {
     return;
   }
 
+  if (ipText.toLowerCase().includes("error")) {
+    console.error(`IP not found from ${elementId} element`);
+    button.textContent = "Error!";
+    button.classList.add("error");
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.classList.remove("error");
+    }, 2000);
+    return;
+  }
+
   navigator.clipboard
     .writeText(ipText)
     .then(() => {
@@ -141,7 +152,19 @@ async function retrieveIPAddress({
       updateIPAddressDisplay(fallbackIP, elementId);
     } catch (f) {
       console.error(`Fallback IP fetch failed for ${elementId}:`, f);
-      showText(elementId, "Error fetching IP");
+      const spinnerElement = document.getElementById(`spinner-${elementId}`);
+      // Hide spinner
+      if (spinnerElement) {
+        spinnerElement.style.opacity = 0;
+        setTimeout(() => {
+          spinnerElement.style.display = "none";
+          // update the IP content
+          showText(elementId, "Error fetching IP");
+        }, 200);
+      } else {
+        // Fallback if spinner doesn't exist
+        showText(elementId, "Error fetching IP");
+      }
     }
   }
 }
