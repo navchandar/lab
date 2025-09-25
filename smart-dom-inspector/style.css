@@ -2,11 +2,12 @@ body {
     margin: 0;
     background-color: #eee;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', 'Helvetica Neue', sans-serif;
 }
 
 header {
-    background-color: #333;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #1f2937;
     padding: 1px;
     color: white;
     text-align: center;
@@ -30,14 +31,11 @@ header {
     font-size: 14px;
 }
 
-.input-panel textarea::placeholder,
-.input-panel textarea::-moz-placeholder,
-.input-panel textarea:-moz-placeholder {
+.input-panel textarea::placeholder, .input-panel textarea::-moz-placeholder, .input-panel textarea:-moz-placeholder {
     opacity: 1;
     font-size: 20px;
     line-height: 2;
 }
-
 
 .render-panel {
     position: relative;
@@ -58,9 +56,9 @@ header {
 
 input[type='checkbox'] {
     vertical-align: middle;
-    zoom: 1;
     cursor: pointer;
-    accent-color: seagreen;
+    accent-color: #10b981;
+    zoom: 1;
 }
 
 iframe {
@@ -75,10 +73,14 @@ iframe {
 
 footer {
     position: relative;
-    bottom: 5px;
-    margin-top: 6rem;
+    bottom: 1px;
+    margin-top: 4rem;
+    margin-bottom: 0;
+    border-top: 1px solid #ddd;
+    background-color: lightsteelblue;
+    padding: 10px 0;
     width: 100%;
-    font-size: 0.8em;
+    font-size: 0.9em;
     text-align: center;
 }
 
@@ -100,13 +102,12 @@ footer p {
     pointer-events: none;
 }
 
-
 #selectorInfo {
     display: grid;
     align-items: center;
     gap: 10%;
     margin-top: 50px;
-    padding: 0 10px;
+    padding: 0 20px;
 }
 
 #selectorInfo label {
@@ -125,20 +126,26 @@ footer p {
 }
 
 .locator-row input {
+    transition: border-color 0.3s ease;
     box-sizing: border-box;
+    border: 1px solid #ccc;
     border-width: 1px;
     border-radius: 5px;
     padding: 5px;
     min-width: 50%;
 }
 
+.locator-row input:focus {
+    outline: none;
+    border-color: #007bff;
+}
+
 .locator-row button {
+    -ms-user-select: none;
+    -webkit-user-select: none;
     cursor: pointer;
     margin: 0 5px;
     padding: 5px 10px;
-    /* Disallow selecting text in button */
-    -webkit-user-select: none;
-    -ms-user-select: none;
     user-select: none;
 }
 
@@ -160,7 +167,7 @@ footer p {
     box-sizing: border-box;
     border: none;
     border-radius: 5px;
-    background-color: #007BFF;
+    background-color: #007bff;
     padding: 8px 16px;
     width: 6em;
     color: white;
@@ -192,6 +199,11 @@ footer p {
     background-color: #01671f;
 }
 
+.copy-btn, .test-btn {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
 .success {
     background-color: #28a745 !important;
 }
@@ -204,8 +216,6 @@ footer p {
     background-color: #a8ab06 !important;
 }
 
-
-/* Styles for mobile devices */
 @media (max-width: 767px) {
     header h1 {
         font-size: 1.5em;
@@ -232,9 +242,7 @@ footer p {
         margin: 5px 5px;
     }
 
-    .input-panel textarea::placeholder,
-    .input-panel textarea::-moz-placeholder,
-    .input-panel textarea:-moz-placeholder {
+    .input-panel textarea::placeholder, .input-panel textarea::-moz-placeholder, .input-panel textarea:-moz-placeholder {
         font-size: 20px;
         line-height: 150%;
     }
@@ -248,10 +256,92 @@ footer p {
         width: 150%;
     }
 
-
     footer {
-        bottom: 1rem;
-        margin-top: 3rem;
+        margin-top: 5rem;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
     }
 
+    header {
+        box-shadow: 0 2px 4px rgba(255, 255, 255, 0.1);
+        background-color: #0c192b;
+        color: #dedede;
+    }
+
+    .input-panel, .render-panel {
+        background-color: #1e1e1e;
+    }
+
+    .input-panel textarea {
+        border: 1px solid #444;
+        background-color: #2a2a2a;
+        color: #f0f0f0;
+    }
+
+    .input-panel textarea::placeholder {
+        color: #aaa;
+    }
+
+    iframe {
+        border: 1px solid #444;
+        background-color: #1e1e1e;
+    }
+
+    footer {
+        border-top: 1px solid #333;
+        background-color: darkslategray;
+        color: #ccc;
+    }
+
+    .locator-row input {
+        border: 1px solid #555;
+        background-color: #2a2a2a;
+        color: #f0f0f0;
+    }
+
+    .locator-row input:focus {
+        border-color: #3399ff;
+    }
+
+    .copy-btn {
+        background-color: #0c42b8;
+        color: #fff;
+    }
+
+    .test-btn {
+        background-color: #007d25;
+        color: #fff;
+    }
+
+    .copy-btn:hover, .copy-btn:focus {
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        background-color: #002f96;
+    }
+
+    .test-btn:hover, .test-btn:focus {
+        box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        background-color: #00611c;
+    }
+
+    .success {
+        background-color: #34c759 !important;
+    }
+
+    .error {
+        background-color: #ff3b30 !important;
+    }
+
+    .warning {
+        background-color: #facc15 !important;
+        color: #000;
+    }
+
+    footer a {
+        color: white;
+    }
 }

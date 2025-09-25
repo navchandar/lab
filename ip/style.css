@@ -11,13 +11,19 @@ body {
 }
 
 header {
-    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #1f2937;
+    padding: 10px;
+    width: 100%;
+    color: white;
     text-align: center;
 }
 
 h1 {
     margin-bottom: 10px;
-    font-size: 2rem;
+    font-weight: 600;
+    font-size: 2.2rem;
 }
 
 .ip-container {
@@ -28,11 +34,10 @@ h1 {
     justify-content: space-between;
     align-items: center;
     box-sizing: content-box;
-    margin: 10px 0;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 40px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border: 0.5px solid lightgray;
-    border-radius: 10px;
+    border-radius: 12px;
     background-color: #fff;
     padding: 20px;
     width: 90%;
@@ -40,6 +45,7 @@ h1 {
 }
 
 .ip-text {
+    flex: 1;
     font-size: 1.2rem;
     word-break: break-word;
 }
@@ -50,15 +56,15 @@ h1 {
     box-sizing: border-box;
     border: none;
     border-radius: 5px;
-    background-color: #007BFF;
-    padding: 8px 16px;
+    background-color: #007bff;
+    padding: 10px 16px;
     width: 6em;
     color: white;
+    font-weight: 600;
     font-size: 14px;
 }
 
-.copy-btn:hover,
-.copy-btn:focus {
+.copy-btn:hover, .copy-btn:focus {
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     background-color: #0056b3;
@@ -73,7 +79,7 @@ h1 {
 }
 
 .last-refresh {
-    margin: 30px 0;
+    margin: 50px 0 0 0;
     font-style: italic;
 }
 
@@ -110,7 +116,7 @@ h1 {
 footer {
     position: fixed;
     bottom: 20px;
-    font-size: 0.8em;
+    font-size: 0.9em;
     text-align: center;
 }
 
@@ -122,10 +128,9 @@ a:hover, a:focus {
     border-bottom: 2px solid #0056b3;
 }
 
-/* Disallow selecting text in button */
 button {
-    -webkit-user-select: none;
     -ms-user-select: none;
+    -webkit-user-select: none;
     user-select: none;
 }
 
@@ -138,7 +143,7 @@ button {
     box-sizing: content-box;
     margin-right: 0.5em;
     border: 0.2em solid rgba(0, 0, 0, 0.1);
-    border-top: 0.2em solid #333;
+    border-top: 0.2em solid #3b82f6;
     border-radius: 50%;
     width: 1em;
     height: 1em;
@@ -148,13 +153,11 @@ button {
     text-decoration: underline;
 }
 
-
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
-
 
 @media (max-width: 768px) {
     .ip-toast {
@@ -175,7 +178,6 @@ button {
         right: 20px;
         transform: translateY(-20px);
     }
-
 }
 
 @media (max-width: 600px) {
@@ -189,6 +191,7 @@ button {
     }
 
     .ip-text {
+        margin: 0;
         font-size: 1rem;
         word-break: break-all;
     }
@@ -206,8 +209,7 @@ button {
         font-size: 12px;
     }
 
-    .copy-btn:hover,
-    .copy-btn:focus {
+    .copy-btn:hover, .copy-btn:focus {
         transform: scale(1);
     }
 
@@ -228,7 +230,6 @@ button {
     .shortcut-hint {
         text-decoration: none;
     }
-
 }
 
 @media (prefers-color-scheme: dark) {
@@ -246,12 +247,6 @@ button {
         background-color: #2c2c2c;
     }
 
-    .copy-btn {
-        background-color: #3399ff;
-        color: #fff;
-    }
-
-
     .ip-toast {
         background-color: #013b5ecc;
         color: #fff;
@@ -261,10 +256,14 @@ button {
         color: #fff;
     }
 
-    .copy-btn:hover,
-    .copy-btn:focus {
+    .copy-btn {
+        background-color: #0c42b8;
+        color: #fff;
+    }
+
+    .copy-btn:hover, .copy-btn:focus {
         box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
-        background-color: #1a73e8;
+        background-color: #002f96;
     }
 
     .copy-btn.success {
@@ -280,4 +279,12 @@ button {
         border-top: 0.2em solid #fff;
     }
 
+    footer {
+        background-color: darkslategray;
+        color: #ccc;
+    }
+
+    footer a {
+        color: white
+    }
 }
