@@ -18,12 +18,27 @@ const staticFiles = [
 
 function generateIndexHtml() {
   console.log("🎨 Generating index.html...");
-  const appDirs = fs
+  const potentialAppDirs = fs
     .readdirSync(ROOT_DIR, { withFileTypes: true })
     .filter(
       (dirent) => dirent.isDirectory() && !IGNORED_DIRS.includes(dirent.name)
     );
 
+  // Filter directories to only include those with 'index.html'
+  const appDirs = potentialAppDirs.filter((dir) => {
+    const indexPath = path.join(ROOT_DIR, dir.name, "index.html");
+    try {
+      // Check if the file exists and is accessible
+      fs.accessSync(indexPath, fs.constants.F_OK);
+      return true; // Keep directory if index.html exists
+    } catch (e) {
+      // If fs.accessSync throws an error, the file does not exist or is inaccessible
+      console.log(`⚠️ Skipping folder '${dir.name}': index.html not found.`);
+      return false; // Skip directory
+    }
+  });
+
+  //  Generate the app links using the filtered list (appDirs)
   const appLinks = appDirs
     .map((dir) => {
       const appName = dir.name;
@@ -39,24 +54,34 @@ function generateIndexHtml() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab App</title>
+    <meta name="description" content="A centralized Progressive Web App (PWA) hosting a collection of small, useful web applications, educational games, and development tools.">
+    <meta name="author" content="Naveenchandar">
+    <meta name="theme-color" content="#333">
+
+    <meta property="og:title" content="Lab App">
+    <meta property="og:type" content="website">
+
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="./static/pwa-style.css">
+
     <style>
         #update-notification { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; font-family: sans-serif; text-align: center; }
         #update-notification button { background-color: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 15px; }
     </style>
 </head>
 <body>
-    <header><h1>App Collection</h1></header>
-    <nav>
-        <ul>
+    <header><h1>Lab Apps</h1></header>
+     <div id="app-container">
+        <nav>
+            <ul>
 ${appLinks}
-        </ul>
-    </nav>
-    <main><iframe name="appFrame" src="./${
-      appDirs[0]?.name || ""
-    }/index.html"></iframe></main>
-    
+            </ul>
+        </nav>
+        <main><iframe name="appFrame" src="./${
+          appDirs[0]?.name || ""
+        }/index.html"></iframe></main>
+    </div>
+
     <div id="update-notification">
         <span>A new version is available!</span>
         <button id="refresh-button">Refresh</button>
