@@ -22,7 +22,6 @@ function registerServiceWorker() {
       });
 
     setupRefreshButton();
-    handleHeaderDisplay();
     listenForControllerChange();
   });
 }
@@ -82,3 +81,4 @@ function listenForControllerChange() {
 }
 
 registerServiceWorker();
+handleHeaderDisplay();
