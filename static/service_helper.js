@@ -30,12 +30,19 @@ function handleHeaderDisplay() {
   document.addEventListener("DOMContentLoaded", () => {
     const appLinks = document.querySelectorAll('nav a[target="appFrame"]');
     const header = document.querySelector("body header");
+    const iframe = document.querySelector('iframe[name="appFrame"]');
+
     appLinks.forEach((link) => {
       link.addEventListener("click", () => {
         if (header) {
           header.style.display = "none";
         }
       });
+      if (iframe) {
+        setTimeout(() => {
+          iframe.focus();
+        }, 300);
+      }
     });
   });
 }
@@ -80,5 +87,5 @@ function listenForControllerChange() {
   });
 }
 
-registerServiceWorker();
 handleHeaderDisplay();
+registerServiceWorker();
