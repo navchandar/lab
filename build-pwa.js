@@ -4,8 +4,8 @@ const path = require("path");
 console.log("🚀 Starting PWA file generation with Node.js...");
 
 const ROOT_DIR = ".";
-const IGNORED_DIRS = [".git", ".github", "node_modules", "config"];
-const IGNORED_FILES = ["build-pwa.js", "README.md", "service-worker.js"];
+const IGNORED_DIRS = [".git", ".github", "node_modules", "config", "Lychee", "stefanzweifel"];
+const IGNORED_FILES = ["build-pwa.js", "README.md", "service-worker.js", ".gitignore", "LICENSE"];
 const staticFiles = [
   "./",
   "./index.html",
@@ -77,9 +77,7 @@ function generateIndexHtml() {
 ${appLinks}
             </ul>
         </nav>
-        <main><iframe name="appFrame" src="./${
-          appDirs[0]?.name || ""
-        }/index.html"></iframe></main>
+        <main><iframe name="appFrame" src=""></iframe></main>
     </div>
 
     <div id="update-notification">
