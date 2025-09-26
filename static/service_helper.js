@@ -22,6 +22,7 @@ function registerServiceWorker() {
       });
 
     setupRefreshButton();
+    handleHeaderDisplay();
     listenForControllerChange();
   });
 }

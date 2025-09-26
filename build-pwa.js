@@ -172,7 +172,7 @@ if (duplicates.length > 0) {
 }
 
 self.addEventListener('install', event => {
-  console.log(\`[SW] Installing and caching: ${CACHE_NAME}\`);
+  console.log('[SW] Installing and caching:', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       console.log('[SW] Caching app shell...');
@@ -184,13 +184,13 @@ self.addEventListener('install', event => {
 
 
 self.addEventListener('activate', event => {
-  console.log(\`[SW] Activating: ${CACHE_NAME}\`);
+  console.log('[SW] Activating:', CACHE_NAME);
   event.waitUntil(
     caches.keys().then(cacheNames =>
       Promise.all(
         cacheNames.map(name => {
           if (name !== CACHE_NAME) {
-            console.log(\`[SW] Deleting old cache: ${name}\`);
+            console.log('[SW] Deleting old cache:', name);
             return caches.delete(name);
           }
         })
