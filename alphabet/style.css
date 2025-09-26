@@ -40,6 +40,7 @@ body {
 /* Styles for mobile devices */
 @media (max-width: 767px) {
     #number {
+        box-sizing: content-box;
         padding: 20px;
         width: 250px;
         height: 400px;
@@ -52,6 +53,7 @@ body {
 /* Styles for desktop */
 @media (min-width: 768px) {
     #number {
+        box-sizing: content-box;
         width: 600px;
         height: 720px;
         -webkit-text-stroke: 3px #333;
