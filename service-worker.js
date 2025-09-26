@@ -107,19 +107,25 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
+
       try {
+        const requestUrl = new URL(event.request.url);
+
+        // Skip unsupported schemes like chrome-extension
+        if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') {
+          return fetch(event.request);
+        }
+
         const cachedResponse = await caches.match(event.request);
-        const fetchPromise = fetch(event.request).then(
-          async (networkResponse) => {
-            try {
-              const cache = await caches.open(CACHE_NAME);
-              cache.put(event.request, networkResponse.clone());
-            } catch (cacheError) {
-              console.warn("[SW] Failed to update cache:", cacheError);
-            }
-            return networkResponse;
+        const fetchPromise = fetch(event.request).then(async networkResponse => {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, networkResponse.clone());
+          } catch (cacheError) {
+            console.warn("[SW] Failed to update cache:", cacheError);
           }
-        );
+          return networkResponse;
+        });
 
         // Return cached response immediately, update in background
         return cachedResponse || fetchPromise;
