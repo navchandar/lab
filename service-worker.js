@@ -1,9 +1,72 @@
-const CACHE_NAME = "lab-full-app-v1-" + new Date().getTime();
-const urlsToCache = [];
+const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
+const urlsToCache = [
+    'index.html',
+  'static/app_stylesheet.css',
+  'manifest.json',
+  'static/icons/icon-192x192.png',
+  'static/icons/icon-512x512.png',
+  'alphabet/data.js',
+  'alphabet/index.html',
+  'alphabet/preview.gif',
+  'alphabet/script.js',
+  'alphabet/style.css',
+  'clock/index.html',
+  'clock/script.js',
+  'clock/style.css',
+  'color/data.js',
+  'color/index.html',
+  'color/preview.gif',
+  'color/script.js',
+  'color/style.css',
+  'ip/index.html',
+  'ip/script.js',
+  'ip/style.css',
+  'number/index.html',
+  'number/preview.gif',
+  'number/script.js',
+  'number/style.css',
+  'shapes/index.html',
+  'shapes/script.js',
+  'shapes/style.css',
+  'smart-dom-inspector/index.html',
+  'smart-dom-inspector/locator_helper.js',
+  'smart-dom-inspector/script.js',
+  'smart-dom-inspector/style.css',
+  'static/icons/ico/android-icon-144x144.png',
+  'static/icons/ico/android-icon-192x192.png',
+  'static/icons/ico/android-icon-36x36.png',
+  'static/icons/ico/android-icon-48x48.png',
+  'static/icons/ico/android-icon-72x72.png',
+  'static/icons/ico/android-icon-96x96.png',
+  'static/icons/ico/apple-icon-114x114.png',
+  'static/icons/ico/apple-icon-120x120.png',
+  'static/icons/ico/apple-icon-144x144.png',
+  'static/icons/ico/apple-icon-152x152.png',
+  'static/icons/ico/apple-icon-180x180.png',
+  'static/icons/ico/apple-icon-57x57.png',
+  'static/icons/ico/apple-icon-60x60.png',
+  'static/icons/ico/apple-icon-72x72.png',
+  'static/icons/ico/apple-icon-76x76.png',
+  'static/icons/ico/apple-icon-precomposed.png',
+  'static/icons/ico/apple-icon.png',
+  'static/icons/ico/browserconfig.xml',
+  'static/icons/ico/favicon-16x16.png',
+  'static/icons/ico/favicon-32x32.png',
+  'static/icons/ico/favicon-96x96.png',
+  'static/icons/ico/favicon.ico',
+  'static/icons/ico/ms-icon-144x144.png',
+  'static/icons/ico/ms-icon-150x150.png',
+  'static/icons/ico/ms-icon-310x310.png',
+  'static/icons/ico/ms-icon-70x70.png',
+  'static/icons/settings-open.svg',
+  'static/icons/settings.svg',
+  'static/service_helper.js',
+  'static/settings.css',
+  'static/speech_helper.js',
+  'static/utils.js'
+];
 
-const duplicates = urlsToCache.filter(
-  (item, index, arr) => arr.indexOf(item) !== index
-);
+const duplicates = urlsToCache.filter((item, index, arr) => arr.indexOf(item) !== index);
 if (duplicates.length > 0) {
   console.warn("[SW] Duplicate URLs detected in cache list:", duplicates);
 }
