@@ -67,13 +67,13 @@ function generateIndexHtml() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab App</title>
+    <link rel="manifest" href="manifest.json">
+
     <meta name="description" content="A centralized Progressive Web App (PWA) hosting a collection of small, useful web applications, educational games, and development tools.">
     <meta name="author" content="Naveenchandar">
-
     <meta property="og:title" content="Lab App">
     <meta property="og:type" content="website">
 
-    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" sizes="192x192"  href="./static/icons/ico/android-icon-192x192.png">
     <link rel="icon" type="image/png" sizes="32x32" href="./static/icons/ico/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="./static/icons/ico/favicon-96x96.png">
@@ -113,55 +113,7 @@ ${appLinks}
         <button id="refresh-button">Refresh</button>
     </div>
 
-    <script>
-        const swPath = './service-worker.js';
-        let newWorker;
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register(swPath, { scope: '/' })
-                    .then(registration => {
-                        console.log('✅ Service Worker registered with scope:', registration.scope);
-
-                        registration.addEventListener('updatefound', () => {
-                            newWorker = registration.installing;
-
-                            newWorker.addEventListener('statechange', () => {
-                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    if (navigator.vibrate) {
-                                        navigator.vibrate(100);
-                                    }
-
-                                    // Show update notification
-                                    const updateNotification = document.getElementById('update-notification');
-                                    if (updateNotification) {
-                                        updateNotification.style.display = 'block';
-                                    }
-                                }
-                            });
-                        });
-                    })
-                    .catch(error => {
-                        console.error('❌ Service Worker registration failed:', error);
-                    });
-
-                // Listen for refresh button click to activate new worker
-                const refreshButton = document.getElementById('refresh-button');
-                if (refreshButton) {
-                    refreshButton.addEventListener('click', () => {
-                        if (newWorker) {
-                            newWorker.postMessage({ action: 'skipWaiting' });
-                        }
-                    });
-                }
-
-                // Reload page when new service worker takes control
-                navigator.serviceWorker.addEventListener('controllerchange', () => {
-                    window.location.reload();
-                });
-            });
-        }
-    </script>
+    <script src="./static/service_helper.js"></script>
 
 </body>
 </html>`;
@@ -204,38 +156,54 @@ function generateServiceWorker() {
   const swTemplate = `
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
-${allFilesToCache}
+    ${allFilesToCache}
 ];
 
 self.addEventListener('install', event => {
+  console.log('[SW] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching app shell...');
+      return cache.addAll(urlsToCache);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  console.log('[SW] Activating...');
+  event.waitUntil(
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(name => {
+          if (name !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          }
+        })
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    }).catch(() => {
+      return new Response('Offline', {
+        status: 503,
+        statusText: 'Service Unavailable'
+      });
+    })
   );
 });
 
 self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'skipWaiting') {
+  if (event.data?.action === 'skipWaiting') {
+    console.log('[SW] Skipping waiting...');
     self.skipWaiting();
   }
-});
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => Promise.all(
-      cacheNames.map(cacheName => {
-        if (!cacheWhitelist.includes(cacheName)) {
-          return caches.delete(cacheName);
-        }
-      })
-    )).then(() => self.clients.claim())
-  );
 });
 `;
 
