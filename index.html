@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="./static/pwa-style.css">
 
     <style>
-        #update-notification { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; font-family: sans-serif; text-align: center; }
-        #update-notification button { background-color: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 15px; }
+        #update-notification { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 8px; background-color: #333; padding: 15px 25px; color: white; font-family: sans-serif; text-align: center; }
+        #update-notification button { cursor: pointer; margin-left: 15px; border: none; border-radius: 5px; background-color: #4CAF50; padding: 8px 16px; color: white; }
     </style>
 </head>
 <body>
@@ -33,7 +33,7 @@
             <li><a href="./smart-dom-inspector/index.html" target="appFrame">Smart-dom-inspector</a></li>
             </ul>
         </nav>
-        <main><iframe name="appFrame" src=""></iframe></main>
+        <main><iframe name="appFrame"></iframe></main>
     </div>
 
     <div id="update-notification">

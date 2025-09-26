@@ -105,7 +105,7 @@ function generateIndexHtml() {
 ${appLinks}
             </ul>
         </nav>
-        <main><iframe name="appFrame" src=""></iframe></main>
+        <main><iframe name="appFrame"></iframe></main>
     </div>
 
     <div id="update-notification">
