@@ -26,6 +26,20 @@ function registerServiceWorker() {
   });
 }
 
+function handleHeaderDisplay() {
+  document.addEventListener("DOMContentLoaded", () => {
+    const appLinks = document.querySelectorAll('nav a[target="appFrame"]');
+    const header = document.querySelector("body header");
+    appLinks.forEach((link) => {
+      link.addEventListener("click", () => {
+        if (header) {
+          header.style.display = "none";
+        }
+      });
+    });
+  });
+}
+
 function handleServiceWorkerUpdates(registration) {
   registration.addEventListener("updatefound", () => {
     newWorker = registration.installing;

@@ -2,7 +2,7 @@ const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
         './',
     './index.html',
-    './static/pwa-style.css',
+    './static/app_stylesheet.css',
     './manifest.json',
     './static/icons/icon-192x192.png',
     './static/icons/icon-512x512.png',
@@ -65,7 +65,7 @@ const urlsToCache = [
     'static/icons/icon-512x512.png',
     'static/icons/settings-open.svg',
     'static/icons/settings.svg',
-    'static/pwa-style.css',
+    'static/app_stylesheet.css',
     'static/service_helper.js',
     'static/settings.css',
     'static/speech_helper.js',

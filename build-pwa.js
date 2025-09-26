@@ -22,7 +22,7 @@ const IGNORED_FILES = [
 const staticFiles = [
   "./",
   "./index.html",
-  "./static/pwa-style.css",
+  "./static/app_stylesheet.css",
   "./manifest.json",
   "./static/icons/icon-192x192.png",
   "./static/icons/icon-512x512.png",
@@ -91,7 +91,7 @@ function generateIndexHtml() {
     <meta name="msapplication-TileImage" content="./static/icons/ico/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
 
-    <link rel="stylesheet" href="./static/pwa-style.css">
+    <link rel="stylesheet" href="./static/app_stylesheet.css">
     <style>
         #update-notification { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; font-family: sans-serif; text-align: center; }
         #update-notification button { background-color: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 15px; }
@@ -147,11 +147,18 @@ function generateServiceWorker() {
   console.log("👷 Generating service-worker.js...");
 
   const allAppFiles = getAllFiles(ROOT_DIR);
-  const allFilesToCache = [...staticFiles, ...allAppFiles]
-    // Remove duplicates
-    .filter((value, index, self) => self.indexOf(value) === index)
-    .map((file) => `    '${file}'`)
-    .join(",\n");
+
+  // Ensure all paths are consistent (e.g., no ./, no trailing slashes):
+  const normalizePath = (filePath) => filePath.replace(/^\.\/|\/$/g, "");
+  // remove duplicates
+  const allFilesToCache = Array.from(
+    new Set([
+      ...staticFiles.map(normalizePath),
+      ...allAppFiles.map(normalizePath),
+    ])
+  );
+
+  console.log("🧾 Files to cache:", allFilesToCache);
 
   const swTemplate = `
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
@@ -159,8 +166,13 @@ const urlsToCache = [
     ${allFilesToCache}
 ];
 
+const duplicates = urlsToCache.filter((item, index, arr) => arr.indexOf(item) !== index);
+if (duplicates.length > 0) {
+  console.warn('[SW] Duplicate URLs detected in cache list:', duplicates);
+}
+
 self.addEventListener('install', event => {
-  console.log('[SW] Installing...');
+  console.log(\`[SW] Installing and caching: ${CACHE_NAME}\`);
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       console.log('[SW] Caching app shell...');
@@ -170,32 +182,51 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+
 self.addEventListener('activate', event => {
-  console.log('[SW] Activating...');
+  console.log(\`[SW] Activating: ${CACHE_NAME}\`);
   event.waitUntil(
     caches.keys().then(cacheNames =>
       Promise.all(
         cacheNames.map(name => {
           if (name !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', name);
+            console.log(\`[SW] Deleting old cache: ${name}\`);
             return caches.delete(name);
           }
         })
       )
-    ).then(() => self.clients.claim())
+    ).then(() => {
+      console.log('[SW] Activation complete. Claiming clients...');
+      self.clients.claim();
+    })
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    }).catch(() => {
-      return new Response('Offline', {
-        status: 503,
-        statusText: 'Service Unavailable'
-      });
-    })
+    (async () => {
+      try {
+        const cachedResponse = await caches.match(event.request);
+        const fetchPromise = fetch(event.request).then(async networkResponse => {
+          try {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(event.request, networkResponse.clone());
+          } catch (cacheError) {
+            console.warn('[SW] Failed to update cache:', cacheError);
+          }
+          return networkResponse;
+        });
+
+        // Return cached response immediately, update in background
+        return cachedResponse || fetchPromise;
+      } catch (error) {
+        console.error('[SW] Fetch handler failed:', error);
+        return new Response('Service unavailable', {
+          status: 503,
+          statusText: 'Service Unavailable',
+        });
+      }
+    })()
   );
 });
 
