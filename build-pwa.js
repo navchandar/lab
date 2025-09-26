@@ -6,7 +6,14 @@ console.log("🚀 Starting PWA file generation with Node.js...");
 const ROOT_DIR = ".";
 const IGNORED_DIRS = [".git", ".github", "node_modules", "config"];
 const IGNORED_FILES = ["build-pwa.js", "README.md", "service-worker.js"];
-
+const staticFiles = [
+  "./",
+  "./index.html",
+  "./static/pwa-style.css",
+  "./manifest.json",
+  "./static/icons/icon-192x192.png",
+  "./static/icons/icon-512x512.png",
+];
 // --- 1. Generate index.html ---
 
 function generateIndexHtml() {
@@ -102,15 +109,6 @@ function getAllFiles(dirPath, arrayOfFiles = []) {
 
 function generateServiceWorker() {
   console.log("👷 Generating service-worker.js...");
-
-  const staticFiles = [
-    "./",
-    "./index.html",
-    "./static/pwa-style.css",
-    "./manifest.json",
-    "./static/icons/icon-192x192.png",
-    "./static/icons/icon-512x512.png",
-  ];
 
   const allAppFiles = getAllFiles(ROOT_DIR);
   const allFilesToCache = [...staticFiles, ...allAppFiles]

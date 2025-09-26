@@ -16,4 +16,14 @@ module.exports = {
     semi: ["error", "always"],
     "no-var": "error",
   },
+  overrides: [
+    {
+      files: ["build-pwa.js", "**/*.config.js"],
+      // Override the environment setting for these files only
+      env: {
+        browser: false,
+        node: true,
+      },
+    },
+  ],
 };
