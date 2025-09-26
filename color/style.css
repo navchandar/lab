@@ -4,34 +4,38 @@ body {
     align-items: flex-end;
     transition: background 1s ease-in-out;
     margin: 0;
-    background: radial-gradient(#dadada26, #aaa8a800, #00000063);
+    background: radial-gradient(circle at center, #dadada26, #aaa8a800, #00000063);
     background-color: black;
     padding: 0;
     height: 100vh;
-    font-family: sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 #color-name {
+    display: block;
+    opacity: 1;
+    transition: all 1s ease-in-out;
     cursor: pointer;
     margin-bottom: 10%;
     padding: 0 20px;
     font-weight: bold;
     font-size: clamp(50px, 10vw, 120px);
+    letter-spacing: 5px;
     user-select: none;
     text-align: center;
     text-shadow: 5px 5px 5px rgba(0, 0, 0, 0.4), -2px -2px 5px rgba(255, 255, 255, 0.4);
     text-transform: uppercase;
-    word-wrap: break-word;
-    display: block;
-    opacity: 1;
-    transition: all 1s ease-in-out;
     overflow-wrap: break-word;
+    word-wrap: break-word;
 }
 
+#color-name:hover {
+    transform: scale(1.05);
+}
 
 .fade-out {
     opacity: 0 !important;
-    transition: all 1s ease-in-out;
+    transition: opacity 1s ease-in-out;
     color: transparent !important;
     text-shadow: none !important;
 }
@@ -40,13 +44,13 @@ body {
 @media (max-width: 767px) {
     #color-name {
         margin-bottom: 50%;
-        font-size: clamp(50px, 5vw, 120px);
+        font-size: clamp(50px, 8vw, 120px);
     }
 }
 
 @media (max-width: 480px) {
     #color-name {
         margin-bottom: 50%;
-        font-size: clamp(50px, 4vw, 120px);
+        font-size: clamp(50px, 4vw, 80px);
     }
 }
