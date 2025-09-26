@@ -27,6 +27,10 @@ jobs:
         run: |
           npm install -g htmlhint csslint eslint@8
 
+      - name: Generate PWA files
+        if: github.event_name == 'push'
+        run: node ./build-pwa.js
+
       - name: Validate HTML
         run: htmlhint --config config/.htmlhintrc .
 
@@ -37,10 +41,6 @@ jobs:
 
       - name: Validate JS
         run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
-
-      - name: Generate PWA files
-        if: github.event_name == 'push'
-        run: node ./build-pwa.js
 
       - name: Validate Broken Links
         uses: lycheeverse/lychee-action@v2
