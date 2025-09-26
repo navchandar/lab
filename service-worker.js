@@ -1,6 +1,6 @@
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
-    './',
+        './',
     './index.html',
     './static/pwa-style.css',
     './manifest.json',
@@ -66,38 +66,55 @@ const urlsToCache = [
     'static/icons/settings-open.svg',
     'static/icons/settings.svg',
     'static/pwa-style.css',
+    'static/service_helper.js',
     'static/settings.css',
     'static/speech_helper.js',
     'static/utils.js'
 ];
 
 self.addEventListener('install', event => {
+  console.log('[SW] Installing...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Caching app shell...');
+      return cache.addAll(urlsToCache);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+  console.log('[SW] Activating...');
+  event.waitUntil(
+    caches.keys().then(cacheNames =>
+      Promise.all(
+        cacheNames.map(name => {
+          if (name !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          }
+        })
+      )
+    ).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    }).catch(() => {
+      return new Response('Offline', {
+        status: 503,
+        statusText: 'Service Unavailable'
+      });
+    })
   );
 });
 
 self.addEventListener('message', event => {
-  if (event.data && event.data.action === 'skipWaiting') {
+  if (event.data?.action === 'skipWaiting') {
+    console.log('[SW] Skipping waiting...');
     self.skipWaiting();
   }
-});
-
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => Promise.all(
-      cacheNames.map(cacheName => {
-        if (!cacheWhitelist.includes(cacheName)) {
-          return caches.delete(cacheName);
-        }
-      })
-    )).then(() => self.clients.claim())
-  );
 });
