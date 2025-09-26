@@ -55,7 +55,7 @@ function generateIndexHtml() {
   const appLinks = appDirs
     .map((dir) => {
       const appName = dir.name;
-      const displayName = appName.charAt(0).toUpperCase() + appName.slice(1);
+      const displayName = appName.toUpperCase();
       return `            <li><a href="./${appName}/index.html" target="appFrame">${displayName}</a></li>`;
     })
     .join("\n");
@@ -156,14 +156,16 @@ function generateServiceWorker() {
       ...staticFiles.map(normalizePath),
       ...allAppFiles.map(normalizePath),
     ])
-  );
+  )
+    .filter((file) => file && file.trim() !== "")
+    .map((file) => `'${file}'`);
 
   console.log("🧾 Files to cache:", allFilesToCache);
 
   const swTemplate = `
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
-    ${allFilesToCache}
+    ${allFilesToCache.join(",\n  ")}
 ];
 
 const duplicates = urlsToCache.filter((item, index, arr) => arr.indexOf(item) !== index);
