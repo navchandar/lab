@@ -37,12 +37,18 @@ function handleHeaderDisplay() {
         if (header) {
           header.style.display = "none";
         }
+
+        // Move focus to iframe after link is clicked
+        if (iframe) {
+          setTimeout(() => {
+            iframe.focus();
+          }, 300);
+        }
       });
-      if (iframe) {
-        setTimeout(() => {
-          iframe.focus();
-        }, 300);
-      }
+    });
+
+    iframe.addEventListener("load", () => {
+      iframe.focus();
     });
   });
 }
