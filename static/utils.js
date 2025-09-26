@@ -274,7 +274,7 @@ export function updateSettingsIcon() {
   const currentIcon = settingsIcon.src.includes(icon);
   const src = "../static/icons/" + icon;
 
-  if (currentIcon !== icon) {
+  if (!currentIcon) {
     updateSettingsMenuPosition(isOpen);
     // Force reflow to ensure transition is registered
     void settingsIcon.offsetWidth;

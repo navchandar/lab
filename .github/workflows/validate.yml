@@ -11,6 +11,9 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -45,3 +48,14 @@ jobs:
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
+
+      - name: Generate PWA files
+        if: github.event_name == 'push'
+        run: node ./build-pwa.js
+
+      - name: Commit and push if changed
+        if: github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "build: Auto-generate PWA files"
+          file_pattern: "index.html service-worker.js"
