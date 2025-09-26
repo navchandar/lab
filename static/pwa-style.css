@@ -1,22 +1,20 @@
-/* --- General & Reset --- */
-:root {
-    --primary-color: #333;
-    --secondary-color: #f4f4f4;
-    --accent-color: #4CAF50;
-    --text-color: #fff;
+html, body {
+    background-color: #f4f4f4;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
-* {
-    box-sizing: border-box;
+/* More targeted margin/padding reset */
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, figure, blockquote, dl, dd {
     margin: 0;
     padding: 0;
 }
 
-html, body {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+ul {
+    list-style: none;
 }
 
 /* --- Main Layout Structure --- */
@@ -35,21 +33,24 @@ body {
 
 /* --- Header --- */
 header {
-    background-color: var(--primary-color);
+    box-sizing: border-box;
+    background-color: #333;
     padding: 15px 20px;
     height: 60px;
-    color: var(--text-color);
+    color: #fff;
     text-align: center;
+
 }
 
 /* --- Navigation Menu --- */
 nav {
+    box-sizing: border-box;
     border-right: 1px solid #ddd;
-    background-color: var(--secondary-color);
+    background-color: #f4f4f4;
     padding: 20px 0;
     width: 220px;
     overflow-y: auto;
-    /* Allow scrolling if many apps */
+
 }
 
 nav ul {
@@ -60,21 +61,20 @@ nav ul li a {
     display: block;
     transition: background-color 0.2s, color 0.2s;
     padding: 12px 20px;
-    color: var(--primary-color);
+    color: #333;
     font-weight: bold;
     text-decoration: none;
 }
 
 nav ul li a:hover {
-    background-color: var(--accent-color);
-    color: var(--text-color);
+    background-color: #4CAF50;
+    color: #fff;
 }
 
 
 /* --- Main Content Area --- */
 main {
     flex-grow: 1;
-    /* Takes up the remaining space */
 }
 
 iframe {
@@ -83,34 +83,31 @@ iframe {
     height: 100%;
 }
 
-/* --- Responsive Design for Mobile --- */
-@media (max-width: 768px) {
-    #app-container {
-        flex-direction: column;
-        /* Stack nav on top of main */
+@media (prefers-color-scheme: dark) {
+
+    html, body {
+        background-color: #2a2a2a;
+        color: #f4f4f4;
     }
 
+    /* --- Header --- */
+    header {
+        background-color: #202020;
+        color: #f4f4f4;
+    }
+
+    /* --- Navigation Menu --- */
     nav {
-        border-right: none;
-        border-bottom: 1px solid #ddd;
-        width: 100%;
-        height: auto;
-        overflow-y: hidden;
-    }
-
-    nav ul {
-        display: flex;
-        overflow-x: auto;
-        /* Allow horizontal scrolling for app list */
+        border-right: 1px solid #444;
+        background-color: #2a2a2a;
     }
 
     nav ul li a {
-        white-space: nowrap;
-        /* Keep app names on one line */
+        color: #f4f4f4;
     }
 
-    main {
-        height: 100%;
-        /* Ensure iframe fills remaining space */
+    nav ul li a:hover {
+        background-color: #6B9C6D;
+        color: #202020;
     }
 }
