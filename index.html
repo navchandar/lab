@@ -4,30 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lab App</title>
+    <meta name="description" content="A centralized Progressive Web App (PWA) hosting a collection of small, useful web applications, educational games, and development tools.">
+    <meta name="author" content="Naveenchandar">
+    <meta name="theme-color" content="#333">
+
+    <meta property="og:title" content="Lab App">
+    <meta property="og:type" content="website">
+
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="./static/pwa-style.css">
+
     <style>
         #update-notification { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; font-family: sans-serif; text-align: center; }
         #update-notification button { background-color: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 15px; }
     </style>
 </head>
 <body>
-    <header><h1>App Collection</h1></header>
-    <nav>
-        <ul>
+    <header><h1>Lab Apps</h1></header>
+     <div id="app-container">
+        <nav>
+            <ul>
             <li><a href="./alphabet/index.html" target="appFrame">Alphabet</a></li>
             <li><a href="./clock/index.html" target="appFrame">Clock</a></li>
             <li><a href="./color/index.html" target="appFrame">Color</a></li>
             <li><a href="./ip/index.html" target="appFrame">Ip</a></li>
-            <li><a href="./lychee/index.html" target="appFrame">Lychee</a></li>
             <li><a href="./number/index.html" target="appFrame">Number</a></li>
             <li><a href="./shapes/index.html" target="appFrame">Shapes</a></li>
             <li><a href="./smart-dom-inspector/index.html" target="appFrame">Smart-dom-inspector</a></li>
-            <li><a href="./static/index.html" target="appFrame">Static</a></li>
-        </ul>
-    </nav>
-    <main><iframe name="appFrame" src="./alphabet/index.html"></iframe></main>
-    
+            </ul>
+        </nav>
+        <main><iframe name="appFrame" src=""></iframe></main>
+    </div>
+
     <div id="update-notification">
         <span>A new version is available!</span>
         <button id="refresh-button">Refresh</button>
