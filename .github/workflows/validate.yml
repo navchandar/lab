@@ -32,15 +32,15 @@ jobs:
         run: node ./build-pwa.js
 
       - name: Validate HTML
-        run: htmlhint --config config/.htmlhintrc .
+        run: npx htmlhint --config config/.htmlhintrc .
 
       - name: Validate CSS
         run: |
           css_files=$(find . -name "*.css" -type f -size +0c)
-          csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
+          npx csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
 
       - name: Validate JS
-        run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
+        run: npx eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
 
       - name: Validate Broken Links
         uses: lycheeverse/lychee-action@v2
