@@ -45,13 +45,14 @@ jobs:
       - name: Validate Broken Links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --base . --verbose --no-progress "./**/*.md" "./**/*.html"
+          args: --base . --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
 
       - name: Validate Spelling
         uses: rojopolis/spellcheck-github-actions@0.52.0
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
+          excluded_patterns: "node_modules/**"
 
       - name: Commit and push if changed
         if: github.event_name == 'push'
