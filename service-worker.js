@@ -32,6 +32,7 @@ const urlsToCache = [
   'smart-dom-inspector/locator_helper.js',
   'smart-dom-inspector/script.js',
   'smart-dom-inspector/style.css',
+  'static/app_script.js',
   'static/icons/ico/android-icon-144x144.png',
   'static/icons/ico/android-icon-192x192.png',
   'static/icons/ico/android-icon-36x36.png',
@@ -60,7 +61,6 @@ const urlsToCache = [
   'static/icons/ico/ms-icon-70x70.png',
   'static/icons/settings-open.svg',
   'static/icons/settings.svg',
-  'static/app_script.js',
   'static/settings.css',
   'static/speech_helper.js',
   'static/utils.js'
