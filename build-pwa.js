@@ -7,16 +7,18 @@ const ROOT_DIR = ".";
 const IGNORED_DIRS = [
   ".git",
   ".github",
-  "node_modules",
   "config",
+  "node_modules",
   "Lychee",
   "stefanzweifel",
+  "ip",
+  "smart-dom-inspector",
 ];
 const IGNORED_FILES = [
   "build-pwa.js",
-  "README.md",
   "service-worker.js",
   ".gitignore",
+  "README.md",
   "LICENSE",
 ];
 const staticFiles = [
@@ -28,6 +30,43 @@ const staticFiles = [
   "./static/icons/icon-512x512.png",
 ];
 // --- 1. Generate index.html ---
+
+// Extract favicon path or base64 from index.html
+function getFavicon(appDir) {
+  const indexPath = path.join(appDir, "index.html");
+  if (!fs.existsSync(indexPath)) {
+    return "";
+  }
+
+  const html = fs.readFileSync(indexPath, "utf8");
+  let href = "";
+
+  // Matches any link tag with rel='icon' or rel='shortcut icon' and captures the href value.
+  const faviconRegex =
+    /<link\s+(?=[^>]*rel=["'](?:shortcut )?icon["'])(?=[^>]*href=["']([^"']+)["'])[^>]+>/i;
+  const match = html.match(faviconRegex);
+
+  if (match && match[1]) {
+    href = match[1];
+  }
+
+  // If no favicon link tag was found
+  if (!href) {
+    return "";
+  }
+
+  // 2. Handle base64 image immediately
+  if (href.startsWith("data:image")) {
+    return href;
+  }
+
+  // 3. Resolve relative path to favicon
+  // The 'href' might be absolute (e.g., /favicon.ico) or relative (e.g., ./images/favicon.ico)
+  const faviconPath = path.join(appDir, href);
+  // Resolve path relative to the current working directory and normalize slashes
+  const relativePath = path.relative(".", faviconPath).replace(/\\/g, "/");
+  return relativePath;
+}
 
 function generateIndexHtml() {
   console.log("🎨 Generating index.html...");
@@ -55,8 +94,13 @@ function generateIndexHtml() {
   const appLinks = appDirs
     .map((dir) => {
       const appName = dir.name;
-      const displayName = appName.toUpperCase();
-      return `            <li><a href="./${appName}/index.html" target="appFrame">${displayName}</a></li>`;
+      const displayName = appName.toUpperCase().replace("-", " ");
+      const favicon = getFavicon(`./${appName}`);
+      const faviconImg = favicon
+        ? `<img src="${favicon}" alt="favicon" class="favicon">`
+        : "";
+
+      return `            <li><a href="./${appName}/index.html" target="appFrame">${faviconImg}${displayName}</a></li>`;
     })
     .join("\n");
 
@@ -66,12 +110,12 @@ function generateIndexHtml() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lab App</title>
+    <title>Mini Apps</title>
     <link rel="manifest" href="manifest.json">
 
-    <meta name="description" content="A centralized Progressive Web App (PWA) hosting a collection of small, useful web applications, educational games, and development tools.">
+    <meta name="description" content="A centralized Progressive Web App (PWA) hosting a collection of small, useful mini web applications, educational games, and development tools.">
     <meta name="author" content="Naveenchandar">
-    <meta property="og:title" content="Lab App">
+    <meta property="og:title" content="Mini Apps">
     <meta property="og:type" content="website">
 
     <link rel="icon" type="image/png" sizes="192x192"  href="./static/icons/ico/android-icon-192x192.png">

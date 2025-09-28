@@ -109,6 +109,12 @@ iframe {
     color: white;
 }
 
+.favicon {
+    margin-right: 5px;
+    width: 16px;
+    height: 16px;
+}
+
 #hamburger-menu {
     display: none;
     position: absolute;
@@ -139,13 +145,25 @@ iframe {
     height: calc(100vh - 60px);
 }
 
+#sidebar {
+    transform: translateX(-220px);
+    transition: transform 0.3s ease;
+}
+
+#sidebar.overlay {
+    transform: translateX(0);
+}
+
+
 #sidebar.overlay ul li a {
     color: white;
 }
 
 #sidebar ul li.active a {
+    border-left: 4px solid #2e7d32;
     background-color: #4CAF50;
     color: white;
+
 }
 
 @media (max-width: 768px) {
