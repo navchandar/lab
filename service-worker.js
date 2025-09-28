@@ -22,6 +22,8 @@ const urlsToCache = [
   'number/preview.gif',
   'number/script.js',
   'number/style.css',
+  'package-lock.json',
+  'package.json',
   'shapes/index.html',
   'shapes/script.js',
   'shapes/style.css',
