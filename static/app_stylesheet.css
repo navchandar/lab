@@ -83,6 +83,89 @@ iframe {
     height: 100%;
 }
 
+#update-notification {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    background-color: #333;
+    padding: 15px 25px;
+    color: white;
+    font-family: sans-serif;
+    text-align: center;
+}
+
+#update-notification button {
+    cursor: pointer;
+    margin-left: 15px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    padding: 8px 16px;
+    color: white;
+}
+
+#hamburger-menu {
+    display: none;
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    z-index: 1100;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background: #4CAF50;
+    padding: 10px 15px;
+    color: white;
+    font-size: 20px;
+}
+
+#sidebar.collapsed {
+    width: 60px;
+    overflow: hidden;
+}
+
+#sidebar.overlay {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    z-index: 1000;
+    background-color: #333;
+    width: 220px;
+    height: calc(100vh - 60px);
+}
+
+#sidebar.overlay ul li a {
+    color: white;
+}
+
+#sidebar ul li.active a {
+    background-color: #4CAF50;
+    color: white;
+}
+
+@media (max-width: 768px) {
+    #hamburger-menu {
+        display: block;
+    }
+
+    #sidebar {
+        position: absolute;
+        top: 60px;
+        left: -220px;
+        transition: left 0.3s ease;
+    }
+
+    #sidebar.overlay {
+        left: 0;
+    }
+}
+
+
 @media (prefers-color-scheme: dark) {
 
     html, body {

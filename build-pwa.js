@@ -92,28 +92,21 @@ function generateIndexHtml() {
     <meta name="theme-color" content="#ffffff">
 
     <link rel="stylesheet" href="./static/app_stylesheet.css">
-    <style>
-        #update-notification { display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: #333; color: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; font-family: sans-serif; text-align: center; }
-        #update-notification button { background-color: #4CAF50; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; margin-left: 15px; }
-    </style>
-</head>
+  </head>
 <body>
-    <header><h1>Lab Apps</h1></header>
-     <div id="app-container">
-        <nav>
-            <ul>
-${appLinks}
-            </ul>
-        </nav>
-        <main><iframe name="appFrame"></iframe></main>
+    <header><h1>Apps</h1></header>
+
+    <div id="app-container">
+      <button id="hamburger-menu" aria-label="Toggle menu">☰</button>
+      <nav id="sidebar">
+          <ul id="app-links">
+              ${appLinks}
+          </ul>
+      </nav>
+      <main><iframe name="appFrame" id="appFrame"></iframe></main>
     </div>
 
-    <div id="update-notification">
-        <span>A new version is available!</span>
-        <button id="refresh-button">Refresh</button>
-    </div>
-
-    <script src="./static/service_helper.js"></script>
+    <script src="./static/app_script.js"></script>
 
 </body>
 </html>`;

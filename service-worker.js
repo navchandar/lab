@@ -60,7 +60,7 @@ const urlsToCache = [
   'static/icons/ico/ms-icon-70x70.png',
   'static/icons/settings-open.svg',
   'static/icons/settings.svg',
-  'static/service_helper.js',
+  'static/app_script.js',
   'static/settings.css',
   'static/speech_helper.js',
   'static/utils.js'
