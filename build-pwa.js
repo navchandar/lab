@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const cheerio = require("cheerio");
 
 console.log("🚀 Starting PWA file generation with Node.js...");
 
@@ -39,32 +40,35 @@ function getFavicon(appDir) {
   }
 
   const html = fs.readFileSync(indexPath, "utf8");
-  let href = "";
+  const $ = cheerio.load(html); // Load the HTML into cheerio
 
-  // Matches any link tag with rel='icon' or rel='shortcut icon' and captures the href value.
-  const faviconRegex =
-    /<link\s+(?=[^>]*rel=["'](?:shortcut )?icon["'])(?=[^>]*href=["']([^"']+)["'])[^>]+>/i;
-  const match = html.match(faviconRegex);
+  // Use a CSS selector to find the icon link.
+  // This robustly finds links with rel="icon", "shortcut icon", "apple-touch-icon", etc.
+  // It also gracefully handles any attribute order.
+  const faviconTag = $('link[rel*="icon"]').first();
 
-  if (match && match[1]) {
-    href = match[1];
-  }
-
-  // If no favicon link tag was found
-  if (!href) {
+  if (!faviconTag.length) {
+    console.warn("No favicon found in", indexPath);
     return "";
   }
 
-  // 2. Handle base64 image immediately
+  const href = faviconTag.attr("href");
+
+  if (!href) {
+    console.warn("No favicon found in", indexPath);
+    return "";
+  }
+
+  // Handle base64 image immediately
   if (href.startsWith("data:image")) {
+    console.warn("Base64 favicon found in", indexPath);
     return href;
   }
 
-  // 3. Resolve relative path to favicon
-  // The 'href' might be absolute (e.g., /favicon.ico) or relative (e.g., ./images/favicon.ico)
+  // Resolve the path for local files
   const faviconPath = path.join(appDir, href);
-  // Resolve path relative to the current working directory and normalize slashes
   const relativePath = path.relative(".", faviconPath).replace(/\\/g, "/");
+  console.warn("Image favicon found in", indexPath);
   return relativePath;
 }
 
