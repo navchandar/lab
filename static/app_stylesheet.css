@@ -58,11 +58,13 @@ nav ul {
 }
 
 nav ul li a {
-    display: block;
+    display: inline-flex;
+    align-content: center;
     transition: background-color 0.2s, color 0.2s;
     padding: 12px 20px;
     color: #333;
     font-weight: bold;
+    text-align: center;
     text-decoration: none;
 }
 
@@ -118,7 +120,7 @@ iframe {
 #hamburger-menu {
     display: none;
     position: absolute;
-    top: 70px;
+    top: 20px;
     left: 10px;
     z-index: 1100;
     cursor: pointer;
@@ -127,7 +129,7 @@ iframe {
     background: #4CAF50;
     padding: 10px 15px;
     color: white;
-    font-size: 20px;
+    font-size: 25px;
 }
 
 #sidebar.collapsed {
@@ -137,12 +139,15 @@ iframe {
 
 #sidebar.overlay {
     position: absolute;
-    top: 60px;
     left: 0;
     z-index: 1000;
     background-color: #333;
     width: 220px;
     height: calc(100vh - 60px);
+}
+
+#sidebar.collapsed {
+    background-color: #333;
 }
 
 #sidebar {
