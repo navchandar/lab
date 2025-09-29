@@ -68,11 +68,14 @@ nav ul li a {
     text-decoration: none;
 }
 
-nav ul li a:hover {
+nav ul li:hover {
     background-color: #4CAF50;
     color: #fff;
 }
 
+nav ul li:hover a {
+    color: #fff;
+}
 
 /* --- Main Content Area --- */
 main {
@@ -153,6 +156,7 @@ iframe {
 #sidebar {
     transform: translateX(-220px);
     transition: transform 0.3s ease;
+    padding-top: 6em;
 }
 
 #sidebar.overlay {
@@ -178,9 +182,9 @@ iframe {
 
     #sidebar {
         position: absolute;
-        top: 60px;
         left: -220px;
         transition: left 0.3s ease;
+        padding-top: 6em;
     }
 
     #sidebar.overlay {
@@ -212,8 +216,13 @@ iframe {
         color: #f4f4f4;
     }
 
-    nav ul li a:hover {
+
+    nav ul li:hover {
         background-color: #6B9C6D;
+        color: #202020;
+    }
+
+    nav ul li:hover a {
         color: #202020;
     }
 }

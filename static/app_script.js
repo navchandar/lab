@@ -93,6 +93,7 @@ function initializeAppUI() {
       const href = link.getAttribute("href");
       iframe.setAttribute("src", href);
 
+      sidebar.classList.remove("overlay");
       sidebar.classList.add("collapsed");
       hamburger.style.display = "block";
 
