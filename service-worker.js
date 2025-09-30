@@ -22,8 +22,6 @@ const urlsToCache = [
   'number/preview.gif',
   'number/script.js',
   'number/style.css',
-  'package-lock.json',
-  'package.json',
   'shapes/index.html',
   'shapes/script.js',
   'shapes/style.css',
@@ -68,14 +66,33 @@ if (duplicates.length > 0) {
 
 self.addEventListener("install", (event) => {
   console.log("[SW] Installing and caching:", CACHE_NAME);
+
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log("[SW] Caching app shell...");
-      return cache.addAll(urlsToCache);
+
+      // Map each URL to a Promise for cache.add()
+      const cachePromises = urlsToCache.map((url) => {
+        return cache.add(url)
+          .then(() => ({ status: 'fulfilled', url }))
+          .catch((error) => ({ status: 'rejected', url, error }));
+      });
+
+      // Wait for all caching attempts to finish (settle)
+      return Promise.allSettled(cachePromises).then((results) => {
+        const failed = results.filter(result => result.status === 'rejected');
+        const successful = results.filter(result => result.status === 'fulfilled');
+
+        if (failed.length > 0) {
+          console.error("[SW]", failed.length, "resources failed to cache:", failed);
+        }
+          console.error("[SW] Successfully cached", successful.length, "resources");
+      });
     })
   );
   self.skipWaiting();
 });
+
 
 self.addEventListener("activate", (event) => {
   console.log("[SW] Activating:", CACHE_NAME);
