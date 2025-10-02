@@ -123,16 +123,16 @@ iframe {
 #hamburger-menu {
     display: none;
     position: absolute;
-    top: 20px;
+    top: 10px;
     left: 10px;
     z-index: 1100;
     cursor: pointer;
     border: none;
     border-radius: 5px;
     background: #4CAF50;
-    padding: 10px 15px;
+    padding: 8px 12px;
     color: white;
-    font-size: 25px;
+    font-size: 20px;
 }
 
 #sidebar.collapsed {
@@ -168,7 +168,7 @@ iframe {
     color: white;
 }
 
-#sidebar ul li.active a {
+#sidebar ul li.active {
     border-left: 4px solid #2e7d32;
     background-color: #4CAF50;
     color: white;
