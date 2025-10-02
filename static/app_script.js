@@ -83,11 +83,6 @@ function listenForControllerChange() {
 function updateThemeColorFromIframe() {
   const iframe = document.getElementById("appFrame");
 
-  // Ensure the iframe element exists
-  if (!iframe) {
-    console.error(`Iframe with ID "${iframeId}" not found.`);
-    return;
-  }
   try {
     // Access the content document of the iframe
     const iframeDocument = iframe.contentWindow.document;
@@ -126,52 +121,54 @@ function updateThemeColorFromIframe() {
   }
 }
 
-
 function monitorIframeBackgroundColor() {
-    const iframe = document.getElementById("appFrame");
+  const iframe = document.getElementById("appFrame");
 
-    if (!iframe) {
-        console.error(`Iframe with ID "${iframeId}" not found.`);
-        return;
-    }
+  if (!iframe) {
+    console.error("Iframe not found.");
+    return;
+  }
 
-    // --- 1. Initial Load and Setup ---
-    iframe.onload = function() {
-        // Run the update once the content is loaded
-        updateThemeColorFromIframe();
+  // --- 1. Initial Load and Setup ---
+  iframe.onload = function () {
+    // Run the update once the content is loaded
+    updateThemeColorFromIframe();
 
-        try {
-            const iframeBody = iframe.contentWindow.document.body;
+    try {
+      const iframeBody = iframe.contentWindow.document.body;
 
-            // --- 2. Create the MutationObserver ---
-            const observer = new MutationObserver(function(mutationsList, observer) {
-                // Check if any change was an attribute change on the body
-                for (const mutation of mutationsList) {
-                    if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                        // The style attribute changed, re-run the update function
-                        updateThemeColorFromIframe();
-                    }
-                }
-            });
-
-            // --- 3. Configuration and Start Observing ---
-            const config = {
-                attributes: true, // Watch for attribute changes
-                attributeFilter: ['style'], // Only care about the 'style' attribute
-                subtree: false // Don't watch children, just the body itself
-            };
-
-            // Start observing the iframe's body element
-            observer.observe(iframeBody, config);
-            console.log('MutationObserver started on iframe body.');
-
-        } catch (e) {
-            console.error('Cannot set up MutationObserver due to Same-Origin Policy. The iframe content is likely cross-origin.', e);
+      // --- 2. Create the MutationObserver ---
+      const observer = new MutationObserver(function (mutationsList, observer) {
+        // Check if any change was an attribute change on the body
+        for (const mutation of mutationsList) {
+          if (
+            mutation.type === "attributes" &&
+            mutation.attributeName === "style"
+          ) {
+            // The style attribute changed, re-run the update function
+            updateThemeColorFromIframe();
+          }
         }
-    };
+      });
+
+      // --- 3. Configuration and Start Observing ---
+      const config = {
+        attributes: true, // Watch for attribute changes
+        attributeFilter: ["style"], // Only care about the 'style' attribute
+        subtree: false, // Don't watch children, just the body itself
+      };
+
+      // Start observing the iframe's body element
+      observer.observe(iframeBody, config);
+      console.log("MutationObserver started on iframe body.");
+    } catch (e) {
+      console.error(
+        "Cannot set up MutationObserver due to Same-Origin Policy. The iframe content is likely cross-origin.",
+        e
+      );
+    }
+  };
 }
-
-
 
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
