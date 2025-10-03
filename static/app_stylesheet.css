@@ -50,7 +50,6 @@ nav {
     padding: 20px 0;
     width: 220px;
     overflow-y: auto;
-
 }
 
 nav ul {
@@ -135,7 +134,19 @@ iframe {
     font-size: 20px;
 }
 
+
+#sidebar {
+    transform: translateX(-220px);
+    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, border-right-color 0.3s ease-in-out;
+    box-sizing: content-box;
+    padding-top: 6em;
+    width: 220px;
+    height: 100vh;
+}
+
+
 #sidebar.collapsed {
+    border-right-color: transparent;
     width: 0px;
     overflow: hidden;
 }
@@ -143,25 +154,10 @@ iframe {
 #sidebar.overlay {
     position: absolute;
     left: 0;
+    transform: translateX(0);
     z-index: 1000;
     background-color: #333;
     width: 220px;
-}
-
-#sidebar.collapsed {
-    background-color: #333;
-}
-
-#sidebar {
-    transform: translateX(-220px);
-    transition: transform 0.3s ease-out;
-    box-sizing: content-box;
-    padding-top: 6em;
-    height: 100vh;
-}
-
-#sidebar.overlay {
-    transform: translateX(0);
 }
 
 
@@ -184,13 +180,13 @@ iframe {
     #sidebar {
         position: absolute;
         left: -220px;
-        transition: left 0.3s ease-out;
         box-sizing: content-box;
         padding-top: 6em;
     }
 
     #sidebar.overlay {
         left: 0;
+        transform: translateX(0);
     }
 }
 
