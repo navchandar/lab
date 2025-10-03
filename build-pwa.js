@@ -162,7 +162,7 @@ function generateIndexHtml() {
 
     <div id="app-container">
       <button id="hamburger-menu" aria-label="Toggle menu">☰</button>
-      <nav id="sidebar" class="overlay">
+      <nav id="sidebar" class="collapsed overlay">
         <div class="sidebar-content">
             <ul id="app-links">
               ${appLinks}

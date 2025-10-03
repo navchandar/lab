@@ -108,7 +108,6 @@ function updateThemeColorFromIframe() {
       // Set the content attribute to the iframe's body background color
       themeMetaTag.content = backgroundColor;
       console.log(`Updated theme color to: ${backgroundColor}`);
-
     } else {
       console.warn("Could not retrieve background-color from iframe body.");
     }
@@ -146,7 +145,8 @@ function monitorIframeBackgroundColor() {
             mutation.attributeName === "style"
           ) {
             // The style attribute changed, re-run the update function
-            updateThemeColorFromIframe();
+            // Wait for the next animation frame to ensure computed styles are ready.
+            requestAnimationFrame(updateThemeColorFromIframe);
           }
         }
       });
@@ -196,7 +196,7 @@ function initializeAppUI() {
       collapseSidebar();
       const href = link.getAttribute("href");
 
-        // The link is already active and loaded
+      // The link is already active and loaded
       if (iframe.getAttribute("src") === href) {
         return;
       }
