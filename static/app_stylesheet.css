@@ -48,7 +48,7 @@ nav {
     border-right: 1px solid #ddd;
     background-color: #f4f4f4;
     padding: 20px 0;
-    width: 220px;
+    width: 200px;
     overflow-y: auto;
 }
 
@@ -136,12 +136,12 @@ iframe {
 
 
 #sidebar {
-    transform: translateX(-220px);
+    transform: translateX(-200px);
     transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, border-right-color 0.3s ease-in-out;
     box-sizing: content-box;
     background-color: #333;
     padding-top: 3em;
-    width: 220px;
+    width: 200px;
     height: 100vh;
 }
 
@@ -159,7 +159,7 @@ iframe {
     left: 0;
     transform: translateX(0);
     z-index: 1000;
-    width: 220px;
+    width: 200px;
 }
 
 
@@ -199,7 +199,7 @@ iframe {
 
     #sidebar {
         position: absolute;
-        left: -220px;
+        left: -200px;
         box-sizing: content-box;
         padding-top: 3em;
     }
