@@ -97,8 +97,6 @@ function updateThemeColorFromIframe() {
     if (backgroundColor) {
       // Find or create the meta theme-color tag in the main document
       let themeMetaTag = document.querySelector('meta[name="theme-color"]');
-      let appContainer = document.querySelector("#app-container");
-
       if (!themeMetaTag) {
         // Create it if it doesn't exist
         themeMetaTag = document.createElement("meta");
@@ -111,9 +109,6 @@ function updateThemeColorFromIframe() {
       themeMetaTag.content = backgroundColor;
       console.log(`Updated theme color to: ${backgroundColor}`);
 
-      if (appContainer) {
-        appContainer.style.backgroundColor = backgroundColor;
-      }
     } else {
       console.warn("Could not retrieve background-color from iframe body.");
     }
@@ -182,25 +177,36 @@ function initializeAppUI() {
   const header = document.querySelector("body header");
   const links = document.querySelectorAll("#app-links li a");
 
+  // Function to collapse the hamburger menu/sidebar
+  const collapseSidebar = () => {
+    sidebar.classList.remove("overlay");
+    sidebar.classList.add("collapsed");
+    hamburger.style.display = "block";
+    if (header) {
+      header.style.display = "none";
+    }
+    monitorIframeBackgroundColor();
+  };
+
+  iframe.addEventListener("load", collapseSidebar);
+
   links.forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
+      collapseSidebar();
       const href = link.getAttribute("href");
-      iframe.setAttribute("src", href);
 
-      sidebar.classList.remove("overlay");
-      sidebar.classList.add("collapsed");
-      hamburger.style.display = "block";
-
-      if (header) {
-        header.style.display = "none";
+        // The link is already active and loaded
+      if (iframe.getAttribute("src") === href) {
+        return;
       }
+
+      iframe.setAttribute("src", href);
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
 
       setTimeout(() => {
-        monitorIframeBackgroundColor();
         iframe.focus();
       }, 300);
     });
@@ -208,9 +214,5 @@ function initializeAppUI() {
 
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
-  });
-
-  iframe.addEventListener("load", () => {
-    iframe.focus();
   });
 }

@@ -76,6 +76,20 @@ function getFavicon(appDir) {
 
 function generateIndexHtml() {
   console.log("🎨 Generating index.html...");
+  const now = new Date();
+  // Convert to IST (UTC + 5:30)
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istTime = new Date(now.getTime() + istOffset);
+
+  // Format: vYYYY.MM.DD_HH.MM
+  const versionString = `v${istTime.getFullYear()}.${String(
+    istTime.getMonth() + 1
+  ).padStart(2, "0")}.${String(istTime.getDate()).padStart(2, "0")}_${String(
+    istTime.getHours()
+  ).padStart(2, "0")}.${String(istTime.getMinutes()).padStart(2, "0")}`;
+
+  console.log(`Version: ${versionString}`);
+
   const potentialAppDirs = fs
     .readdirSync(ROOT_DIR, { withFileTypes: true })
     .filter(
@@ -149,9 +163,12 @@ function generateIndexHtml() {
     <div id="app-container">
       <button id="hamburger-menu" aria-label="Toggle menu">☰</button>
       <nav id="sidebar" class="overlay">
-          <ul id="app-links">
+        <div class="sidebar-content">
+            <ul id="app-links">
               ${appLinks}
-          </ul>
+            </ul>
+            <div class="version-label">Version: ${versionString}</div>
+        </div>
       </nav>
       <main><iframe name="appFrame" id="appFrame"></iframe></main>
     </div>
