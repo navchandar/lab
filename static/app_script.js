@@ -187,42 +187,63 @@ function monitorIframeBackgroundColor() {
     return;
   }
 
-  // --- Prevent re-initialization if this gets called again ---
+  // Prevent re-init if this is called more than once
   if (iframe.dataset.themeSyncInit === "1") {
     return;
   }
   iframe.dataset.themeSyncInit = "1";
+
+  // Schedule update AFTER iframe click handlers complete (next tick)
+  const scheduleUpdate = (() => {
+    let scheduled = false;
+    return () => {
+      if (scheduled) {
+        return;
+      }
+      scheduled = true;
+      setTimeout(() => {
+        scheduled = false;
+        updateThemeColorFromIframe();
+      }, 0);
+    };
+  })();
 
   const onLoad = function () {
     // Update immediately on each navigation
     updateThemeColorFromIframe();
 
     try {
-      // Clean up a previous observer (from a previous document)
+      // Disconnect previous observer (for prior iframe document)
       if (iframeBodyObserver) {
         iframeBodyObserver.disconnect();
         iframeBodyObserver = null;
       }
 
-      const iframeBody = iframe.contentWindow.document.body;
+      const doc = iframe.contentWindow.document;
+      const body = doc.body;
 
-      // Watch for inline style changes on the body
+      // Watch for style/class changes on the body
       iframeBodyObserver = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
           if (
             mutation.type === "attributes" &&
-            mutation.attributeName === "style"
+            (mutation.attributeName === "style" ||
+              mutation.attributeName === "class")
           ) {
-            requestAnimationFrame(updateThemeColorFromIframe);
+            // Run AFTER any click handler mutations in the iframe
+            scheduleUpdate();
           }
         }
       });
 
-      iframeBodyObserver.observe(iframeBody, {
+      iframeBodyObserver.observe(body, {
         attributes: true,
-        attributeFilter: ["style"],
+        attributeFilter: ["style", "class"],
         subtree: false,
       });
+
+      doc.addEventListener("click", scheduleUpdate, false);
+      body.addEventListener("transitionend", scheduleUpdate, false);
 
       console.log("MutationObserver started on iframe body.");
     } catch (e) {
@@ -233,10 +254,10 @@ function monitorIframeBackgroundColor() {
     }
   };
 
-  // add this as listener to iframe
+  // Use addEventListener to avoid overwriting onload
   iframe.addEventListener("load", onLoad);
 
-  // If the iframe is already loaded when this runs, run once now
+  // If the iframe is already loaded when this runs, fire once now
   try {
     if (
       iframe.contentDocument &&
@@ -244,7 +265,7 @@ function monitorIframeBackgroundColor() {
     ) {
       onLoad();
     }
-  } catch (e) {
+  } catch {
     // Ignore if no iframe content
   }
 }
@@ -301,6 +322,7 @@ function initializeAppUI() {
 
       setTimeout(() => {
         iframe.focus();
+        iframe.dataset.themeSyncInit = 0;
       }, 300);
     });
   });
