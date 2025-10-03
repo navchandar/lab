@@ -26,60 +26,112 @@ function registerServiceWorker() {
   listenForControllerChange();
 }
 
+/**
+ * Monitors a service worker registration for available updates.
+ * When an update is found and installed, it notifies the user.
+ * @param {ServiceWorkerRegistration} registration The service worker registration object.
+ */
 function monitorServiceWorkerUpdates(registration) {
   registration.addEventListener("updatefound", () => {
-    newWorker = registration.installing;
+    // Use 'const' to properly scope the new worker variable.
+    const newWorker = registration.installing;
+    if (!newWorker) {
+      return;
+    }
 
     newWorker.addEventListener("statechange", () => {
-      if (
-        newWorker.state === "installed" &&
-        navigator.serviceWorker.controller
-      ) {
-        // vibrate slightly if updates found
-        if (navigator.vibrate) {
-          navigator.vibrate(100);
-        }
-        const updateBanner = document.getElementById("update-notification");
-        if (updateBanner) {
-          updateBanner.style.display = "block";
-        }
+      // Check if the new worker is installed and a controller already exists.
+      const isUpdateReady =
+        newWorker.state === "installed" && navigator.serviceWorker.controller;
+
+      if (isUpdateReady) {
+        // Separate the UI logic into its own function.
+        showUpdateNotification();
       }
     });
   });
 }
 
-function setupUpdateNotification() {
-  const html = `
-    <div id="update-notification" role="alert">
-      <span>A new version is available!</span>
-      <button id="refresh-button">Refresh</button>
-    </div>
-  `;
-  document.body.insertAdjacentHTML("beforeend", html);
+/**
+ * Handles the UI logic to show the update notification to the user.
+ */
+function showUpdateNotification() {
+  console.log("A new version is available. Showing update banner.");
 
-  const refreshButton = document.getElementById("refresh-button");
-  refreshButton?.addEventListener("click", () => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.getRegistration().then((reg) => {
-        if (reg?.waiting) {
-          const worker = newWorker || reg.waiting;
-          worker.postMessage({ type: "SKIP_WAITING" });
+  // Provide tactile feedback if the Vibration API is supported.
+  if (navigator.vibrate) {
+    navigator.vibrate(100); 
+  }
+
+  // Safely get and display the notification banner.
+  const updateBanner = document.getElementById("update-notification");
+  if (updateBanner) {
+    updateBanner.style.display = "block";
+  } else {
+    console.log("Update notification element not found");
+  }
+}
+
+/**
+ * Creates and displays an update notification, attaching the necessary event listeners.
+ */
+function setupUpdateNotification() {
+  // Use createElement for safer and more manageable DOM manipulation
+  const notification = document.createElement("div");
+  notification.id = "update-notification";
+  notification.setAttribute("role", "alert");
+
+  const message = document.createElement("span");
+  message.textContent = "A new version is available!";
+
+  const refreshButton = document.createElement("button");
+  refreshButton.id = "refresh-button";
+  refreshButton.textContent = "Refresh";
+
+  notification.append(message, refreshButton);
+  document.body.appendChild(notification);
+
+  // Use async/await for cleaner asynchronous logic
+  refreshButton.addEventListener("click", async () => {
+    try {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        // Check for a waiting worker and post the message
+        if (registration?.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
         } else {
+          // Fallback if no waiting worker is found
           window.location.reload();
         }
-      });
-    } else {
+      } else {
+        window.location.reload();
+      }
+    } catch (error) {
+      console.error("Error during service worker update:", error);
+      // Always provide a fallback reload if an error occurs
       window.location.reload();
     }
   });
 }
 
+/**
+ * Listens for when the new service worker takes control, then reloads the page.
+ */
 function listenForControllerChange() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  let isRefreshing = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
+    // Prevent potential multiple reloads
+    if (isRefreshing) {
+      return;
+    }
+    isRefreshing = true;
     window.location.reload();
   });
 }
-
 function updateThemeColorFromIframe() {
   const iframe = document.getElementById("appFrame");
 
