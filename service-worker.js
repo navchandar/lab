@@ -83,10 +83,10 @@ self.addEventListener("install", (event) => {
         const failed = results.filter(result => result.status === 'rejected');
         const successful = results.filter(result => result.status === 'fulfilled');
 
+        console.log("[SW] Successfully cached", successful.length, "resources");
         if (failed.length > 0) {
           console.error("[SW]", failed.length, "resources failed to cache:", failed);
         }
-          console.error("[SW] Successfully cached", successful.length, "resources");
       });
     })
   );
