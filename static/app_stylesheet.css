@@ -136,7 +136,7 @@ iframe {
 }
 
 #sidebar.collapsed {
-    width: 60px;
+    width: 0px;
     overflow: hidden;
 }
 
@@ -146,7 +146,6 @@ iframe {
     z-index: 1000;
     background-color: #333;
     width: 220px;
-    height: calc(100vh - 60px);
 }
 
 #sidebar.collapsed {
@@ -157,6 +156,7 @@ iframe {
     transform: translateX(-220px);
     transition: transform 0.3s ease;
     padding-top: 6em;
+    height: 100vh;
 }
 
 #sidebar.overlay {

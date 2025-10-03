@@ -97,6 +97,7 @@ function updateThemeColorFromIframe() {
     if (backgroundColor) {
       // Find or create the meta theme-color tag in the main document
       let themeMetaTag = document.querySelector('meta[name="theme-color"]');
+      let appContainer = document.querySelector("#app-container");
 
       if (!themeMetaTag) {
         // Create it if it doesn't exist
@@ -109,6 +110,10 @@ function updateThemeColorFromIframe() {
       // Set the content attribute to the iframe's body background color
       themeMetaTag.content = backgroundColor;
       console.log(`Updated theme color to: ${backgroundColor}`);
+
+      if (appContainer) {
+        appContainer.style.backgroundColor = backgroundColor;
+      }
     } else {
       console.warn("Could not retrieve background-color from iframe body.");
     }
