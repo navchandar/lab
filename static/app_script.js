@@ -155,6 +155,8 @@ function updateThemeColorFromIframe() {
     const computedStyle = window.getComputedStyle(iframeBody);
     const backgroundColor = computedStyle.getPropertyValue("background-color");
 
+    iframeBody.addEventListener("click", collapseSidebar);
+
     // Check if a color was successfully retrieved
     if (backgroundColor) {
       // Find or create the meta theme-color tag in the main document
@@ -247,26 +249,35 @@ function monitorIframeBackgroundColor() {
   }
 }
 
+const collapseSidebar = () => {
+  const sidebar = document.getElementById("sidebar");
+  const hamburger = document.getElementById("hamburger-menu");
+  const header = document.querySelector("body header");
+
+  if (!sidebar.classList.contains("collapsed")) {
+    sidebar.classList.add("collapsed");
+  }
+  if (sidebar.classList.contains("overlay")) {
+    sidebar.classList.remove("overlay");
+  }
+  if (hamburger.style.display !== "block") {
+    hamburger.style.display = "block";
+  }
+
+  if (header && header.style.display !== "none") {
+    header.style.display = "none";
+    sidebar.style.paddingTop = "6.75em";
+  }
+};
+
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
   const sidebar = document.getElementById("sidebar");
   const hamburger = document.getElementById("hamburger-menu");
-  const header = document.querySelector("body header");
   const links = document.querySelectorAll("#app-links li a");
 
   // Initialize theme sync once at startup
   monitorIframeBackgroundColor();
-
-  const collapseSidebar = () => {
-    sidebar.classList.add("collapsed");
-    sidebar.classList.remove("overlay");
-    hamburger.style.display = "block";
-
-    if (header) {
-      header.style.display = "none";
-      sidebar.style.paddingTop = "6.75em";
-    }
-  };
 
   iframe.addEventListener("load", collapseSidebar);
 
@@ -296,5 +307,22 @@ function initializeAppUI() {
 
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    // '=' key shortcut to toggle the sidebar
+    if (event.key === "=") {
+      event.preventDefault();
+      sidebar.classList.toggle("overlay");
+    } else if (event.key === "Escape") {
+      collapseSidebar();
+    }
+  });
+
+  document.addEventListener("focusin", (event) => {
+    // Check if the element that received focus is an iframe
+    if (event.target.tagName === "IFRAME") {
+      collapseSidebar();
+    }
   });
 }

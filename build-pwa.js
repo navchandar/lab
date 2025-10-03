@@ -167,10 +167,10 @@ function generateIndexHtml() {
             <ul id="app-links">
               ${appLinks}
             </ul>
-            <div class="version-label">Version: ${versionString}</div>
+            <div class="version-label">${versionString}</div>
         </div>
       </nav>
-      <main><iframe name="appFrame" id="appFrame"></iframe></main>
+      <main><iframe name="appFrame" title="App Frame" id="appFrame"></iframe></main>
     </div>
 
     <script src="./static/app_script.js"></script>
@@ -252,10 +252,10 @@ self.addEventListener("install", (event) => {
         const failed = results.filter(result => result.status === 'rejected');
         const successful = results.filter(result => result.status === 'fulfilled');
 
+        console.log("[SW] Successfully cached", successful.length, "resources");
         if (failed.length > 0) {
           console.error("[SW]", failed.length, "resources failed to cache:", failed);
         }
-          console.error("[SW] Successfully cached", successful.length, "resources");
       });
     })
   );
