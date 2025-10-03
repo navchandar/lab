@@ -1,5 +1,6 @@
 const swPath = "/lab/service-worker.js";
 let newWorker = null;
+let iframeBodyObserver = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeAppUI();
@@ -136,8 +137,13 @@ function listenForControllerChange() {
     window.location.reload();
   });
 }
+
 function updateThemeColorFromIframe() {
   const iframe = document.getElementById("appFrame");
+  if (!iframe) {
+    console.error("Iframe not found.");
+    return;
+  }
 
   try {
     // Access the content document of the iframe
@@ -154,23 +160,19 @@ function updateThemeColorFromIframe() {
       // Find or create the meta theme-color tag in the main document
       let themeMetaTag = document.querySelector('meta[name="theme-color"]');
       if (!themeMetaTag) {
-        // Create it if it doesn't exist
         themeMetaTag = document.createElement("meta");
         themeMetaTag.name = "theme-color";
         document.head.appendChild(themeMetaTag);
         console.log("Created new meta theme-color tag.");
       }
-
-      // Set the content attribute to the iframe's body background color
-      themeMetaTag.content = backgroundColor;
+      themeMetaTag.content = backgroundColor.trim();
       console.log(`Updated theme color to: ${backgroundColor}`);
     } else {
       console.warn("Could not retrieve background-color from iframe body.");
     }
   } catch (e) {
-    // This catch block will usually handle the Cross-Origin security error
     console.error(
-      "Error accessing iframe content. Check for Cross-Origin policy restrictions (CORS).",
+      "Error accessing iframe content. Check for Same-Origin restrictions.",
       e
     );
   }
@@ -178,52 +180,71 @@ function updateThemeColorFromIframe() {
 
 function monitorIframeBackgroundColor() {
   const iframe = document.getElementById("appFrame");
-
   if (!iframe) {
     console.error("Iframe not found.");
     return;
   }
 
-  // --- 1. Initial Load and Setup ---
-  iframe.onload = function () {
-    // Run the update once the content is loaded
+  // --- Prevent re-initialization if this gets called again ---
+  if (iframe.dataset.themeSyncInit === "1") {
+    return;
+  }
+  iframe.dataset.themeSyncInit = "1";
+
+  const onLoad = function () {
+    // Update immediately on each navigation
     updateThemeColorFromIframe();
 
     try {
+      // Clean up a previous observer (from a previous document)
+      if (iframeBodyObserver) {
+        iframeBodyObserver.disconnect();
+        iframeBodyObserver = null;
+      }
+
       const iframeBody = iframe.contentWindow.document.body;
 
-      // --- 2. Create the MutationObserver ---
-      const observer = new MutationObserver(function (mutationsList, observer) {
-        // Check if any change was an attribute change on the body
+      // Watch for inline style changes on the body
+      iframeBodyObserver = new MutationObserver((mutationsList) => {
         for (const mutation of mutationsList) {
           if (
             mutation.type === "attributes" &&
             mutation.attributeName === "style"
           ) {
-            // The style attribute changed, re-run the update function
-            // Wait for the next animation frame to ensure computed styles are ready.
             requestAnimationFrame(updateThemeColorFromIframe);
           }
         }
       });
 
-      // --- 3. Configuration and Start Observing ---
-      const config = {
-        attributes: true, // Watch for attribute changes
-        attributeFilter: ["style"], // Only care about the 'style' attribute
-        subtree: false, // Don't watch children, just the body itself
-      };
+      iframeBodyObserver.observe(iframeBody, {
+        attributes: true,
+        attributeFilter: ["style"],
+        subtree: false,
+      });
 
-      // Start observing the iframe's body element
-      observer.observe(iframeBody, config);
       console.log("MutationObserver started on iframe body.");
     } catch (e) {
       console.error(
-        "Cannot set up MutationObserver due to Same-Origin Policy. The iframe content is likely cross-origin.",
+        "Cannot set up MutationObserver due to Same-Origin Policy.",
         e
       );
     }
   };
+
+  // add this as listener to iframe
+  iframe.addEventListener("load", onLoad);
+
+  // If the iframe is already loaded when this runs, run once now
+  try {
+    if (
+      iframe.contentDocument &&
+      iframe.contentDocument.readyState === "complete"
+    ) {
+      onLoad();
+    }
+  } catch (e) {
+    // Ignore if no iframe content
+  }
 }
 
 function initializeAppUI() {
@@ -233,7 +254,9 @@ function initializeAppUI() {
   const header = document.querySelector("body header");
   const links = document.querySelectorAll("#app-links li a");
 
-  // Function to collapse the hamburger menu/sidebar
+  // Initialize theme sync once at startup
+  monitorIframeBackgroundColor();
+
   const collapseSidebar = () => {
     sidebar.classList.add("collapsed");
     sidebar.classList.remove("overlay");
@@ -243,8 +266,6 @@ function initializeAppUI() {
       header.style.display = "none";
       sidebar.style.paddingTop = "6.75em";
     }
-
-    monitorIframeBackgroundColor();
   };
 
   iframe.addEventListener("load", collapseSidebar);
@@ -257,10 +278,12 @@ function initializeAppUI() {
 
       // The link is already active and loaded
       if (iframe.getAttribute("src") === href) {
+        console.log(`Already loaded ${href} in iframe`);
         return;
       }
 
       iframe.setAttribute("src", href);
+      console.log(`Loading ${href} in iframe`);
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
