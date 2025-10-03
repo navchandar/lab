@@ -32,6 +32,12 @@ function registerServiceWorker() {
  * @param {ServiceWorkerRegistration} registration The service worker registration object.
  */
 function monitorServiceWorkerUpdates(registration) {
+  if (registration.waiting) {
+    // If we already have a waiting worker, it means an update is ready.
+    showUpdateNotification();
+    return;
+  }
+
   registration.addEventListener("updatefound", () => {
     // Use 'const' to properly scope the new worker variable.
     const newWorker = registration.installing;
@@ -40,10 +46,8 @@ function monitorServiceWorkerUpdates(registration) {
     }
 
     newWorker.addEventListener("statechange", () => {
-      // Check if the new worker is installed and a controller already exists.
-      const isUpdateReady =
-        newWorker.state === "installed" && navigator.serviceWorker.controller;
-
+      // Check if the new worker is installed
+      const isUpdateReady = newWorker.state === "installed";
       if (isUpdateReady) {
         // Separate the UI logic into its own function.
         showUpdateNotification();
@@ -60,7 +64,7 @@ function showUpdateNotification() {
 
   // Provide tactile feedback if the Vibration API is supported.
   if (navigator.vibrate) {
-    navigator.vibrate(100); 
+    navigator.vibrate(100);
   }
 
   // Safely get and display the notification banner.
@@ -231,12 +235,15 @@ function initializeAppUI() {
 
   // Function to collapse the hamburger menu/sidebar
   const collapseSidebar = () => {
-    sidebar.classList.remove("overlay");
     sidebar.classList.add("collapsed");
+    sidebar.classList.remove("overlay");
     hamburger.style.display = "block";
+
     if (header) {
       header.style.display = "none";
+      sidebar.style.paddingTop = "6.75em";
     }
+
     monitorIframeBackgroundColor();
   };
 

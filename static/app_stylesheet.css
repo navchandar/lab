@@ -140,13 +140,15 @@ iframe {
     transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, border-right-color 0.3s ease-in-out;
     box-sizing: content-box;
     background-color: #333;
-    padding-top: 6em;
+    padding-top: 3em;
     width: 220px;
     height: 100vh;
 }
 
 
 #sidebar.collapsed {
+    position: absolute;
+    left: 0;
     border-right-color: transparent;
     width: 0px;
     overflow: hidden;
@@ -175,14 +177,14 @@ iframe {
 .sidebar-content {
     display: flex;
     flex-direction: column;
-    height: 82%;
 }
 
 .version-label {
-    margin-top: auto;
+    margin-top: 30px;
+    margin-bottom: 20px;
     border-top: 1px solid #444;
     background-color: #333;
-    padding: 10px;
+    padding: 8px;
     color: #ccc;
     font-size: 0.85em;
     text-align: center;
@@ -197,7 +199,7 @@ iframe {
         position: absolute;
         left: -220px;
         box-sizing: content-box;
-        padding-top: 6em;
+        padding-top: 3em;
     }
 
     #sidebar.overlay {
