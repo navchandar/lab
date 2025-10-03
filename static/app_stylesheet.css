@@ -154,7 +154,8 @@ iframe {
 
 #sidebar {
     transform: translateX(-220px);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease-out;
+    box-sizing: content-box;
     padding-top: 6em;
     height: 100vh;
 }
@@ -183,7 +184,8 @@ iframe {
     #sidebar {
         position: absolute;
         left: -220px;
-        transition: left 0.3s ease;
+        transition: left 0.3s ease-out;
+        box-sizing: content-box;
         padding-top: 6em;
     }
 
