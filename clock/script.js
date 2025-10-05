@@ -451,6 +451,19 @@
       if (e.key === "Escape") {
         this.state.selectedHand = null;
       }
+
+      const keyNum = parseInt(e.key, 10);
+      if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 12) {
+        // Convert to 24-hour format based on current time
+        const currentMinutes = Math.round(this.state.totalMinutes);
+        const currentHours = Math.floor(
+          utils.mod(currentMinutes, C.MINUTES_IN_24_HOURS) / 60
+        );
+        const isAm = currentHours < 12;
+        const h12 = keyNum % 12;
+        const newHour = isAm ? h12 : h12 + 12;
+        this.setTime(newHour, 0, true);
+      }
     }
 
     // --- Helper Methods ---

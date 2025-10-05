@@ -48,6 +48,7 @@ p {
     margin: 0 auto;
     margin-bottom: 20px;
     box-shadow: 0 10px 10px rgba(0, 0, 0, 0.5);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 1), 0 10px 20px rgba(0, 0, 0, 0.5);
     border: 8px solid var(--border);
     border-radius: 50%;
     background: var(--clock-bg);
@@ -62,25 +63,28 @@ p {
     left: 50%;
     transform: translate(-50%, -90%) rotate(0deg);
     transform-origin: 50% 90%;
+    /*     clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%); */
     transition: transform 0.35s ease-in-out;
     cursor: grab;
     box-sizing: content-box;
-    border-radius: 4px;
+    border-radius: 10px;
     touch-action: none;
 }
 
 .hand.hour {
     z-index: 2;
+    border: 3px solid color-mix(in srgb, var(--accent-hour) 60%, black);
     background: var(--accent-hour);
-    width: 10px;
+    width: 11px;
     height: 80px;
 }
 
 .hand.minute {
     z-index: 1;
+    border: 3px solid color-mix(in srgb, var(--accent-minute) 60%, black);
     background: var(--accent-minute);
     width: 5px;
-    height: 120px
+    height: 115px;
 }
 
 #hourHand,
@@ -100,10 +104,14 @@ p {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    border: 2px solid rgba(0, 0, 0, 0.5);
     border-radius: 50%;
     background: var(--text);
+    background: radial-gradient(circle at center, #fff 0%, #999 100%);
     width: 16px;
     height: 16px;
+    ;
 }
 
 .number {
@@ -112,8 +120,10 @@ p {
     transform: translate(-50%, -50%);
     cursor: pointer;
     padding: 10px;
+    color: #333;
     font-weight: bold;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
+    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
 }
 
 .tick {
@@ -125,6 +135,7 @@ p {
     transform-origin: center center;
     cursor: pointer;
     box-sizing: content-box;
+    border-radius: 1px;
     background: var(--text);
     background-clip: content-box;
     padding: 10px;
@@ -135,17 +146,17 @@ p {
 /* Digital input */
 input[type="time"] {
     box-sizing: border-box;
-    border: 2px solid var(--border);
-    border-radius: 8px;
+    border: 5px solid var(--border);
+    border-radius: 10px;
     background: var(--card);
-    padding: 8px 12px;
+    padding: 6px 25px;
     width: 12ch;
     min-width: 0;
     height: 40px;
     min-inline-size: 0;
     color: var(--text);
     font-weight: bold;
-    font-size: 1rem;
+    font-size: 1.2rem;
     line-height: normal;
 }
 
