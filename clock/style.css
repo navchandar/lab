@@ -47,8 +47,8 @@ p {
     box-sizing: content-box;
     margin: 0 auto;
     margin-bottom: 20px;
-    box-shadow: 0 10px 10px rgba(0, 0, 0, 0.5);
-    box-shadow: inset 0 0 10px rgba(0, 0, 0, 1), 0 10px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 10px var(--text-shadow);
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 1), 0 10px 20px var(--text-shadow);
     border: 8px solid var(--border);
     border-radius: 50%;
     background: var(--clock-bg);
@@ -63,7 +63,7 @@ p {
     left: 50%;
     transform: translate(-50%, -90%) rotate(0deg);
     transform-origin: 50% 90%;
-    /*     clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%); */
+    /* clip-path: polygon(50% 0%, 100% 20%, 100% 100%, 0% 100%, 0% 20%); */
     transition: transform 0.35s ease-in-out;
     cursor: grab;
     box-sizing: content-box;
@@ -73,6 +73,7 @@ p {
 
 .hand.hour {
     z-index: 2;
+    box-sizing: content-box;
     border: 3px solid color-mix(in srgb, var(--accent-hour) 60%, black);
     background: var(--accent-hour);
     width: 11px;
@@ -81,6 +82,7 @@ p {
 
 .hand.minute {
     z-index: 1;
+    box-sizing: content-box;
     border: 3px solid color-mix(in srgb, var(--accent-minute) 60%, black);
     background: var(--accent-minute);
     width: 5px;
@@ -104,14 +106,14 @@ p {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 10;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
-    border: 2px solid rgba(0, 0, 0, 0.5);
+    box-sizing: content-box;
+    box-shadow: 0 0 5px var(--text-shadow);
+    border: 2px solid var(--text-shadow);
     border-radius: 50%;
     background: var(--text);
     background: radial-gradient(circle at center, #fff 0%, #999 100%);
     width: 16px;
     height: 16px;
-    ;
 }
 
 .number {
@@ -120,10 +122,9 @@ p {
     transform: translate(-50%, -50%);
     cursor: pointer;
     padding: 10px;
-    color: #333;
     font-weight: bold;
     font-size: 1.4rem;
-    text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.5);
+    text-shadow: 0px 1px 1px var(--text-shadow);
 }
 
 .tick {

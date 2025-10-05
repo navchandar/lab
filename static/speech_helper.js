@@ -305,6 +305,7 @@ export const TTS = () => {
    * @param {string[]} [options.preferredVendors=['Google','Microsoft','Apple']]
    * @param {string} [options.forceVoiceName] // exact voice name if you know it
    * @param {boolean} [options.chunk=true] // split long text into smaller utterances
+   * @param {boolean} [options.directSpeech=false] // Speak the given text directly
    * @param {function} [options.onStart]
    * @param {function} [options.onEnd]
    * @param {function} [options.onBoundary] // word/char boundary events
@@ -322,23 +323,29 @@ export const TTS = () => {
       preferredVendors = ["Google", "Microsoft", "Apple"],
       forceVoiceName,
       chunk = true,
+      directSpeech = false,
       onStart,
       onEnd,
       onBoundary,
     } = options;
 
-    const el = getElementFromInput(elOrSelector);
-    if (!el) {
-      console.warn("[TTS] Element not found for:", elOrSelector);
-      return;
+    let text;
+
+    if (options.directSpeech) {
+      text = elOrSelector;
+    } else {
+      const el = getElementFromInput(elOrSelector);
+      if (!el) {
+        console.warn("[TTS] Element not found for:", elOrSelector);
+        return;
+      }
+      text = extractTextContent(el);
     }
 
-    const text = extractTextContent(el);
     if (!text) {
       console.warn("[TTS] No textContent found to speak.");
       return;
     }
-
     const synth = window.speechSynthesis;
 
     // If already speaking, cancel the current queue to avoid overlap

@@ -40,6 +40,7 @@
           --bg: #4e4e4e;
           --card: lightgrey;
           --text: #123;
+          --text-shadow: rgba(0, 0, 0, 0.5);
           --clock-bg: whitesmoke;
           --clock-bgimg: radial-gradient(white, white, #afafaf);
           --accent-hour: #ff7b7b;
@@ -54,12 +55,13 @@
               --bg: #121212;
               --card: #242424;
               --text: #eee;
+              --text-shadow: rgba(150, 150, 150, 0.5);
               --clock-bg: #333;
               --clock-bgimg: radial-gradient(grey, grey, black);
               --accent-hour: #ff9f9f;
               --accent-minute: #5ce0b9;
               --border: rgba(255, 255, 255, 0.6);
-              --shadow:  0 1px 1px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.9);
+              --shadow:  0 1px 1px rgba(15, 2, 2, 0.5), 0 8px 16px rgba(0, 0, 0, 0.9);
           }
       }
       /* csslint ignore:end */
@@ -110,6 +112,53 @@
 
         <!-- Digital -->
         <input type="time" id="timeInput" lang="en-US" step="60" value="00:00" />
+      </div>
+    </div>
+
+     <button
+      id="muteButton"
+      aria-label="Mute sound"
+      disabled
+      title="Mute sound"
+    ></button>
+
+    <button
+      id="fullscreen-btn"
+      aria-label="Toggle fullscreen mode"
+      title="Toggle fullscreen"
+    >
+      <svg
+        id="fullscreen-icon"
+        fill="none"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      ></svg>
+    </button>
+
+    <!-- Settings Button -->
+    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+      <img
+        id="settings-icon"
+        src="../static/icons/settings.svg"
+        width="24"
+        height="24"
+        alt="Settings"
+        aria-hidden="true"
+      />
+    </button>
+
+    <!-- Overlay Menu -->
+    <div id="settings-menu">
+      <div class="randomize-checkbox">
+        <label for="randomize" id="randomize-label">Randomize Time:</label>
+        <input type="checkbox" id="randomize" />
+      </div>
+
+      <div class="autoplay-checkbox">
+        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+        <input type="checkbox" id="autoplay" />
       </div>
     </div>
 

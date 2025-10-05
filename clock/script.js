@@ -1,3 +1,15 @@
+import * as utils from "../static/utils.js";
+import { TTS } from "../static/speech_helper.js";
+
+// --- DOM Element References ---
+const muteButton = document.getElementById("muteButton");
+
+const settingsBtn = document.getElementById("settings-btn");
+const settingsIcon = document.getElementById("settings-icon");
+
+const ttsInstance = TTS();
+ttsInstance.unlockSpeech();
+
 (function () {
   /**
    * A collection of utility functions.
@@ -160,7 +172,29 @@
 
       // Update the digital time input, rounding to the nearest minute
       const { hh, mm } = this._formatTimeForDisplay(totalMinutes);
-      this.elements.timeInput.value = `${hh}:${mm}`;
+      const formattedTime = `${hh}:${mm}`;
+      this.elements.timeInput.value = formattedTime;
+      this.elements.timeInput.setAttribute("value", formattedTime);
+    }
+
+    speakTime() {
+      const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
+      const hour = parseInt(hh, 10);
+      const minutes = parseInt(mm, 10);
+
+      let timeText = `${hour}`;
+      if (minutes === 0) {
+        timeText += ` o clock`;
+      } else {
+        timeText += ` ${minutes}`;
+      }
+
+      setTimeout(() => {
+        // Speak the time value
+        if (!utils.isMuted()) {
+          ttsInstance.speakElement(timeText, { directSpeech: true });
+        }
+      }, 700);
     }
 
     /**
@@ -317,6 +351,7 @@
       }
 
       this.setTime(hours, minutes, true);
+      this.speakTime();
     }
 
     /**
@@ -431,6 +466,7 @@
       }
 
       this.setTime(hours, minutes, true);
+      this.speakTime();
     }
 
     /**
@@ -457,12 +493,13 @@
         // Convert to 24-hour format based on current time
         const currentMinutes = Math.round(this.state.totalMinutes);
         const currentHours = Math.floor(
-          utils.mod(currentMinutes, C.MINUTES_IN_24_HOURS) / 60
+          utils.mod(currentMinutes, CONSTANTS.MINUTES_IN_24_HOURS) / 60
         );
         const isAm = currentHours < 12;
         const h12 = keyNum % 12;
         const newHour = isAm ? h12 : h12 + 12;
         this.setTime(newHour, 0, true);
+        this.speakTime();
       }
     }
 
