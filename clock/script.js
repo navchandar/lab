@@ -9,12 +9,13 @@ const settingsIcon = document.getElementById("settings-icon");
 
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
+let intervalID = null;
 
 (function () {
   /**
    * A collection of utility functions.
    */
-  const utils = {
+  const u = {
     /**
      * Performs a true modulo operation, ensuring the result is always positive.
      * @param {number} n The dividend.
@@ -43,7 +44,7 @@ ttsInstance.unlockSpeech();
       const dx = e.clientX - cx;
       const dy = e.clientY - cy;
       let angle = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
-      return utils.mod(angle, 360);
+      return u.mod(angle, 360);
     },
   };
 
@@ -157,13 +158,10 @@ ttsInstance.unlockSpeech();
       const { totalMinutes } = this.state;
 
       // Calculate hand angles
-      const minuteInHour = utils.mod(totalMinutes, 60);
+      const minuteInHour = u.mod(totalMinutes, 60);
       const minuteAngle = minuteInHour * CONSTANTS.DEGREES_PER_MINUTE;
 
-      const minuteIn12h = utils.mod(
-        totalMinutes,
-        CONSTANTS.MINUTES_IN_12_HOURS
-      );
+      const minuteIn12h = u.mod(totalMinutes, CONSTANTS.MINUTES_IN_12_HOURS);
       const hourAngle = minuteIn12h / CONSTANTS.MINUTES_PER_DEGREE_HOUR_HAND;
 
       // Apply transformations to the DOM
@@ -197,6 +195,13 @@ ttsInstance.unlockSpeech();
       }, 700);
     }
 
+    incrementMinute() {
+      const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
+      const hour = parseInt(hh, 10);
+      const minutes = parseInt(mm, 10) + 1;
+      this.setTime(hours, minutes, true);
+    }
+
     /**
      * Formats the total minutes into a 12-hour display string.
      * @param {number} totalMinutes - The total minutes from midnight.
@@ -204,9 +209,9 @@ ttsInstance.unlockSpeech();
      */
     _formatTimeForDisplay(totalMinutes) {
       const roundedTotal = Math.round(totalMinutes);
-      const minutes = utils.mod(roundedTotal, 60);
+      const minutes = u.mod(roundedTotal, 60);
       const hours24 = Math.floor(
-        utils.mod(roundedTotal, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+        u.mod(roundedTotal, CONSTANTS.MINUTES_IN_24_HOURS) / 60
       );
 
       // Convert 24-hour format to 12-hour format for display
@@ -238,11 +243,9 @@ ttsInstance.unlockSpeech();
       for (let i = 1; i <= 12; i++) {
         const angle = i * CONSTANTS.DEGREES_PER_HOUR - 90; // Adjust for 12 at top
         const x =
-          CLOCK_CENTER_COORD +
-          CLOCK_FACE_RADIUS * Math.cos(utils.degToRad(angle));
+          CLOCK_CENTER_COORD + CLOCK_FACE_RADIUS * Math.cos(u.degToRad(angle));
         const y =
-          CLOCK_CENTER_COORD +
-          CLOCK_FACE_RADIUS * Math.sin(utils.degToRad(angle));
+          CLOCK_CENTER_COORD + CLOCK_FACE_RADIUS * Math.sin(u.degToRad(angle));
 
         const numEl = document.createElement("div");
         numEl.className = "number";
@@ -337,9 +340,9 @@ ttsInstance.unlockSpeech();
 
       const rounded = Math.round(this.state.totalMinutes);
       let hours = Math.floor(
-        utils.mod(rounded, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+        u.mod(rounded, CONSTANTS.MINUTES_IN_24_HOURS) / 60
       );
-      let minutes = utils.mod(rounded, 60);
+      let minutes = u.mod(rounded, 60);
 
       if (this.state.selectedHand === "hour") {
         const h12 = value % 12; // Map 12 to 0 for calculation
@@ -380,7 +383,7 @@ ttsInstance.unlockSpeech();
       }
 
       const rect = this.elements.clock.getBoundingClientRect();
-      const angle = utils.angleFromCenter(e, rect);
+      const angle = u.angleFromCenter(e, rect);
 
       if (this.state.lastAngle !== null) {
         let delta = angle - this.state.lastAngle;
@@ -493,7 +496,7 @@ ttsInstance.unlockSpeech();
         // Convert to 24-hour format based on current time
         const currentMinutes = Math.round(this.state.totalMinutes);
         const currentHours = Math.floor(
-          utils.mod(currentMinutes, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+          u.mod(currentMinutes, CONSTANTS.MINUTES_IN_24_HOURS) / 60
         );
         const isAm = currentHours < 12;
         const h12 = keyNum % 12;
@@ -580,6 +583,87 @@ ttsInstance.unlockSpeech();
     }
   }
 
+  function autoplay() {
+    if (intervalID) {
+      clearInterval(intervalID);
+    }
+    window.__analogClock.incrementMinute();
+    intervalID = setInterval(() => {
+      window.__analogClock.incrementMinute();
+    }, 1000);
+  }
+
+  function updateSettingsMenu() {
+    // =========================
+    // Settings Menu
+    // =========================
+    const randomizeCheckbox = document.getElementById("randomize");
+    const autoplayCheckbox = document.getElementById("autoplay");
+
+    // Toggle menu visibility
+    settingsBtn.style.display = "block";
+    utils.addListeners(settingsBtn, utils.onClickSettings);
+    utils.addListeners(settingsIcon, utils.onClickSettings);
+
+    utils.setIsRandom(randomizeCheckbox.checked);
+    utils.addUnifiedListeners(randomizeCheckbox, () => {
+      utils.setIsRandom(randomizeCheckbox.checked);
+    });
+
+    function handleAutoplayToggle() {
+      if (autoplayCheckbox.checked) {
+        autoplay();
+      } else {
+        clearInterval(intervalID);
+      }
+    }
+
+    utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
+  }
+
+  // =========================
+  // Event Listeners
+  // =========================
+  function handleKeydown(event) {
+    const target = event.target;
+
+    switch (event.code) {
+      case "Space":
+      case "Enter":
+        // Ignore key presses if focused on an interactive element
+        if (utils.isInteractiveElement(target)) {
+          return;
+        }
+        event.preventDefault();
+        window.__analogClock.incrementMinute();
+        break;
+      case "KeyM":
+        event.preventDefault();
+        utils.toggleMute();
+        utils.hideSettings();
+        if (utils.isMuted()) {
+          ttsInstance.cancel();
+        } else {
+          window.__analogClock.speakTime();
+        }
+        break;
+      case "KeyF":
+        event.preventDefault();
+        utils.toggleFullscreen();
+        utils.hideSettings();
+        break;
+      case "KeyS":
+        event.preventDefault();
+        utils.onClickSettings();
+        break;
+      case "Escape":
+        utils.hideSettings();
+        break;
+    }
+  }
+
+  utils.setFullscreenIcon();
+
   // --- Bootstrapping ---
 
   /**
@@ -590,6 +674,9 @@ ttsInstance.unlockSpeech();
     const hourHandEl = document.getElementById("hourHand");
     const minuteHandEl = document.getElementById("minuteHand");
     const timeInputEl = document.getElementById("timeInput");
+    document.addEventListener("keydown", handleKeydown);
+    utils.updateMuteBtn();
+    utils.updateFullScreenBtn();
 
     // Ensure all required elements are found before initializing
     if (!clockEl || !hourHandEl || !minuteHandEl || !timeInputEl) {
@@ -614,5 +701,17 @@ ttsInstance.unlockSpeech();
 
     // Expose the clock instance for debugging purposes
     window.__analogClock = clock;
+
+    updateSettingsMenu();
+
+    // update mute button if speech supported
+    if (ttsInstance.isSpeechReady()) {
+      utils.enableMuteBtn();
+      if (!utils.isMuted()) {
+        window.__analogClock.speakTime();
+      }
+    } else {
+      utils.disableMuteBtn();
+    }
   });
 })();
