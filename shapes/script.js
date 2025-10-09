@@ -50,7 +50,6 @@ let currentShapeIndex = 0;
 let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
-let isMute = utils.isMuted();
 
 function changeTextColor(color, label) {
   shapeNameElement.classList.add("fade-out");

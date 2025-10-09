@@ -2,8 +2,6 @@ import * as utils from "../static/utils.js";
 import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
-const muteButton = document.getElementById("muteButton");
-
 const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 
@@ -227,8 +225,8 @@ let intervalID = null;
       // Random integer to get a multiple of 5 (e.g., 5, 10, 15, 20)
       const randomMinuteOffset = (Math.floor(Math.random() * 4) + 1) * 5;
 
-      const newHour = currentHour + randomHourOffset;
-      const newMinutes = currentMinutes + randomMinuteOffset;
+      const newHour = hour + randomHourOffset;
+      const newMinutes = minutes + randomMinuteOffset;
 
       this.setTime(newHour, newMinutes, true);
       this.speakTime();
