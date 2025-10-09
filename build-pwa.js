@@ -167,8 +167,8 @@ function generateIndexHtml() {
             <ul id="app-links">
               ${appLinks}
             </ul>
-            <div class="version-label">${versionString}</div>
         </div>
+        <div class="version-label">${versionString}</div>
       </nav>
       <main><iframe name="appFrame" title="App Frame" id="appFrame"></iframe></main>
     </div>

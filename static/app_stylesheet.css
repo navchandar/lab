@@ -136,6 +136,8 @@ iframe {
 
 
 #sidebar {
+    display: flex;
+    flex-direction: column;
     transform: translateX(-200px);
     transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, border-right-color 0.3s ease-in-out;
     box-sizing: content-box;
@@ -164,6 +166,7 @@ iframe {
 
 
 #sidebar.overlay ul li a {
+    padding: 15px 100px 10px 25px;
     color: white;
 }
 
@@ -180,8 +183,8 @@ iframe {
 }
 
 .version-label {
-    margin-top: 30px;
-    margin-bottom: 20px;
+    margin-top: auto;
+    margin-bottom: 110px;
     border-top: 1px solid #444;
     background-color: #333;
     padding: 8px;
