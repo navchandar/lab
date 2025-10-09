@@ -182,7 +182,7 @@ let intervalID = null;
 
       let timeText = `${hour}`;
       if (minutes === 0) {
-        timeText += ` o clock`;
+        timeText += `'o clock`;
       } else {
         timeText += ` ${minutes}`;
       }
@@ -195,11 +195,43 @@ let intervalID = null;
       }, 700);
     }
 
+    /**
+     * Increase minute by 1 everytime this function runs
+     */
     incrementMinute() {
       const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
       const hour = parseInt(hh, 10);
       const minutes = parseInt(mm, 10) + 1;
-      this.setTime(hours, minutes, true);
+      this.setTime(hour, minutes, true);
+      if (minutes === 0) {
+        this.speakTime();
+      }
+    }
+    /**
+     * Increase hour by 1 everytime this function runs
+     */
+    incrementHour() {
+      const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
+      const hour = parseInt(hh, 10) + 1;
+      const minutes = parseInt(mm, 10);
+      this.setTime(hour, minutes, true);
+      this.speakTime();
+    }
+
+    setRandomTime() {
+      const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
+      const hour = parseInt(hh, 10);
+      const minutes = parseInt(mm, 10);
+      // Random integer to add to the hour (e.g., between 1 and 5)
+      const randomHourOffset = Math.floor(Math.random() * 5) + 1;
+      // Random integer to get a multiple of 5 (e.g., 5, 10, 15, 20)
+      const randomMinuteOffset = (Math.floor(Math.random() * 4) + 1) * 5;
+
+      const newHour = currentHour + randomHourOffset;
+      const newMinutes = currentMinutes + randomMinuteOffset;
+
+      this.setTime(newHour, newMinutes, true);
+      this.speakTime();
     }
 
     /**
@@ -587,10 +619,19 @@ let intervalID = null;
     if (intervalID) {
       clearInterval(intervalID);
     }
-    window.__analogClock.incrementMinute();
-    intervalID = setInterval(() => {
+    // Determine which mode to use (random or sequential)
+    const isRandomEnabled = utils.getIsRandomEnabled();
+    if (isRandomEnabled) {
+      window.__analogClock.setRandomTime();
+      intervalID = setInterval(() => {
+        window.__analogClock.setRandomTime();
+      }, 1000);
+    } else {
       window.__analogClock.incrementMinute();
-    }, 1000);
+      intervalID = setInterval(() => {
+        window.__analogClock.incrementMinute();
+      }, 1000);
+    }
   }
 
   function updateSettingsMenu() {
@@ -626,16 +667,31 @@ let intervalID = null;
   // =========================
   function handleKeydown(event) {
     const target = event.target;
-
+    const isRandomEnabled = utils.getIsRandomEnabled();
     switch (event.code) {
       case "Space":
+        // Ignore key presses if focused on an interactive element
+        if (utils.isInteractiveElement(target)) {
+          return;
+        }
+        event.preventDefault();
+        if (isRandomEnabled) {
+          window.__analogClock.setRandomTime();
+        } else {
+          window.__analogClock.incrementMinute();
+        }
+        break;
       case "Enter":
         // Ignore key presses if focused on an interactive element
         if (utils.isInteractiveElement(target)) {
           return;
         }
         event.preventDefault();
-        window.__analogClock.incrementMinute();
+        if (isRandomEnabled) {
+          window.__analogClock.setRandomTime();
+        } else {
+          window.__analogClock.incrementHour();
+        }
         break;
       case "KeyM":
         event.preventDefault();

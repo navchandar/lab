@@ -1,5 +1,4 @@
 const swPath = "/lab/service-worker.js";
-let newWorker = null;
 let iframeBodyObserver = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -24,7 +23,6 @@ function registerServiceWorker() {
     });
 
   setupUpdateNotification();
-  listenForControllerChange();
 }
 
 /**
@@ -33,7 +31,7 @@ function registerServiceWorker() {
  * @param {ServiceWorkerRegistration} registration The service worker registration object.
  */
 function monitorServiceWorkerUpdates(registration) {
-  if (registration.waiting) {
+  if (registration.waiting && navigator.serviceWorker.controller) {
     // If we already have a waiting worker, it means an update is ready.
     showUpdateNotification();
     return;
@@ -49,7 +47,7 @@ function monitorServiceWorkerUpdates(registration) {
     newWorker.addEventListener("statechange", () => {
       // Check if the new worker is installed
       const isUpdateReady = newWorker.state === "installed";
-      if (isUpdateReady) {
+      if (isUpdateReady && navigator.serviceWorker.controller) {
         // Separate the UI logic into its own function.
         showUpdateNotification();
       }
@@ -103,7 +101,7 @@ function setupUpdateNotification() {
         const registration = await navigator.serviceWorker.getRegistration();
         // Check for a waiting worker and post the message
         if (registration?.waiting) {
-          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          registration.waiting.postMessage({ action: "skipWaiting" }); 
         } else {
           // Fallback if no waiting worker is found
           window.location.reload();
@@ -116,25 +114,6 @@ function setupUpdateNotification() {
       // Always provide a fallback reload if an error occurs
       window.location.reload();
     }
-  });
-}
-
-/**
- * Listens for when the new service worker takes control, then reloads the page.
- */
-function listenForControllerChange() {
-  if (!("serviceWorker" in navigator)) {
-    return;
-  }
-
-  let isRefreshing = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    // Prevent potential multiple reloads
-    if (isRefreshing) {
-      return;
-    }
-    isRefreshing = true;
-    window.location.reload();
   });
 }
 
