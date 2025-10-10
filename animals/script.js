@@ -1,8 +1,11 @@
 import * as utils from "../static/utils.js";
+import { TTS } from "../static/speech_helper.js";
+
+const ttsInstance = TTS();
+ttsInstance.unlockSpeech();
 
 document.addEventListener("DOMContentLoaded", () => {
   // --- DATA ---
-  // 'image' the path to its picture, and 'sound' the path to its audio file.
   const animalNames = [
     "Dog",
     "Cat",
@@ -23,12 +26,12 @@ document.addEventListener("DOMContentLoaded", () => {
     "Duck",
   ];
 
+  // 'image' is the path to each animals picture
   const animals = animalNames.map((name) => {
     const file = name.toLowerCase().replace(/ /g, "-");
     return {
       name: name,
       image: `../static/images/${file}.jpg`,
-      sound: `../static/sounds/${file}.mp3`,
     };
   });
 
@@ -76,45 +79,23 @@ document.addEventListener("DOMContentLoaded", () => {
     animalImage.alt = animal.name;
     animalName.textContent = animal.name;
 
-    playSound(animal.sound);
-    hideSettings();
-  }
+    setTimeout(() => {
+      // Speak the animal name
+      if (!utils.isMuted()) {
+        ttsInstance.speakElement(animalName);
+      }
+    }, 500);
 
-  /**
-   * Plays a sound file.
-   * @param {string} soundSrc - The path to the audio file.
-   */
-  function playSound(soundSrc) {
-    if (isMuted) {
-      return;
-    }
-
-    // Stop any currently playing sound
-    if (currentAudio) {
-      currentAudio.pause();
-      currentAudio.currentTime = 0;
-    }
-
-    currentAudio = new Audio(soundSrc);
-    currentAudio
-      .play()
-      .catch((error) => console.error("Audio playback error:", error));
+    utils.hideSettings();
   }
 
   // --- UI & CONTROL FUNCTIONS ---
 
-  function toggleMute() {
-    isMuted = !isMuted;
-    localStorage.setItem("isMuted", isMuted);
-    utils.updateMuteBtn();
-    if (isMuted && currentAudio) {
-      currentAudio.pause();
-    }
-  }
-
   function handleAutoplay() {
     if (autoplayCheckbox.checked) {
-      if (autoplayInterval) clearInterval(autoplayInterval);
+      if (autoplayInterval) {
+        clearInterval(autoplayInterval);
+      }
       showNextAnimal(); // Show one immediately
       autoplayInterval = setInterval(showNextAnimal, 5000);
     } else {
@@ -127,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupEventListeners() {
     container.addEventListener("click", showNextAnimal);
-    muteButton.addEventListener("click", toggleMute);
+    muteButton.addEventListener("click", utils.toggleMute);
     fullscreenBtn.addEventListener("click", utils.toggleFullscreen);
     settingsBtn.addEventListener("click", utils.toggleSettings);
     autoplayCheckbox.addEventListener("change", handleAutoplay);
@@ -157,7 +138,7 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
         case "KeyM":
           event.preventDefault();
-          toggleMute();
+          utils.toggleMute();
           utils.hideSettings();
           break;
         case "KeyF":
@@ -180,16 +161,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- INITIALIZATION ---
   function init() {
+    settingsBtn.style.display = "block";
     randomizeCheckbox.checked = localStorage.getItem("isRandom") === "true";
     randomizeCheckbox.addEventListener("change", () => {
       localStorage.setItem("isRandom", randomizeCheckbox.checked);
     });
 
+    utils.bodyAction(showNextAnimal);
     utils.updateMuteBtn();
+    utils.setFullscreenIcon();
     utils.updateFullScreenBtn();
+
     setupEventListeners();
     // Load the first animal on page load
     showNextAnimal();
+    // update mute button if speech supported
+    if (ttsInstance.isSpeechReady()) {
+      utils.enableMuteBtn();
+      if (!utils.isMuted()) {
+        ttsInstance.speakElement(shapeNameElement);
+      }
+    } else {
+      utils.disableMuteBtn();
+    }
   }
 
   init();
