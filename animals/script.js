@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (ttsInstance.isSpeechReady()) {
       utils.enableMuteBtn();
       if (!utils.isMuted()) {
-        ttsInstance.speakElement(shapeNameElement);
+        ttsInstance.speakElement(animalName);
       }
     } else {
       utils.disableMuteBtn();
