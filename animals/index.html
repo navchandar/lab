@@ -26,90 +26,22 @@
       content="A fun, interactive page for learning animal sounds."
     />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#2c3e50" />
+    <meta name="theme-color" content="#4e4e4e" />
 
-    <!-- <link rel="stylesheet" href="style.css" /> -->
+    <link rel="stylesheet" href="../static/settings.css" />
+    <link rel="stylesheet" href="style.css" />
+
     <style>
-      /* Basic styles for demonstration */
       :root {
-        --background-color: #2c3e50;
-        --text-color: #ecf0f1;
-        --button-bg: rgba(255, 255, 255, 0.1);
-        --button-hover-bg: rgba(255, 255, 255, 0.2);
+        --bg: #4e4e4e;
+        --text: #ecf0f1;
       }
-      html, body {
-        margin: 0;
-        background-color: var(--background-color);
-        padding: 0;
-        height: 100%;
-        overflow: hidden;
-        color: var(--text-color);
-        font-family: Arial, sans-serif;
-        -webkit-tap-highlight-color: transparent;
-      }
-      body {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        user-select: none;
-        text-align: center;
-      }
-      #animal-container {
-        cursor: pointer;
-        max-width: 90vw;
-        max-height: 90vh;
-      }
-      #animal-image {
-        display: block;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        border-radius: 15px;
-        max-width: 100%;
-        max-height: 70vh;
-        object-fit: contain;
-      }
-      #animal-name {
-        margin-top: 20px;
-        font-weight: bold;
-        font-size: clamp(2rem, 8vw, 4rem);
-        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
-        text-transform: capitalize;
-      }
-      /* Add styles for your buttons (mute, fullscreen, etc.) here */
-      button {
-        position: fixed;
-        z-index: 100;
-        transition: background-color 0.2s;
-        cursor: pointer;
-        border: none;
-        border-radius: 50%;
-        background: var(--button-bg);
-        padding: 12px;
-        color: white;
-      }
-      button:hover {
-        background: var(--button-hover-bg);
-      }
-      #muteButton { top: 20px; right: 20px; }
-      #fullscreen-btn { top: 20px; right: 80px; }
-      #settings-btn { top: 20px; right: 140px; }
-      #settings-menu {
-        display: none;
-        position: fixed;
-        top: 80px;
-        right: 20px;
-        z-index: 99;
-        border-radius: 8px;
-        background: #34495e;
-        padding: 20px;
-      }
-      #settings-menu.visible { display: block; }
-      .settings-item { display: flex; align-items: center; margin-bottom: 10px; }
     </style>
   </head>
 
   <body>
     <div id="animal-container">
-      <img id="animal-image" alt="An animal image will appear here" />
+      <img id="animal-image" alt="Loading image..." />
       <h1 id="animal-name"></h1>
     </div>
 

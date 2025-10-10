@@ -1,0 +1,53 @@
+html, body {
+    margin: 0;
+    background-color: var(--bg);
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    color: var(--text);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    text-align: center;
+}
+
+#animal-container {
+    cursor: pointer;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+#animal-image {
+    display: block;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    border-radius: 15px;
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    object-fit: contain;
+    user-select: none;
+}
+
+#animal-name {
+    margin-top: 20px;
+    font-weight: bold;
+    font-size: clamp(2rem, 8vw, 4rem);
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+    text-transform: capitalize;
+}
+
+
+/* Styles for mobile devices */
+@media (max-width: 767px) {
+    #animal-image {
+        box-sizing: content-box;
+        width: 250px;
+        height: auto;
+    }
+}

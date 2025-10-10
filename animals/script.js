@@ -74,17 +74,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const animal = animals[currentIndex];
 
-    // Update the UI
+    // Temporarily clear the name to show the name
+    animalName.textContent = "";
+
+    // Set the image source
     animalImage.src = animal.image;
     animalImage.alt = animal.name;
-    animalName.textContent = animal.name;
 
-    setTimeout(() => {
-      // Speak the animal name
-      if (!utils.isMuted()) {
-        ttsInstance.speakElement(animalName);
-      }
-    }, 500);
+    // Attach a 'load' event listener to the image
+    animalImage.onload = () => {
+      animalName.textContent = animal.name;
+      setTimeout(() => {
+        if (!utils.isMuted()) {
+          ttsInstance.speakElement(animalName);
+        }
+      }, 500);
+      animalImage.onload = null;
+    };
+
+    // Handle potential errors during image loading
+    animalImage.onerror = () => {
+      console.error("Error loading image:", animal.image);
+      // You might want to update the name/UI even on error or show a placeholder
+      animalImage.onload = null;
+    };
 
     utils.hideSettings();
   }
