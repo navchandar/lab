@@ -150,7 +150,7 @@ input[type="time"] {
     border: 5px solid var(--border);
     border-radius: 10px;
     background: var(--card);
-    padding: 6px 25px;
+    padding: 6px 18px;
     width: 12ch;
     min-width: 0;
     height: 40px;
@@ -169,6 +169,14 @@ input[type="time"]::-webkit-datetime-edit-hour-field,
 input[type="time"]::-webkit-datetime-edit-minute-field,
 input[type="time"]::-webkit-datetime-edit-ampm-field {
     padding: 0;
+}
+
+input[type="time"]::-webkit-datetime-edit-ampm-field {
+    display: none;
+}
+
+input[type="time"] .datetime-edit-field.ampm {
+    display: none;
 }
 
 /* 'X' button for resetting/clearing time */
