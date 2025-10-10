@@ -75,7 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const animal = animals[currentIndex];
 
     // Temporarily clear the name to show the name
-    animalName.textContent = "";
+    animalName.style.opacity = 0;
 
     // Set the image source
     animalImage.src = animal.image;
@@ -84,6 +84,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Attach a 'load' event listener to the image
     animalImage.onload = () => {
       animalName.textContent = animal.name;
+      animalName.style.opacity = 1;
       setTimeout(() => {
         if (!utils.isMuted()) {
           ttsInstance.speakElement(animalName);

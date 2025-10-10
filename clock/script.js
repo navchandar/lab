@@ -180,7 +180,7 @@ let intervalID = null;
 
       let timeText = `${hour}`;
       if (minutes === 0) {
-        timeText += `'o clock`;
+        timeText += ` o clock`;
       } else {
         timeText += ` ${minutes}`;
       }
@@ -188,7 +188,7 @@ let intervalID = null;
       setTimeout(() => {
         // Speak the time value
         if (!utils.isMuted()) {
-          ttsInstance.speakElement(timeText, { directSpeech: true });
+          ttsInstance.speakElement(timeText, { directSpeech: true, rate: 0.8 });
         }
       }, 700);
     }
