@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Animals</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' style='dominant-baseline:central; text-anchor:middle; font-size:80px;'>🐾</text></svg>"
+      type="image/svg+xml"
+    />
+
+    <meta
+      name="description"
+      content="An interactive site to display animal images and play their sounds."
+    />
+    <meta
+      name="keywords"
+      content="animals, sounds, kids learning, interactive, JavaScript, education"
+    />
+    <meta name="author" content="Nveenchandar" />
+
+    <meta property="og:title" content="Animals" />
+    <meta
+      property="og:description"
+      content="A fun, interactive page for learning animal sounds."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#2c3e50" />
+
+    <!-- <link rel="stylesheet" href="style.css" /> -->
+    <style>
+      /* Basic styles for demonstration */
+      :root {
+        --background-color: #2c3e50;
+        --text-color: #ecf0f1;
+        --button-bg: rgba(255, 255, 255, 0.1);
+        --button-hover-bg: rgba(255, 255, 255, 0.2);
+      }
+      html, body {
+        margin: 0;
+        background-color: var(--background-color);
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        user-select: none;
+        text-align: center;
+      }
+      #animal-container {
+        cursor: pointer;
+        max-width: 90vw;
+        max-height: 90vh;
+      }
+      #animal-image {
+        display: block;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        border-radius: 15px;
+        max-width: 100%;
+        max-height: 70vh;
+        object-fit: contain;
+      }
+      #animal-name {
+        margin-top: 20px;
+        font-weight: bold;
+        font-size: clamp(2rem, 8vw, 4rem);
+        text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+        text-transform: capitalize;
+      }
+      /* Add styles for your buttons (mute, fullscreen, etc.) here */
+      button {
+        position: fixed;
+        z-index: 100;
+        transition: background-color 0.2s;
+        cursor: pointer;
+        border: none;
+        border-radius: 50%;
+        background: var(--button-bg);
+        padding: 12px;
+        color: white;
+      }
+      button:hover {
+        background: var(--button-hover-bg);
+      }
+      #muteButton { top: 20px; right: 20px; }
+      #fullscreen-btn { top: 20px; right: 80px; }
+      #settings-btn { top: 20px; right: 140px; }
+      #settings-menu {
+        display: none;
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        z-index: 99;
+        border-radius: 8px;
+        background: #34495e;
+        padding: 20px;
+      }
+      #settings-menu.visible { display: block; }
+      .settings-item { display: flex; align-items: center; margin-bottom: 10px; }
+    </style>
+  </head>
+
+  <body>
+    <div id="animal-container">
+      <img id="animal-image" alt="An animal image will appear here" />
+      <h1 id="animal-name"></h1>
+    </div>
+
+    <button
+      id="muteButton"
+      aria-label="Mute sound"
+      disabled
+      title="Mute sound"
+    ></button>
+
+    <button
+      id="fullscreen-btn"
+      aria-label="Toggle fullscreen mode"
+      title="Toggle fullscreen"
+    >
+      <svg
+        id="fullscreen-icon"
+        fill="none"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      ></svg>
+    </button>
+
+    <!-- Settings Button -->
+    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+      <img
+        id="settings-icon"
+        src="../static/icons/settings.svg"
+        width="24"
+        height="24"
+        alt="Settings"
+        aria-hidden="true"
+      />
+    </button>
+
+    <!-- Overlay Menu -->
+    <div id="settings-menu">
+      <div class="randomize-checkbox">
+        <label for="randomize" id="randomize-label">Randomize Animals:</label>
+        <input type="checkbox" id="randomize" />
+      </div>
+      <div class="autoplay-checkbox">
+        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+        <input type="checkbox" id="autoplay" />
+      </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
