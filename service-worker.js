@@ -10,6 +10,8 @@ const urlsToCache = [
   'alphabet/preview.gif',
   'alphabet/script.js',
   'alphabet/style.css',
+  'animals/index.html',
+  'animals/script.js',
   'clock/index.html',
   'clock/script.js',
   'clock/style.css',
@@ -54,6 +56,8 @@ const urlsToCache = [
   'static/icons/ico/ms-icon-70x70.png',
   'static/icons/settings-open.svg',
   'static/icons/settings.svg',
+  'static/images/cat.jpg',
+  'static/images/dog.jpg',
   'static/settings.css',
   'static/speech_helper.js',
   'static/utils.js'
