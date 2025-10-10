@@ -12,6 +12,7 @@ const urlsToCache = [
   'alphabet/style.css',
   'animals/index.html',
   'animals/script.js',
+  'animals/style.css',
   'clock/index.html',
   'clock/script.js',
   'clock/style.css',
