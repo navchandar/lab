@@ -762,7 +762,7 @@ let intervalID = null;
     if (ttsInstance.isSpeechReady()) {
       utils.enableMuteBtn();
       if (!utils.isMuted()) {
-        window.__analogClock.speakTime();
+        setTimeout(window.__analogClock.speakTime, 1000);
       }
     } else {
       utils.disableMuteBtn();

@@ -174,3 +174,23 @@ body {
         height: 600px;
     }
 }
+
+
+
+@media (prefers-reduced-motion: reduce) {
+
+    /* 🛑 Disable all transitions and animations */
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition: none !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    #shape, .fade-out {
+        transition: none !important;
+    }
+}

@@ -39,10 +39,10 @@ header {
 
 .render-panel {
     position: relative;
+    zoom: 75%;
     box-sizing: border-box;
     padding: 15px 10px 1px 10px;
     width: 50%;
-    zoom: 75%;
 }
 
 .render-options {
@@ -56,9 +56,9 @@ header {
 
 input[type='checkbox'] {
     vertical-align: middle;
+    zoom: 1;
     cursor: pointer;
     accent-color: #10b981;
-    zoom: 1;
 }
 
 iframe {
@@ -216,6 +216,8 @@ footer p {
     background-color: #a8ab06 !important;
 }
 
+
+/* Styles for mobile devices */
 @media (max-width: 767px) {
     header h1 {
         font-size: 1.5em;

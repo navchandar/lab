@@ -183,7 +183,7 @@ iframe {
 }
 
 .sidebar-info {
-    margin-top: 200px;
+    margin-top: 20em;
     border-top: 1px solid #444;
     padding: 1em 15px;
     color: #555;
@@ -225,7 +225,8 @@ iframe {
     text-wrap: nowrap;
 }
 
-@media (max-width: 768px) {
+/* Styles for mobile devices */
+@media (max-width: 767px) {
     #hamburger-menu {
         display: block;
     }
@@ -240,6 +241,10 @@ iframe {
     #sidebar.overlay {
         left: 0;
         transform: translateX(0);
+    }
+
+    .sidebar-info {
+        margin-top: 2em;
     }
 }
 

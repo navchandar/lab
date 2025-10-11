@@ -132,7 +132,9 @@ function updateThemeColorFromIframe() {
     // Note: We use getComputedStyle to get the *actual* applied style
     const iframeBody = iframeDocument.body;
     const computedStyle = window.getComputedStyle(iframeBody);
-    const backgroundColor = computedStyle.getPropertyValue("background-color");
+    const backgroundColor = computedStyle
+      .getPropertyValue("background-color")
+      .trim();
 
     iframeBody.addEventListener("click", collapseSidebar);
 
@@ -145,9 +147,17 @@ function updateThemeColorFromIframe() {
         themeMetaTag.name = "theme-color";
         document.head.appendChild(themeMetaTag);
         console.log("Created new meta theme-color tag.");
+        themeMetaTag.content = backgroundColor;
+        console.log(`Initialized theme color to: ${backgroundColor}`);
+        return;
       }
-      themeMetaTag.content = backgroundColor.trim();
-      console.log(`Updated theme color to: ${backgroundColor}`);
+
+      // Get the current color from the existing tag and compare
+      const currentThemeColor = themeMetaTag.content.trim();
+      if (currentThemeColor !== newBackgroundColor) {
+        themeMetaTag.content = backgroundColor;
+        console.log(`Updated theme color to: ${backgroundColor}`);
+      }
     } else {
       console.warn("Could not retrieve background-color from iframe body.");
     }

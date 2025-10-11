@@ -376,7 +376,7 @@ export const TTS = () => {
         findFallbackVoice(allVoices, locale);
     }
     if (voice) {
-      console.log(`[TTS] Selected Voice: ${voice}`);
+      console.log(`[TTS] Selected Voice: ${voice.name} (${voice.lang})`);
     } else {
       console.warn("[TTS] Could not select any voice. Aborting.");
       return;

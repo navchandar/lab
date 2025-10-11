@@ -61,3 +61,10 @@ body {
         text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
     }
 }
+
+
+@media (prefers-reduced-motion: reduce) {
+    #number {
+        transition: none !important;
+    }
+}

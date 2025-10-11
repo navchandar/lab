@@ -19,7 +19,10 @@ let currentLang = urlParam.get("lang") || "english";
 const canvas = document.createElement("canvas");
 canvas.width = 1;
 canvas.height = 1;
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("2d", { willReadFrequently: true });
+if (!ctx) {
+  console.error("Failed to get 2D canvas context.");
+}
 
 const synth = window.speechSynthesis;
 let Locale = null;

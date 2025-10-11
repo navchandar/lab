@@ -138,12 +138,6 @@
     opacity: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    #settings-icon {
-        transition: none;
-    }
-}
-
 .randomize-checkbox,
 .autoplay-checkbox {
     display: flex;
@@ -152,9 +146,9 @@
 
 input[type="checkbox"] {
     vertical-align: middle;
-    margin: -3px 10px 5px 5px;
-    zoom: 1;
     transform: scale(2);
+    zoom: 1;
+    margin: -3px 10px 5px 5px;
     -ms-transform: scale(2);
     -webkit-transform: scale(2);
     -o-transform: scale(2);
@@ -200,11 +194,29 @@ input[type="checkbox"] {
     }
 
     input[type="checkbox"] {
-        zoom: 1;
         transform: scale(1.7);
+        zoom: 1;
         -ms-transform: scale(1.7);
         -webkit-transform: scale(1.7);
         -o-transform: scale(1.7);
         -moz-transform: scale(1.7);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    /* 🛑 Disable all transitions and animations */
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition: none !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    #settings-icon {
+        transition: none !important;
     }
 }
