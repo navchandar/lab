@@ -404,7 +404,7 @@ function initializeAppUI() {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       collapseSidebar();
-      const href = link.getAttribute("href");
+      let href = link.getAttribute("href");
       const title = link.getAttribute("title") || link.textContent;
 
       if (href && !href.startsWith("/") && !href.includes("://")) {
