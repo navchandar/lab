@@ -261,15 +261,17 @@ function handlePopState(event) {
 
   let targetSrc;
 
-  if (event.state && event.state.iframeSrc) {
+  if (event && event.state && event.state.iframeSrc) {
     // If we have a state object pushed by pushState, use its source.
     targetSrc = event.state.iframeSrc;
   } else {
     // If the state is null (e.g., first load or navigating to a manually entered URL)
     const path = window.location.pathname;
     // URLs are structured like: /lab/#app-name.html
-    const match = path.match(/\/lab\/#(.+)$/);
-    targetSrc = match ? match[1] : links[0]?.getAttribute("href") || "";
+    const hash = window.location.hash;
+    const match = hash.startsWith("#") ? hash.substring(1) : "";
+
+    targetSrc = match || links[0]?.getAttribute("href") || "";
   }
 
   if (targetSrc && iframe.getAttribute("src") !== targetSrc) {
