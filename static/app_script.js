@@ -276,7 +276,6 @@ function handlePopState(event) {
     targetSrc = event.state.iframeSrc;
   } else {
     const hash = window.location.hash;
-
     if (hash.length > 1) {
       // Remove the leading '#'
       const currentHashPath = hash.substring(1);
@@ -303,6 +302,8 @@ function handlePopState(event) {
     uncollapseSidebar();
 
     links.forEach((l) => l.parentElement.classList.remove("active"));
+    const basepath = window.location.pathname.replace(/\/$/, "");
+    history.replaceState({ iframeSrc: null }, document.title, basepath);
     return;
   }
 
@@ -315,6 +316,11 @@ function handlePopState(event) {
       const isActive = l.getAttribute("href") === targetSrc;
       l.parentElement.classList.toggle("active", isActive);
     });
+
+    const basepath = window.location.pathname.replace(/\/$/, "");
+    const newPath = `${basepath}/#${targetSrc}`;
+    history.replaceState({ iframeSrc: targetSrc }, document.title, newPath);
+    collapseSidebar();
   }
 }
 
@@ -361,6 +367,7 @@ function uncollapseSidebar() {
 
   // Remove collapse
   sidebar.classList.remove("collapsed");
+  sidebar.classList.add("overlay");
 
   // Show the main header
   if (header) {
