@@ -1,4 +1,5 @@
-const swPath = "/lab/service-worker.js";
+const BASE_PATH = "/lab/";
+const swPath = `${BASE_PATH}service-worker.js`;
 let iframeBodyObserver = null;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -405,6 +406,12 @@ function initializeAppUI() {
       collapseSidebar();
       const href = link.getAttribute("href");
       const title = link.getAttribute("title") || link.textContent;
+
+      if (href && !href.startsWith("/") && !href.includes("://")) {
+        if (!href.contains(BASE_PATH)) {
+          href = BASE_PATH + href;
+        }
+      }
 
       // The link is already active and loaded
       if (iframe.getAttribute("src") === href) {

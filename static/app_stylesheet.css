@@ -57,8 +57,9 @@ nav ul {
 }
 
 nav ul li a {
-    display: inline-flex;
+    display: flex;
     align-content: center;
+    align-items: center;
     transition: background-color 0.2s, color 0.2s;
     padding: 12px 20px;
     color: #333;
@@ -114,6 +115,7 @@ iframe {
 }
 
 .favicon {
+    vertical-align: middle;
     margin-right: 5px;
     width: 16px;
     height: 16px;
@@ -164,10 +166,16 @@ iframe {
     width: 200px;
 }
 
-
 #sidebar.overlay ul li a {
-    padding: 15px 100px 10px 25px;
+    display: block;
+    box-sizing: border-box;
+    padding: 15px 5px 10px 20px;
+    width: 100%;
+    overflow: hidden;
     color: white;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 #sidebar ul li.active {
