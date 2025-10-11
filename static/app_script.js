@@ -249,6 +249,41 @@ function monitorIframeBackgroundColor() {
   }
 }
 
+// Add this function anywhere in your script.js, outside of other functions.
+
+/**
+ * Handles browser navigation (Back/Forward buttons) by checking the history state.
+ * @param {PopStateEvent} event The popstate event object.
+ */
+function handlePopState(event) {
+  const iframe = document.getElementById("appFrame");
+  const links = document.querySelectorAll("#app-links li a");
+
+  let targetSrc;
+
+  if (event.state && event.state.iframeSrc) {
+    // If we have a state object pushed by pushState, use its source.
+    targetSrc = event.state.iframeSrc;
+  } else {
+    // If the state is null (e.g., first load or navigating to a manually entered URL)
+    const path = window.location.pathname;
+    // URLs are structured like: /lab/#app-name.html
+    const match = path.match(/\/lab\/#(.+)$/);
+    targetSrc = match ? match[1] : links[0]?.getAttribute("href") || "";
+  }
+
+  if (targetSrc && iframe.getAttribute("src") !== targetSrc) {
+    console.log(`PopState: Loading ${targetSrc} in iframe`);
+    iframe.setAttribute("src", targetSrc);
+
+    // Update active state in the sidebar
+    links.forEach((l) => {
+      const isActive = l.getAttribute("href") === targetSrc;
+      l.parentElement.classList.toggle("active", isActive);
+    });
+  }
+}
+
 const collapseSidebar = () => {
   const sidebar = document.getElementById("sidebar");
   const hamburger = document.getElementById("hamburger-menu");
@@ -296,6 +331,7 @@ function initializeAppUI() {
       e.preventDefault();
       collapseSidebar();
       const href = link.getAttribute("href");
+      const title = link.getAttribute("title") || link.textContent;
 
       // The link is already active and loaded
       if (iframe.getAttribute("src") === href) {
@@ -306,6 +342,13 @@ function initializeAppUI() {
       iframe.setAttribute("src", href);
       console.log(`Loading ${href} in iframe`);
 
+      const newState = { iframeSrc: href };
+      const newPath = `/lab/#${href}`;
+
+      // Use history.pushState(state, title, url)
+      history.pushState(newState, title, newPath);
+      console.log(`Pushed state: ${newPath}`);
+
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
 
@@ -315,6 +358,9 @@ function initializeAppUI() {
       }, 300);
     });
   });
+
+  window.addEventListener("popstate", handlePopState);
+  handlePopState();
 
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");

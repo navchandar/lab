@@ -171,7 +171,7 @@ ${appLinks}
             </ul>
 
              <div class="sidebar-info">
-                <h3>🛠️ Maintained By:</h3>
+                <h3>🛠️ Maintainer</h3>
                 <a class="maintained-by-link" target="_blank" href="https://navchandar.github.io/">Naveenchandar</a>
 
                 <h3>📑 License</h3>
