@@ -180,13 +180,25 @@ body {
 @media (prefers-reduced-motion: reduce) {
 
     /* 🛑 Disable all transitions and animations */
-    *,
-    ::before,
-    ::after {
+    html,
+    a,
+    div,
+    section,
+    header,
+    footer,
+    span,
+    li,
+    button,
+    input,
+    textarea,
+    select {
         animation-duration: 0.001ms !important;
         animation-iteration-count: 1 !important;
         transition: none !important;
         transition-duration: 0.001ms !important;
+    }
+
+    html {
         scroll-behavior: auto !important;
     }
 
