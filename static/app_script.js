@@ -154,7 +154,7 @@ function updateThemeColorFromIframe() {
 
       // Get the current color from the existing tag and compare
       const currentThemeColor = themeMetaTag.content.trim();
-      if (currentThemeColor !== newBackgroundColor) {
+      if (currentThemeColor !== backgroundColor) {
         themeMetaTag.content = backgroundColor;
         console.log(`Updated theme color to: ${backgroundColor}`);
       }
