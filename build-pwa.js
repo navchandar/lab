@@ -33,6 +33,21 @@ const staticFiles = [
   "./static/icons/icon-192x192.png",
   "./static/icons/icon-512x512.png",
 ];
+
+const now = new Date();
+// Convert to IST (UTC + 5:30)
+const istOffset = 5.5 * 60 * 60 * 1000;
+const istTime = new Date(now.getTime() + istOffset);
+
+// Format: vYYYY.MM.DD_HH.MM
+const versionString = `v${istTime.getFullYear()}.${String(
+  istTime.getMonth() + 1
+).padStart(2, "0")}.${String(istTime.getDate()).padStart(2, "0")}_${String(
+  istTime.getHours()
+).padStart(2, "0")}.${String(istTime.getMinutes()).padStart(2, "0")}`;
+
+console.log(`Version: ${versionString}`);
+
 // --- 1. Generate index.html ---
 
 // Extract favicon path or base64 from index.html
@@ -78,19 +93,6 @@ function getFavicon(appDir) {
 
 function generateIndexHtml() {
   console.log("🎨 Generating index.html...");
-  const now = new Date();
-  // Convert to IST (UTC + 5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const istTime = new Date(now.getTime() + istOffset);
-
-  // Format: vYYYY.MM.DD_HH.MM
-  const versionString = `v${istTime.getFullYear()}.${String(
-    istTime.getMonth() + 1
-  ).padStart(2, "0")}.${String(istTime.getDate()).padStart(2, "0")}_${String(
-    istTime.getHours()
-  ).padStart(2, "0")}.${String(istTime.getMinutes()).padStart(2, "0")}`;
-
-  console.log(`Version: ${versionString}`);
 
   const potentialAppDirs = fs
     .readdirSync(ROOT_DIR, { withFileTypes: true })
@@ -233,6 +235,7 @@ function generateServiceWorker() {
   console.log("🧾 Files to cache:", allFilesToCache);
 
   const swTemplate = `
+// version=${versionString}
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
     ${allFilesToCache.join(",\n  ")}
