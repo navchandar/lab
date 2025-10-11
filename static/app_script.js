@@ -408,7 +408,7 @@ function initializeAppUI() {
       const title = link.getAttribute("title") || link.textContent;
 
       if (href && !href.startsWith("/") && !href.includes("://")) {
-        if (!href.contains(BASE_PATH)) {
+        if (!href.includes(BASE_PATH)) {
           href = BASE_PATH + href;
         }
       }
@@ -419,8 +419,8 @@ function initializeAppUI() {
         return;
       }
 
-      iframe.setAttribute("src", href);
       console.log(`Loading ${href} in iframe`);
+      iframe.setAttribute("src", href);
 
       const newState = { iframeSrc: href };
       const basepath = window.location.pathname.replace(/\/$/, "");
