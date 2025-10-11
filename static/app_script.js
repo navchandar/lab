@@ -101,7 +101,7 @@ function setupUpdateNotification() {
         const registration = await navigator.serviceWorker.getRegistration();
         // Check for a waiting worker and post the message
         if (registration?.waiting) {
-          registration.waiting.postMessage({ action: "skipWaiting" }); 
+          registration.waiting.postMessage({ action: "skipWaiting" });
         } else {
           // Fallback if no waiting worker is found
           window.location.reload();
@@ -253,6 +253,16 @@ const collapseSidebar = () => {
   const sidebar = document.getElementById("sidebar");
   const hamburger = document.getElementById("hamburger-menu");
   const header = document.querySelector("body header");
+  const iframe = document.getElementById("appFrame");
+  const iframeSrc = iframe.getAttribute("src");
+
+  // If the iframe's src is empty or null, dont collapse.
+  if (!iframeSrc || iframeSrc === "") {
+    return;
+  }
+  if (!iframe.contentWindow) {
+    return;
+  }
 
   if (!sidebar.classList.contains("collapsed")) {
     sidebar.classList.add("collapsed");

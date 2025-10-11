@@ -13,6 +13,7 @@ const IGNORED_DIRS = [
   "Lychee",
   "stefanzweifel",
   "ip",
+  "jobs",
   "smart-dom-inspector",
 ];
 const IGNORED_FILES = [
@@ -42,7 +43,8 @@ function getFavicon(appDir) {
   }
 
   const html = fs.readFileSync(indexPath, "utf8");
-  const $ = cheerio.load(html); // Load the HTML into cheerio
+  // Load the HTML into cheerio
+  const $ = cheerio.load(html);
 
   // Use a CSS selector to find the icon link.
   // This robustly finds links with rel="icon", "shortcut icon", "apple-touch-icon", etc.
@@ -165,8 +167,16 @@ function generateIndexHtml() {
       <nav id="sidebar" class="overlay">
         <div class="sidebar-content">
             <ul id="app-links">
-              ${appLinks}
+${appLinks}
             </ul>
+
+             <div class="sidebar-info">
+                <h3>🛠️ Maintained By:</h3>
+                <a class="maintained-by-link" target="_blank" href="https://navchandar.github.io/">Naveenchandar</a>
+
+                <h3>📑 License</h3>
+                <a target="_blank" href="https://github.com/navchandar/lab/blob/main/LICENSE">GPLv3</a>
+            </div>
         </div>
         <div class="version-label">${versionString}</div>
       </nav>
