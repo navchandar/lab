@@ -259,19 +259,31 @@ function handlePopState(event) {
   const iframe = document.getElementById("appFrame");
   const links = document.querySelectorAll("#app-links li a");
 
-  let targetSrc;
+  let targetSrc = null;
 
   if (event && event.state && event.state.iframeSrc) {
     // If we have a state object pushed by pushState, use its source.
     targetSrc = event.state.iframeSrc;
   } else {
-    // If the state is null (e.g., first load or navigating to a manually entered URL)
-    const path = window.location.pathname;
-    // URLs are structured like: /lab/#app-name.html
     const hash = window.location.hash;
-    const match = hash.startsWith("#") ? hash.substring(1) : "";
 
-    targetSrc = match || links[0]?.getAttribute("href") || "";
+    if (hash.length > 1) {
+      // Remove the leading '#'
+      const currentHashPath = hash.substring(1);
+
+      // If you decide to push with a leading slash, trim that too
+      const normalizedPath = currentHashPath.startsWith("/")
+        ? currentHashPath.substring(1)
+        : currentHashPath;
+
+      let foundLink = Array.from(links).find((l) =>
+        l.getAttribute("href")?.endsWith(normalizedPath)
+      );
+
+      if (foundLink) {
+        targetSrc = normalizedPath;
+      }
+    }
   }
 
   if (targetSrc && iframe.getAttribute("src") !== targetSrc) {
@@ -345,7 +357,8 @@ function initializeAppUI() {
       console.log(`Loading ${href} in iframe`);
 
       const newState = { iframeSrc: href };
-      const newPath = `/lab/#${href}`;
+      const basepath = window.location.pathname.replace(/\/$/, "");
+      const newPath = `${basepath}/#${href}`;
 
       // Use history.pushState(state, title, url)
       history.pushState(newState, title, newPath);

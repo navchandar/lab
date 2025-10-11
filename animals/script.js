@@ -48,9 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- STATE VARIABLES ---
   let currentIndex = -1;
-  let isMuted = localStorage.getItem("isMuted") === "true";
   let autoplayInterval = null;
-  let currentAudio = null;
 
   // --- CORE FUNCTIONS ---
 

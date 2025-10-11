@@ -122,7 +122,7 @@ function generateIndexHtml() {
         ? `<img src="${favicon}" alt="favicon" class="favicon">`
         : "";
 
-      return `            <li><a href="./${appName}/index.html" target="appFrame">${faviconImg}${displayName}</a></li>`;
+      return `            <li><a href="${appName}/index.html" target="appFrame">${faviconImg}${displayName}</a></li>`;
     })
     .join("\n");
 
