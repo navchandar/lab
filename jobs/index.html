@@ -1,1 +1,76 @@
-TODO
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Job Listings</title>
+    <meta
+      name="description"
+      content="Browse and filter a comprehensive list of available job openings in tech, marketing, and more. Find remote and on-site positions easily."
+    />
+    <meta
+      name="keywords"
+      content="job board, job list, career, employment, tech jobs, remote jobs, full-time, part-time, job openings"
+    />
+    <meta name="author" content="Your Company Name" />
+
+    <meta property="og:title" content="Job Listings" />
+    <meta
+      property="og:description"
+      content="Browse and filter a comprehensive list of available job openings in tech, marketing, and more."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/jobs" />
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Job Listings</h1>
+      <p>Find your next role with ease.</p>
+    </header>
+
+    <main>
+      <div class="controls">
+        <input
+          type="text"
+          id="searchInput"
+          placeholder="Search by Title or Company"
+        />
+        <select id="locationFilter">
+          <option value="">All Locations</option>
+        </select>
+        <select id="typeFilter">
+          <option value="">All Types</option>
+        </select>
+      </div>
+
+      <div class="table-container">
+        <table id="jobTable">
+          <thead>
+            <tr>
+              <th>Job Title</th>
+              <th>Company</th>
+              <th>Location</th>
+              <th>Type</th>
+              <th>Date Posted</th>
+            </tr>
+          </thead>
+          <tbody id="jobTableBody"></tbody>
+        </table>
+      </div>
+
+      <p id="noResults" style="display:none; text-align:center;">
+        No jobs match your current filters.
+      </p>
+    </main>
+
+    <footer>
+      <p>All rights reserved.</p>
+    </footer>
+
+    <script src="jobs.json"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

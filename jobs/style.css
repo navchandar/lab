@@ -1,0 +1,76 @@
+body {
+    margin: 0;
+    background-color: #f4f4f9;
+    padding: 0;
+    color: #333;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background-color: #007bff;
+    padding: 20px;
+    color: white;
+    text-align: center;
+}
+
+main {
+    margin: 20px auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: white;
+    padding: 20px;
+    max-width: 1200px;
+}
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.controls input, .controls select {
+    flex-grow: 1;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 10px;
+    min-width: 150px;
+}
+
+.table-container {
+    overflow-x: auto;
+    /* Ensures table is scrollable on small screens */
+}
+
+#jobTable {
+    margin-top: 10px;
+    border-collapse: collapse;
+    width: 100%;
+}
+
+#jobTable th, #jobTable td {
+    border: 1px solid #ddd;
+    padding: 12px 15px;
+    text-align: left;
+}
+
+#jobTable th {
+    background-color: #e9ecef;
+    font-weight: bold;
+}
+
+#jobTable tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+#jobTable tbody tr:hover {
+    cursor: pointer;
+    background-color: #cfe2ff;
+}
+
+footer {
+    margin-top: 20px;
+    padding: 10px;
+    color: #6c757d;
+    text-align: center;
+}
