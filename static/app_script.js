@@ -296,6 +296,16 @@ function handlePopState(event) {
     }
   }
 
+  if (!targetSrc) {
+    // If no targetSrc is determined
+    iframe.setAttribute("src", "");
+    // Display the sidebar
+    uncollapseSidebar();
+
+    links.forEach((l) => l.parentElement.classList.remove("active"));
+    return;
+  }
+
   if (targetSrc && iframe.getAttribute("src") !== targetSrc) {
     console.log(`PopState: Loading ${targetSrc} in iframe`);
     iframe.setAttribute("src", targetSrc);
@@ -339,11 +349,43 @@ const collapseSidebar = () => {
   }
 };
 
+/**
+ * Handles the UI logic to ensure the sidebar and header are visible.
+ */
+function uncollapseSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const hamburger = document.getElementById("hamburger-menu");
+  const header = document.querySelector("body header");
+
+  console.log("Uncollapsing sidebar and showing header.");
+
+  // Remove collapse
+  sidebar.classList.remove("collapsed");
+
+  // Show the main header
+  if (header) {
+    header.style.display = "block";
+  }
+}
+
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
   const sidebar = document.getElementById("sidebar");
   const hamburger = document.getElementById("hamburger-menu");
   const links = document.querySelectorAll("#app-links li a");
+
+  window.addEventListener("popstate", handlePopState);
+  handlePopState();
+
+  // If there's no hash, manually replace the initial history entry
+  // with a clean state so "back" works correctly to leave the app.
+  if (window.location.hash === "") {
+    history.replaceState(
+      { iframeSrc: null },
+      document.title,
+      window.location.pathname
+    );
+  }
 
   // Initialize theme sync once at startup
   monitorIframeBackgroundColor();
@@ -383,9 +425,6 @@ function initializeAppUI() {
       }, 300);
     });
   });
-
-  window.addEventListener("popstate", handlePopState);
-  handlePopState();
 
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
