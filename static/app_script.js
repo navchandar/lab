@@ -260,7 +260,17 @@ function monitorIframeBackgroundColor() {
   }
 }
 
-// Add this function anywhere in your script.js, outside of other functions.
+function getNormalizedHashPath() {
+  const hash = window.location.hash;
+  if (hash.length > 1) {
+    let path = hash.substring(1);
+    if (!path.startsWith(BASE_PATH)) {
+      path = BASE_PATH + path;
+    }
+    return path;
+  }
+  return null;
+}
 
 /**
  * Handles browser navigation (Back/Forward buttons) by checking the history state.
@@ -269,61 +279,61 @@ function monitorIframeBackgroundColor() {
 function handlePopState(event) {
   const iframe = document.getElementById("appFrame");
   const links = document.querySelectorAll("#app-links li a");
-
   let targetSrc = null;
 
-  if (event && event.state && event.state.iframeSrc) {
-    // If we have a state object pushed by pushState, use its source.
+  if (event?.state?.iframeSrc) {
     targetSrc = event.state.iframeSrc;
   } else {
-    const hash = window.location.hash;
-    if (hash.length > 1) {
-      // Remove the leading '#'
-      let currentHashPath = hash.substring(1);
-
-      // If you decide to push with a leading slash, trim that too
-      const normalizedPath = currentHashPath.startsWith("/")
-        ? currentHashPath.substring(1)
-        : currentHashPath;
-      
-      currentHashPath = currentHashPath.replace("lab/", "");
-
-      let foundLink = Array.from(links).find((l) =>
-        l.getAttribute("href")?.endsWith(normalizedPath)
-      );
-
-      if (foundLink) {
-        targetSrc = normalizedPath;
-      }
-    }
+    targetSrc = getNormalizedHashPath();
   }
 
   if (!targetSrc) {
-    // If no targetSrc is determined
     iframe.setAttribute("src", "");
-    // Display the sidebar
     uncollapseSidebar();
-
     links.forEach((l) => l.parentElement.classList.remove("active"));
-    const basepath = window.location.pathname.replace(/\/$/, "");
-    history.replaceState({ iframeSrc: null }, document.title, basepath);
+
+    if (!event?.state) {
+      history.replaceState(
+        { iframeSrc: null },
+        document.title,
+        window.location.pathname
+      );
+    }
     return;
   }
 
-  if (targetSrc && iframe.getAttribute("src") !== targetSrc) {
-    console.log(`PopState: Loading ${targetSrc} in iframe`);
-    iframe.setAttribute("src", targetSrc);
-
-    // Update active state in the sidebar
+  if (iframe.getAttribute("src") !== targetSrc) {
+    safeSetIframeSrc(targetSrc);
     links.forEach((l) => {
-      const isActive = l.getAttribute("href") === targetSrc;
+      const isActive =
+        l.getAttribute("href") === targetSrc.replace(BASE_PATH, "");
       l.parentElement.classList.toggle("active", isActive);
     });
-
     const basepath = window.location.pathname.replace(/\/$/, "");
-    const newPath = `${basepath}/#${targetSrc}`;
+    const newPath = `${basepath}/#${targetSrc.replace(BASE_PATH, "")}`;
     history.replaceState({ iframeSrc: targetSrc }, document.title, newPath);
     collapseSidebar();
+  }
+}
+
+function safeSetIframeSrc(src) {
+  const iframe = document.getElementById("appFrame");
+  if (!iframe) return;
+
+  const setSrc = () => {
+    iframe.setAttribute("src", src);
+  };
+
+  try {
+    const docReady = iframe.contentDocument?.readyState;
+    if (docReady === "complete") {
+      setSrc();
+    } else {
+      iframe.addEventListener("load", setSrc, { once: true });
+    }
+  } catch (e) {
+    // Fallback in case of cross-origin iframe
+    setSrc();
   }
 }
 
@@ -401,6 +411,9 @@ function initializeAppUI() {
   monitorIframeBackgroundColor();
 
   iframe.addEventListener("load", collapseSidebar);
+  iframe.addEventListener("error", () => {
+    console.error("Iframe failed to load:", iframe.getAttribute("src"));
+  });
 
   links.forEach((link) => {
     link.addEventListener("click", (e) => {
@@ -422,7 +435,7 @@ function initializeAppUI() {
       }
 
       console.log(`Loading ${href} in iframe`);
-      iframe.setAttribute("src", href);
+      safeSetIframeSrc(href);
 
       const newState = { iframeSrc: href };
       const basepath = window.location.pathname.replace(/\/$/, "");
