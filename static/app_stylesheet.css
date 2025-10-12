@@ -144,7 +144,7 @@ iframe {
     transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, border-right-color 0.3s ease-in-out;
     box-sizing: content-box;
     background-color: #333;
-    padding-top: 3em;
+    padding-top: 2em;
     width: 200px;
     height: 100vh;
 }
@@ -243,7 +243,7 @@ iframe {
         position: absolute;
         left: -200px;
         box-sizing: content-box;
-        padding-top: 1em;
+        padding-top: 0em;
     }
 
     #sidebar.overlay {
@@ -253,6 +253,11 @@ iframe {
 
     .sidebar-info {
         margin-top: 0em;
+    }
+
+    .version-label {
+        margin-top: 1em;
+        padding-top: 0;;
     }
 }
 

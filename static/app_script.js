@@ -279,12 +279,14 @@ function handlePopState(event) {
     const hash = window.location.hash;
     if (hash.length > 1) {
       // Remove the leading '#'
-      const currentHashPath = hash.substring(1);
+      let currentHashPath = hash.substring(1);
 
       // If you decide to push with a leading slash, trim that too
       const normalizedPath = currentHashPath.startsWith("/")
         ? currentHashPath.substring(1)
         : currentHashPath;
+      
+      currentHashPath = currentHashPath.replace("lab/", "");
 
       let foundLink = Array.from(links).find((l) =>
         l.getAttribute("href")?.endsWith(normalizedPath)
