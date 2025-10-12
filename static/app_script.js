@@ -318,7 +318,9 @@ function handlePopState(event) {
 
 function safeSetIframeSrc(src) {
   const iframe = document.getElementById("appFrame");
-  if (!iframe) return;
+  if (!iframe) {
+    return;
+  }
 
   const setSrc = () => {
     iframe.setAttribute("src", src);
