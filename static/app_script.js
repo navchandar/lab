@@ -2,6 +2,13 @@ const BASE_PATH = "/lab/";
 const swPath = `${BASE_PATH}service-worker.js`;
 let iframeBodyObserver = null;
 
+// --- DOM elements ---
+const sidebar = document.getElementById("sidebar");
+const appContainer = document.getElementById("app-container");
+const hamburger = document.getElementById("hamburger-menu");
+const header = document.querySelector("body header");
+const iframe = document.getElementById("appFrame");
+
 document.addEventListener("DOMContentLoaded", () => {
   initializeAppUI();
   registerServiceWorker();
@@ -371,29 +378,22 @@ function safeSetIframeSrc(src) {
   }
 }
 
+/**
+ * Collapses the sidebar if iframe is loaded and visible.
+ */
 const collapseSidebar = () => {
-  const sidebar = document.getElementById("sidebar");
-  const appContainer = document.getElementById("app-container");
-  const hamburger = document.getElementById("hamburger-menu");
-  const header = document.querySelector("body header");
-  const iframe = document.getElementById("appFrame");
-  const iframeSrc = iframe.getAttribute("src");
+  const iframeSrc = iframe?.getAttribute("src");
 
-  // If the iframe's src is empty or null, dont collapse.
-  if (!iframeSrc || iframeSrc === "") {
-    return;
-  }
-  if (!iframe.contentWindow) {
+  if (!iframeSrc || iframeSrc === "" || !iframe.contentWindow) {
     return;
   }
 
-  if (!sidebar.classList.contains("collapsed")) {
-    sidebar.classList.add("collapsed");
-    appContainer.classList.add("sidebar-collapsed");
-  }
-  if (sidebar.classList.contains("overlay")) {
-    sidebar.classList.remove("overlay");
-  }
+  console.log("Collapsing sidebar and hiding header.");
+
+  sidebar.classList.add("collapsed");
+  sidebar.classList.remove("overlay");
+  appContainer.classList.add("sidebar-collapsed");
+
   if (hamburger.style.display !== "block") {
     hamburger.style.display = "block";
   }
@@ -405,26 +405,19 @@ const collapseSidebar = () => {
 };
 
 /**
- * Handles the UI logic to ensure the sidebar and header are visible.
+ * Uncollapses the sidebar and shows the header.
  */
-function uncollapseSidebar() {
-  const sidebar = document.getElementById("sidebar");
-  const appContainer = document.getElementById("app-container");
-  const hamburger = document.getElementById("hamburger-menu");
-  const header = document.querySelector("body header");
-
+const uncollapseSidebar = () => {
   console.log("Uncollapsing sidebar and showing header.");
 
-  // Remove collapse
   sidebar.classList.remove("collapsed");
   sidebar.classList.add("overlay");
   appContainer.classList.remove("sidebar-collapsed");
 
-  // Show the main header
   if (header) {
     header.style.display = "block";
   }
-}
+};
 
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
@@ -486,6 +479,7 @@ function initializeAppUI() {
     });
   });
 
+  // Toggle sidebar on hamburger click
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
     sidebar.classList.toggle("collapsed");
