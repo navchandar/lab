@@ -412,6 +412,7 @@ function initializeAppUI() {
   const links = document.querySelectorAll("#app-links li a");
 
   window.addEventListener("popstate", handlePopState);
+  window.addEventListener("hashchange", handlePopState);
 
   const initialHashPath = getNormalizedHashPath();
   const initialIframeSrc = initialHashPath
@@ -423,9 +424,6 @@ function initializeAppUI() {
     document.title,
     window.location.href
   );
-
-  // Handle direct/manual hash edits or fragment-only history entries
-  handlePopState();
 
   // Initialize theme sync once at startup
   monitorIframeBackgroundColor();
@@ -453,13 +451,12 @@ function initializeAppUI() {
       safeSetIframeSrc(href);
 
       const newHash = toHash(href); // e.g., #app-name
-      const currentPath = window.location.pathname.replace(/\/$/, "");
-      const newUrl = `${currentPath}/${newHash}`; // e.g., /lab/#app-name
-
-      // Push the url state, but rely on the URL part for navigation.
+      // Push only the fragment; keep the current path exactly as-is.
+      // This ensures each click produces a distinct URL when the hash differs,
+      // and the address bar will always reflect Back/Forward transitions.
       const state = { iframeSrc: href };
-      history.pushState(state, title, newUrl);
-      console.log(`Pushed state: ${newUrl}`);
+      history.pushState(state, title, newHash);
+      console.log(`Pushed state (hash-only): ${newHash}`);
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
