@@ -273,7 +273,9 @@ const toHash = (href) =>
   "#" + toCanonicalRoute(href).replace(BASE_PATH, "").replace(/^\//, "");
 
 function samePath(a, b) {
-  if (!a || !b) return false;
+  if (!a || !b) {
+    return false;
+  }
   try {
     return (
       new URL(a, window.location.origin).pathname ===
