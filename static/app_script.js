@@ -260,12 +260,37 @@ function monitorIframeBackgroundColor() {
   }
 }
 
+function toCanonicalRoute(href) {
+  if (!href) {
+    return null;
+  }
+  let s = href.trim();
+  // strip leading hash if present
+  if (s.startsWith("#")) {
+    s = s.slice(1);
+  }
+  // ensure leading slash
+  if (!s.startsWith("/")) {
+    s = "/" + s;
+  }
+  // ensure BASE_PATH prefix
+  if (!s.startsWith(BASE_PATH)) {
+    // remove possible double leading slash before appending
+    s = BASE_PATH + s.replace(/^\//, "");
+  }
+  return s; // always '/lab/...'
+}
+
 function getNormalizedHashPath() {
   const hash = window.location.hash;
   if (hash.length > 1) {
-    let path = hash.substring(1);
+    let path = hash.slice(1).trim();
+    // Ensure single leading slash before normalization
+    if (!path.startsWith("/")) {
+      path = "/" + path;
+    }
     if (!path.startsWith(BASE_PATH)) {
-      path = BASE_PATH + path;
+      path = BASE_PATH + path.replace(/^\//, "");
     }
     return path;
   }
@@ -282,9 +307,10 @@ function handlePopState(event) {
   let targetSrc = null;
 
   if (event?.state?.iframeSrc) {
-    targetSrc = event.state.iframeSrc;
+    targetSrc = toCanonicalRoute(event.state.iframeSrc);
   } else {
-    targetSrc = getNormalizedHashPath();
+    const hashPath = getNormalizedHashPath();
+    targetSrc = hashPath ? toCanonicalRoute(hashPath) : null;
   }
 
   if (!targetSrc) {
@@ -304,14 +330,23 @@ function handlePopState(event) {
 
   if (iframe.getAttribute("src") !== targetSrc) {
     safeSetIframeSrc(targetSrc);
+    const activeKey = targetSrc.replace(BASE_PATH, "").replace(/^\//, "");
     links.forEach((l) => {
-      const isActive =
-        l.getAttribute("href") === targetSrc.replace(BASE_PATH, "");
-      l.parentElement.classList.toggle("active", isActive);
+      const linkKey = (toCanonicalRoute(l.getAttribute("href")) || "")
+        .replace(BASE_PATH, "")
+        .replace(/^\//, "");
+      l.parentElement.classList.toggle("active", linkKey === activeKey);
     });
+
     const basepath = window.location.pathname.replace(/\/$/, "");
-    const newPath = `${basepath}/#${targetSrc.replace(BASE_PATH, "")}`;
-    history.replaceState({ iframeSrc: targetSrc }, document.title, newPath);
+    const canonicalHash =
+      "#" + targetSrc.replace(BASE_PATH, "").replace(/^\//, "");
+    const newPath = `${basepath}/${canonicalHash}`;
+    // Only attach state if it wasn't present (e.g., direct load / manual hash)
+    if (!event?.state?.iframeSrc) {
+      history.replaceState({ iframeSrc: targetSrc }, document.title, newPath);
+    }
+
     collapseSidebar();
   }
 }
@@ -321,21 +356,15 @@ function safeSetIframeSrc(src) {
   if (!iframe) {
     return;
   }
-
-  const setSrc = () => {
-    iframe.setAttribute("src", src);
-  };
+  const current = iframe.getAttribute("src") || "";
+  if (current === src) {
+    return;
+  }
 
   try {
-    const docReady = iframe.contentDocument?.readyState;
-    if (docReady === "complete") {
-      setSrc();
-    } else {
-      iframe.addEventListener("load", setSrc, { once: true });
-    }
+    iframe.src = src;
   } catch (e) {
-    // Fallback in case of cross-origin iframe
-    setSrc();
+    iframe.setAttribute("src", src);
   }
 }
 
@@ -397,10 +426,10 @@ function initializeAppUI() {
   const links = document.querySelectorAll("#app-links li a");
 
   window.addEventListener("popstate", handlePopState);
-  handlePopState();
 
-  // If there's no hash, manually replace the initial history entry
-  // with a clean state so "back" works correctly to leave the app.
+  // Handle direct/manual hash edits or fragment-only history entries
+  window.addEventListener("hashchange", handlePopState);
+  handlePopState();
   if (window.location.hash === "") {
     history.replaceState(
       { iframeSrc: null },
@@ -421,14 +450,8 @@ function initializeAppUI() {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       collapseSidebar();
-      let href = link.getAttribute("href");
+      let href = toCanonicalRoute(link.getAttribute("href"));
       const title = link.getAttribute("title") || link.textContent;
-
-      if (href && !href.startsWith("/") && !href.includes("://")) {
-        if (!href.includes(BASE_PATH)) {
-          href = BASE_PATH + href;
-        }
-      }
 
       // The link is already active and loaded
       if (iframe.getAttribute("src") === href) {
