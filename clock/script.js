@@ -174,7 +174,7 @@ let intervalID = null;
     }
 
     speakTime() {
-      if (this.state?.totalMinutes != null) {
+      if (this.state?.totalMinutes !== null) {
         const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
         const hour = parseInt(hh, 10);
         const minutes = parseInt(mm, 10);

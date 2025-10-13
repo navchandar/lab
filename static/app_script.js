@@ -4,7 +4,6 @@ let iframeBodyObserver = null;
 
 // --- DOM elements ---
 const sidebar = document.getElementById("sidebar");
-const appContainer = document.getElementById("app-container");
 const hamburger = document.getElementById("hamburger-menu");
 const header = document.querySelector("body header");
 const iframe = document.getElementById("appFrame");
