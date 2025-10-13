@@ -311,23 +311,16 @@ function getNormalizedHashPath() {
 
 /**
  * Handles browser navigation (Back/Forward buttons) by checking the history state.
- * @param {PopStateEvent} event The popstate event object.
  */
-function handlePopState(event) {
+function handlePopState() {
   const iframe = document.getElementById("appFrame");
   const links = document.querySelectorAll("#app-links li a");
   let targetSrc = null;
 
-  if (event?.state && typeof event.state.iframeSrc === "string") {
-    targetSrc =
-      event.state.iframeSrc === ""
-        ? null
-        : toCanonicalRoute(event.state.iframeSrc);
-  } else {
-    const hashPath = getNormalizedHashPath();
-    targetSrc = hashPath ? toCanonicalRoute(hashPath) : null;
-  }
-
+  // The browser has already updated the URL and hash when popstate fires.
+  // We must now read the new URL's hash to determine the content.
+  const hashPath = getNormalizedHashPath();
+  targetSrc = hashPath ? toCanonicalRoute(hashPath) : null;
   if (!targetSrc) {
     iframe.setAttribute("src", "");
     uncollapseSidebar();
@@ -446,6 +439,7 @@ function initializeAppUI() {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       collapseSidebar();
+
       const href = toCanonicalRoute(link.getAttribute("href"));
       const title = link.getAttribute("title") || link.textContent;
 
@@ -458,13 +452,14 @@ function initializeAppUI() {
       console.log(`Loading ${href} in iframe`);
       safeSetIframeSrc(href);
 
-      const newHash = toHash(href);
+      const newHash = toHash(href); // e.g., #app-name
       const currentPath = window.location.pathname.replace(/\/$/, "");
-      const url = `${currentPath}/${newHash}`;
-      const state = { iframeSrc: href };
+      const newUrl = `${currentPath}/${newHash}`; // e.g., /lab/#app-name
 
-      history.pushState(state, title, url);
-      console.log(`Pushed state: ${url}`);
+      // Push the url state, but rely on the URL part for navigation.
+      const state = { iframeSrc: href };
+      history.pushState(state, title, newUrl);
+      console.log(`Pushed state: ${newUrl}`);
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
