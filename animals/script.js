@@ -4,7 +4,20 @@ import { TTS } from "../static/speech_helper.js";
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 
+// --- DOM ELEMENTS ---
+const container = document.getElementById("animal-container");
+const animalImage = document.getElementById("animal-image");
+const animalName = document.getElementById("animal-name");
+const settingsBtn = document.getElementById("settings-btn");
+const settingsMenu = document.getElementById("settings-menu");
+const randomizeCheckbox = document.getElementById("randomize");
+const autoplayCheckbox = document.getElementById("autoplay");
+
 document.addEventListener("DOMContentLoaded", () => {
+  utils.updateMuteBtn();
+  utils.setFullscreenIcon();
+  utils.updateFullScreenBtn();
+
   // --- DATA ---
   const animalNames = [
     "Dog",
@@ -34,17 +47,6 @@ document.addEventListener("DOMContentLoaded", () => {
       image: `../static/images/${file}.jpg`,
     };
   });
-
-  // --- DOM ELEMENTS ---
-  const container = document.getElementById("animal-container");
-  const animalImage = document.getElementById("animal-image");
-  const animalName = document.getElementById("animal-name");
-  const muteButton = document.getElementById("muteButton");
-  const fullscreenBtn = document.getElementById("fullscreen-btn");
-  const settingsBtn = document.getElementById("settings-btn");
-  const settingsMenu = document.getElementById("settings-menu");
-  const randomizeCheckbox = document.getElementById("randomize");
-  const autoplayCheckbox = document.getElementById("autoplay");
 
   // --- STATE VARIABLES ---
   let currentIndex = -1;
@@ -120,20 +122,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupEventListeners() {
     container.addEventListener("click", showNextAnimal);
-    muteButton.addEventListener("click", utils.toggleMute);
-    fullscreenBtn.addEventListener("click", utils.toggleFullscreen);
-    settingsBtn.addEventListener("click", utils.toggleSettings);
+    settingsBtn.addEventListener("click", utils.onClickSettings);
+    settingsIcon.addEventListener("click", utils.onClickSettings);
     autoplayCheckbox.addEventListener("change", handleAutoplay);
-
-    // Close settings if clicking outside
-    document.addEventListener("click", (event) => {
-      if (
-        !settingsMenu.contains(event.target) &&
-        !settingsBtn.contains(event.target)
-      ) {
-        utils.hideSettings();
-      }
-    });
 
     function handleKeydown(event) {
       const target = event.target;
@@ -179,13 +170,9 @@ document.addEventListener("DOMContentLoaded", () => {
       localStorage.setItem("isRandom", randomizeCheckbox.checked);
     });
 
-    utils.bodyAction(showNextAnimal);
-    utils.updateMuteBtn();
-    utils.setFullscreenIcon();
-    utils.updateFullScreenBtn();
-
     setupEventListeners();
     // Load the first animal on page load
+    utils.bodyAction(showNextAnimal);
     showNextAnimal();
     // update mute button if speech supported
     if (ttsInstance.isSpeechReady()) {

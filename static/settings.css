@@ -76,9 +76,17 @@
     background-color: #5a6268;
 }
 
+#settings-btn:active,
+#muteButton:active,
+#fullscreen-btn:active {
+    transform: scale(0.95);
+}
+
+
 #settings-btn img {
     margin-bottom: -5px;
 }
+
 
 /* Settings Menu */
 #settings-menu {
@@ -176,10 +184,6 @@ input[type="checkbox"] {
         right: 10px;
         bottom: 10px;
         font-size: 1.2em;
-    }
-
-    #fullscreen-btn:active {
-        transform: scale(1.2);
     }
 
     /* Settings Menu */
