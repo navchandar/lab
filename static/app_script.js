@@ -392,7 +392,6 @@ const collapseSidebar = () => {
 
   sidebar.classList.add("collapsed");
   sidebar.classList.remove("overlay");
-  appContainer.classList.add("sidebar-collapsed");
 
   if (hamburger.style.display !== "block") {
     hamburger.style.display = "block";
@@ -412,7 +411,6 @@ const uncollapseSidebar = () => {
 
   sidebar.classList.remove("collapsed");
   sidebar.classList.add("overlay");
-  appContainer.classList.remove("sidebar-collapsed");
 
   if (header) {
     header.style.display = "block";
@@ -483,7 +481,6 @@ function initializeAppUI() {
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
     sidebar.classList.toggle("collapsed");
-    appContainer.classList.toggle("sidebar-collapsed");
   });
 
   document.addEventListener("keydown", (event) => {
