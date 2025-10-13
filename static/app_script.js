@@ -460,7 +460,7 @@ function initializeAppUI() {
 
       const newHash = toHash(href);
       const currentPath = window.location.pathname.replace(/\/$/, "");
-      const newUrl = `${currentPath}/${newHash}`;
+      const url = `${currentPath}/${newHash}`;
       const state = { iframeSrc: href };
 
       history.pushState(state, title, url);
