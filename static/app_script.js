@@ -428,10 +428,6 @@ function initializeAppUI() {
   window.addEventListener("hashchange", handlePopState);
 
   const initialHashPath = getNormalizedHashPath();
-  const initialIframeSrc = initialHashPath
-    ? toCanonicalRoute(initialHashPath)
-    : "";
-
   // On load, sync iframe with current hash (if any):
   handlePopState();
 

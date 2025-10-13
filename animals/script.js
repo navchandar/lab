@@ -9,7 +9,7 @@ const container = document.getElementById("animal-container");
 const animalImage = document.getElementById("animal-image");
 const animalName = document.getElementById("animal-name");
 const settingsBtn = document.getElementById("settings-btn");
-const settingsMenu = document.getElementById("settings-menu");
+const settingsIcon = document.getElementById("settings-icon");
 const randomizeCheckbox = document.getElementById("randomize");
 const autoplayCheckbox = document.getElementById("autoplay");
 
@@ -58,11 +58,11 @@ document.addEventListener("DOMContentLoaded", () => {
    * Displays the next animal and plays its sound.
    */
   function showNextAnimal() {
-    // Determine next index
-    const isRandom = randomizeCheckbox.checked;
+    // Determine next index// Determine which mode to use (random or sequential)
+    const isRandomEnabled = utils.getIsRandomEnabled();
     let nextIndex = currentIndex;
 
-    if (isRandom) {
+    if (isRandomEnabled) {
       // Ensure the next random animal is different from the current one
       while (nextIndex === currentIndex) {
         nextIndex = Math.floor(Math.random() * animals.length);
@@ -122,9 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function setupEventListeners() {
     container.addEventListener("click", showNextAnimal);
-    settingsBtn.addEventListener("click", utils.onClickSettings);
-    settingsIcon.addEventListener("click", utils.onClickSettings);
-    autoplayCheckbox.addEventListener("change", handleAutoplay);
 
     function handleKeydown(event) {
       const target = event.target;
@@ -162,14 +159,26 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("keydown", handleKeydown);
   }
 
-  // --- INITIALIZATION ---
-  function init() {
+  function updateSettingsMenu() {
+    // =========================
+    // Settings Menu
+    // =========================
+    // Toggle menu visibility
     settingsBtn.style.display = "block";
-    randomizeCheckbox.checked = localStorage.getItem("isRandom") === "true";
-    randomizeCheckbox.addEventListener("change", () => {
-      localStorage.setItem("isRandom", randomizeCheckbox.checked);
+    utils.addListeners(settingsBtn, utils.onClickSettings);
+    utils.addListeners(settingsIcon, utils.onClickSettings);
+
+    utils.setIsRandom(randomizeCheckbox.checked);
+    utils.addUnifiedListeners(randomizeCheckbox, () => {
+      utils.setIsRandom(randomizeCheckbox.checked);
     });
 
+    utils.addUnifiedListeners(autoplayCheckbox, handleAutoplay);
+  }
+
+  // --- INITIALIZATION ---
+  function init() {
+    updateSettingsMenu();
     setupEventListeners();
     // Load the first animal on page load
     utils.bodyAction(showNextAnimal);

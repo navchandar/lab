@@ -235,7 +235,6 @@ Object.keys(window.alphabets).forEach((langKey) => {
 // --- Set Initial Values from URL and LocalStorage ---
 languageSelect.value = lang;
 numberElement.textContent = Alphabet[0];
-randomizeCheckbox.checked = utils.getIsRandomEnabled();
 
 // --- Initialize Speech Synthesis ---
 if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
