@@ -319,7 +319,10 @@ function handlePopState(event) {
   let targetSrc = null;
 
   if (event?.state && typeof event.state.iframeSrc === "string") {
-    targetSrc = toCanonicalRoute(event.state.iframeSrc);
+    targetSrc =
+      event.state.iframeSrc === ""
+        ? null
+        : toCanonicalRoute(event.state.iframeSrc);
   } else {
     const hashPath = getNormalizedHashPath();
     targetSrc = hashPath ? toCanonicalRoute(hashPath) : null;
@@ -336,12 +339,18 @@ function handlePopState(event) {
     safeSetIframeSrc(targetSrc);
     const activeKey = targetSrc.replace(BASE_PATH, "").replace(/^\//, "");
     links.forEach((l) => {
-      const linkKey = (toCanonicalRoute(l.getAttribute("href")) || "")
+      const linkHref = l.getAttribute("href");
+      // Use toCanonicalRoute on the link's href to get the comparable key
+      const linkCanonicalRoute = toCanonicalRoute(linkHref) || "";
+      const linkKey = linkCanonicalRoute
         .replace(BASE_PATH, "")
         .replace(/^\//, "");
       l.parentElement.classList.toggle("active", linkKey === activeKey);
     });
 
+    collapseSidebar();
+  } else {
+    // Close sidebar even if the src is the same
     collapseSidebar();
   }
 }
@@ -410,15 +419,19 @@ function initializeAppUI() {
 
   window.addEventListener("popstate", handlePopState);
 
+  const initialHashPath = getNormalizedHashPath();
+  const initialIframeSrc = initialHashPath
+    ? toCanonicalRoute(initialHashPath)
+    : "";
+
+  history.replaceState(
+    { iframeSrc: initialIframeSrc },
+    document.title,
+    window.location.href
+  );
+
   // Handle direct/manual hash edits or fragment-only history entries
   handlePopState();
-  if (window.location.hash === "") {
-    history.replaceState(
-      { iframeSrc: null },
-      document.title,
-      window.location.pathname
-    );
-  }
 
   // Initialize theme sync once at startup
   monitorIframeBackgroundColor();
@@ -447,14 +460,8 @@ function initializeAppUI() {
       const basepath = window.location.pathname.replace(/\/$/, "");
       const url = `${basepath}/${toHash(href)}`;
       const state = { iframeSrc: href };
-      const isInitial = !history.state || history.state.iframeSrc === null;
-      if (isInitial) {
-        history.replaceState(state, title, url);
-        console.log(`Replaced initial state: ${url}`);
-      } else {
-        history.pushState(state, title, url);
-        console.log(`Pushed state: ${url}`);
-      }
+      history.pushState(state, title, url);
+      console.log(`Pushed state: ${url}`);
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
