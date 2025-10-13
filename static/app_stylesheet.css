@@ -67,6 +67,10 @@ header {
     transform: translateX(-100%);
 }
 
+#app-container:not(.sidebar-collapsed) main {
+    margin-left: 240px;
+}
+
 #app-container.sidebar-collapsed main {
     margin-left: 0;
 }

@@ -489,7 +489,7 @@ function initializeAppUI() {
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
     sidebar.classList.toggle("collapsed");
-
+    appContainer.classList.toggle("sidebar-collapsed");
   });
 
   document.addEventListener("keydown", (event) => {
