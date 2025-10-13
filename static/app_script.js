@@ -393,7 +393,7 @@ const collapseSidebar = () => {
 
   if (header && header.style.display !== "none") {
     header.style.display = "none";
-    sidebar.style.paddingTop = "6.75em";
+    sidebar.style.paddingTop = "3.75em";
   }
 };
 
@@ -408,6 +408,7 @@ const uncollapseSidebar = () => {
 
   if (header) {
     header.style.display = "block";
+    sidebar.style.paddingTop = "0em";
   }
 };
 
@@ -457,9 +458,11 @@ function initializeAppUI() {
       console.log(`Loading ${href} in iframe`);
       safeSetIframeSrc(href);
 
-      const basepath = window.location.pathname.replace(/\/$/, "");
-      const url = `${basepath}/${toHash(href)}`;
+      const newHash = toHash(href);
+      const currentPath = window.location.pathname.replace(/\/$/, "");
+      const newUrl = `${currentPath}/${newHash}`;
       const state = { iframeSrc: href };
+
       history.pushState(state, title, url);
       console.log(`Pushed state: ${url}`);
 
