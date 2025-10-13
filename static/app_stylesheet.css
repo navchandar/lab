@@ -38,6 +38,15 @@ iframe {
     height: 100%;
 }
 
+header {
+    box-sizing: border-box;
+    background-color: #0b767a;
+    padding: 15px 20px;
+    height: 60px;
+    color: #fff;
+    text-align: center;
+}
+
 /* --- Sidebar Navigation --- */
 #sidebar {
     display: flex;
@@ -70,6 +79,18 @@ iframe {
     height: 60px;
     color: #212529;
     text-align: center;
+}
+
+.sidebar-info {
+    margin-top: 1em;
+    border-top: 1px solid #444;
+    padding: 1em 2em;
+    color: #555555cc;
+    font-size: 0.9em;
+}
+
+.sidebar-info h3 {
+    margin: 0em 0 0.25em 0;
 }
 
 #app-links {
@@ -181,6 +202,16 @@ iframe {
     margin-right: 5px;
     width: 16px;
     height: 16px;
+}
+
+.version-label {
+    margin-top: auto;
+    margin-bottom: 110px;
+    border-top: 1px solid #444;
+    padding: 8px;
+    padding-left: 2em;
+    font-size: 0.85em;
+    text-wrap: nowrap;
 }
 
 /* --- Mobile & Overlay View --- */
