@@ -270,6 +270,9 @@ function monitorIframeBackgroundColor() {
   }
 }
 
+const toHash = (href) =>
+  "#" + toCanonicalRoute(href).replace(BASE_PATH, "").replace(/^\//, "");
+
 function toCanonicalRoute(href) {
   if (!href) {
     return null;
@@ -316,7 +319,7 @@ function handlePopState(event) {
   const links = document.querySelectorAll("#app-links li a");
   let targetSrc = null;
 
-  if (event?.state?.iframeSrc) {
+  if (event?.state && typeof event.state.iframeSrc === "string") {
     targetSrc = toCanonicalRoute(event.state.iframeSrc);
   } else {
     const hashPath = getNormalizedHashPath();
@@ -327,14 +330,6 @@ function handlePopState(event) {
     iframe.setAttribute("src", "");
     uncollapseSidebar();
     links.forEach((l) => l.parentElement.classList.remove("active"));
-
-    if (!event?.state) {
-      history.replaceState(
-        { iframeSrc: null },
-        document.title,
-        window.location.pathname
-      );
-    }
     return;
   }
 
@@ -347,15 +342,6 @@ function handlePopState(event) {
         .replace(/^\//, "");
       l.parentElement.classList.toggle("active", linkKey === activeKey);
     });
-
-    const basepath = window.location.pathname.replace(/\/$/, "");
-    const canonicalHash =
-      "#" + targetSrc.replace(BASE_PATH, "").replace(/^\//, "");
-    const newPath = `${basepath}/${canonicalHash}`;
-    // Only attach state if it wasn't present (e.g., direct load / manual hash)
-    if (!event?.state?.iframeSrc) {
-      history.replaceState({ iframeSrc: targetSrc }, document.title, newPath);
-    }
 
     collapseSidebar();
   }
@@ -447,7 +433,7 @@ function initializeAppUI() {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       collapseSidebar();
-      let href = toCanonicalRoute(link.getAttribute("href"));
+      const href = toCanonicalRoute(link.getAttribute("href"));
       const title = link.getAttribute("title") || link.textContent;
 
       // The link is already active and loaded
@@ -459,13 +445,17 @@ function initializeAppUI() {
       console.log(`Loading ${href} in iframe`);
       safeSetIframeSrc(href);
 
-      const newState = { iframeSrc: href };
       const basepath = window.location.pathname.replace(/\/$/, "");
-      const newPath = `${basepath}/#${href}`;
-
-      // Use history.pushState(state, title, url)
-      history.pushState(newState, title, newPath);
-      console.log(`Pushed state: ${newPath}`);
+      const url = `${basepath}/${toHash(href)}`;
+      const state = { iframeSrc: href };
+      const isInitial = !history.state || history.state.iframeSrc === null;
+      if (isInitial) {
+        history.replaceState(state, title, url);
+        console.log(`Replaced initial state: ${url}`);
+      } else {
+        history.pushState(state, title, url);
+        console.log(`Pushed state: ${url}`);
+      }
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");

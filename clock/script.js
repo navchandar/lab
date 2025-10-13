@@ -174,23 +174,28 @@ let intervalID = null;
     }
 
     speakTime() {
-      const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
-      const hour = parseInt(hh, 10);
-      const minutes = parseInt(mm, 10);
+      if (this.state?.totalMinutes != null) {
+        const { hh, mm } = this._formatTimeForDisplay(this.state.totalMinutes);
+        const hour = parseInt(hh, 10);
+        const minutes = parseInt(mm, 10);
 
-      let timeText = `${hour}`;
-      if (minutes === 0) {
-        timeText += ` o clock`;
-      } else {
-        timeText += ` ${minutes}`;
-      }
-
-      setTimeout(() => {
-        // Speak the time value
-        if (!utils.isMuted()) {
-          ttsInstance.speakElement(timeText, { directSpeech: true, rate: 0.8 });
+        let timeText = `${hour}`;
+        if (minutes === 0) {
+          timeText += ` o clock`;
+        } else {
+          timeText += ` ${minutes}`;
         }
-      }, 700);
+
+        setTimeout(() => {
+          // Speak the time value
+          if (!utils.isMuted()) {
+            ttsInstance.speakElement(timeText, {
+              directSpeech: true,
+              rate: 0.8,
+            });
+          }
+        }, 700);
+      }
     }
 
     /**
