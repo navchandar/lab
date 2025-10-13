@@ -419,12 +419,8 @@ function initializeAppUI() {
     ? toCanonicalRoute(initialHashPath)
     : "";
 
-  history.replaceState(
-    { iframeSrc: initialIframeSrc },
-    document.title,
-    window.location.href
-  );
-
+  // Store initial state but do not modify the URL at all:
+  history.replaceState({ iframeSrc: initialIframeSrc }, document.title);
   // Initialize theme sync once at startup
   monitorIframeBackgroundColor();
 
@@ -451,12 +447,11 @@ function initializeAppUI() {
       safeSetIframeSrc(href);
 
       const newHash = toHash(href); // e.g., #app-name
-      // Push only the fragment; keep the current path exactly as-is.
-      // This ensures each click produces a distinct URL when the hash differs,
-      // and the address bar will always reflect Back/Forward transitions.
-      const state = { iframeSrc: href };
-      history.pushState(state, title, newHash);
-      console.log(`Pushed state (hash-only): ${newHash}`);
+      if (window.location.hash !== newHash) {
+        // Update the address bar and create a history entry
+        window.location.hash = newHash;
+        history.replaceState({ iframeSrc: href }, title);
+      }
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
       link.parentElement.classList.add("active");
