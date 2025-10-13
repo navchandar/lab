@@ -71,6 +71,7 @@ function showUpdateNotification() {
   const updateBanner = document.getElementById("update-notification");
   if (updateBanner) {
     updateBanner.style.display = "block";
+    updateBanner.classList.add("show");
   } else {
     console.log("Update notification element not found");
   }
@@ -102,6 +103,9 @@ function setupUpdateNotification() {
         const registration = await navigator.serviceWorker.getRegistration();
         // Check for a waiting worker and post the message
         if (registration?.waiting) {
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            window.location.reload();
+          });
           registration.waiting.postMessage({ action: "skipWaiting" });
         } else {
           // Fallback if no waiting worker is found
@@ -136,8 +140,6 @@ function updateThemeColorFromIframe() {
     const backgroundColor = computedStyle
       .getPropertyValue("background-color")
       .trim();
-
-    iframeBody.addEventListener("click", collapseSidebar);
 
     // Check if a color was successfully retrieved
     if (backgroundColor) {
@@ -211,6 +213,7 @@ function monitorIframeBackgroundColor() {
 
       const doc = iframe.contentWindow.document;
       const body = doc.body;
+      body.addEventListener("click", collapseSidebar);
 
       // Watch for style/class changes on the body
       iframeBodyObserver = new MutationObserver((mutationsList) => {
@@ -370,6 +373,7 @@ function safeSetIframeSrc(src) {
 
 const collapseSidebar = () => {
   const sidebar = document.getElementById("sidebar");
+  const appContainer = document.getElementById("app-container");
   const hamburger = document.getElementById("hamburger-menu");
   const header = document.querySelector("body header");
   const iframe = document.getElementById("appFrame");
@@ -385,6 +389,7 @@ const collapseSidebar = () => {
 
   if (!sidebar.classList.contains("collapsed")) {
     sidebar.classList.add("collapsed");
+    appContainer.classList.add("sidebar-collapsed");
   }
   if (sidebar.classList.contains("overlay")) {
     sidebar.classList.remove("overlay");
@@ -404,6 +409,7 @@ const collapseSidebar = () => {
  */
 function uncollapseSidebar() {
   const sidebar = document.getElementById("sidebar");
+  const appContainer = document.getElementById("app-container");
   const hamburger = document.getElementById("hamburger-menu");
   const header = document.querySelector("body header");
 
@@ -412,6 +418,7 @@ function uncollapseSidebar() {
   // Remove collapse
   sidebar.classList.remove("collapsed");
   sidebar.classList.add("overlay");
+  appContainer.classList.remove("sidebar-collapsed");
 
   // Show the main header
   if (header) {
@@ -428,7 +435,6 @@ function initializeAppUI() {
   window.addEventListener("popstate", handlePopState);
 
   // Handle direct/manual hash edits or fragment-only history entries
-  window.addEventListener("hashchange", handlePopState);
   handlePopState();
   if (window.location.hash === "") {
     history.replaceState(

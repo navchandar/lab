@@ -1,117 +1,178 @@
-html, body {
-    background-color: #f4f4f4;
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden;
-    color: #333;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+/* --- Base & Reset --- */
+html {
+    box-sizing: border-box;
 }
 
-/* More targeted margin/padding reset */
-body, h1, h2, h3, h4, h5, h6, p, ul, ol, figure, blockquote, dl, dd {
+body, h1, h2, h3, p, ul {
     margin: 0;
     padding: 0;
 }
 
-ul {
-    list-style: none;
-}
-
-/* --- Main Layout Structure --- */
 body {
-    display: flex;
-    flex-direction: column;
+    background-color: #f8f9fa;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    color: #212529;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- Main Layout --- */
 #app-container {
     display: flex;
-    flex-grow: 1;
-    height: calc(100vh - 60px);
-    /* Full height minus header */
+    height: 100vh;
 }
 
-
-/* --- Header --- */
-header {
-    box-sizing: border-box;
-    background-color: #333;
-    padding: 15px 20px;
-    height: 60px;
-    color: #fff;
-    text-align: center;
-
-}
-
-/* --- Navigation Menu --- */
-nav {
-    box-sizing: border-box;
-    border-right: 1px solid #ddd;
-    background-color: #f4f4f4;
-    padding: 20px 0;
-    width: 200px;
-    overflow-y: auto;
-}
-
-nav ul {
-    list-style-type: none;
-}
-
-nav ul li a {
-    display: flex;
-    align-content: center;
-    align-items: center;
-    transition: background-color 0.2s, color 0.2s;
-    padding: 12px 20px;
-    color: #333;
-    font-weight: bold;
-    text-align: center;
-    text-decoration: none;
-}
-
-nav ul li:hover {
-    background-color: #4CAF50;
-    color: #fff;
-}
-
-nav ul li:hover a {
-    color: #fff;
-}
-
-/* --- Main Content Area --- */
 main {
     flex-grow: 1;
+    transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-left: 240px;
 }
 
 iframe {
+    display: block;
     border: none;
     width: 100%;
     height: 100%;
 }
 
+/* --- Sidebar Navigation --- */
+#sidebar {
+    display: flex;
+    position: relative;
+    flex-shrink: 0;
+    flex-direction: column;
+    transform: translateX(0);
+    z-index: 1000;
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid #dee2e6;
+    background-color: #ffffff;
+    width: 240px;
+    height: 100%;
+}
+
+#sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+#app-container.sidebar-collapsed main {
+    margin-left: 0;
+}
+
+#sidebar header {
+    box-sizing: border-box;
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    padding: 1rem 1.5rem;
+    height: 60px;
+    color: #212529;
+    text-align: center;
+}
+
+#app-links {
+    flex-grow: 1;
+    padding: 0.5rem 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+#app-links li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    border-left: 4px solid transparent;
+    padding: 14px 24px;
+    color: #495057;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+#app-links li a:hover {
+    background-color: #e9ecef;
+    color: #000;
+}
+
+#app-links li.active a {
+    border-left-color: #0d6efd;
+    background-color: #e7f1ff;
+    color: #0d6efd;
+}
+
+/* --- Hamburger Menu --- */
+#hamburger-menu {
+    display: none;
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    z-index: 1100;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    cursor: pointer;
+    border: none;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #f8f9fa;
+    padding: 10px;
+    color: #495057;
+    font-size: 24px;
+}
+
+#hamburger-menu:hover {
+    background-color: #e9ecef;
+}
+
+#hamburger-menu:active {
+    transform: scale(0.95);
+}
+
+
+/* --- Update Notification --- */
 #update-notification {
     display: none;
     position: fixed;
     bottom: 20px;
     left: 50%;
-    transform: translateX(-50%);
-    z-index: 1000;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-radius: 8px;
-    background-color: #333;
-    padding: 15px 25px;
-    color: white;
-    font-family: sans-serif;
-    text-align: center;
+    align-items: center;
+    transform: translate(-50%, 20px);
+    opacity: 0;
+    z-index: 2000;
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    background-color: #212529;
+    padding: 16px 24px;
+    pointer-events: none;
+    color: #f8f9fa;
+}
+
+/* This style should be toggled by JS to show the banner */
+#update-notification.show {
+    transform: translate(-50%, 0);
+    opacity: 1;
+    pointer-events: auto;
 }
 
 #update-notification button {
+    transition: background-color 0.2s ease, transform 0.2s ease;
     cursor: pointer;
-    margin-left: 15px;
+    margin-left: 20px;
     border: none;
-    border-radius: 5px;
-    background-color: #4CAF50;
-    padding: 8px 16px;
+    border-radius: 8px;
+    background-color: #0d6efd;
+    padding: 10px 20px;
     color: white;
+    font-weight: 500;
+}
+
+#update-notification button:hover {
+    background-color: #0b5ed7;
+}
+
+#update-notification button:active {
+    transform: scale(0.98);
 }
 
 .favicon {
@@ -121,184 +182,73 @@ iframe {
     height: 16px;
 }
 
-#hamburger-menu {
-    display: none;
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    z-index: 1100;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background: #4CAF50;
-    padding: 8px 12px;
-    color: white;
-    font-size: 20px;
-}
-
-
-#sidebar {
-    display: flex;
-    flex-direction: column;
-    transform: translateX(-200px);
-    transition: transform 0.3s ease-in-out, width 0.3s ease-in-out, border-right-color 0.3s ease-in-out;
-    box-sizing: content-box;
-    background-color: #333;
-    padding-top: 2em;
-    width: 200px;
-    height: 100vh;
-}
-
-
-#sidebar.collapsed {
-    position: absolute;
-    left: 0;
-    border-right-color: transparent;
-    width: 0px;
-    overflow: hidden;
-}
-
-#sidebar.overlay {
-    position: absolute;
-    left: 0;
-    transform: translateX(0);
-    z-index: 1000;
-    width: 200px;
-}
-
-#sidebar.overlay ul li a {
-    display: block;
-    box-sizing: border-box;
-    padding: 15px 5px 10px 20px;
-    width: 100%;
-    overflow: hidden;
-    color: white;
-    text-align: left;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-#sidebar ul li.active {
-    border-left: 4px solid #2e7d32;
-    background-color: #4CAF50;
-    color: white;
-
-}
-
-.sidebar-content {
-    display: flex;
-    flex-direction: column;
-}
-
-.sidebar-info {
-    margin-top: 20em;
-    border-top: 1px solid #444;
-    padding: 1em 15px;
-    color: #555;
-    font-size: 0.9em;
-}
-
-.sidebar-info h3 {
-    margin: 1em 0 0.5em 0;
-    padding-bottom: 2px;
-    color: lightsteelblue;
-    font-size: 0.9em;
-}
-
-.sidebar-info a {
-    padding-left: 1em;
-    color: #f4f4f4;
-    text-decoration: none;
-}
-
-.sidebar-info a:hover {
-    text-decoration: underline;
-}
-
-.maintained-by-link {
-    display: block;
-    margin-bottom: 1em;
-}
-
-.version-label {
-    margin-top: auto;
-    margin-bottom: 110px;
-    border-top: 1px solid #444;
-    background-color: #333;
-    padding: 8px;
-    overflow: hidden;
-    color: #ccc;
-    font-size: 0.85em;
-    text-align: center;
-    text-wrap: nowrap;
-}
-
-/* Styles for mobile devices */
-@media (max-width: 767px) {
+/* --- Mobile & Overlay View --- */
+@media (max-width: 768px) {
     #hamburger-menu {
         display: block;
     }
 
+    main {
+        margin-left: 0;
+    }
+
     #sidebar {
         position: absolute;
-        left: -200px;
-        box-sizing: content-box;
-        padding-top: 0em;
+        transform: translateX(-100%);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+        height: 100vh;
     }
 
     #sidebar.overlay {
-        left: 0;
         transform: translateX(0);
     }
 
-    .sidebar-info {
-        margin-top: 0em;
-    }
-
-    .version-label {
-        margin-top: 1em;
-        padding-top: 0;;
+    /* The 'collapsed' class isn't needed for mobile logic */
+    #app-container.sidebar-collapsed main {
+        margin-left: 0;
     }
 }
 
-
+/* --- Dark Mode --- */
 @media (prefers-color-scheme: dark) {
-
-    html, body {
-        background-color: #2a2a2a;
-        color: #f4f4f4;
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
     }
 
-    /* --- Header --- */
-    header {
-        background-color: #202020;
-        color: #f4f4f4;
+    #sidebar {
+        border-right: 1px solid #333;
+        background-color: #1e1e1e;
     }
 
-    /* --- Navigation Menu --- */
-    nav {
-        border-right: 1px solid #444;
-        background-color: #2a2a2a;
+    #sidebar header {
+        border-bottom: 1px solid #333;
+        background-color: #1e1e1e;
+        color: #e0e0e0;
     }
 
-    nav ul li a {
-        color: #f4f4f4;
+    #app-links li a {
+        color: #adb5bd;
     }
 
-
-    nav ul li:hover {
-        background-color: #6B9C6D;
-        color: #202020;
+    #app-links li a:hover {
+        background-color: #2c2c2c;
+        color: #ffffff;
     }
 
-    nav ul li:hover a {
-        color: #202020;
+    #app-links li.active a {
+        border-left-color: #4dabf7;
+        background-color: #1c2e41;
+        color: #4dabf7;
     }
 
-    .version-label {
-        border-top: 1px solid #444;
-        background-color: #2a2a2a;
-        color: #f4f4f4;
+    #hamburger-menu {
+        border: 1px solid #333;
+        background: #1e1e1e;
+        color: #adb5bd;
     }
 
+    #hamburger-menu:hover {
+        background-color: #2c2c2c;
+    }
 }
