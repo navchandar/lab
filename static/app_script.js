@@ -272,6 +272,18 @@ function monitorIframeBackgroundColor() {
 const toHash = (href) =>
   "#" + toCanonicalRoute(href).replace(BASE_PATH, "").replace(/^\//, "");
 
+function samePath(a, b) {
+  if (!a || !b) return false;
+  try {
+    return (
+      new URL(a, window.location.origin).pathname ===
+      new URL(b, window.location.origin).pathname
+    );
+  } catch {
+    return a === b;
+  }
+}
+
 function toCanonicalRoute(href) {
   if (!href) {
     return null;
@@ -328,7 +340,7 @@ function handlePopState() {
     return;
   }
 
-  if (iframe.getAttribute("src") !== targetSrc) {
+  if (!samePath(iframe.getAttribute("src") || "", targetSrc)) {
     safeSetIframeSrc(targetSrc);
     const activeKey = targetSrc.replace(BASE_PATH, "").replace(/^\//, "");
     links.forEach((l) => {
@@ -354,7 +366,7 @@ function safeSetIframeSrc(src) {
     return;
   }
   const current = iframe.getAttribute("src") || "";
-  if (current === src) {
+  if (samePath(current, src)) {
     return;
   }
 
@@ -411,7 +423,6 @@ function initializeAppUI() {
   const hamburger = document.getElementById("hamburger-menu");
   const links = document.querySelectorAll("#app-links li a");
 
-  window.addEventListener("popstate", handlePopState);
   window.addEventListener("hashchange", handlePopState);
 
   const initialHashPath = getNormalizedHashPath();
@@ -419,8 +430,9 @@ function initializeAppUI() {
     ? toCanonicalRoute(initialHashPath)
     : "";
 
-  // Store initial state but do not modify the URL at all:
-  history.replaceState({ iframeSrc: initialIframeSrc }, document.title);
+  // On load, sync iframe with current hash (if any):
+  handlePopState();
+
   // Initialize theme sync once at startup
   monitorIframeBackgroundColor();
 
@@ -450,7 +462,6 @@ function initializeAppUI() {
       if (window.location.hash !== newHash) {
         // Update the address bar and create a history entry
         window.location.hash = newHash;
-        history.replaceState({ iframeSrc: href }, title);
       }
 
       links.forEach((l) => l.parentElement.classList.remove("active"));
