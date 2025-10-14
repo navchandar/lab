@@ -99,9 +99,9 @@ p {
     top: -15px;
     left: 50%;
     transform: translateX(-50%);
-    border-right: 8px solid transparent;
-    border-bottom: 18px solid color-mix(in srgb, var(--accent-hour) 60%, black);
-    border-left: 10px solid transparent;
+    border-right: 7px solid transparent;
+    border-bottom: 16px solid color-mix(in srgb, var(--accent-hour) 60%, black);
+    border-left: 7px solid transparent;
     width: 0;
     height: 0;
     content: "";
@@ -113,7 +113,7 @@ p {
     left: 50%;
     transform: translateX(-50%);
     border-right: 4px solid transparent;
-    border-bottom: 14px solid color-mix(in srgb, var(--accent-minute) 60%, black);
+    border-bottom: 13px solid color-mix(in srgb, var(--accent-minute) 60%, black);
     border-left: 4px solid transparent;
     width: 0;
     height: 0;
@@ -133,13 +133,13 @@ p {
     transform: translate(-50%, -50%);
     z-index: 10;
     box-sizing: content-box;
-    box-shadow: 0 0 5px var(--text-shadow);
+    box-shadow: 0px 0 2px var(--text-shadow);
     border: 2px solid var(--text-shadow);
     border-radius: 50%;
     background: var(--text);
     background: radial-gradient(circle at center, #fff 0%, #999 100%);
-    width: 16px;
-    height: 16px;
+    width: 15px;
+    height: 15px;
 }
 
 .number {
@@ -177,13 +177,13 @@ input[type="time"] {
     border-radius: 10px;
     background: var(--card);
     padding: 6px 18px;
-    width: 12ch;
+    width: 6em;
     min-width: 0;
     height: 40px;
     min-inline-size: 0;
     color: var(--text);
     font-weight: bold;
-    font-size: 1.2rem;
+    font-size: 2rem;
     line-height: normal;
 }
 
@@ -257,7 +257,8 @@ input[type="time"] {
     }
 
     .container {
-        width: 80%;
+        width: 75%;
+        max-height: 90vh;
     }
 
     .hand.hour {
@@ -280,7 +281,7 @@ input[type="time"] {
     }
 
     input[type="time"] {
-        width: 9ch;
+        width: 10ch;
         height: 50px;
         font-size: 2rem;
     }
