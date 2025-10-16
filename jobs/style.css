@@ -1,3 +1,8 @@
+/* Apply smooth transitions to key elements that change color or background in dark mode */
+body, header, main, footer, #jobTable th, #jobTable tbody tr {
+    transition: background-color 0.5s ease, color 0.5s ease, box-shadow 0.5s ease;
+}
+
 body {
     margin: 0;
     background-color: #f4f4f9;
@@ -5,7 +10,6 @@ body {
     color: #333;
     font-family: Arial, sans-serif;
 }
-
 
 header {
     box-sizing: border-box;
@@ -40,13 +44,29 @@ main {
     margin-bottom: 20px;
 }
 
+/* ================================================= */
+/* CONTROL TRANSITIONS (INPUT/SELECT) */
+/* ================================================= */
 .controls input, .controls select {
     flex-grow: 1;
+    /* Transition for border color and box shadow */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 10px;
     min-width: 150px;
 }
+
+/* Focus state for a modern 'lift' effect */
+.controls input:focus, .controls select:focus {
+    outline: none;
+    /* Removes the default ugly focus ring */
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+    /* Subtle focus ring */
+    border-color: #007bff;
+    /* Primary blue for focus */
+}
+
 
 .table-container {
     margin: auto;
@@ -72,13 +92,20 @@ main {
     font-weight: bold;
 }
 
+/* Apply transition to all table rows */
+#jobTable tbody tr {
+    transition: background-color 0.3s ease;
+}
+
 #jobTable tbody tr:nth-child(even) {
     background-color: #f8f9fa;
 }
 
+
 #jobTable tbody tr:hover {
     cursor: pointer;
     background-color: #cfe2ff;
+    /* Your existing hover color */
 }
 
 footer {
@@ -97,7 +124,12 @@ footer p {
     margin: 0;
 }
 
+/* ================================================= */
+/* LINK TRANSITIONS */
+/* ================================================= */
 a {
+    /* Transition for border-bottom to smooth the hover effect */
+    transition: border-bottom 0.2s ease;
     text-decoration: none;
 }
 
@@ -122,13 +154,21 @@ a:hover, a:focus {
         color: lightblue;
     }
 
+    a:hover, a:focus {
+        border-bottom: 2px solid #d9d9d9;
+    }
+
     #jobTable th {
         background-color: #5c5c5c;
         color: white;
     }
 
     #jobTable tbody tr:nth-child(2n) {
-        background-color: #343434;
+        background-color: #34343455;
+    }
+
+    #jobTable tbody tr:hover {
+        background-color: #cfe2ff5e;
     }
 
     footer {
