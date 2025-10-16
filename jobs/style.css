@@ -47,26 +47,32 @@ main {
 /* ================================================= */
 /* CONTROL TRANSITIONS (INPUT/SELECT) */
 /* ================================================= */
-.controls input, .controls select {
+.dt-search input, .dt-length select {
     flex-grow: 1;
     /* Transition for border color and box shadow */
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 10px;
-    min-width: 150px;
+    max-width: 200px;
+}
+
+.dt-search input {
+    width: 40vw;
+    max-width: 500px;
 }
 
 /* Focus state for a modern 'lift' effect */
-.controls input:focus, .controls select:focus {
+.dt-search input:focus, .dt-length select:focus {
     outline: none;
-    /* Removes the default ugly focus ring */
     box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-    /* Subtle focus ring */
     border-color: #007bff;
-    /* Primary blue for focus */
 }
 
+
+.dt-empty {
+    text-align: center;
+}
 
 .table-container {
     margin: auto;
@@ -105,7 +111,6 @@ main {
 #jobTable tbody tr:hover {
     cursor: pointer;
     background-color: #cfe2ff;
-    /* Your existing hover color */
 }
 
 footer {
@@ -136,7 +141,6 @@ a {
 a:hover, a:focus {
     border-bottom: 2px solid #0056b3;
 }
-
 
 
 @media (prefers-color-scheme: dark) {
