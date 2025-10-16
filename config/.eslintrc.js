@@ -23,6 +23,14 @@ module.exports = {
       env: {
         browser: false,
         node: true,
+      },
+    },
+    {
+      files: ["jobs/*.js"],
+      env: {
+        browser: true,
+        node: false,
+        es6: true,
         jquery: true,
       },
     },
