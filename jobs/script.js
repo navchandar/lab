@@ -1,10 +1,7 @@
 function main() {
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
-  const jobTableElement = document.getElementById("jobTable");
-  const tableArray = [jobTableElement];
-
-  const jobsTable = tableArray.DataTable({
+  const jobsTable = jQuery("#jobTable").DataTable({
     // Add configurations
     // Sort by the 5th column (Date Posted) descending
     order: [[4, "desc"]],
