@@ -303,8 +303,10 @@ export function updateSettingsIcon() {
  * and then updates the settings icon to reflect the current state.
  */
 export function toggleSettings() {
+  const settingsBtn = document.getElementById("settings-btn");
   const settingsMenu = document.getElementById("settings-menu");
   settingsMenu.classList.toggle("show");
+  settingsBtn.classList.toggle("show");
 }
 
 /**

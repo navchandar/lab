@@ -151,13 +151,19 @@ header {
     border: none;
     border-radius: 8px;
     background: #0b767a;
-    padding: 8px 10px;
+    padding: 6px 10px;
     color: white;
     font-size: 24px;
+    line-height: 1;
 }
 
+#hamburger-menu.menu-open {
+    background: #111;
+}
+
+
 #hamburger-menu:hover {
-    background-color: #085d60;
+    background-color: #025457;
 }
 
 #hamburger-menu:active {
@@ -287,6 +293,10 @@ header {
         border: 1px solid #333;
         background: #1e1e1e;
         color: #adb5bd;
+    }
+
+    #hamburger-menu.menu-open {
+        background: #111;
     }
 
     #hamburger-menu:hover {

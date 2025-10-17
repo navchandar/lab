@@ -65,9 +65,7 @@
     cursor: pointer;
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
     border: none;
-    border-radius: 2px;
-    border-bottom-right-radius: 0px;
-    border-bottom-left-radius: 0px;
+    border-radius: 8px;
     background-color: #6c757d;
     padding: 0.5rem;
 }
@@ -107,7 +105,7 @@
     border: 0px solid rgba(0, 0, 0, 0.46);
     padding-bottom: 1rem;
     pointer-events: none;
-    text-shadow: 0px 2px 5px #000c;
+    text-shadow: 0px 2px 3px #000;
 }
 
 #settings-menu label {
@@ -137,8 +135,14 @@
     pointer-events: auto;
 }
 
+#settings-btn.show {
+    border-bottom-right-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
 #settings-icon {
     transition: opacity 140ms ease, transform 180ms ease;
+    pointer-events: none;
 }
 
 #settings-icon.is-swapping {

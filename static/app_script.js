@@ -476,6 +476,18 @@ function initializeAppUI() {
   hamburger.addEventListener("click", () => {
     sidebar.classList.toggle("overlay");
     sidebar.classList.toggle("collapsed");
+    this.classList.toggle("menu-open");
+
+    if (this.classList.contains("menu-open")) {
+      // Menu is open, display the close symbol 'X'
+      this.textContent = "x";
+      this.setAttribute("aria-expanded", "true");
+      this.setAttribute("aria-label", "Close menu");
+    } else {
+      this.textContent = "☰";
+      this.setAttribute("aria-expanded", "false");
+      this.setAttribute("aria-label", "Toggle menu");
+    }
   });
 
   document.addEventListener("keydown", (event) => {
