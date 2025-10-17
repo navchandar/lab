@@ -8,6 +8,7 @@ const shapeNameElement = document.getElementById("shapename");
 const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 
+// --- Speaker Initiation --
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 
@@ -51,6 +52,15 @@ let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
 
+/**
+ * Speaks the given text displayed on the screen.
+ */
+function speaker() {
+  if (!utils.isMuted()) {
+    ttsInstance.speakElement(shapeNameElement);
+  }
+}
+
 function changeTextColor(color, label) {
   shapeNameElement.classList.add("fade-out");
   // Wait for fade-out to complete, then change text and fade in
@@ -58,9 +68,7 @@ function changeTextColor(color, label) {
     shapeNameElement.textContent = label;
     shapeNameElement.classList.remove("fade-out");
     // Speak the shape name
-    if (!utils.isMuted()) {
-      ttsInstance.speakElement(shapeNameElement);
-    }
+    speaker();
   }, 700);
   console.log("Updated text content to: " + label);
 }
@@ -162,12 +170,12 @@ function handleKeydown(event) {
       break;
     case "KeyM":
       event.preventDefault();
-      utils.toggleMute();
       utils.hideSettings();
+      utils.toggleMute();
       if (utils.isMuted()) {
         ttsInstance.cancel();
       } else {
-        ttsInstance.speakElement(shapeNameElement);
+        speaker();
       }
       break;
     case "KeyF":
@@ -199,9 +207,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // update mute button if speech supported
   if (ttsInstance.isSpeechReady()) {
     utils.enableMuteBtn();
-    if (!utils.isMuted()) {
-      ttsInstance.speakElement(shapeNameElement);
-    }
+    speaker();
   } else {
     utils.disableMuteBtn();
   }

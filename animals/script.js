@@ -1,6 +1,7 @@
 import * as utils from "../static/utils.js";
 import { TTS } from "../static/speech_helper.js";
 
+// --- Speaker Initiation --
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 
@@ -12,6 +13,15 @@ const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 const randomizeCheckbox = document.getElementById("randomize");
 const autoplayCheckbox = document.getElementById("autoplay");
+
+/**
+ * Speaks the given text displayed on the screen.
+ */
+function speaker() {
+  if (!utils.isMuted()) {
+    ttsInstance.speakElement(animalName);
+  }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   utils.updateMuteBtn();
@@ -53,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let autoplayInterval = null;
 
   // --- CORE FUNCTIONS ---
-
   /**
    * Displays the next animal and plays its sound.
    */
@@ -85,11 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     animalImage.onload = () => {
       animalName.textContent = animal.name;
       animalName.style.opacity = 1;
-      setTimeout(() => {
-        if (!utils.isMuted()) {
-          ttsInstance.speakElement(animalName);
-        }
-      }, 500);
+      setTimeout(speaker, 700);
       animalImage.onload = null;
     };
 
@@ -138,8 +143,13 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
         case "KeyM":
           event.preventDefault();
-          utils.toggleMute();
           utils.hideSettings();
+          utils.toggleMute();
+          if (utils.isMuted()) {
+            ttsInstance.cancel();
+          } else {
+            speaker();
+          }
           break;
         case "KeyF":
           event.preventDefault();
@@ -186,9 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // update mute button if speech supported
     if (ttsInstance.isSpeechReady()) {
       utils.enableMuteBtn();
-      if (!utils.isMuted()) {
-        ttsInstance.speakElement(animalName);
-      }
+      speaker();
     } else {
       utils.disableMuteBtn();
     }

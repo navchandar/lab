@@ -5,6 +5,7 @@ import { TTS } from "../static/speech_helper.js";
 const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 
+// --- Speaker Initiation --
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 let intervalID = null;
@@ -173,6 +174,15 @@ let intervalID = null;
       this.elements.timeInput.setAttribute("value", formattedTime);
     }
 
+    speaker(timeText) {
+      if (!utils.isMuted()) {
+        ttsInstance.speakElement(timeText, {
+          directSpeech: true,
+          rate: 0.8,
+        });
+      }
+    }
+
     speakTime() {
       if (!this.state) {
         return;
@@ -191,12 +201,7 @@ let intervalID = null;
 
         setTimeout(() => {
           // Speak the time value
-          if (!utils.isMuted()) {
-            ttsInstance.speakElement(timeText, {
-              directSpeech: true,
-              rate: 0.8,
-            });
-          }
+          this.speaker(timeText);
         }, 700);
       }
     }
@@ -701,8 +706,8 @@ let intervalID = null;
         break;
       case "KeyM":
         event.preventDefault();
-        utils.toggleMute();
         utils.hideSettings();
+        utils.toggleMute();
         if (utils.isMuted()) {
           ttsInstance.cancel();
         } else {

@@ -1,4 +1,5 @@
 import * as utils from "../static/utils.js";
+import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
 const colorNameEl = document.getElementById("color-name");
@@ -8,9 +9,13 @@ const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 
 // --- Application State & Configuration ---
-
+let Locale = null;
 let currentIndex = 0;
 let intervalID = null;
+
+// --- Speaker Initiation --
+const ttsInstance = TTS();
+ttsInstance.unlockSpeech();
 
 const urlParam = new URLSearchParams(window.location.search);
 let currentLang = urlParam.get("lang") || "english";
@@ -23,13 +28,6 @@ const ctx = canvas.getContext("2d", { willReadFrequently: true });
 if (!ctx) {
   console.error("Failed to get 2D canvas context.");
 }
-
-const synth = window.speechSynthesis;
-let Locale = null;
-let utterance = null;
-let isMute = utils.isMuted();
-let retryCount = 0;
-const maxRetries = 10;
 
 function getBrightness(color) {
   try {
@@ -223,105 +221,16 @@ function updateSettingsMenu() {
   utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
 }
 
-function updateSpeakerOptions() {
-  // Initial mute button state
-  muteButton.disabled = true;
-  muteButton.title = "Setting up Speech Synthesis...";
-
-  Locale = window.colors[currentLang].locale;
-  // =========================
-  // Speech Synthesis Setup
-  // =========================
-  if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
-    console.warn("Web Speech API is not supported in this browser.");
-    muteButton.style.display = "none";
-    window.speaker = () => console.warn("Speech API not available.");
-  } else {
-    // Initialize utterance only if supported
-    utterance = new SpeechSynthesisUtterance();
-    let availableVoices = [];
-
-    let pop = function populateVoiceList() {
-      let voices = synth.getVoices();
-
-      if (!voices || !voices.length) {
-        if (retryCount < maxRetries) {
-          retryCount++;
-          setTimeout(populateVoiceList, 100);
-        } else {
-          console.warn("Failed to load voices after multiple attempts.");
-          muteButton.disabled = true;
-          muteButton.title = "Speech not available";
-        }
-        return;
-      }
-
-      availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
-      console.log(
-        "Available voices:",
-        availableVoices.map((v) => `${v.name} (${v.lang})`)
-      );
-
-      let preferredVoice = availableVoices.find(
-        (voice) =>
-          voice.lang === Locale &&
-          [
-            "Google",
-            "Microsoft",
-            "Apple",
-            "Samantha",
-            "Monica",
-            "Zira",
-            "David",
-          ].some((name) => voice.name.includes(name))
-      );
-
-      if (!preferredVoice) {
-        const langPrefix = Locale.split("-")[0];
-        preferredVoice =
-          availableVoices.find((v) => v.lang.startsWith(langPrefix)) ||
-          availableVoices.find((v) => v.lang.indexOf(Locale) !== -1) ||
-          availableVoices[0];
-      }
-
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-        utterance.lang = preferredVoice.lang;
-        console.log(
-          "Set default voice to:",
-          preferredVoice.name,
-          preferredVoice.lang
-        );
-        muteButton.disabled = false;
-        muteButton.title = "Toggle sound";
-      } else {
-        console.warn("No suitable voice found for Locale: " + Locale);
-        muteButton.disabled = false;
-        muteButton.style.display = "none";
-      }
-    };
-
-    pop();
-    if (synth.onvoiceschanged !== undefined) {
-      synth.onvoiceschanged = pop;
-    }
-  }
-}
-
+/**
+ * Speaks the given text displayed on the screen.
+ */
 function speaker() {
-  isMute = utils.isMuted();
-  if (utterance && !isMute) {
-    if (synth.speaking) {
-      synth.cancel();
-    }
-    utterance.text = colorNameEl.textContent.toLowerCase();
-    try {
-      synth.speak(utterance);
-    } catch (error) {
-      console.error("Error speaking:", error);
-    }
-  } else if (!utterance) {
-    console.warn("Speech API not initialized. Cannot speak.");
+  if (!utils.isMuted()) {
+    ttsInstance.speakElement(numberElement.textContent.toLowerCase(), {
+      directSpeech: true,
+      rate: 0.8,
+      locale: Locale,
+    });
   }
 }
 
@@ -343,8 +252,13 @@ function handleKeydown(event) {
       break;
     case "KeyM":
       event.preventDefault();
-      utils.toggleMute();
       utils.hideSettings();
+      utils.toggleMute();
+      if (utils.isMuted()) {
+        ttsInstance.cancel();
+      } else {
+        speaker();
+      }
       break;
     case "KeyF":
       event.preventDefault();
@@ -364,7 +278,6 @@ function handleKeydown(event) {
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
-  updateSpeakerOptions();
   updateColor();
   updateSettingsMenu();
 
@@ -372,4 +285,12 @@ document.addEventListener("DOMContentLoaded", () => {
   utils.bodyAction(updateColor);
   utils.updateMuteBtn();
   utils.updateFullScreenBtn();
+
+  // update mute button if speech supported
+  if (ttsInstance.isSpeechReady()) {
+    utils.enableMuteBtn();
+    speaker();
+  } else {
+    utils.disableMuteBtn();
+  }
 });

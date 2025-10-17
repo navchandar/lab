@@ -2,6 +2,7 @@
 // GLOBAL VARIABLES & CONSTANTS
 // =========================================================================
 import * as utils from "../static/utils.js";
+import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
@@ -35,11 +36,9 @@ let isMute = utils.isMuted();
 let currentIndex = 0;
 let history = []; // Used to prevent immediate repeats in random mode
 
-// --- Speech Synthesis State ---
-const synth = window.speechSynthesis;
-let utterance = null;
-let retryCount = 0;
-const maxRetries = 10; // Max attempts to fetch voices
+// --- Speaker Initiation --
+const ttsInstance = TTS();
+ttsInstance.unlockSpeech();
 
 // =========================================================================
 // CORE APPLICATION LOGIC
@@ -119,7 +118,7 @@ function updateCharacter() {
   numberElement.style.color = currentColor;
 
   // Speak the new character
-  speaker();
+  setTimeout(speaker, 700);
 }
 
 /**
@@ -136,87 +135,15 @@ function incrementAlphabet() {
 // =========================================================================
 
 /**
- * Populates the list of available voices and selects the best one for the current language.
- * This function may be called multiple times as voices load asynchronously.
- */
-function populateVoiceList() {
-  let voices = synth.getVoices();
-
-  // If voices are not ready, retry a few times.
-  if (!voices || !voices.length) {
-    if (retryCount < maxRetries) {
-      retryCount++;
-      setTimeout(populateVoiceList, 100);
-    } else {
-      console.warn(
-        "Failed to load speech synthesis voices after multiple attempts."
-      );
-      muteButton.disabled = true;
-      muteButton.title = "Speech not available";
-    }
-    return;
-  }
-
-  // Sort voices for consistency and debugging.
-  let availableVoices = voices.sort((a, b) => a.name.localeCompare(b.name));
-
-  // Attempt to find a preferred, high-quality voice from major vendors.
-  let preferredVoice = availableVoices.find(
-    (voice) =>
-      voice.lang === Locale &&
-      [
-        "Google",
-        "Microsoft",
-        "Apple",
-        "Samantha",
-        "Monica",
-        "Zira",
-        "David",
-      ].some((name) => voice.name.includes(name))
-  );
-
-  // If no high-quality voice is found, find any voice matching the language code.
-  if (!preferredVoice) {
-    const langPrefix = Locale.split("-")[0];
-    preferredVoice =
-      availableVoices.find((v) => v.lang.startsWith(langPrefix)) ||
-      availableVoices.find((v) => v.lang.indexOf(Locale) !== -1);
-  }
-
-  // If a suitable voice is found, configure the utterance.
-  if (preferredVoice) {
-    utterance.voice = preferredVoice;
-    utterance.lang = preferredVoice.lang;
-    console.log(
-      "Set default voice to:",
-      preferredVoice.name,
-      preferredVoice.lang
-    );
-    muteButton.disabled = false;
-    muteButton.title = "Toggle sound";
-  } else {
-    console.warn("No suitable voice found for Locale: " + Locale);
-    muteButton.style.display = "none"; // Hide button if no voice is available
-  }
-}
-
-/**
- * Speaks the current character displayed on the screen.
+ * Speaks the given text displayed on the screen.
  */
 function speaker() {
-  isMute = utils.isMuted();
-  if (utterance && !isMute) {
-    if (synth.speaking) {
-      synth.cancel(); // Stop any currently playing speech
-    }
-    utterance.text = numberElement.textContent.toLowerCase();
-    try {
-      synth.speak(utterance);
-    } catch (error) {
-      console.error("Error speaking:", error);
-    }
-  } else if (!utterance) {
-    console.warn("Speech API not initialized. Cannot speak.");
+  if (!utils.isMuted()) {
+    ttsInstance.speakElement(numberElement.textContent.toLowerCase(), {
+      directSpeech: true,
+      rate: 0.8,
+      locale: Locale,
+    });
   }
 }
 
@@ -236,25 +163,6 @@ Object.keys(window.alphabets).forEach((langKey) => {
 languageSelect.value = lang;
 numberElement.textContent = Alphabet[0];
 
-// --- Initialize Speech Synthesis ---
-if (!synth || typeof SpeechSynthesisUtterance === "undefined") {
-  console.warn("Web Speech API is not supported in this browser.");
-  muteButton.style.display = "none";
-  window.speaker = () => console.warn("Speech API not available.");
-} else {
-  utterance = new SpeechSynthesisUtterance();
-  muteButton.disabled = true;
-  muteButton.title = "Setting up Speech Synthesis...";
-  populateVoiceList();
-  // This event is crucial for some browsers that load voices asynchronously.
-  if (synth.onvoiceschanged !== undefined) {
-    synth.onvoiceschanged = populateVoiceList;
-  }
-}
-
-// --- Initial Sound on Load ---
-speaker();
-
 // =========================================================================
 // EVENT LISTENERS
 // =========================================================================
@@ -273,8 +181,13 @@ function handleKeydown(event) {
       break;
     case "KeyM":
       event.preventDefault();
-      utils.toggleMute();
       utils.hideSettings();
+      utils.toggleMute();
+      if (utils.isMuted()) {
+        ttsInstance.cancel();
+      } else {
+        speaker();
+      }
       break;
     case "KeyF":
       event.preventDefault();
@@ -332,7 +245,6 @@ randomizeCheckbox.addEventListener(
   { passive: false }
 );
 
-
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -342,4 +254,12 @@ document.addEventListener("DOMContentLoaded", () => {
   utils.bodyAction(incrementAlphabet);
   utils.updateMuteBtn();
   utils.updateFullScreenBtn();
+
+  // update mute button if speech supported
+  if (ttsInstance.isSpeechReady()) {
+    utils.enableMuteBtn();
+    speaker();
+  } else {
+    utils.disableMuteBtn();
+  }
 });
