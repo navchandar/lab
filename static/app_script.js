@@ -427,7 +427,6 @@ function initializeAppUI() {
 
   window.addEventListener("hashchange", handlePopState);
 
-  const initialHashPath = getNormalizedHashPath();
   // On load, sync iframe with current hash (if any):
   handlePopState();
 
@@ -445,7 +444,6 @@ function initializeAppUI() {
       collapseSidebar();
 
       const href = toCanonicalRoute(link.getAttribute("href"));
-      const title = link.getAttribute("title") || link.textContent;
 
       // The link is already active and loaded
       if (iframe.getAttribute("src") === href) {

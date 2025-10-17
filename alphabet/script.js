@@ -6,7 +6,6 @@ import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
-const muteButton = document.getElementById("muteButton");
 
 const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
@@ -32,7 +31,6 @@ const colors = [
 
 let currentColor = null;
 let previousColor = null;
-let isMute = utils.isMuted();
 let currentIndex = 0;
 let history = []; // Used to prevent immediate repeats in random mode
 

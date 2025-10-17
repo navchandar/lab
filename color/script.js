@@ -3,7 +3,6 @@ import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
 const colorNameEl = document.getElementById("color-name");
-const muteButton = document.getElementById("muteButton");
 
 const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
@@ -226,7 +225,7 @@ function updateSettingsMenu() {
  */
 function speaker() {
   if (!utils.isMuted()) {
-    ttsInstance.speakElement(numberElement.textContent.toLowerCase(), {
+    ttsInstance.speakElement(colorNameEl.textContent, {
       directSpeech: true,
       rate: 0.8,
       locale: Locale,

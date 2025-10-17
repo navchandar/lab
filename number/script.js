@@ -6,7 +6,6 @@ import { TTS } from "../static/speech_helper.js";
 
 // --- DOM Element References ---
 const numberElement = document.getElementById("number");
-const muteButton = document.getElementById("muteButton");
 
 const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
@@ -17,7 +16,6 @@ let previousColor = null;
 
 let intervalID = null;
 let Locale = null;
-let isMute = utils.isMuted();
 
 // --- Speaker Initiation --
 const ttsInstance = TTS();
