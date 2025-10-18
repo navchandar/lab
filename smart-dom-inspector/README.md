@@ -1,4 +1,4 @@
-# 🧠 Smart DOM Inspector
+# 🔍 Smart DOM Inspector
 
 Smart DOM Inspector is a free, browser-based tool for rendering HTML, inspecting DOM elements, and generating accurate, easy to maintain CSS selectors, XPath expressions, and element IDs. 
 
