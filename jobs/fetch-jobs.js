@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const axios = require("axios").default;
 const linkedIn = require("linkedin-jobs-api");
+const randomUA = require("random-useragent");
 
 // -------- Config you can tune ----------
 const KEYWORDS = [
@@ -21,16 +22,17 @@ const KEYWORDS = [
 const BASE_QUERY = {
   location: "India",
   jobType: "full time",
-  sortBy: "relevant",
+  sortBy: "recent", // relevant
   dateSincePosted: "24hr",
   experienceLevel: "senior",
-  limit: "50",
+  //valid values: internship, entry level, associate, senior, director, executive
+  limit: "25",
   page: "0",
 };
 
 const OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
-const HOURS_WINDOW = 2; // keep only <= 2 hours old
-const DAYS_TO_KEEP = 7; // purge > 7 days old
+const HOURS_WINDOW = 6; // Add only jobs <= 6 hours old
+const DAYS_TO_KEEP = 7; // purge jobs > 7 days old
 const DEFAULT_TYPE_LABEL = "Full-Time";
 
 // -------- Utilities ----------
@@ -55,34 +57,6 @@ function toIsoStringUTC(date) {
   return new Date(date).toISOString();
 }
 
-function parseAgoToDate(agoText) {
-  const now = Date.now();
-  const t = (agoText || "").toLowerCase();
-  if (!t) {
-    return null;
-  }
-  if (t.includes("just now")) {
-    return new Date(now);
-  }
-  const m = t.match(/(\d+)\s+(minute|minutes|hour|hours|day|days)\s+ago/);
-  if (!m) {
-    return null;
-  }
-  const num = parseInt(m[1], 10);
-  const unit = m[2].startsWith("minute")
-    ? "minute"
-    : m[2].startsWith("hour")
-    ? "hour"
-    : "day";
-  const ms =
-    unit === "minute"
-      ? num * 60 * 1000
-      : unit === "hour"
-      ? num * 60 * 60 * 1000
-      : num * 24 * 60 * 60 * 1000;
-  return new Date(now - ms);
-}
-
 function extractJobIdFromUrl(url) {
   const m = (url || "").match(/\/jobs\/view\/(\d+)/);
   return m ? m[1] : null;
@@ -92,17 +66,27 @@ function unescapeJsonString(s) {
   return s.replace(/\\\//g, "/").replace(/\\"/g, '"');
 }
 
-function parsePostedTimeTextToDate(text) {
-  if (!text) {
+function parseRelativeTimeToDate(input) {
+  if (!input) {
     return null;
   }
-  const t = text.trim().toLowerCase();
+  let t = String(input).trim().toLowerCase();
 
-  if (t.includes("just now")) {
+  // Normalize common variants
+  // e.g., "Posted just now", "Just posted", "Just now"
+  if (/(^|\s)(just\s+posted|posted\s+just\s+now|just\s+now)\b/.test(t)) {
     return new Date();
   }
 
-  // Common forms seen on LinkedIn job pages: "37 minutes ago", "1 hour ago", "2 hours ago", "1 day ago"
+  // Remove noise like "active", "posted", "about", "approximately"
+  t = t.replace(/\b(active|posted|about|approximately)\b/g, "").trim();
+
+  // Normalize abbreviations: "min" -> "minute", "mins" -> "minutes", "hr"/"hrs" -> "hour"/"hours"
+  t = t
+    .replace(/\bmins?\b/g, (m) => (m === "min" ? "minute" : "minutes"))
+    .replace(/\bhrs?\b/g, (m) => (m === "hr" ? "hour" : "hours"));
+
+  // Now match "X minute(s)/hour(s)/day(s) ago"
   const m = t.match(/(\d+)\s+(minute|minutes|hour|hours|day|days)\s+ago/);
   if (!m) {
     return null;
@@ -128,11 +112,17 @@ function parsePostedTimeTextToDate(text) {
 async function fetchJobDetail(jobId) {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
   try {
+    const header = {
+      "User-Agent":
+        randomUA.getRandom() ||
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.9",
+    };
+
+    console.log(url);
     const { data } = await axios.get(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-      },
+      headers: header,
       timeout: 12000,
     });
 
@@ -168,7 +158,7 @@ async function fetchJobDetail(jobId) {
     }
 
     const listedOrRelative =
-      listedAt || parsePostedTimeTextToDate(postedTimeText);
+      listedAt || parseRelativeTimeToDate(postedTimeText);
 
     // 3) Try to extract an external apply URL when present
     let applyUrl = null;
@@ -221,6 +211,10 @@ function uniqueBy(arr, keyFn) {
   }
 
   const deduped = uniqueBy(gathered, (r) => r.jobUrl);
+  console.log(`Gathered: ${gathered.length}`);
+  console.log(`Deduped: ${deduped.length}`);
+
+  let includedCount = 0;
 
   const enriched = [];
   for (const job of deduped) {
@@ -232,33 +226,46 @@ function uniqueBy(arr, keyFn) {
       const detail = await fetchJobDetail(jobId);
       listedAt = detail.listedAt;
       applyUrl = detail.applyUrl;
-      await sleep(300);
+      await sleep(500);
     }
 
     let postedAt =
       listedAt ||
-      parseAgoToDate(job.agoTime) ||
+      parseRelativeTimeToDate(postedTimeText) ||
+      parseRelativeTimeToDate(job.agoTime) ||
       (job.date ? new Date(`${job.date}T00:00:00Z`) : null);
 
-    if (!withinLastHours(postedAt, HOURS_WINDOW)) {
-      continue;
+    if (!postedAt) {
+      console.warn("No postedAt; skipping", {
+        title: job.position,
+        ago: job.agoTime,
+        url: job.jobUrl,
+      });
+    } else if (!withinLastHours(postedAt, HOURS_WINDOW)) {
+      console.warn("Older than window; skipping", {
+        title: job.position,
+        ago: job.agoTime,
+        postedAt,
+      });
+    } else {
+      includedCount++;
+      console.log(includedCount);
+      enriched.push({
+        title: job.position || "",
+        company: job.company || "",
+        location: job.location || "India",
+        type: DEFAULT_TYPE_LABEL,
+        datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
+        url: applyUrl || job.jobUrl,
+
+        source: "LinkedIn",
+        sourceUrl: job.jobUrl,
+        jobId,
+        agoTime: job.agoTime || null,
+        companyLogo: job.companyLogo || null,
+        keywordMatched: job._keyword,
+      });
     }
-
-    enriched.push({
-      title: job.position || "",
-      company: job.company || "",
-      location: job.location || "India",
-      type: DEFAULT_TYPE_LABEL,
-      datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
-      url: applyUrl || job.jobUrl,
-
-      source: "LinkedIn",
-      sourceUrl: job.jobUrl,
-      jobId,
-      agoTime: job.agoTime || null,
-      companyLogo: job.companyLogo || null,
-      keywordMatched: job._keyword,
-    });
   }
 
   const existing = readExisting();
