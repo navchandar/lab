@@ -26,8 +26,6 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "20"
-          cache: "npm"
-          cache-dependency-path: jobs/package-lock.json
 
       - name: Install deps
         working-directory: jobs

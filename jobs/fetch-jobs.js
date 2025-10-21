@@ -272,7 +272,9 @@ function uniqueBy(arr, keyFn) {
   const byKey = new Map();
   const keyFor = (j) => j.url || j.sourceUrl;
 
-  for (const j of prunedExisting) byKey.set(keyFor(j), j);
+  for (const j of prunedExisting) {
+    byKey.set(keyFor(j), j);
+  }
 
   for (const j of enriched) {
     const k = keyFor(j);
