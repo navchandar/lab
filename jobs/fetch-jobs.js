@@ -83,7 +83,9 @@ function extractJobIdFromUrl(url) {
 
   for (const re of patterns) {
     const m = clean.match(re);
-    if (m) return m[1];
+    if (m) {
+      return m[1];
+    }
   }
 
   // Fallback: pick the **longest** digit run from the URL (job IDs are long)
