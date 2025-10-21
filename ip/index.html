@@ -41,7 +41,7 @@
       <h1>Your Public IP Address</h1>
     </header>
 
-    <div class="ip-container" style="margin-top: 5em;">
+    <div class="ip-container">
       <div class="ip-text">
         <strong>IPv4:</strong>
         <span class="spinner" id="spinner-ip1" aria-hidden="true"></span>
@@ -70,6 +70,21 @@
 
     <div id="last-refresh" class="last-refresh">Last refreshed: just now</div>
 
+    <div class="bookmarklet-installer">
+      <a
+        id="ip-bookmarklet-link"
+        href="javascript:(function(){const ipServices=['https://api.ipify.org','https://icanhazip.com'];function fetchAndCopyIP(index=0){if(index>=ipServices.length){alert('Failed to retrieve IP from all sources.');return}const url=ipServices[index];fetch(url).then(response=>{if(!response.ok){throw new Error(`Service ${url} failed with status: ${response.status}`)}return response.text()}).then(ip=>{const trimmedIP=ip.trim();navigator.clipboard.writeText(trimmedIP).then(()=>{alert('IPv4 copied to clipboard: '+trimmedIP)}).catch(()=>{alert('Failed to copy IPv4 to clipboard. The IP is: '+trimmedIP)})}).catch(error=>{console.error(`Error fetching from ${url}:`,error);fetchAndCopyIP(index+1)})}fetchAndCopyIP()})()"
+        title="Drag this button to your browser's bookmarks bar to install this bookmarklet"
+      >
+        IP Bookmarklet
+      </a>
+
+      <p id="installation-instructions">
+        This bookmarklet allows you to copy your current IPv4 address directly
+        from your bookmarks. To install this, drag the button above and drop it
+        onto your browser's bookmarks Bar.
+      </p>
+    </div>
     <footer>
       <p>
         Powered by

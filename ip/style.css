@@ -35,7 +35,7 @@ h1 {
     justify-content: space-between;
     align-items: center;
     box-sizing: content-box;
-    margin-top: 40px;
+    margin-top: 3em;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
     border: 0.5px solid lightgray;
     border-radius: 12px;
@@ -164,6 +164,54 @@ button {
     text-decoration: underline;
 }
 
+
+.bookmarklet-installer {
+    margin: 0;
+    margin-top: 1em;
+    margin-bottom: 1em;
+    width: 80%;
+    text-align: center;
+}
+
+
+#ip-bookmarklet-link {
+    display: inline-block;
+    transition: background-color 0.3s ease;
+    cursor: grab;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 8px;
+    background-color: #4CAF50;
+    padding: 12px 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    text-align: center;
+    text-decoration: none;
+}
+
+#ip-bookmarklet-link:hover {
+    background-color: #45a049;
+}
+
+/* Initially hide the instructions */
+#installation-instructions {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease, max-height 0.3s ease, margin-top 0.3s ease;
+    margin-top: 0;
+    max-height: 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.bookmarklet-installer:hover #installation-instructions {
+    visibility: visible;
+    opacity: 1;
+    margin-top: 20px;
+    max-height: 50px;
+}
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
@@ -181,6 +229,14 @@ button {
 
     .ip-toast-close {
         margin: 0;
+    }
+
+    /* Dont display bookmarklet in mobile */
+    .bookmarklet-installer {
+        display: none;
+        margin-top: 0;
+        margin-bottom: 0;
+        width: 0;
     }
 }
 
@@ -210,7 +266,7 @@ button {
     }
 
     .ip-container {
-        margin-top: 15%;
+        margin-top: 7%;
         width: 80%;
     }
 
@@ -227,7 +283,7 @@ button {
     }
 
     .last-refresh {
-        margin: 20% 0 0 0;
+        margin: 10% 0 0 0;
         width: 90%;
         text-align: center;
     }
@@ -247,6 +303,7 @@ button {
     .shortcut-hint {
         text-decoration: none;
     }
+
 }
 
 @media (prefers-color-scheme: dark) {
