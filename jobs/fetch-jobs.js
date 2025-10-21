@@ -231,7 +231,6 @@ function uniqueBy(arr, keyFn) {
 
     let postedAt =
       listedAt ||
-      parseRelativeTimeToDate(postedTimeText) ||
       parseRelativeTimeToDate(job.agoTime) ||
       (job.date ? new Date(`${job.date}T00:00:00Z`) : null);
 
@@ -269,12 +268,22 @@ function uniqueBy(arr, keyFn) {
   }
 
   const existing = readExisting();
+
+  console.log(`Existing job posts before cleanup: ${existing.length}`);
+
   const sevenDaysAgo = Date.now() - DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
 
   const prunedExisting = existing.filter((j) => {
     const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
     return d >= sevenDaysAgo;
   });
+
+  console.log(
+    `Removed ${existing.length - prunedExisting.length} old job posts`
+  );
+  console.log(
+    `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
+  );
 
   const byKey = new Map();
   const keyFor = (j) => j.url || j.sourceUrl;
@@ -300,6 +309,7 @@ function uniqueBy(arr, keyFn) {
   const finalList = Array.from(byKey.values()).sort(
     (a, b) => new Date(b.datePosted) - new Date(a.datePosted)
   );
+  console.log(`Filtered and finalized ${finalList.length} job posts`);
 
   writeOutput(finalList);
 
