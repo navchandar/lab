@@ -57,9 +57,43 @@ function toIsoStringUTC(date) {
   return new Date(date).toISOString();
 }
 
+function htmlUnescape(s) {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 function extractJobIdFromUrl(url) {
-  const m = (url || "").match(/\/jobs\/view\/(\d+)/);
-  return m ? m[1] : null;
+  if (!url) {
+    return null;
+  }
+
+  const clean = htmlUnescape(url);
+
+  // Try the most reliable / common patterns first (prefer longer numeric tokens)
+  const patterns = [
+    /\/jobs\/view\/(\d{6,})/i, // .../jobs/view/4300865412
+    /currentJobId=(\d{6,})/i, // ?currentJobId=4300865412
+    /\/jobPosting\/(\d{6,})/i, // .../jobs/api/jobPosting/4300865412
+    /[?&]trk=[^&]*-(\d{6,})(?:&|$)/i, // sometimes ID appears in tracking params
+  ];
+
+  for (const re of patterns) {
+    const m = clean.match(re);
+    if (m) return m[1];
+  }
+
+  // Fallback: pick the **longest** digit run from the URL (job IDs are long)
+  const allNums = clean.match(/\d+/g);
+  if (allNums && allNums.length) {
+    allNums.sort((a, b) => b.length - a.length);
+    return allNums[0]; // longest numeric token
+  }
+
+  return null;
 }
 
 function unescapeJsonString(s) {
@@ -86,6 +120,17 @@ function parseRelativeTimeToDate(input) {
     .replace(/\bmins?\b/g, (m) => (m === "min" ? "minute" : "minutes"))
     .replace(/\bhrs?\b/g, (m) => (m === "hr" ? "hour" : "hours"));
 
+  // Handle "a minute ago" / "an hour ago"
+  t = t
+    .replace(/\ban?\s+minute\b/g, "1 minute")
+    .replace(/\ban?\s+hour\b/g, "1 hour");
+
+  // "yesterday"
+  if (/\byesterday\b/.test(t)) {
+    const d = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return d;
+  }
+
   // Now match "X minute(s)/hour(s)/day(s) ago"
   const m = t.match(/(\d+)\s+(minute|minutes|hour|hours|day|days)\s+ago/);
   if (!m) {
@@ -106,7 +151,14 @@ function parseRelativeTimeToDate(input) {
       ? num * 60 * 60 * 1000
       : num * 24 * 60 * 60 * 1000;
 
-  return new Date(Date.now() - ms);
+  const d = new Date(Date.now() - ms);
+
+  // Clamp: never allow "future" date due to skew
+  if (d.getTime() > Date.now()) {
+    return new Date();
+  }
+
+  return d;
 }
 
 async function fetchJobDetail(jobId) {
@@ -120,11 +172,8 @@ async function fetchJobDetail(jobId) {
       "Accept-Language": "en-US,en;q=0.9",
     };
 
-    console.log(url);
-    const { data } = await axios.get(url, {
-      headers: header,
-      timeout: 12000,
-    });
+    console.log("Detail fetch URL:", url);
+    const { data } = await axios.get(url, { headers: header, timeout: 12000 });
 
     // Treat response as text so we can regex both JSON-like fields and HTML
     const txt = typeof data === "string" ? data : JSON.stringify(data);
@@ -141,26 +190,30 @@ async function fetchJobDetail(jobId) {
     // 2) If no listedAt, try to parse the visible relative time:
     //    Look for the .posted-time-ago__text element content in the HTML
     let postedTimeText = null;
+
     if (!listedAt) {
-      // Grab the text node inside .posted-time-ago__text
-      // The HTML varies; this regex looks for: <span class="posted-time-ago__text">TEXT</span>
-      const mSpan = txt.match(
+      // Try real HTML first
+      let mSpan = txt.match(
         /<[^>]*class="[^"]*posted-time-ago__text[^"]*"[^>]*>([\s\S]*?)<\/[^>]*>/i
       );
+      if (!mSpan) {
+        // Fallback: entity-escaped HTML (in case the response body is encoded)
+        mSpan = txt.match(
+          /&lt;[^&gt;]*class="[^"]*posted-time-ago__text[^"]*"[^&gt;]*&gt;([\s\S]*?)&lt;\/[^&gt;]*&gt;/i
+        );
+      }
       if (mSpan) {
-        // Strip tags/whitespace if nested
-        const raw = mSpan[1]
+        postedTimeText = mSpan[1]
           .replace(/<[^>]+>/g, " ")
           .replace(/\s+/g, " ")
           .trim();
-        postedTimeText = raw;
       }
     }
 
-    const listedOrRelative =
-      listedAt || parseRelativeTimeToDate(postedTimeText);
+    const resolvedDate = listedAt || parseRelativeTimeToDate(postedTimeText);
 
     // 3) Try to extract an external apply URL when present
+
     let applyUrl = null;
     const mApply =
       txt.match(/"companyApplyUrl"\s*:\s*"(https?:\\\/\\\/[^"]+)"/) ||
@@ -169,9 +222,9 @@ async function fetchJobDetail(jobId) {
       applyUrl = unescapeJsonString(mApply[1]);
     }
 
-    return { listedAt: listedOrRelative, applyUrl };
+    return { resolvedDate, applyUrl };
   } catch {
-    return { listedAt: null, applyUrl: null };
+    return { resolvedDate: null, applyUrl: null };
   }
 }
 
@@ -218,15 +271,24 @@ function uniqueBy(arr, keyFn) {
 
   const enriched = [];
   for (const job of deduped) {
-    const jobId = extractJobIdFromUrl(job.jobUrl);
+    const jobUrlClean = htmlUnescape(job.jobUrl || "");
+    const jobId = extractJobIdFromUrl(jobUrlClean);
+
     let listedAt = null;
     let applyUrl = null;
 
     if (jobId) {
-      const detail = await fetchJobDetail(jobId);
-      listedAt = detail.listedAt;
+      console.log("Parsed jobId", { jobId, jobUrl: jobUrlClean });
+
+      const detail = jobId
+        ? await fetchJobDetail(jobId)
+        : { resolvedDate: null, applyUrl: null };
+
+      listedAt = detail.resolvedDate;
       applyUrl = detail.applyUrl;
       await sleep(500);
+    } else {
+      console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
     }
 
     let postedAt =
@@ -248,7 +310,7 @@ function uniqueBy(arr, keyFn) {
       });
     } else {
       includedCount++;
-      console.log(includedCount);
+
       enriched.push({
         title: job.position || "",
         company: job.company || "",
@@ -265,6 +327,10 @@ function uniqueBy(arr, keyFn) {
         keywordMatched: job._keyword,
       });
     }
+  }
+
+  if (enriched && enriched.length) {
+    console.log("Sample:", enriched[0]);
   }
 
   const existing = readExisting();
@@ -306,9 +372,12 @@ function uniqueBy(arr, keyFn) {
     }
   }
 
-  const finalList = Array.from(byKey.values()).sort(
-    (a, b) => new Date(b.datePosted) - new Date(a.datePosted)
-  );
+  const finalList = Array.from(byKey.values()).sort((a, b) => {
+    const ta = a.datePosted ? new Date(a.datePosted).getTime() : 0;
+    const tb = b.datePosted ? new Date(b.datePosted).getTime() : 0;
+    return tb - ta;
+  });
+
   console.log(`Filtered and finalized ${finalList.length} job posts`);
 
   writeOutput(finalList);
