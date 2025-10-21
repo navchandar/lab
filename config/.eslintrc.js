@@ -18,7 +18,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ["build-pwa.js", "**/*.config.js"],
+      files: ["build-pwa.js", "**/*.config.js", "jobs/fetch-jobs.js"],
       // Override the environment setting for these files only
       env: {
         browser: false,
@@ -26,7 +26,7 @@ module.exports = {
       },
     },
     {
-      files: ["jobs/*.js"],
+      files: ["jobs/script.js"],
       env: {
         browser: true,
         node: false,

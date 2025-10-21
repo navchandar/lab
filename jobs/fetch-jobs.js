@@ -92,6 +92,39 @@ function unescapeJsonString(s) {
   return s.replace(/\\\//g, "/").replace(/\\"/g, '"');
 }
 
+function parsePostedTimeTextToDate(text) {
+  if (!text) {
+    return null;
+  }
+  const t = text.trim().toLowerCase();
+
+  if (t.includes("just now")) {
+    return new Date();
+  }
+
+  // Common forms seen on LinkedIn job pages: "37 minutes ago", "1 hour ago", "2 hours ago", "1 day ago"
+  const m = t.match(/(\d+)\s+(minute|minutes|hour|hours|day|days)\s+ago/);
+  if (!m) {
+    return null;
+  }
+
+  const num = parseInt(m[1], 10);
+  const unit = m[2].startsWith("minute")
+    ? "minute"
+    : m[2].startsWith("hour")
+    ? "hour"
+    : "day";
+
+  const ms =
+    unit === "minute"
+      ? num * 60 * 1000
+      : unit === "hour"
+      ? num * 60 * 60 * 1000
+      : num * 24 * 60 * 60 * 1000;
+
+  return new Date(Date.now() - ms);
+}
+
 async function fetchJobDetail(jobId) {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
   try {
@@ -102,10 +135,12 @@ async function fetchJobDetail(jobId) {
       },
       timeout: 12000,
     });
+
+    // Treat response as text so we can regex both JSON-like fields and HTML
     const txt = typeof data === "string" ? data : JSON.stringify(data);
 
-    // exact timestamp if present
-    let listedAt;
+    // 1) Prefer an exact epoch from JSON when present (listedAt)
+    let listedAt = null;
     const mTime = txt.match(/"listedAt"\s*:\s*(\d{10,13})/);
     if (mTime) {
       const ts =
@@ -113,8 +148,30 @@ async function fetchJobDetail(jobId) {
       listedAt = new Date(ts);
     }
 
-    // external apply URL if present
-    let applyUrl;
+    // 2) If no listedAt, try to parse the visible relative time:
+    //    Look for the .posted-time-ago__text element content in the HTML
+    let postedTimeText = null;
+    if (!listedAt) {
+      // Grab the text node inside .posted-time-ago__text
+      // The HTML varies; this regex looks for: <span class="posted-time-ago__text">TEXT</span>
+      const mSpan = txt.match(
+        /<[^>]*class="[^"]*posted-time-ago__text[^"]*"[^>]*>([\s\S]*?)<\/[^>]*>/i
+      );
+      if (mSpan) {
+        // Strip tags/whitespace if nested
+        const raw = mSpan[1]
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        postedTimeText = raw;
+      }
+    }
+
+    const listedOrRelative =
+      listedAt || parsePostedTimeTextToDate(postedTimeText);
+
+    // 3) Try to extract an external apply URL when present
+    let applyUrl = null;
     const mApply =
       txt.match(/"companyApplyUrl"\s*:\s*"(https?:\\\/\\\/[^"]+)"/) ||
       txt.match(/"applyUrl"\s*:\s*"(https?:\\\/\\\/[^"]+)"/);
@@ -122,7 +179,7 @@ async function fetchJobDetail(jobId) {
       applyUrl = unescapeJsonString(mApply[1]);
     }
 
-    return { listedAt, applyUrl };
+    return { listedAt: listedOrRelative, applyUrl };
   } catch {
     return { listedAt: null, applyUrl: null };
   }
