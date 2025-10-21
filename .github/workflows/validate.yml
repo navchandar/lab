@@ -52,7 +52,6 @@ jobs:
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
-          excluded_patterns: "node_modules/**"
 
       - name: Commit and push if changed
         if: github.event_name == 'push'
