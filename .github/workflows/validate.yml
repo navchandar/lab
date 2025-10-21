@@ -22,25 +22,34 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: "20"
+          cache: "npm"
+          cache-dependency-path: config/package-lock.json
 
       - name: Install dependencies
+        working-directory: config
         run: |
-          npm install htmlhint csslint eslint@8 cheerio --save-dev
+          npm ci
+
+      # Make locally installed CLIs discoverable without npx
+      - name: Add node_modules to PATH
+        run: echo "${GITHUB_WORKSPACE}/config/node_modules/.bin" >> $GITHUB_PATH
 
       - name: Generate PWA files
         if: github.event_name == 'push'
+        env:
+          NODE_PATH: "${{ github.workspace }}/config/node_modules"
         run: node ./build-pwa.js
 
       - name: Validate HTML
-        run: npx htmlhint --config config/.htmlhintrc .
+        run: htmlhint --config config/.htmlhintrc .
 
       - name: Validate CSS
         run: |
           css_files=$(find . -name "*.css" -type f -size +0c)
-          npx csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
+          csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
 
       - name: Validate JS
-        run: npx eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
+        run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
 
       - name: Validate Broken Links
         uses: lycheeverse/lychee-action@v2
