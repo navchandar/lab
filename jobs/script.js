@@ -431,15 +431,22 @@ function main() {
     const searchedJobs = !searchTerm.length
       ? allJobs // If no search, use all jobs
       : allJobs.filter((job) => {
+          // Convert searchTerm to lowercase once
+          const search = searchTerm.toLowerCase();
+          // Get the Date object and Check if date is valid
+          const dateObject = new Date(job.datePosted);
+          const isDateValid = !isNaN(dateObject);
+          // Construct the searchable date string only if the date is valid
+          const dateString = isDateValid
+            ? dateObject.toISOString().toLowerCase()
+            : "";
+
           // Check against the data you want to be searchable
           return (
-            job.title.toLowerCase().includes(searchTerm) ||
-            job.company.toLowerCase().includes(searchTerm) ||
-            job.location.toLowerCase().includes(searchTerm) ||
-            new Date(job.datePosted)
-              ?.toISOString()
-              .toLowerCase()
-              .includes(searchTerm)
+            job.title.toLowerCase().includes(search) ||
+            job.company.toLowerCase().includes(search) ||
+            job.location.toLowerCase().includes(search) ||
+            dateString.includes(search)
           );
         });
 
