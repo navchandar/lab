@@ -24,11 +24,11 @@ const KEYWORDS = [
 const BASE_QUERY = {
   location: "India",
   jobType: "full time",
-  sortBy: "recent", // relevant
+  sortBy: "relevant", // relevant or recent
   dateSincePosted: "24hr",
   experienceLevel: "senior",
   //valid values: internship, entry level, associate, senior, director, executive
-  limit: "25",
+  limit: "20",
   page: "0",
 };
 
@@ -342,7 +342,7 @@ function mergeAndCleanJobsData(output_data) {
     await sleep(800);
   }
 
-  const deduped = uniqueBy(gathered, (r) => r.jobUrl);
+  let deduped = uniqueBy(gathered, (r) => r.jobUrl);
   const existingJobs = readExisting();
   const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
 
@@ -355,8 +355,6 @@ function mergeAndCleanJobsData(output_data) {
   console.log(`Gathered: ${gathered.length}`);
   console.log(`Deduped: ${deduped.length}`);
 
-  let includedCount = 0;
-
   const enriched = [];
   for (const job of deduped) {
     const jobId = extractJobIdFromUrl(job.jobUrl);
@@ -364,16 +362,16 @@ function mergeAndCleanJobsData(output_data) {
 
     let listedAt = null;
     let applyUrl = null;
+    let description = null;
 
     if (jobId) {
       console.log("Parsed jobId", { jobId, jobUrl: jobUrlClean });
 
-      const detail = jobId
-        ? await fetchJobDetail(jobId)
-        : { resolvedDate: null, applyUrl: null };
+      const detail = await fetchJobDetail(jobId);
 
       listedAt = detail.resolvedDate;
       applyUrl = detail.applyUrl;
+      description = detail.description || "";
       await sleep(500);
     } else {
       console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
@@ -387,18 +385,14 @@ function mergeAndCleanJobsData(output_data) {
     if (!postedAt) {
       console.warn("No postedAt; skipping", {
         title: job.position,
-        ago: job.agoTime,
         url: job.jobUrl,
       });
     } else if (!withinLastHours(postedAt, HOURS_WINDOW)) {
       console.warn("Older than window; skipping", {
         title: job.position,
-        ago: job.agoTime,
         postedAt,
       });
     } else {
-      includedCount++;
-
       const job_title = clean_title(job.position);
       const company_name = clean_company(job.company);
       enriched.push({
@@ -411,6 +405,7 @@ function mergeAndCleanJobsData(output_data) {
         source: "LinkedIn",
         sourceUrl: job.jobUrl,
         jobId,
+        description,
         companyLogo: job.companyLogo || null,
         keywordMatched: job._keyword,
       });
