@@ -1,6 +1,7 @@
 // Global variable to hold all jobs
 let allJobs = [];
 let lastModified = null;
+let initialLoadComplete = false;
 
 const cityAliases = {
   bengaluru: [
@@ -371,6 +372,11 @@ function main() {
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
       applyFilters();
+
+      if (!initialLoadComplete) {
+        setupEventListeners();
+        initialLoadComplete = true;
+      }
     } catch (error) {
       console.error("Could not fetch jobs data:", error);
     }
@@ -445,6 +451,9 @@ function main() {
     // Use the new set of jobs for updating the dropdown options
     const getDropdownJobs = (ignoreFilter) => {
       return searchedAndFilteredJobs.filter((job) => {
+        if (!job || !job.company || !job.normalizedLocation) {
+          return false;
+        }
         // For company dropdown: ignore company filter, apply location filter
         const companyMatch =
           ignoreFilter === "company" ||
@@ -520,8 +529,6 @@ function main() {
 
   // Run once immediately to load jobs
   loadJobs();
-
-  setupEventListeners();
 
   // Poll every 5 minutes
   setInterval(loadJobs, 5 * 60 * 1000); // 300000 ms = 5 minutes
