@@ -303,6 +303,9 @@ function main() {
       }
 
       allJobs = await response.json();
+      allJobs.forEach((job) => {
+        job.normalizedLocation = normalizeLocation(job.location);
+      });
 
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
@@ -334,7 +337,7 @@ function main() {
     // Extract unique company and location names
     const companies = [...new Set(jobs.map((j) => j.company))].sort();
     const locations = [
-      ...new Set(jobs.map((j) => normalizeLocation(j.location))),
+      ...new Set(jobs.map((j) => j.normalizedLocation)),
     ].sort();
 
     populateFilter("#companyFilter", companies);
@@ -345,16 +348,12 @@ function main() {
     const select = $(selector);
     select.empty();
 
-    items.forEach((item) => {
-      const option = new Option(
-        item,
-        item,
-        false,
-        selectedValues.includes(item)
-      );
-      select.append(option);
+    // Create all Option objects in an array first
+    const options = items.map((item) => {
+      return new Option(item, item, false, selectedValues.includes(item));
     });
-
+    // Append all at once and trigger select2
+    select.append(options);
     select.trigger("change.select2");
   }
 
@@ -370,11 +369,24 @@ function main() {
     // Get the global search term from DataTables API
     const searchTerm = jobsTable.search().toLowerCase().trim();
 
+    // Pre-filter by global search to reduce the number of items to loop through for the dropdowns.
+    const searchedJobs = !searchTerm.length
+      ? allJobs // If no search, use all jobs
+      : allJobs.filter((job) => {
+          // Check against the data you want to be searchable
+          return (
+            job.title.toLowerCase().includes(searchTerm) ||
+            job.company.toLowerCase().includes(searchTerm) ||
+            job.location.toLowerCase().includes(searchTerm) ||
+            job.datePosted.toISOString().toLowerCase().includes(searchTerm)
+          );
+        });
+
     // --- Helper function to filter jobs based on all active filters ---
     // We use 'ignoreFilter' to specify which dropdown we are currently populating,
     // so we don't filter it by its own selection.
     const getFilteredJobs = (ignoreFilter) => {
-      return allJobs.filter((job) => {
+      return searchedJobs.filter((job) => {
         // 1. Check Company filter
         const companyMatch =
           ignoreFilter === "company" || // Always true if we are populating companies
@@ -385,19 +397,10 @@ function main() {
         const locationMatch =
           ignoreFilter === "location" || // Always true if we are populating locations
           !selectedLocations.length ||
-          selectedLocations.includes(normalizeLocation(job.location));
+          selectedLocations.includes(job.normalizedLocation);
 
-        // 3. Check Global Search filter
-        // We search against the original job object fields
-        const searchMatch =
-          !searchTerm.length ||
-          job.title.toLowerCase().includes(searchTerm) ||
-          job.company.toLowerCase().includes(searchTerm) ||
-          job.location.toLowerCase().includes(searchTerm) || // Use original location for search
-          job.datePosted.toLowerCase().includes(searchTerm);
-
-        // Return true only if all filters match
-        return companyMatch && locationMatch && searchMatch;
+        // 3. Global searchMatch is already handled by creating 'searchedJobs'
+        return companyMatch && locationMatch;
       });
     };
 
@@ -413,9 +416,7 @@ function main() {
     // Get jobs filtered by COMPANY and SEARCH
     const locationFilteredJobs = getFilteredJobs("location");
     const locations = [
-      ...new Set(
-        locationFilteredJobs.map((j) => normalizeLocation(j.location))
-      ),
+      ...new Set(locationFilteredJobs.map((j) => j.normalizedLocation)),
     ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     populateFilter("#locationFilter", locations, selectedLocations);
@@ -429,8 +430,9 @@ function main() {
     const selectedCompanies = $("#companyFilter").val();
     const selectedLocations = $("#locationFilter").val();
 
-    const company = data[1]; // Company column
-    const location = normalizeLocation(data[2]); // Location column
+    const job = allJobs[dataIndex];
+    const company = job.company; // or data[1]
+    const location = job.normalizedLocation;
 
     const companyMatch =
       !selectedCompanies.length || selectedCompanies.includes(company);
