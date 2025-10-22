@@ -201,14 +201,21 @@ async function fetchJobDetail(jobId) {
       listedAt = parseRelativeTimeToDate(postedText);
 
       const descHtml = $(".description__text").html();
-      description = descHtml ? cheerio.load(descHtml).text().trim() : null;
+      description = descHtml ? cheerio.load(descHtml).text() : null;
+      if (description) {
+        description = description
+          .replace("Show more", " ")
+          .replace("Show less", " ")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
 
       const applyMatch = data.match(/"applyUrl"\s*:\s*"([^"]+)"/);
       if (applyMatch) {
         applyUrl = applyMatch[1].replace(/\\\//g, "/");
       }
     }
-
+    await sleep(1000);
     return { resolvedDate: listedAt, applyUrl, description };
   } catch (err) {
     console.error("Error fetching job detail:", err.message);
@@ -372,7 +379,6 @@ function mergeAndCleanJobsData(output_data) {
       listedAt = detail.resolvedDate;
       applyUrl = detail.applyUrl;
       description = detail.description || "";
-      await sleep(500);
     } else {
       console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
     }
@@ -415,7 +421,9 @@ function mergeAndCleanJobsData(output_data) {
   if (enriched && enriched.length) {
     console.log("Sample:", enriched[0]);
   }
+
   mergeAndCleanJobsData(enriched);
+  
 })().catch((err) => {
   console.error(err);
   process.exit(1);
