@@ -371,7 +371,6 @@ function main() {
 
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
-      applyFilters();
 
       if (!initialLoadComplete) {
         setupEventListeners();
@@ -410,6 +409,7 @@ function main() {
 
     populateFilter("#companyFilter", companies);
     populateFilter("#locationFilter", locations);
+    applyFilters();
   }
 
   function populateFilter(selector, items, selectedValues = []) {
@@ -472,17 +472,21 @@ function main() {
 
     // Update Company Dropdown
     const companyFilteredJobs = getDropdownJobs("company");
-    const companies = [
-      ...new Set(companyFilteredJobs.map((j) => j.company)),
-    ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    populateFilter("#companyFilter", companies, selectedCompanies);
+    if (companyFilteredJobs) {
+      const companies = [
+        ...new Set(companyFilteredJobs.map((j) => j.company)),
+      ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      populateFilter("#companyFilter", companies, selectedCompanies);
+    }
 
     // Update Location Dropdown
     const locationFilteredJobs = getDropdownJobs("location");
-    const locations = [
-      ...new Set(locationFilteredJobs.map((j) => j.normalizedLocation)),
-    ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    populateFilter("#locationFilter", locations, selectedLocations);
+    if (locationFilteredJobs) {
+      const locations = [
+        ...new Set(locationFilteredJobs.map((j) => j.normalizedLocation)),
+      ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+      populateFilter("#locationFilter", locations, selectedLocations);
+    }
   }
 
   function resetAllFilters() {
