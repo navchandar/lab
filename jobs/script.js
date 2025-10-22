@@ -425,69 +425,51 @@ function main() {
     // Get ALL current filter values
     const selectedCompanies = $("#companyFilter").val();
     const selectedLocations = $("#locationFilter").val();
-    // Get the global search term from DataTables API
-    const searchTerm = jobsTable.search().toLowerCase().trim();
 
-    // Pre-filter by global search to reduce the number of items to loop through for the dropdowns.
-    const searchedJobs = !searchTerm.length
-      ? allJobs // If no search, use all jobs
-      : allJobs.filter((job) => {
-          // Convert searchTerm to lowercase once
-          const search = searchTerm.toLowerCase();
-          // Get the Date object and Check if date is valid
-          const dateObject = new Date(job.datePosted);
-          const isDateValid = !isNaN(dateObject);
-          // Construct the searchable date string only if the date is valid
-          const dateString = isDateValid
-            ? dateObject.toISOString().toLowerCase()
-            : "";
+    // Get the indices of the rows currently being displayed in the table (after search/pagination)
+    const filteredRowIndices = jobsTable
+      .rows({
+        search: "applied", // only include rows that match the current search term
+        filter: "applied", // only include rows that match the custom filters (company/location)
+      })
+      .indexes();
 
-          // Check against the data you want to be searchable
-          return (
-            job.title.toLowerCase().includes(search) ||
-            job.company.toLowerCase().includes(search) ||
-            job.location.toLowerCase().includes(search) ||
-            dateString.includes(search)
-          );
-        });
+    // Map these indices back to the original 'allJobs' array to get the currently visible job objects
+    const searchedAndFilteredJobs = filteredRowIndices.map(
+      (index) => allJobs[index]
+    );
 
-    // --- Helper function to filter jobs based on all active filters ---
-    // We use 'ignoreFilter' to specify which dropdown we are currently populating,
-    // so we don't filter it by its own selection.
-    const getFilteredJobs = (ignoreFilter) => {
-      return searchedJobs.filter((job) => {
-        // 1. Check Company filter
+    // Use the new set of jobs for updating the dropdown options
+    const getDropdownJobs = (ignoreFilter) => {
+      return searchedAndFilteredJobs.filter((job) => {
+        // For company dropdown: ignore company filter, apply location filter
         const companyMatch =
-          ignoreFilter === "company" || // Always true if we are populating companies
+          ignoreFilter === "company" ||
           !selectedCompanies.length ||
           selectedCompanies.includes(job.company);
 
-        // 2. Check Location filter
+        // For location dropdown: ignore location filter, apply company filter
         const locationMatch =
-          ignoreFilter === "location" || // Always true if we are populating locations
+          ignoreFilter === "location" ||
           !selectedLocations.length ||
           selectedLocations.includes(job.normalizedLocation);
 
-        // 3. Global searchMatch is already handled by creating 'searchedJobs'
         return companyMatch && locationMatch;
       });
     };
 
-    // --- Populate Company Dropdown ---
-    // Get jobs filtered by LOCATION and SEARCH
-    const companyFilteredJobs = getFilteredJobs("company");
+    // Update Company Dropdown
+    const companyFilteredJobs = getDropdownJobs("company");
     const companies = [
       ...new Set(companyFilteredJobs.map((j) => j.company)),
     ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     populateFilter("#companyFilter", companies, selectedCompanies);
 
-    // --- Populate Location Dropdown ---
-    // Get jobs filtered by COMPANY and SEARCH
-    const locationFilteredJobs = getFilteredJobs("location");
+    // Update Location Dropdown
+    const locationFilteredJobs = getDropdownJobs("location");
     const locations = [
       ...new Set(locationFilteredJobs.map((j) => j.normalizedLocation)),
     ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-
     populateFilter("#locationFilter", locations, selectedLocations);
   }
 
