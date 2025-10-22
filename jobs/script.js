@@ -232,6 +232,54 @@ function normalizeLocation(location) {
   return location;
 }
 
+const dataTableConfig = {
+  // Add configurations
+  // Sort by the 5th column (Date Posted) descending
+  // order: [[4, "desc"]],
+  order: [],
+  pageLength: 10, // Show 10 rows per page
+  lengthChange: true, // Allow user to change page length
+  responsive: true, // Make table responsive
+  autoWidth: false, // Prevent automatic column width
+  language: {
+    search: "Search jobs:",
+    lengthMenu: "Show _MENU_ job posts per page",
+    info: "Showing _START_ to _END_ of _TOTAL_ job posts",
+  },
+  columnDefs: [
+    {
+      // 1. Job Title (Index 0)
+      targets: [0],
+      className: "dt-head-left dt-body-left", // Ensure header and body text align left
+      width: "30%",
+    },
+    {
+      // 2. Company Name (Index 1)
+      targets: [1],
+      className: "dt-head-left dt-body-left",
+      width: "20%",
+    },
+    {
+      // 3. Location (Index 2)
+      targets: [2],
+      className: "dt-head-left dt-body-left",
+      width: "20%",
+    },
+    {
+      // 4. Type (Index 3 - Full-Time/Part-Time/Contract)
+      targets: [3],
+      className: "dt-head-center dt-body-center", // Center align for better visual grouping
+      width: "10%",
+    },
+    {
+      // 5. Date Posted (Index 4)
+      targets: [4],
+      type: "date", // Explicitly tell DataTables to sort this as a date
+      className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
+      width: "20%",
+    },
+  ],
+};
 /**
  * Converts a UTC ISO 8601 date string to the user's local time.
  * * @param {string} utcDateString - Input date string (e.g., '2025-10-22T07:14:43.184Z')
@@ -266,67 +314,10 @@ function convertToLocalTime(utcDateString) {
 function main() {
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
-  const jobsTable = jQuery("#jobTable").DataTable({
-    // Add configurations
-    // Sort by the 5th column (Date Posted) descending
-    // order: [[4, "desc"]],
-    order: [],
-    pageLength: 10, // Show 10 rows per page
-    lengthChange: true, // Allow user to change page length
-    responsive: true, // Make table responsive
-    autoWidth: false, // Prevent automatic column width
-    language: {
-      search: "Search jobs:",
-      lengthMenu: "Show _MENU_ job posts per page",
-      info: "Showing _START_ to _END_ of _TOTAL_ job posts",
-    },
-    columnDefs: [
-      {
-        // 1. Job Title (Index 0)
-        targets: [0],
-        className: "dt-head-left dt-body-left", // Ensure header and body text align left
-        width: "30%",
-      },
-      {
-        // 2. Company Name (Index 1)
-        targets: [1],
-        className: "dt-head-left dt-body-left",
-        width: "20%",
-      },
-      {
-        // 3. Location (Index 2)
-        targets: [2],
-        className: "dt-head-left dt-body-left",
-        width: "20%",
-      },
-      {
-        // 4. Type (Index 3 - Full-Time/Part-Time/Contract)
-        targets: [3],
-        className: "dt-head-center dt-body-center", // Center align for better visual grouping
-        width: "10%",
-      },
-      {
-        // 5. Date Posted (Index 4)
-        targets: [4],
-        type: "date", // Explicitly tell DataTables to sort this as a date
-        className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
-        width: "20%",
-      },
-    ],
-  });
+  const jobsTable = jQuery("#jobTable").DataTable(dataTableConfig);
 
   // Initialize Select2 on the dropdowns
-  $("#companyFilter").select2({
-    placeholder: "Select Companies", // Friendly prompt
-    allowClear: true, // Adds an 'x' to clear selection
-    width: "100%", // Ensures it fits its container
-  });
-
-  $("#locationFilter").select2({
-    placeholder: "Select Locations",
-    allowClear: true,
-    width: "100%",
-  });
+  setupSelectDropdowns();
 
   // --- Load Data using Fetch API ---
   async function loadJobs() {
@@ -381,6 +372,20 @@ function main() {
     }
   }
 
+  function setupSelectDropdowns() {
+    $("#companyFilter").select2({
+      placeholder: "Select Companies", // Friendly prompt
+      allowClear: true, // Adds an 'x' to clear selection
+      width: "100%", // Ensures it fits its container
+    });
+
+    $("#locationFilter").select2({
+      placeholder: "Select Locations",
+      allowClear: true,
+      width: "100%",
+    });
+  }
+
   // --- Function to populate the table ---
   function populateTable(jobs) {
     // Clear the existing data
@@ -431,9 +436,13 @@ function main() {
   }
 
   function updateDropdowns() {
+    if (!Array.isArray(allJobs) || allJobs.length === 0) {
+      return;
+    }
+
     // Get ALL current filter values
-    const selectedCompanies = $("#companyFilter").val();
-    const selectedLocations = $("#locationFilter").val();
+    const selectedCompanies = $("#companyFilter").val() || [];
+    const selectedLocations = $("#locationFilter").val() || [];
 
     // Get the indices of the rows currently being displayed in the table (after search/pagination)
     const filteredRowIndices = jobsTable
@@ -441,7 +450,8 @@ function main() {
         search: "applied", // only include rows that match the current search term
         filter: "applied", // only include rows that match the custom filters (company/location)
       })
-      .indexes();
+      .indexes()
+      .toArray();
 
     // Map these indices back to the original 'allJobs' array to get the currently visible job objects
     const searchedAndFilteredJobs = filteredRowIndices.map(
@@ -455,15 +465,16 @@ function main() {
           return false;
         }
         // For company dropdown: ignore company filter, apply location filter
+
         const companyMatch =
           ignoreFilter === "company" ||
-          !selectedCompanies.length ||
+          selectedCompanies.length === 0 ||
           selectedCompanies.includes(job.company);
 
         // For location dropdown: ignore location filter, apply company filter
         const locationMatch =
           ignoreFilter === "location" ||
-          !selectedLocations.length ||
+          selectedLocations.length === 0 ||
           selectedLocations.includes(job.normalizedLocation);
 
         return companyMatch && locationMatch;
@@ -472,20 +483,28 @@ function main() {
 
     // Update Company Dropdown
     const companyFilteredJobs = getDropdownJobs("company");
-    if (companyFilteredJobs) {
-      const companies = [
-        ...new Set(companyFilteredJobs.map((j) => j.company)),
-      ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    if (companyFilteredJobs && companyFilteredJobs.length) {
+      const companies = Array.from(
+        new Set(companyFilteredJobs.map((j) => j.company))
+      ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
       populateFilter("#companyFilter", companies, selectedCompanies);
+    } else {
+      // If no rows match, keep existing selections but clear available options
+      populateFilter("#companyFilter", [], selectedCompanies);
     }
 
     // Update Location Dropdown
     const locationFilteredJobs = getDropdownJobs("location");
-    if (locationFilteredJobs) {
-      const locations = [
-        ...new Set(locationFilteredJobs.map((j) => j.normalizedLocation)),
-      ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+    if (locationFilteredJobs && locationFilteredJobs.length) {
+      const locations = Array.from(
+        new Set(locationFilteredJobs.map((j) => j.normalizedLocation))
+      ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
       populateFilter("#locationFilter", locations, selectedLocations);
+    } else {
+      populateFilter("#locationFilter", [], selectedLocations);
     }
   }
 
