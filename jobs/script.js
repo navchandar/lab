@@ -330,7 +330,10 @@ function main() {
   // --- Load Data using Fetch API ---
   async function loadJobs() {
     try {
-      const headResponse = await fetch("jobs.json", { method: "HEAD" });
+      const headResponse = await fetch("jobs.json", {
+        method: "HEAD",
+        cache: "no-store",
+      });
       const newModified = headResponse.headers.get("Last-Modified");
 
       if (lastModified && newModified && newModified === lastModified) {
