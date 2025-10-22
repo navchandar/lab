@@ -227,6 +227,9 @@ function normalizeLocation(location) {
   return location;
 }
 
+// Global variable to hold all jobs
+let allJobs = [];
+
 function main() {
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
@@ -260,7 +263,7 @@ function main() {
         // 3. Location (Index 2)
         targets: [2],
         className: "dt-head-left dt-body-left",
-        width: "15%",
+        width: "20%",
       },
       {
         // 4. Type (Index 3 - Full-Time/Part-Time/Contract)
@@ -273,7 +276,7 @@ function main() {
         targets: [4],
         type: "date", // Explicitly tell DataTables to sort this as a date
         className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
-        width: "25%",
+        width: "20%",
       },
     ],
   });
@@ -285,7 +288,8 @@ function main() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const allJobs = await response.json();
+
+      allJobs = await response.json();
 
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
@@ -324,26 +328,50 @@ function main() {
     populateFilter("#locationFilter", locations);
   }
 
-  function populateFilter(selector, items) {
+  function populateFilter(selector, items, selectedValues = []) {
     const select = $(selector);
-    select.empty(); // Clear existing options
+    select.empty();
 
     items.forEach((item) => {
-      select.append(new Option(item, item));
+      const option = new Option(
+        item,
+        item,
+        false,
+        selectedValues.includes(item)
+      );
+      select.append(option);
     });
 
-    // Initialize Select2
-    select.select2({
-      placeholder: "Select options",
-      allowClear: true,
-      width: "resolve",
-    });
+    select.trigger("change.select2");
   }
 
   function applyFilters() {
+    jobsTable.draw();
+    updateDropdowns();
+  }
+
+  function updateDropdowns() {
     const selectedCompanies = $("#companyFilter").val();
     const selectedLocations = $("#locationFilter").val();
-    jobsTable.draw();
+
+    const filteredJobs = allJobs.filter((job) => {
+      const companyMatch =
+        !selectedCompanies.length || selectedCompanies.includes(job.company);
+      const locationMatch =
+        !selectedLocations.length ||
+        selectedLocations.includes(normalizeLocation(job.location));
+      return companyMatch && locationMatch;
+    });
+
+    const companies = [...new Set(filteredJobs.map((j) => j.company))].sort(
+      (a, b) => a.toLowerCase().localeCompare(b.toLowerCase())
+    );
+    const locations = [
+      ...new Set(filteredJobs.map((j) => normalizeLocation(j.location))),
+    ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+
+    populateFilter("#companyFilter", companies, selectedCompanies);
+    populateFilter("#locationFilter", locations, selectedLocations);
   }
 
   // --- Start loading the jobs ---
@@ -368,6 +396,11 @@ function main() {
   // Attach filter change listeners
   $("#companyFilter").on("change", applyFilters);
   $("#locationFilter").on("change", applyFilters);
+  $("#resetFilters").on("click", function () {
+    $("#companyFilter").val(null).trigger("change");
+    $("#locationFilter").val(null).trigger("change");
+    applyFilters();
+  });
 }
 
 document.addEventListener("DOMContentLoaded", main);
