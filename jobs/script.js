@@ -417,17 +417,20 @@ function main() {
     applyFilters();
   }
 
-  function populateFilter(selector, items, selectedValues = []) {
-    const select = $(selector);
-    select.empty();
+  function populateFilter(selector, options, selected) {
+    const $el = $(selector);
+    // Build a set to avoid duplicates
+    const set = new Set(options);
+    selected.forEach((v) => set.add(v));
+    // ensure currently selected items remain present
 
-    // Create all Option objects in an array first
-    const options = items.map((item) => {
-      return new Option(item, item, false, selectedValues.includes(item));
-    });
-    // Append all at once and trigger select2
-    select.append(options);
-    select.trigger("change.select2");
+    $el.empty();
+    for (const val of Array.from(set)) {
+      $el.append(new Option(val, val, false, selected.includes(val)));
+    }
+
+    // trigger change
+    $el.trigger("change.select2");
   }
 
   function applyFilters() {
@@ -447,8 +450,8 @@ function main() {
     // Get the indices of the rows currently being displayed in the table (after search/pagination)
     const filteredRowIndices = jobsTable
       .rows({
+        page: "all",
         search: "applied", // only include rows that match the current search term
-        filter: "applied", // only include rows that match the custom filters (company/location)
       })
       .indexes()
       .toArray();
