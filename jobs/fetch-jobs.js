@@ -272,6 +272,20 @@ function clean_title(job_title) {
   return job_title;
 }
 
+function clean_company(company_name) {
+  if (!company_name) {
+    return "";
+  }
+  const phrases_to_remove = ["®", "©", "™"];
+  // Remove each phrase from job_title
+  phrases_to_remove.forEach((phrase) => {
+    company_name = company_name.replace(phrase, "");
+  });
+  // Remove colons and trim whitespace
+  company_name = company_name.replace(/:/g, " ").trim();
+  return company_name;
+}
+
 function clean_url(url) {
   if (!url) {
     return "";
@@ -399,9 +413,10 @@ function mergeAndCleanJobsData(output_data) {
       includedCount++;
 
       const job_title = clean_title(job.position);
+      const company_name = clean_company(job.company);
       enriched.push({
         title: job_title,
-        company: job.company || "",
+        company: company_name,
         location: job.location || "India",
         type: "Full-Time",
         datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
@@ -409,7 +424,6 @@ function mergeAndCleanJobsData(output_data) {
         source: "LinkedIn",
         sourceUrl: job.jobUrl,
         jobId,
-        agoTime: job.agoTime || null,
         companyLogo: job.companyLogo || null,
         keywordMatched: job._keyword,
       });
