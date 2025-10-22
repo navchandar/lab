@@ -24,7 +24,7 @@ const KEYWORDS = [
 const BASE_QUERY = {
   location: "India",
   jobType: "full time",
-  sortBy: "relevant", // relevant or recent
+  sortBy: "recent", // relevant or recent
   dateSincePosted: "24hr",
   experienceLevel: "senior",
   //valid values: internship, entry level, associate, senior, director, executive
