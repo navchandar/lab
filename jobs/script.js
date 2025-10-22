@@ -281,6 +281,19 @@ function main() {
     ],
   });
 
+  // Initialize Select2 on the dropdowns
+  $("#companyFilter").select2({
+    placeholder: "Select Companies", // Friendly prompt
+    allowClear: true, // Adds an 'x' to clear selection
+    width: "100%", // Ensures it fits its container
+  });
+
+  $("#locationFilter").select2({
+    placeholder: "Select Locations",
+    allowClear: true,
+    width: "100%",
+  });
+
   // --- Load Data using Fetch API ---
   async function loadJobs() {
     try {
@@ -351,26 +364,60 @@ function main() {
   }
 
   function updateDropdowns() {
+    // Get ALL current filter values
     const selectedCompanies = $("#companyFilter").val();
     const selectedLocations = $("#locationFilter").val();
+    // Get the global search term from DataTables API
+    const searchTerm = jobsTable.search().toLowerCase().trim();
 
-    const filteredJobs = allJobs.filter((job) => {
-      const companyMatch =
-        !selectedCompanies.length || selectedCompanies.includes(job.company);
-      const locationMatch =
-        !selectedLocations.length ||
-        selectedLocations.includes(normalizeLocation(job.location));
-      return companyMatch && locationMatch;
-    });
+    // --- Helper function to filter jobs based on all active filters ---
+    // We use 'ignoreFilter' to specify which dropdown we are currently populating,
+    // so we don't filter it by its own selection.
+    const getFilteredJobs = (ignoreFilter) => {
+      return allJobs.filter((job) => {
+        // 1. Check Company filter
+        const companyMatch =
+          ignoreFilter === "company" || // Always true if we are populating companies
+          !selectedCompanies.length ||
+          selectedCompanies.includes(job.company);
 
-    const companies = [...new Set(filteredJobs.map((j) => j.company))].sort(
-      (a, b) => a.toLowerCase().localeCompare(b.toLowerCase())
-    );
+        // 2. Check Location filter
+        const locationMatch =
+          ignoreFilter === "location" || // Always true if we are populating locations
+          !selectedLocations.length ||
+          selectedLocations.includes(normalizeLocation(job.location));
+
+        // 3. Check Global Search filter
+        // We search against the original job object fields
+        const searchMatch =
+          !searchTerm.length ||
+          job.title.toLowerCase().includes(searchTerm) ||
+          job.company.toLowerCase().includes(searchTerm) ||
+          job.location.toLowerCase().includes(searchTerm) || // Use original location for search
+          job.datePosted.toLowerCase().includes(searchTerm);
+
+        // Return true only if all filters match
+        return companyMatch && locationMatch && searchMatch;
+      });
+    };
+
+    // --- Populate Company Dropdown ---
+    // Get jobs filtered by LOCATION and SEARCH
+    const companyFilteredJobs = getFilteredJobs("company");
+    const companies = [
+      ...new Set(companyFilteredJobs.map((j) => j.company)),
+    ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    populateFilter("#companyFilter", companies, selectedCompanies);
+
+    // --- Populate Location Dropdown ---
+    // Get jobs filtered by COMPANY and SEARCH
+    const locationFilteredJobs = getFilteredJobs("location");
     const locations = [
-      ...new Set(filteredJobs.map((j) => normalizeLocation(j.location))),
+      ...new Set(
+        locationFilteredJobs.map((j) => normalizeLocation(j.location))
+      ),
     ].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
-    populateFilter("#companyFilter", companies, selectedCompanies);
     populateFilter("#locationFilter", locations, selectedLocations);
   }
 
@@ -394,11 +441,25 @@ function main() {
   });
 
   // Attach filter change listeners
+  // When a dropdown changes, apply all filters
   $("#companyFilter").on("change", applyFilters);
   $("#locationFilter").on("change", applyFilters);
+
+  // When the DataTables global search input is used, update the dropdowns.
+  jobsTable.on("search.dt", function () {
+    updateDropdowns();
+  });
+
+  // When reset is clicked, clear all filters and redraw
   $("#resetFilters").on("click", function () {
-    $("#companyFilter").val(null).trigger("change");
-    $("#locationFilter").val(null).trigger("change");
+    // Clear dropdowns (without triggering 'change' events)
+    $("#companyFilter").val(null);
+    $("#locationFilter").val(null);
+
+    // Clear the DataTables global search
+    jobsTable.search("");
+
+    // Manually call applyFilters() ONCE to sync dropdowns and redraw the table
     applyFilters();
   });
 }
