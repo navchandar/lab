@@ -352,11 +352,25 @@ function mergeAndCleanJobsData(output_data) {
   let deduped = uniqueBy(gathered, (r) => r.jobUrl);
   const existingJobs = readExisting();
   const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
+  // Find the largest jobId in existingJobIds - Assuming jobIds are numerical
+  const maxExistingJobId =
+    existingJobIds.size > 0
+      ? Math.max(...Array.from(existingJobIds).map((id) => Number(id)))
+      : -Infinity; // Use -Infinity if the set is empty for smallest number
 
   // Filter out jobs that already exist
   deduped = deduped.filter((job) => {
     const jobId = extractJobIdFromUrl(job.jobUrl);
-    return jobId && !existingJobIds.has(jobId);
+    if (!jobId) {
+      console.warn("Could not parse jobId", job.jobUrl);
+      return false;
+    }
+    // Check if this already exists
+    const isNew = !existingJobIds.has(jobId);
+    // Check if the job id is actually a reposted job
+    const isNotRepost = Number(jobId) >= maxExistingJobId;
+    // Keep the job post only if it's new and not already saved
+    return isNew && isNotRepost;
   });
 
   console.log(`Gathered: ${gathered.length}`);
@@ -423,7 +437,6 @@ function mergeAndCleanJobsData(output_data) {
   }
 
   mergeAndCleanJobsData(enriched);
-  
 })().catch((err) => {
   console.error(err);
   process.exit(1);
