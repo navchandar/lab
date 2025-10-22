@@ -241,9 +241,13 @@ a:hover, a:focus {
         background-color: #cfe2ff5e;
     }
 
-    ul, li {
-        background-color: #282828;
-        color: lightgray;
+    ul, li, .select2-selection__choice__display {
+        background-color: #282828 !important;
+        color: lightgray !important;
+    }
+
+    .select2-container--default, .select2-selection--multiple {
+        background-color: #a5a5a5 !important;
     }
 
     #filters label {
