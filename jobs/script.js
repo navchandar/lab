@@ -280,6 +280,9 @@ const dataTableConfig = {
     },
   ],
 };
+
+const asArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
 /**
  * Converts a UTC ISO 8601 date string to the user's local time.
  * * @param {string} utcDateString - Input date string (e.g., '2025-10-22T07:14:43.184Z')
@@ -311,7 +314,7 @@ function convertToLocalTime(utcDateString) {
   }
 }
 
-function main() {
+async function main() {
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
   const jobsTable = jQuery("#jobTable").DataTable(dataTableConfig);
@@ -419,15 +422,28 @@ function main() {
 
   function populateFilter(selector, options, selected) {
     const $el = $(selector);
-    // Build a set to avoid duplicates
-    const set = new Set(options);
-    selected.forEach((v) => set.add(v));
-    // ensure currently selected items remain present
 
+    // Normalize inputs
+    const opts = Array.isArray(options) ? options : [];
+    const selectedArr = Array.isArray(selected)
+      ? selected
+      : selected
+      ? [selected]
+      : [];
+
+    // Build a set of options and make sure existing selections stay present
+    const set = new Set(opts);
+    selectedArr.forEach((v) => {
+      if (v !== undefined && v !== null && v !== "") {
+        set.add(v);
+      }
+    });
+
+    // Rebuild options
     $el.empty();
-    for (const val of Array.from(set)) {
-      $el.append(new Option(val, val, false, selected.includes(val)));
-    }
+    Array.from(set).forEach((val) => {
+      $el.append(new Option(val, val, false, selectedArr.includes(val)));
+    });
 
     // trigger change
     $el.trigger("change.select2");
@@ -444,8 +460,8 @@ function main() {
     }
 
     // Get ALL current filter values
-    const selectedCompanies = $("#companyFilter").val() || [];
-    const selectedLocations = $("#locationFilter").val() || [];
+    const selectedCompanies = asArray($("#companyFilter").val());
+    const selectedLocations = asArray($("#locationFilter").val());
 
     // Get the indices of the rows currently being displayed in the table (after search/pagination)
     const filteredRowIndices = jobsTable
@@ -554,7 +570,7 @@ function main() {
   }
 
   // Run once immediately to load jobs
-  loadJobs();
+  await loadJobs();
 
   // Poll every 5 minutes
   setInterval(loadJobs, 5 * 60 * 1000); // 300000 ms = 5 minutes
