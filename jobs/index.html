@@ -46,6 +46,11 @@
 
     <script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
 
+    <link
+      href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
   </head>
   <body>
     <header>
@@ -53,6 +58,14 @@
     </header>
 
     <main>
+      <div id="filters">
+        <label for="companyFilter">Filter by Company:</label>
+        <select id="companyFilter" multiple="multiple"></select>
+
+        <label for="locationFilter">Filter by Location:</label>
+        <select id="locationFilter" multiple="multiple"></select>
+      </div>
+
       <div class="table-container">
         <table id="jobTable" class="display" style="width:100%">
           <thead>

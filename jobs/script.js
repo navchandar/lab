@@ -84,10 +84,59 @@ function main() {
 
     // Add the new data and redraw the table
     jobsTable.rows.add(dataToLoad).draw();
+
+    // Extract unique company and location names
+    const companies = [...new Set(jobs.map((j) => j.company))].sort();
+    const locations = [...new Set(jobs.map((j) => j.location))].sort();
+
+    populateFilter("#companyFilter", companies);
+    populateFilter("#locationFilter", locations);
+  }
+
+  function populateFilter(selector, items) {
+    const select = $(selector);
+    select.empty(); // Clear existing options
+
+    items.forEach((item) => {
+      select.append(new Option(item, item));
+    });
+
+    // Initialize Select2
+    select.select2({
+      placeholder: "Select options",
+      allowClear: true,
+      width: "resolve",
+    });
+  }
+
+  function applyFilters() {
+    const selectedCompanies = $("#companyFilter").val();
+    const selectedLocations = $("#locationFilter").val();
+
+    jobsTable.rows().every(function () {
+      const data = this.data();
+      const company = data[1];
+      const location = data[2];
+
+      const companyMatch =
+        !selectedCompanies.length || selectedCompanies.includes(company);
+      const locationMatch =
+        !selectedLocations.length || selectedLocations.includes(location);
+
+      if (companyMatch && locationMatch) {
+        $(this.node()).show();
+      } else {
+        $(this.node()).hide();
+      }
+    });
   }
 
   // --- Start loading the jobs ---
   loadJobs();
+
+  // Attach filter change listeners
+  $("#companyFilter").on("change", applyFilters);
+  $("#locationFilter").on("change", applyFilters);
 }
 
 document.addEventListener("DOMContentLoaded", main);

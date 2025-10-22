@@ -7,12 +7,13 @@ const randomUA = require("random-useragent");
 
 // -------- Config you can tune ----------
 const KEYWORDS = [
-  "Senior QA Automation",
+  "Senior QA Automation Engineer",
   "QA Automation Lead",
-  "Lead QA",
-  "Senior SDET",
+  "Lead QA Engineer",
+  "Senior SDET (Software Development Engineer in Test)",
   "SDET Lead",
   "Test Automation Lead",
+  "Performance QA Engineer",
   "Quality Engineering Lead",
   "Senior Test Engineer",
   "Automation Architect",
