@@ -33,7 +33,6 @@ const BASE_QUERY = {
 const OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 const HOURS_WINDOW = 6; // Add only jobs <= 6 hours old
 const DAYS_TO_KEEP = 7; // purge jobs > 7 days old
-const DEFAULT_TYPE_LABEL = "Full-Time";
 
 // -------- Utilities ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -48,9 +47,17 @@ function readExisting() {
 }
 
 function writeOutput(list) {
-  // Ensure /jobs exists even if repo is fresh
-  fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(list, null, 2) + "\n", "utf-8");
+  try {
+    // Ensure /jobs exists even if repo is fresh
+    fs.mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
+    fs.writeFileSync(
+      OUTPUT_FILE,
+      JSON.stringify(list, null, 2) + "\n",
+      "utf-8"
+    );
+  } catch (e) {
+    console.error(`Failed to save ${OUTPUT_FILE}:`, e.message);
+  }
 }
 
 function toIsoStringUTC(date) {
@@ -250,6 +257,83 @@ function uniqueBy(arr, keyFn) {
   return out;
 }
 
+function clean_title(job_title) {
+  if (!job_title) {
+    return "";
+  }
+  const phrases_to_remove = ["Interesting Job Opportunity"];
+  // Remove each phrase from job_title
+  phrases_to_remove.forEach((phrase) => {
+    job_title = job_title.replace(phrase, "");
+  });
+  // Remove colons and trim whitespace
+  job_title = job_title.replace(/:/g, "").trim();
+  return job_title;
+}
+
+function clean_url(url) {
+  if (!url) {
+    return "";
+  }
+  url = htmlUnescape(url);
+  // Create a URL object
+  const urlObj = new URL(url);
+  // Get the base URL without query parameters
+  const clean_url = urlObj.origin + urlObj.pathname;
+  return clean_url;
+}
+
+function mergeAndCleanJobsData(output_data) {
+  const existing = readExisting();
+  console.log(`Existing job posts before cleanup: ${existing.length}`);
+
+  const sevenDaysAgo = Date.now() - DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
+  // Filter out old posts
+  const prunedExisting = existing.filter((j) => {
+    const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
+    return d >= sevenDaysAgo;
+  });
+  console.log(
+    `Removed ${existing.length - prunedExisting.length} old job posts`
+  );
+  console.log(
+    `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
+  );
+
+  // Use jobId as the unique key
+  const byJobId = new Map();
+
+  for (const j of prunedExisting) {
+    byJobId.set(j.jobId, j);
+  }
+
+  for (const j of output_data) {
+    const existingJob = byJobId.get(j.jobId);
+    if (!existingJob) {
+      byJobId.set(j.jobId, j);
+    } else {
+      const existingTime = existingJob.datePosted
+        ? new Date(existingJob.datePosted).getTime()
+        : 0;
+      const newTime = j.datePosted ? new Date(j.datePosted).getTime() : 0;
+      if (newTime > existingTime) {
+        byJobId.set(j.jobId, { ...existingJob, ...j });
+      }
+    }
+  }
+
+  // Final sorted list
+  const finalList = Array.from(byJobId.values()).sort((a, b) => {
+    const ta = a.datePosted ? new Date(a.datePosted).getTime() : 0;
+    const tb = b.datePosted ? new Date(b.datePosted).getTime() : 0;
+    return tb - ta;
+  });
+
+  console.log(`Filtered and finalized ${finalList.length} job posts`);
+  writeOutput(finalList);
+  console.log(`Saved ${finalList.length} jobs to ${OUTPUT_FILE}`);
+}
+
 // -------- Main pipeline ----------
 (async function main() {
   const gathered = [];
@@ -273,8 +357,8 @@ function uniqueBy(arr, keyFn) {
 
   const enriched = [];
   for (const job of deduped) {
-    const jobUrlClean = htmlUnescape(job.jobUrl || "");
-    const jobId = extractJobIdFromUrl(jobUrlClean);
+    const jobId = extractJobIdFromUrl(job.jobUrl);
+    const jobUrlClean = clean_url(job.jobUrl);
 
     let listedAt = null;
     let applyUrl = null;
@@ -313,14 +397,14 @@ function uniqueBy(arr, keyFn) {
     } else {
       includedCount++;
 
+      const job_title = clean_title(job.position);
       enriched.push({
-        title: job.position || "",
+        title: job_title,
         company: job.company || "",
         location: job.location || "India",
-        type: DEFAULT_TYPE_LABEL,
+        type: "Full-Time",
         datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
-        url: applyUrl || job.jobUrl,
-
+        url: applyUrl || jobUrlClean || job.jobUrl,
         source: "LinkedIn",
         sourceUrl: job.jobUrl,
         jobId,
@@ -334,57 +418,7 @@ function uniqueBy(arr, keyFn) {
   if (enriched && enriched.length) {
     console.log("Sample:", enriched[0]);
   }
-
-  const existing = readExisting();
-
-  console.log(`Existing job posts before cleanup: ${existing.length}`);
-
-  const sevenDaysAgo = Date.now() - DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
-
-  const prunedExisting = existing.filter((j) => {
-    const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
-    return d >= sevenDaysAgo;
-  });
-
-  console.log(
-    `Removed ${existing.length - prunedExisting.length} old job posts`
-  );
-  console.log(
-    `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
-  );
-
-  const byKey = new Map();
-  const keyFor = (j) => j.url || j.sourceUrl;
-
-  for (const j of prunedExisting) {
-    byKey.set(keyFor(j), j);
-  }
-
-  for (const j of enriched) {
-    const k = keyFor(j);
-    if (!byKey.has(k)) {
-      byKey.set(k, j);
-    } else {
-      const curr = byKey.get(k);
-      const currT = curr.datePosted ? new Date(curr.datePosted).getTime() : 0;
-      const newT = j.datePosted ? new Date(j.datePosted).getTime() : 0;
-      if (newT > currT) {
-        byKey.set(k, { ...curr, ...j });
-      }
-    }
-  }
-
-  const finalList = Array.from(byKey.values()).sort((a, b) => {
-    const ta = a.datePosted ? new Date(a.datePosted).getTime() : 0;
-    const tb = b.datePosted ? new Date(b.datePosted).getTime() : 0;
-    return tb - ta;
-  });
-
-  console.log(`Filtered and finalized ${finalList.length} job posts`);
-
-  writeOutput(finalList);
-
-  console.log(`Saved ${finalList.length} jobs to ${OUTPUT_FILE}`);
+  mergeAndCleanJobsData(enriched);
 })().catch((err) => {
   console.error(err);
   process.exit(1);
