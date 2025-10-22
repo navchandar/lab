@@ -378,7 +378,7 @@ function main() {
             job.title.toLowerCase().includes(searchTerm) ||
             job.company.toLowerCase().includes(searchTerm) ||
             job.location.toLowerCase().includes(searchTerm) ||
-            job.datePosted.toISOString().toLowerCase().includes(searchTerm)
+            new Date(job.datePosted)?.toISOString().toLowerCase().includes(searchTerm)
           );
         });
 
