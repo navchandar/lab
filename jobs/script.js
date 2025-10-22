@@ -227,8 +227,40 @@ function normalizeLocation(location) {
   return location;
 }
 
+/**
+ * Converts a UTC ISO 8601 date string to the user's local time.
+ * * @param {string} utcDateString - Input date string (e.g., '2025-10-22T07:14:43.184Z')
+ * @returns {string} The formatted local date string (formatted as 'yyyy-mm-dd hh:mm TZ').
+ */
+function convertToLocalTime(utcDateString) {
+  try {
+    const date = new Date(utcDateString);
+    const formatter = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZoneName: "short",
+    });
+
+    const parts = formatter.formatToParts(date);
+    const get = (type) => parts.find((p) => p.type === type)?.value || "";
+
+    const formatted = `${get("year")}-${get("month")}-${get("day")} ${get(
+      "hour"
+    )}:${get("minute")} ${get("timeZoneName")}`;
+    return formatted.trim();
+  } catch {
+    console.log("Error converting to local timezone");
+    return null;
+  }
+}
+
 // Global variable to hold all jobs
 let allJobs = [];
+let lastModified = null;
 
 function main() {
   // --- Initialize an empty DataTable ---
@@ -297,13 +329,38 @@ function main() {
   // --- Load Data using Fetch API ---
   async function loadJobs() {
     try {
-      const response = await fetch("jobs.json");
+      const headResponse = await fetch("jobs.json", { method: "HEAD" });
+      const newModified = headResponse.headers.get("Last-Modified");
+
+      if (lastModified && newModified && newModified === lastModified) {
+        console.log("No changes in jobs.json");
+        return;
+      }
+
+      // Update stored value
+      lastModified = newModified;
+
+      // Fetch and update table
+      const response = await fetch("jobs.json", { cache: "no-store" });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // Get the IANA Timezone Name
+      const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log("Local Timezone:", localTimeZone);
+
       allJobs = await response.json();
       allJobs.forEach((job) => {
+        const originalDate = job.datePosted;
+        const localTime = convertToLocalTime(originalDate);
+        if (localTime) {
+          job.datePosted = localTime;
+        } else {
+          // Replace 'T' with ' T' to insert a space
+          job.datePosted = originalDate.replace("T", " T");
+        }
+        // Normalize location for dropdown
         job.normalizedLocation = normalizeLocation(job.location);
       });
 
@@ -378,7 +435,10 @@ function main() {
             job.title.toLowerCase().includes(searchTerm) ||
             job.company.toLowerCase().includes(searchTerm) ||
             job.location.toLowerCase().includes(searchTerm) ||
-            new Date(job.datePosted)?.toISOString().toLowerCase().includes(searchTerm)
+            new Date(job.datePosted)
+              ?.toISOString()
+              .toLowerCase()
+              .includes(searchTerm)
           );
         });
 
@@ -422,7 +482,7 @@ function main() {
     populateFilter("#locationFilter", locations, selectedLocations);
   }
 
-  // --- Start loading the jobs ---
+  // Run once immediately to load jobs
   loadJobs();
 
   // Custom filtering function for DataTables
@@ -463,6 +523,9 @@ function main() {
 
     // Manually call applyFilters() ONCE to sync dropdowns and redraw the table
     applyFilters();
+
+    // Poll every 5 minutes
+    setInterval(loadJobs, 5 * 60 * 1000); // 300000 ms = 5 minutes
   });
 }
 

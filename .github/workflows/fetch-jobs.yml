@@ -2,7 +2,7 @@ name: Fetch Jobs
 
 on:
   schedule:
-    - cron: "0 * * * *" # every hour
+    - cron: "*/30 * * * *" # every half hour
   workflow_dispatch:
 
 permissions:
@@ -32,7 +32,7 @@ jobs:
       - name: Install dependencies
         working-directory: jobs
         run: |
-            npm ci
+          npm ci
 
       - name: Fetch jobs
         working-directory: jobs

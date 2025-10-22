@@ -2,6 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const axios = require("axios").default;
+const cheerio = require("cheerio");
 const linkedIn = require("linkedin-jobs-api");
 const randomUA = require("random-useragent");
 
@@ -174,67 +175,44 @@ function parseRelativeTimeToDate(input) {
 async function fetchJobDetail(jobId) {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
   try {
-    const header = {
+    const headers = {
       "User-Agent":
         randomUA.getRandom() ||
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      Accept: "application/json, text/html",
       "Accept-Language": "en-US,en;q=0.9",
     };
 
-    console.log("Detail fetch URL:", url);
-    const { data } = await axios.get(url, { headers: header, timeout: 12000 });
+    const { data } = await axios.get(url, { headers, timeout: 12000 });
 
-    // Treat response as text so we can regex both JSON-like fields and HTML
-    const txt = typeof data === "string" ? data : JSON.stringify(data);
-
-    // 1) Prefer an exact epoch from JSON when present (listedAt)
+    // Try to parse JSON directly
     let listedAt = null;
-    const mTime = txt.match(/"listedAt"\s*:\s*(\d{10,13})/);
-    if (mTime) {
-      const ts =
-        mTime[1].length === 13 ? Number(mTime[1]) : Number(mTime[1]) * 1000;
-      listedAt = new Date(ts);
-    }
-
-    // 2) If no listedAt, try to parse the visible relative time:
-    //    Look for the .posted-time-ago__text element content in the HTML
-    let postedTimeText = null;
-
-    if (!listedAt) {
-      // Try real HTML first
-      let mSpan = txt.match(
-        /<[^>]*class="[^"]*posted-time-ago__text[^"]*"[^>]*>([\s\S]*?)<\/[^>]*>/i
-      );
-      if (!mSpan) {
-        // Fallback: entity-escaped HTML (in case the response body is encoded)
-        mSpan = txt.match(
-          /&lt;[^&gt;]*class="[^"]*posted-time-ago__text[^"]*"[^&gt;]*&gt;([\s\S]*?)&lt;\/[^&gt;]*&gt;/i
-        );
-      }
-      if (mSpan) {
-        postedTimeText = mSpan[1]
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
-    }
-
-    const resolvedDate = listedAt || parseRelativeTimeToDate(postedTimeText);
-
-    // 3) Try to extract an external apply URL when present
-
     let applyUrl = null;
-    const mApply =
-      txt.match(/"companyApplyUrl"\s*:\s*"(https?:\\\/\\\/[^"]+)"/) ||
-      txt.match(/"applyUrl"\s*:\s*"(https?:\\\/\\\/[^"]+)"/);
-    if (mApply) {
-      applyUrl = unescapeJsonString(mApply[1]);
+    let description = null;
+
+    if (typeof data === "object") {
+      listedAt = data.listedAt ? new Date(data.listedAt) : null;
+      applyUrl = data.applyUrl || data.companyApplyUrl || null;
+      description = data.description || null;
+    } else {
+      // Fallback: parse HTML with cheerio
+      const $ = cheerio.load(data);
+      const postedText = $(".posted-time-ago__text").text().trim();
+      listedAt = parseRelativeTimeToDate(postedText);
+
+      const descHtml = $(".description__text").html();
+      description = descHtml ? cheerio.load(descHtml).text().trim() : null;
+
+      const applyMatch = data.match(/"applyUrl"\s*:\s*"([^"]+)"/);
+      if (applyMatch) {
+        applyUrl = applyMatch[1].replace(/\\\//g, "/");
+      }
     }
 
-    return { resolvedDate, applyUrl };
-  } catch {
-    return { resolvedDate: null, applyUrl: null };
+    return { resolvedDate: listedAt, applyUrl, description };
+  } catch (err) {
+    console.error("Error fetching job detail:", err.message);
+    return { resolvedDate: null, applyUrl: null, description: null };
   }
 }
 
@@ -365,6 +343,15 @@ function mergeAndCleanJobsData(output_data) {
   }
 
   const deduped = uniqueBy(gathered, (r) => r.jobUrl);
+  const existingJobs = readExisting();
+  const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
+
+  // Filter out jobs that already exist
+  deduped = deduped.filter((job) => {
+    const jobId = extractJobIdFromUrl(job.jobUrl);
+    return jobId && !existingJobIds.has(jobId);
+  });
+
   console.log(`Gathered: ${gathered.length}`);
   console.log(`Deduped: ${deduped.length}`);
 
