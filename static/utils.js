@@ -314,9 +314,32 @@ export function toggleSettings() {
  * and updates the settings icon to the default (closed) state.
  */
 export function hideSettings() {
-  const settingsBtn = document.getElementById("settings-btn");
-  const settingsMenu = document.getElementById("settings-menu");
-  settingsMenu.classList.remove("show");
-  settingsBtn.classList.toggle("show");
+  const settingsBtn = document.querySelector("#settings-btn.show");
+  const settingsMenu = document.querySelector("#settings-menu.show");
+
+  if (settingsBtn) {
+    settingsBtn.classList.remove("show");
+  }
+  if (settingsMenu) {
+    settingsMenu.classList.remove("show");
+  }
+
   updateSettingsIcon();
+}
+
+/**
+ * Check for the '=' key press and toggle Sidebar from iframe app
+ */
+export function handleSidebar(message = "toggleSidebar") {
+  // If this site is in an iframe: send message to parent
+  if (window !== window.parent) {
+    const targetOrigin = window.location.origin;
+    window.parent.postMessage({ command: message }, targetOrigin);
+    console.log("Message sent to parent to toggle sidebar");
+  }
+}
+
+/** Hide sidebar if loaded in iframe app */
+export function hideSidebar() {
+  handleSidebar("collapseSidebar");
 }

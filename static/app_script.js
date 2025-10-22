@@ -402,6 +402,8 @@ const collapseSidebar = () => {
     header.style.display = "none";
     sidebar.style.paddingTop = "3.75em";
   }
+  hamburger.classList.remove("menu-open");
+  updateHamburger();
 };
 
 /**
@@ -412,6 +414,8 @@ const uncollapseSidebar = () => {
 
   sidebar.classList.remove("collapsed");
   sidebar.classList.add("overlay");
+  hamburger.classList.toggle("menu-open");
+  updateHamburger();
 
   if (header) {
     header.style.display = "block";
@@ -419,10 +423,28 @@ const uncollapseSidebar = () => {
   }
 };
 
+function toggleHamburgerMenu() {
+  sidebar.classList.toggle("overlay");
+  sidebar.classList.toggle("collapsed");
+  hamburger.classList.toggle("menu-open");
+  updateHamburger();
+}
+
+function updateHamburger() {
+  if (hamburger.classList.contains("menu-open")) {
+    // Menu is open, display the close symbol 'X'
+    hamburger.textContent = "x";
+    hamburger.setAttribute("aria-expanded", "true");
+    hamburger.setAttribute("aria-label", "Close menu");
+  } else {
+    hamburger.textContent = "☰";
+    hamburger.setAttribute("aria-expanded", "false");
+    hamburger.setAttribute("aria-label", "Toggle menu");
+  }
+}
+
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
-  const sidebar = document.getElementById("sidebar");
-  const hamburger = document.getElementById("hamburger-menu");
   const links = document.querySelectorAll("#app-links li a");
 
   window.addEventListener("hashchange", handlePopState);
@@ -471,22 +493,7 @@ function initializeAppUI() {
   });
 
   // Toggle sidebar on hamburger click
-  hamburger.addEventListener("click", () => {
-    sidebar.classList.toggle("overlay");
-    sidebar.classList.toggle("collapsed");
-    this.classList.toggle("menu-open");
-
-    if (this.classList.contains("menu-open")) {
-      // Menu is open, display the close symbol 'X'
-      this.textContent = "x";
-      this.setAttribute("aria-expanded", "true");
-      this.setAttribute("aria-label", "Close menu");
-    } else {
-      this.textContent = "☰";
-      this.setAttribute("aria-expanded", "false");
-      this.setAttribute("aria-label", "Toggle menu");
-    }
-  });
+  hamburger.addEventListener("click", toggleHamburgerMenu);
 
   document.addEventListener("keydown", (event) => {
     // '=' key shortcut to toggle the sidebar
@@ -501,6 +508,22 @@ function initializeAppUI() {
   document.addEventListener("focusin", (event) => {
     // Check if the element that received focus is an iframe
     if (event.target.tagName === "IFRAME") {
+      collapseSidebar();
+    }
+  });
+
+  window.addEventListener("message", (event) => {
+    // Security: Always verify the origin of the message
+    if (event.origin !== window.location.origin) {
+      return;
+    }
+    // Check for the specific command to toggle the sidebar
+    if (event.data && event.data.command === "toggleSidebar") {
+      event.preventDefault();
+      toggleHamburgerMenu();
+    }
+    if (event.data && event.data.command === "collapseSidebar") {
+      event.preventDefault();
       collapseSidebar();
     }
   });

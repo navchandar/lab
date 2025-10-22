@@ -154,6 +154,11 @@ function handleKeydown(event) {
       break;
     case "Escape":
       utils.hideSettings();
+      utils.hideSidebar();
+      break;
+    case "Equal":
+      event.preventDefault();
+      utils.handleSidebar();
       break;
   }
 }

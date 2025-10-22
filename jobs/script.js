@@ -268,7 +268,8 @@ function main() {
   const jobsTable = jQuery("#jobTable").DataTable({
     // Add configurations
     // Sort by the 5th column (Date Posted) descending
-    order: [[4, "desc"]],
+    // order: [[4, "desc"]],
+    order: [],
     pageLength: 10, // Show 10 rows per page
     lengthChange: true, // Allow user to change page length
     responsive: true, // Make table responsive
