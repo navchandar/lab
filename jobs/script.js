@@ -1,3 +1,7 @@
+// Global variable to hold all jobs
+let allJobs = [];
+let lastModified = null;
+
 const cityAliases = {
   bengaluru: [
     "bangalore",
@@ -258,10 +262,6 @@ function convertToLocalTime(utcDateString) {
   }
 }
 
-// Global variable to hold all jobs
-let allJobs = [];
-let lastModified = null;
-
 function main() {
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
@@ -367,6 +367,7 @@ function main() {
 
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
+      applyFilters();
     } catch (error) {
       console.error("Could not fetch jobs data:", error);
     }
@@ -490,38 +491,7 @@ function main() {
     populateFilter("#locationFilter", locations, selectedLocations);
   }
 
-  // Run once immediately to load jobs
-  loadJobs();
-
-  // Custom filtering function for DataTables
-  $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-    const selectedCompanies = $("#companyFilter").val();
-    const selectedLocations = $("#locationFilter").val();
-
-    const job = allJobs[dataIndex];
-    const company = job.company; // or data[1]
-    const location = job.normalizedLocation;
-
-    const companyMatch =
-      !selectedCompanies.length || selectedCompanies.includes(company);
-    const locationMatch =
-      !selectedLocations.length || selectedLocations.includes(location);
-
-    return companyMatch && locationMatch;
-  });
-
-  // Attach filter change listeners
-  // When a dropdown changes, apply all filters
-  $("#companyFilter").on("change", applyFilters);
-  $("#locationFilter").on("change", applyFilters);
-
-  // When the DataTables global search input is used, update the dropdowns.
-  jobsTable.on("search.dt", function () {
-    updateDropdowns();
-  });
-
-  // When reset is clicked, clear all filters and redraw
-  $("#resetFilters").on("click", function () {
+  function resetAllFilters() {
     // Clear dropdowns (without triggering 'change' events)
     $("#companyFilter").val(null);
     $("#locationFilter").val(null);
@@ -531,10 +501,45 @@ function main() {
 
     // Manually call applyFilters() ONCE to sync dropdowns and redraw the table
     applyFilters();
+  }
 
-    // Poll every 5 minutes
-    setInterval(loadJobs, 5 * 60 * 1000); // 300000 ms = 5 minutes
-  });
+  function setupEventListeners() {
+    // Custom filtering function for DataTables
+    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+      const selectedCompanies = $("#companyFilter").val();
+      const selectedLocations = $("#locationFilter").val();
+
+      const job = allJobs[dataIndex];
+      const company = job.company; // or data[1]
+      const location = job.normalizedLocation;
+
+      const companyMatch =
+        !selectedCompanies.length || selectedCompanies.includes(company);
+      const locationMatch =
+        !selectedLocations.length || selectedLocations.includes(location);
+
+      return companyMatch && locationMatch;
+    });
+
+    // Attach filter change listeners
+    // When a dropdown changes, apply all filters
+    $("#companyFilter").on("change", applyFilters);
+    $("#locationFilter").on("change", applyFilters);
+
+    // When the DataTables global search input is used, update the dropdowns.
+    jobsTable.on("search.dt", updateDropdowns);
+
+    // When reset is clicked, clear all filters and redraw
+    $("#resetFilters").on("click", resetAllFilters);
+  }
+
+  // Run once immediately to load jobs
+  loadJobs();
+
+  setupEventListeners();
+
+  // Poll every 5 minutes
+  setInterval(loadJobs, 5 * 60 * 1000); // 300000 ms = 5 minutes
 }
 
 document.addEventListener("DOMContentLoaded", main);
