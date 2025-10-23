@@ -266,7 +266,7 @@ const dataTableConfig = {
       width: "20%",
     },
     {
-      // 4. Type (Index 3 - Full-Time/Part-Time/Contract)
+      // 4. Type (Index 3 - QA / DEV / DEVOPS roles)
       targets: [3],
       className: "dt-head-center dt-body-center", // Center align for better visual grouping
       width: "10%",
@@ -401,7 +401,7 @@ async function main() {
         `<a href="${job.url}" target="_blank" rel="noopener noreferrer">${job.title}</a>`,
         job.company,
         job.location,
-        job.type,
+        job.classification.roleType,
         job.datePosted,
       ];
     });
