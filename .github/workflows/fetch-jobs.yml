@@ -2,7 +2,7 @@ name: Fetch Jobs
 
 on:
   schedule:
-    - cron: "*/30 * * * *" # every half hour
+    - cron: "15,45 * * * *" # every half hour
   workflow_dispatch:
 
 permissions:
