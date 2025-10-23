@@ -420,11 +420,12 @@ async function main() {
     const dataToLoad = jobs.map((job) => {
       // The order MUST match <thead> columns
       let roleType = job.classification.roleType;
+      let roleTypeLink = `<a href="#" class="search-role-type">#${roleType}</a>`;
       return [
         `<a href="${job.url}" ${props}>${job.title}</a>`,
         job.company,
         job.location,
-        roleType === "—" ? roleType : `#${roleType}`,
+        roleType === "—" ? roleType : roleTypeLink,
         job.experienceRequired,
         job.datePosted,
       ];
@@ -591,6 +592,15 @@ async function main() {
 
     // When reset is clicked, clear all filters and redraw
     $("#resetFilters").on("click", resetAllFilters);
+
+    $("#jobTable").on("click", ".search-role-type", function (e) {
+      e.preventDefault();
+      // Get the text content of the link (e.g., "#SoftwareQA")
+      let searchText = $(this).text();
+      // Apply the search to DataTables
+      jobsTable.search(searchText).draw();
+      $("#dt-search-0").val(searchText);
+    });
   }
 
   // Run once immediately to load jobs
