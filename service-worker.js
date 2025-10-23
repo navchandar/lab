@@ -1,4 +1,4 @@
-// version=v2025.10.23_18.24
+// version=v2025.10.23_22.59
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
     'index.html',
