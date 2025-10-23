@@ -1,4 +1,5 @@
 const fs = require("fs");
+const path = require("path");
 
 const CATEGORIES = {
   "Software Dev": {
@@ -642,14 +643,15 @@ function scoreDoc(job, config = CATEGORIES) {
   // Fallbacks to explicit signals if scores are too close/weak
   let finalCat = bestCat;
   if (bestScore < 3 || margin < 1) {
-    if (/\bqa\b|\btester\b|\bquality\b|\bsdet\b/.test(title))
+    if (/\bqa\b|\btester\b|\bquality\b|\bsdet\b/.test(title)) {
       finalCat = "Software QA";
-    else if (/\bdevops\b|\bsre\b|\bsite reliability\b/.test(title))
+    } else if (/\bdevops\b|\bsre\b|\bsite reliability\b/.test(title)) {
       finalCat = "DevOps/SRE";
-    else if (
+    } else if (
       /\bhardware\b|\bfirmware\b|\bembedded\b|\bmechanical\b/.test(title)
-    )
+    ) {
       finalCat = "Hardware QA";
+    }
   }
 
   // Unknown if very low confidence
@@ -699,17 +701,17 @@ function classifyJobs(jobs) {
   });
 }
 
-// CLI: node classify.js jobs.json
+let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
+// CLI usage: node classify.js
 if (require.main === module) {
   const input = process.argv[2];
-  if (!input) {
-    console.error("Usage: node classify.js <jobs.json>");
-    process.exit(1);
+  if (input) {
+    OUTPUT_FILE = path.resolve(input);
   }
 
   try {
     // Read the file
-    const raw = fs.readFileSync(input, "utf-8");
+    const raw = fs.readFileSync(OUTPUT_FILE, "utf-8");
     const jobs = JSON.parse(raw);
 
     // Classify the jobs
@@ -719,13 +721,13 @@ if (require.main === module) {
     const outputJson = JSON.stringify(out, null, 2);
 
     // Write back to the same file
-    fs.writeFileSync(input, outputJson, "utf-8");
+    fs.writeFileSync(OUTPUT_FILE, outputJson, "utf-8");
 
     console.log(
-      `Successfully classified ${jobs.length} entries and updated the file: ${input}`
+      `Successfully classified ${jobs.length} entries and updated the file: ${OUTPUT_FILE}`
     );
   } catch (error) {
-    console.error(`Error processing file ${input}:`, error.message);
+    console.error(`Error processing file ${OUTPUT_FILE}:`, error.message);
     process.exit(1);
   }
 }

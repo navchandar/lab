@@ -107,9 +107,6 @@ function extractJobIdFromUrl(url) {
   return null;
 }
 
-function unescapeJsonString(s) {
-  return s.replace(/\\\//g, "/").replace(/\\"/g, '"');
-}
 
 function parseRelativeTimeToDate(input) {
   if (!input) {
