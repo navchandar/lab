@@ -477,8 +477,11 @@ function buildRegexes(arr) {
   const phrases = [];
   const tokens = [];
   for (const item of arr || []) {
-    if (/\s|[./+-]/.test(item)) phrases.push(item);
-    else tokens.push(item);
+    if (/\s|[./+-]/.test(item)) {
+      phrases.push(item);
+    } else {
+      tokens.push(item);
+    }
   }
   // Word-boundary regex for tokens, literal regex for phrases
   const tokenRe = tokens.length
@@ -579,16 +582,24 @@ function scoreDoc(job, config = CATEGORIES) {
 
     // Tie-breaker nudges based on title tokens
     if (/\bsdet\b/.test(title)) {
-      if (cat === "Software QA") s += 3;
+      if (cat === "Software QA") {
+        s += 3;
+      }
     }
     if (/\bdevops\b|\bsre\b/.test(title)) {
-      if (cat === "DevOps/SRE") s += 3;
+      if (cat === "DevOps/SRE") {
+        s += 3;
+      }
     }
     if (/\bhardware\b|\bembedded\b|\bfirmware\b/.test(title)) {
-      if (cat === "Hardware QA") s += 2;
+      if (cat === "Hardware QA") {
+        s += 2;
+      }
     }
     if (/\bdeveloper\b|\bsoftware engineer\b/.test(title)) {
-      if (cat === "Software Dev") s += 2;
+      if (cat === "Software Dev") {
+        s += 2;
+      }
     }
 
     // Proximity nudge for DevOps/SRE: kubernetes + terraform both present
@@ -599,14 +610,18 @@ function scoreDoc(job, config = CATEGORIES) {
         null
       );
       const hasTf = hasAny(desc, buildRegexes(["terraform"]).tokenRe, null);
-      if (hasK8s && hasTf) s += 2;
+      if (hasK8s && hasTf) {
+        s += 2;
+      }
     }
 
     // Nudge for AI/ML: if 'mlops' and 'ci/cd' are present, boost 'Software Dev'
     if (cat === "Software Dev") {
       const hasMlops = hasAny(desc, buildRegexes(["mlops"]).tokenRe, null);
       const hasCiCd = hasAny(desc, buildRegexes(["ci/cd"]).tokenRe, null);
-      if (hasMlops && hasCiCd) s += 3;
+      if (hasMlops && hasCiCd) {
+        s += 3;
+      }
     }
 
     // Weight category if needed

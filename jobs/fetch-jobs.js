@@ -435,11 +435,11 @@ function mergeAndCleanJobsData(output_data) {
 
   const total_jobs = mergeAndCleanJobsData(enriched);
 
-  let summaryContent = `# Results\n\n\n`;
+  let summaryContent = `## Results\n\n\n`;
   try {
     // After processing, generate Markdown for the summary
-    summaryContent += `Found **${enriched.length}** new job posts.\n\n
-    Total **${total_jobs}** job posts saved in json.`;
+    summaryContent += ` - Found **${enriched.length}** new job posts.\n\n`;
+    summaryContent += ` - Total **${total_jobs}** job posts saved in json.\n`;
 
     // Append the Markdown to the summary file
     const summaryFile = process.env.GITHUB_STEP_SUMMARY;
