@@ -1344,19 +1344,49 @@ function getExperience(jobDescription) {
   return null;
 }
 
-function normalizeExperience(exp) {
-  return exp
-    .replace(/\s*-\s*/g, " - ") // Add space around hyphen
-    .replace(/\s*–\s*/g, " - ") // Add space around hyphen
-    .replace(/\s*to\s*/gi, " - ") // Replace 'to' with spaced hyphen
-    .replace(/\s*\+\s*/g, "+") // Normalize plus sign spacing
-    .replace(/\s*plus\s*/gi, "+") // Normalize plus sign spacing
-    .replace(/\s*years?\b/gi, "") // Remove 'years' or 'year'
-    .replace(/\s*yrs?\b/gi, "") // Remove 'yrs' or 'yr'
-    .replace(/\s*y\b/gi, "") // Remove 'y'
-    .replace(/\s+/g, " ") // Normalize extra spaces
-    .trim(); // Final cleanup
+/**
+ * Cleans and normalizes the experience string to only contain
+ * the numeric requirement (e.g., "5+", "2 - 4", "10").
+ * * @param {string} experienceString The raw value from experienceRequired.
+ * @returns {string} The normalized experience value.
+ */
+function normalizeExperience(experienceString) {
+  if (!experienceString) {
+    return "";
+  }
+
+  // 1. Pre-cleanup to handle prefixes like "Experience", "Overall", etc.
+  let cleanedString = experienceString
+    .replace(/^(Experience|Overall)\s*[:-]?\s*/i, "")
+    .trim();
+
+  // 2. Regular Expression to capture the desired pattern:
+  // This reliably extracts the numbers, range, or plus sign from the start.
+  const regex = /^(\d+)(\s*[-]\s*(\d+))?([+])?/;
+
+  const match = cleanedString.match(regex);
+
+  if (match) {
+    const firstNum = match[1];
+    const rangePart = match[2];
+    const plusSign = match[4];
+
+    if (rangePart) {
+      // Reconstruct as "X - Y"
+      return `${firstNum} - ${match[3]}`;
+    } else if (plusSign) {
+      // Reconstruct as "X+"
+      return `${firstNum}+`;
+    } else {
+      // Just a single number
+      return firstNum;
+    }
+  }
+
+  // Fallback if no expected pattern is found
+  return "";
 }
+
 function addExperienceToJobs(jobs) {
   return jobs.map((job) => {
     // 1. Get the experience value
