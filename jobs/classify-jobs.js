@@ -1284,45 +1284,79 @@ function getExperience(jobDescription) {
   if (!jobDescription) {
     return null;
   }
+
   const desc = jobDescription.toString();
 
-  // The pattern to capture years of experience mentions globally (note the 'g' flag)
-  // Example matches: "5+ years", "3 to 5 years", "2 years", "2 - 4 years"
-  const EXPERIENCE_REGEX =
-    /(\d+\s*-\s*\d+|\d+\s*to\s*\d+|\d+\+?)\s*(?:years?|yrs?|y)?\s*(?:of\s*)?(?:experience|exp|background|testing|industry|relevant)/gi;
+  // Original regex
+  const EXPERIENCE_REGEX_1 =
+    /(\d+\s*-\s*\d+|\d+\s*–\s*\d+|\d+\s*to\s*\d+|\d+\+?)\s*(?:years?|yrs?|y)?\s*(?:of\s*)?(?:experience|exp|background|testing|industry|relevant|hands)/gi;
 
-  const matches = [...desc.matchAll(EXPERIENCE_REGEX)];
+  // Improved regex
+  const EXPERIENCE_REGEX_2 =
+    /\b(?:experience\s*[:\-]?\s*|need\s+a\s*|overall\s*)?(?:(\d{1,2})\s*(?:–|-|to|plus|\+)?\s*(\d{1,2})?|\d{1,2}\s*\+?)\s*(?:years?|yrs?|y)\b(?:\s*of)?(?:\s*(?:experience|exp|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
 
-  if (matches.length > 0) {
-    // Return an array of all unique, relevant experience requirements found
-    const requirements = new Set();
+  const matches1 = [...desc.matchAll(EXPERIENCE_REGEX_1)];
+  const matches2 = [...desc.matchAll(EXPERIENCE_REGEX_2)];
 
+  const requirements = new Set();
+  let maxExperienceValue = 0;
+  let maxExperienceString = null;
+
+  const processMatches = (matches) => {
     for (const match of matches) {
-      // match[1] holds the captured group (e.g., "5+", "3 to 5", "2")
-      const requirement = match[1].replace(/\s+/g, " ").trim();
+      const raw = match[0];
+      const cleaned = raw.replace(/\s+/g, " ").trim();
 
-      // We want to avoid capturing numbers that aren't years (like 'level 1', 'team of 2').
-      // Check if it's a range (contains '-' or 'to') or a number greater than 2.
+      // Extract all numbers from the string
+      const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
+        parseInt(m[0], 10)
+      );
+
+      // Determine the highest number in the match
+      const maxInMatch = Math.max(...numMatches);
+
+      // Filter: Avoid low numbers unless it's a range
       if (
-        requirement.includes("-") ||
-        requirement.includes("to") ||
-        parseInt(requirement, 10) > 2
+        cleaned.includes("-") ||
+        cleaned.includes("to") ||
+        cleaned.includes("plus") ||
+        maxInMatch > 2
       ) {
-        requirements.add(requirement);
+        requirements.add(cleaned);
+
+        if (maxInMatch > maxExperienceValue) {
+          maxExperienceValue = maxInMatch;
+          maxExperienceString = cleaned;
+        }
       }
     }
+  };
 
-    if (requirements.size > 0) {
-      console.log("Experiences found:", requirements);
-      // Return first experience found
-      const first_match = Array.from(requirements)[0];
-      return first_match;
-    }
+  processMatches(matches1);
+  processMatches(matches2);
+
+  if (maxExperienceString) {
+    console.log("Experiences found:", [...requirements]);
+    console.log("Maximum Experience:", maxExperienceString);
+    return normalizeExperience(maxExperienceString);
   }
 
   return null;
 }
 
+function normalizeExperience(exp) {
+  return exp
+    .replace(/\s*-\s*/g, " - ") // Add space around hyphen
+    .replace(/\s*–\s*/g, " - ") // Add space around hyphen
+    .replace(/\s*to\s*/gi, " - ") // Replace 'to' with spaced hyphen
+    .replace(/\s*\+\s*/g, "+") // Normalize plus sign spacing
+    .replace(/\s*plus\s*/gi, "+") // Normalize plus sign spacing
+    .replace(/\s*years?\b/gi, "") // Remove 'years' or 'year'
+    .replace(/\s*yrs?\b/gi, "") // Remove 'yrs' or 'yr'
+    .replace(/\s*y\b/gi, "") // Remove 'y'
+    .replace(/\s+/g, " ") // Normalize extra spaces
+    .trim(); // Final cleanup
+}
 function addExperienceToJobs(jobs) {
   return jobs.map((job) => {
     // 1. Get the experience value
