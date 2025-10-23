@@ -1280,6 +1280,61 @@ function classifyJobs(jobs) {
   });
 }
 
+function getExperience(jobDescription) {
+  if (!jobDescription) {
+    return null;
+  }
+  const desc = jobDescription.toString();
+
+  // The pattern to capture years of experience mentions globally (note the 'g' flag)
+  // Example matches: "5+ years", "3 to 5 years", "2 years", "2 - 4 years"
+  const EXPERIENCE_REGEX =
+    /(\d+\s*-\s*\d+|\d+\s*to\s*\d+|\d+\+?)\s*(?:years?|yrs?|y)?\s*(?:of\s*)?(?:experience|exp|background|testing|industry|relevant)/gi;
+
+  const matches = [...desc.matchAll(EXPERIENCE_REGEX)];
+
+  if (matches.length > 0) {
+    // Return an array of all unique, relevant experience requirements found
+    const requirements = new Set();
+
+    for (const match of matches) {
+      // match[1] holds the captured group (e.g., "5+", "3 to 5", "2")
+      const requirement = match[1].replace(/\s+/g, " ").trim();
+
+      // We want to avoid capturing numbers that aren't years (like 'level 1', 'team of 2').
+      // Check if it's a range (contains '-' or 'to') or a number greater than 2.
+      if (
+        requirement.includes("-") ||
+        requirement.includes("to") ||
+        parseInt(requirement, 10) > 2
+      ) {
+        requirements.add(requirement);
+      }
+    }
+
+    if (requirements.size > 0) {
+      console.log("Experiences found:", requirements);
+      // Return first experience found
+      first_match = Array.from(requirements)[0];
+      return first_match;
+    }
+  }
+
+  return null;
+}
+
+function addExperienceToJobs(jobs) {
+  return jobs.map((job) => {
+    // 1. Get the experience value
+    const requiredExp = getExperience(job.description) || UNKNOWN;
+
+    return {
+      ...job,
+      experienceRequired: requiredExp,
+    };
+  });
+}
+
 let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 // CLI usage: node classify.js
 if (require.main === module) {
@@ -1294,7 +1349,8 @@ if (require.main === module) {
     const jobs = JSON.parse(raw);
 
     // Classify the jobs
-    const out = classifyJobs(jobs);
+    const jobswithExp = addExperienceToJobs(jobs);
+    const out = classifyJobs(jobswithExp);
 
     // Convert back to a nicely formatted JSON string
     const outputJson = JSON.stringify(out, null, 2);
