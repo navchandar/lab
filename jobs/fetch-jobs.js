@@ -440,13 +440,15 @@ function mergeAndCleanJobsData(output_data) {
     const summaryContent = `# Results\n\n\n
     Found **${enriched.length}** new job posts.\n\n
     Total **${total_jobs}** job posts saved in json.`;
-    
+
     // Append the Markdown to the summary file
     const summaryFile = process.env.GITHUB_STEP_SUMMARY;
     if (summaryFile) {
       fs.appendFileSync(summaryFile, summaryContent);
     }
-  } catch {}
+  } catch {
+    console.log("Error saving summaryContent:", summaryContent);
+  }
 })().catch((err) => {
   console.error(err);
   process.exit(1);
