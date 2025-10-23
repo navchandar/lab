@@ -397,11 +397,12 @@ async function main() {
     // Prepare data for DataTables. It expects an array of arrays.
     const dataToLoad = jobs.map((job) => {
       // The order MUST match <thead> columns
+      let roleType = job.classification.roleType;
       return [
         `<a href="${job.url}" target="_blank" rel="noopener noreferrer">${job.title}</a>`,
         job.company,
         job.location,
-        `#${job.classification.roleType}`,
+        roleType === "—" ? roleType : `#${roleType}`,
         job.datePosted,
       ];
     });
