@@ -393,13 +393,14 @@ async function main() {
   function populateTable(jobs) {
     // Clear the existing data
     jobsTable.clear();
+    let props = 'target="_blank" rel="noopener noreferrer"';
 
     // Prepare data for DataTables. It expects an array of arrays.
     const dataToLoad = jobs.map((job) => {
       // The order MUST match <thead> columns
       let roleType = job.classification.roleType;
       return [
-        `<a href="${job.url}" target="_blank" rel="noopener noreferrer">${job.title}</a>`,
+        `<a href="${job.url}" ${props}>${job.title}</a>`,
         job.company,
         job.location,
         roleType === "—" ? roleType : `#${roleType}`,
