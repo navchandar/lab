@@ -1315,7 +1315,7 @@ function getExperience(jobDescription) {
     if (requirements.size > 0) {
       console.log("Experiences found:", requirements);
       // Return first experience found
-      first_match = Array.from(requirements)[0];
+      const first_match = Array.from(requirements)[0];
       return first_match;
     }
   }
