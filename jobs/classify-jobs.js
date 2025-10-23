@@ -1293,7 +1293,7 @@ function getExperience(jobDescription) {
 
   // Improved regex
   const EXPERIENCE_REGEX_2 =
-    /\b(?:experience\s*[:\-]?\s*|need\s+a\s*|overall\s*)?(?:(\d{1,2})\s*(?:–|-|to|plus|\+)?\s*(\d{1,2})?|\d{1,2}\s*\+?)\s*(?:years?|yrs?|y)\b(?:\s*of)?(?:\s*(?:experience|exp|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
+    /\b(?:experience\s*[:-]?\s*|need\s+a\s*|overall\s*)?(?:(\d{1,2})\s*(?:–|-|to|plus|\+)?\s*(\d{1,2})?|\d{1,2}\s*\+?)\s*(?:years?|yrs?|y)\b(?:\s*of)?(?:\s*(?:experience|exp|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
 
   const matches1 = [...desc.matchAll(EXPERIENCE_REGEX_1)];
   const matches2 = [...desc.matchAll(EXPERIENCE_REGEX_2)];

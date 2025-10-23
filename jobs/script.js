@@ -219,14 +219,29 @@ const cityAliases = {
 };
 
 function normalizeLocation(location) {
+  if (!location) {
+    return "";
+  }
+
   const locLower = location.toLowerCase().trim();
 
+  // Normalize known city aliases
   for (const [canonical, aliases] of Object.entries(cityAliases)) {
     for (const alias of aliases) {
       if (locLower.includes(alias)) {
         return canonical.charAt(0).toUpperCase() + canonical.slice(1);
       }
     }
+  }
+
+  // Remove trailing country info
+  if (location.includes(",")) {
+    location = location
+      .replace(
+        /\s*,?\s*(usa|united states|india|canada|uk|australia|germany|france|italy|spain|uae|singapore|china|japan|brazil|mexico)\s*$/i,
+        ""
+      )
+      .trim();
   }
 
   return location;
@@ -257,7 +272,7 @@ const dataTableConfig = {
       // 2. Company Name (Index 1)
       targets: [1],
       className: "dt-head-left dt-body-left",
-      width: "20%",
+      width: "15%",
     },
     {
       // 3. Location (Index 2)
