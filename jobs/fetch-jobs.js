@@ -432,11 +432,17 @@ function mergeAndCleanJobsData(output_data) {
     }
   }
 
-  if (enriched && enriched.length) {
-    console.log("Sample:", enriched[0]);
-  }
-
   mergeAndCleanJobsData(enriched);
+
+  try {
+    // After processing, generate Markdown for the summary
+    const summaryContent = `# Results\n\nFound **${enriched.length}** new job posts.\n`;
+    // Append the Markdown to the summary file
+    const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+    if (summaryFile) {
+      fs.appendFileSync(summaryFile, summaryContent);
+    }
+  } catch {}
 })().catch((err) => {
   console.error(err);
   process.exit(1);
