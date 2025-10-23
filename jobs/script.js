@@ -401,7 +401,7 @@ async function main() {
         `<a href="${job.url}" target="_blank" rel="noopener noreferrer">${job.title}</a>`,
         job.company,
         job.location,
-        job.classification.roleType,
+        `#${job.classification.roleType}`,
         job.datePosted,
       ];
     });

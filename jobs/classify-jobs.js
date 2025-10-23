@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const CATEGORIES = {
-  "Software Dev": {
+  SoftwareDEV: {
     weight: 1,
     titleBoost: 1.5,
     phrases: [
@@ -136,7 +136,7 @@ const CATEGORIES = {
     ],
   },
 
-  "Software QA": {
+  SoftwareQA: {
     weight: 1,
     titleBoost: 1.3,
     phrases: [
@@ -246,12 +246,12 @@ const CATEGORIES = {
       "real estate",
       "residential construction",
       "structural",
-      // Industry QA that is not software QA (we avoid misclassifying):
+      // Industry QA that is not SoftwareQA (we avoid misclassifying):
       "qms",
       "snagging",
       "sop",
       "itp",
-      // Heavier BI/warehouse (goes to Data Engg)
+      // Heavier BI/warehouse (goes to DataEngg)
       "data warehousing",
       "etl",
       // Non-tech roles
@@ -271,7 +271,7 @@ const CATEGORIES = {
     ],
   },
 
-  "Hardware QA": {
+  HardwareQA: {
     weight: 1,
     titleBoost: 1.4,
     phrases: [
@@ -489,7 +489,7 @@ const CATEGORIES = {
     ],
   },
 
-  "Data Engg": {
+  DataEngg: {
     weight: 1,
     titleBoost: 1.4,
     phrases: [
@@ -938,21 +938,21 @@ const CATEGORIES = {
 
 // Role-defining title nudges only (specific > generic). Order matters.
 const TITLE_NUDGES = [
-  // --- Software QA ---
+  // --- SoftwareQA ---
   {
     regex: /\b(sdet|software\s*developer\s*in\s*test)\b/i,
-    cat: "Software QA",
+    cat: "SoftwareQA",
     boost: 5,
   },
   {
     regex:
       /\b(qa\s*engineer|quality\s*engineer|test\s*automation|automation\s*tester)\b/i,
-    cat: "Software QA",
+    cat: "SoftwareQA",
     boost: 4,
   },
   {
     regex: /\b(test\s*architect|qa\s*architect)\b/i,
-    cat: "Software QA",
+    cat: "SoftwareQA",
     boost: 3,
   },
 
@@ -969,17 +969,17 @@ const TITLE_NUDGES = [
     boost: 4,
   },
 
-  // --- Hardware QA / Embedded / Silicon / Mechanical ---
+  // --- HardwareQA / Embedded / Silicon / Mechanical ---
   {
     regex:
       /\b(asic|fpga|rtl|post-?silicon|pre-?silicon|silicon\s*validation)\b/i,
-    cat: "Hardware QA",
+    cat: "HardwareQA",
     boost: 5,
   },
   {
     regex:
       /\b(hardware|embedded|firmware|validation\s*engineer|mechatronics|electro-?mechanical|mechanical)\b/i,
-    cat: "Hardware QA",
+    cat: "HardwareQA",
     boost: 4,
   },
 
@@ -987,12 +987,12 @@ const TITLE_NUDGES = [
   {
     regex:
       /\b(data\s*engineer|analytics\s*engineer|data\s*platform\s*engineer)\b/i,
-    cat: "Data Engg",
+    cat: "DataEngg",
     boost: 4,
   },
   {
     regex: /\b(etl\s*developer|data\s*architect)\b/i,
-    cat: "Data Engg",
+    cat: "DataEngg",
     boost: 3,
   },
 
@@ -1059,7 +1059,7 @@ const TITLE_NUDGES = [
   },
 ];
 
-const UNKNOWN = "-";
+const UNKNOWN = "—";
 
 function norm(s) {
   return (s || "")
@@ -1198,8 +1198,8 @@ function scoreDoc(job, config = CATEGORIES) {
       }
     }
 
-    // Nudge for AI/ML: if 'mlops' and 'ci/cd' are present, boost 'Software Dev'
-    if (cat === "Software Dev") {
+    // Nudge for AI/ML: if 'mlops' and 'ci/cd' are present, boost 'SoftwareDEV'
+    if (cat === "SoftwareDEV") {
       const hasMlops = hasAny(desc, buildRegexes(["mlops"]).tokenRe, null);
       const hasCiCd = hasAny(desc, buildRegexes(["ci/cd"]).tokenRe, null);
       if (hasMlops && hasCiCd) {
@@ -1226,13 +1226,13 @@ function scoreDoc(job, config = CATEGORIES) {
   let finalCat = bestCat;
   if (bestScore < 3 || margin < 1) {
     if (/\bqa\b|\btester\b|\bquality\b|\bsdet\b/.test(title)) {
-      finalCat = "Software QA";
+      finalCat = "SoftwareQA";
     } else if (/\bdevops\b|\bsre\b|\bsite reliability\b/.test(title)) {
       finalCat = "DevOps/SRE";
     } else if (
       /\bhardware\b|\bfirmware\b|\bembedded\b|\bmechanical\b/.test(title)
     ) {
-      finalCat = "Hardware QA";
+      finalCat = "HardwareQA";
     }
   }
 
@@ -1250,11 +1250,8 @@ function scoreDoc(job, config = CATEGORIES) {
     }
   }
 
-  // Final check: if 'Software QA' won but has strong construction/civil negatives in title, kick to Unknown
-  if (
-    finalCat === "Software QA" &&
-    /\b(mep|civil|construction)\b/.test(title)
-  ) {
+  // Final check: if 'SoftwareQA' won but has strong construction/civil negatives in title, kick to Unknown
+  if (finalCat === "SoftwareQA" && /\b(mep|civil|construction)\b/.test(title)) {
     finalCat = UNKNOWN;
   }
 
