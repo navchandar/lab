@@ -332,6 +332,7 @@ function mergeAndCleanJobsData(output_data) {
   console.log(`Filtered and finalized ${finalList.length} job posts`);
   writeOutput(finalList);
   console.log(`Saved ${finalList.length} jobs to ${OUTPUT_FILE}`);
+  return finalList.length;
 }
 
 // -------- Main pipeline ----------
@@ -432,11 +433,14 @@ function mergeAndCleanJobsData(output_data) {
     }
   }
 
-  mergeAndCleanJobsData(enriched);
+  const total_jobs = mergeAndCleanJobsData(enriched);
 
   try {
     // After processing, generate Markdown for the summary
-    const summaryContent = `# Results\n\nFound **${enriched.length}** new job posts.\n`;
+    const summaryContent = `# Results\n\n\n
+    Found **${enriched.length}** new job posts.\n\n
+    Total **${total_jobs}** job posts saved in json.`;
+    
     // Append the Markdown to the summary file
     const summaryFile = process.env.GITHUB_STEP_SUMMARY;
     if (summaryFile) {
