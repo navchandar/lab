@@ -4,7 +4,8 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "fetch": "node fetch-jobs.js"
+    "fetch": "node fetch-jobs.js",
+    "classify": "node classify.js jobs.json"
   },
   "dependencies": {
     "axios": "^1.7.7",

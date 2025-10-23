@@ -38,6 +38,10 @@ jobs:
         working-directory: jobs
         run: npm run fetch
 
+      - name: Classify jobs
+        working-directory: jobs
+        run: npm run classify
+
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
