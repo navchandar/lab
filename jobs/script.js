@@ -269,14 +269,14 @@ const dataTableConfig = {
       // 4. Type (Index 3 - QA / DEV / DEVOPS roles)
       targets: [3],
       className: "dt-head-center dt-body-center", // Center align for better visual grouping
-      width: "10%",
+      width: "15%",
     },
     {
       // 5. Date Posted (Index 4)
       targets: [4],
       type: "date", // Explicitly tell DataTables to sort this as a date
       className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
-      width: "20%",
+      width: "15%",
     },
   ],
 };

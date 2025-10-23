@@ -28,7 +28,7 @@ const BASE_QUERY = {
   dateSincePosted: "24hr",
   experienceLevel: "senior",
   //valid values: internship, entry level, associate, senior, director, executive
-  limit: "20",
+  limit: "30",
   page: "0",
 };
 
