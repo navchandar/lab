@@ -1,4 +1,4 @@
-// version=v2025.10.24_22.57
+// version=v2025.10.24_23.08
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
     'index.html',
@@ -93,10 +93,12 @@ self.addEventListener("install", (event) => {
         if (failed.length > 0) {
           console.error("[SW]", failed.length, "resources failed to cache:", failed);
         }
+
+        // ONLY AFTER CACHING IS COMPLETE, THEN SKIP WAITING
+        self.skipWaiting();
       });
     })
   );
-  self.skipWaiting();
 });
 
 
