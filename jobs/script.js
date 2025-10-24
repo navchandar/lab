@@ -250,7 +250,7 @@ function normalizeLocation(location) {
 }
 
 // Update last modified timestamp from Jobs.json to UI
-function updateFooterTimestamp(gmtDateString) {
+function updateRefreshTimeDisplay(gmtDateString) {
   if (!lastMod || !gmtDateString) {
     return;
   }
@@ -387,6 +387,9 @@ async function main() {
       console.log("Local Timezone:", localTimeZone);
 
       allJobs = await response.json();
+
+      updateRefreshTimeDisplay(newModified);
+
       allJobs.forEach((job) => {
         const originalDate = job.datePosted;
         const localTime = convertToLocalTime(originalDate);
