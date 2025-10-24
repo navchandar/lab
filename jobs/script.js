@@ -606,8 +606,8 @@ async function main() {
   // Run once immediately to load jobs
   await loadJobs();
 
-  // Poll every 5 minutes
-  setInterval(loadJobs, 5 * 60 * 1000); // 300000 ms = 5 minutes
+  // Poll every 1 minutes
+  setInterval(loadJobs, 1 * 60 * 1000); // 300000 ms = 5 minutes
 }
 
 document.addEventListener("DOMContentLoaded", main);
