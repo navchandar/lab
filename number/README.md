@@ -3,7 +3,7 @@
 A fun and responsive number incrementor that changes color with each interaction.
 
 
-[https://github.com/navchandar/lab/number/](https://github.com/navchandar/lab/number/)
+[https://navchandar.github.io/lab/number/](https://navchandar.github.io/lab/number/)
 
 
 

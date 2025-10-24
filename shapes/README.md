@@ -4,7 +4,7 @@
 Shape Explorer - A fun and interactive way for kids to learn and identify basic shapes with random colors.
 
 
-[https://github.com/navchandar/lab/shapes/](https://github.com/navchandar/lab/shapes/)
+[https://navchandar.github.io/lab/shapes/](https://navchandar.github.io/lab/shapes/)
 
 
 

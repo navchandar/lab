@@ -3,7 +3,7 @@
 A fun, interactive page for learning animal images and sounds.
 
 
-[https://github.com/navchandar/lab/animals/](https://github.com/navchandar/lab/animals/)
+[https://navchandar.github.io/lab/animals/](https://navchandar.github.io/lab/animals/)
 
 
 

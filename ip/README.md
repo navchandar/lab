@@ -3,7 +3,7 @@
 Quickly chcek your public IP address using this simple and responsive web page.
 
 
-[https://github.com/navchandar/lab/ip/](https://github.com/navchandar/lab/ip/)
+[https://navchandar.github.io/lab/ip/](https://navchandar.github.io/lab/ip/)
 
 
 

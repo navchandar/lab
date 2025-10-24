@@ -3,7 +3,7 @@
 An interactive color viewer for children to learn color names in multiple languages.
 
 
-[https://github.com/navchandar/lab/color/](https://github.com/navchandar/lab/color/)
+[https://navchandar.github.io/lab/color/](https://navchandar.github.io/lab/color/)
 
 
 

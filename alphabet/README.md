@@ -3,7 +3,7 @@
 A fun and responsive Alphabet Generator that changes color with each interaction.
 
 
-[https://github.com/navchandar/lab/alphabet/](https://github.com/navchandar/lab/alphabet/)
+[https://navchandar.github.io/lab/alphabet/](https://navchandar.github.io/lab/alphabet/)
 
 
 ## Features

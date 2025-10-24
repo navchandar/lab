@@ -4,7 +4,7 @@
 Browse and filter a comprehensive list of recently posted job openings. Find remote and on-site positions easily.
 
 
-[https://github.com/navchandar/lab/jobs/](https://github.com/navchandar/lab/jobs/)
+[https://navchandar.github.io/lab/jobs/](https://navchandar.github.io/lab/jobs/)
 
 
 
