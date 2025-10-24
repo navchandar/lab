@@ -3,6 +3,8 @@ let allJobs = [];
 let lastModified = null;
 let initialLoadComplete = false;
 
+const lastMod = document.getElementById("last-refresh");
+
 const cityAliases = {
   bengaluru: [
     "bangalore",
@@ -247,6 +249,18 @@ function normalizeLocation(location) {
   return location;
 }
 
+// Update last modified timestamp from Jobs.json to UI
+function updateFooterTimestamp(gmtDateString) {
+  if (!lastMod || !gmtDateString) {
+    return;
+  }
+  // convert the GMT date string to local time
+  const localTimestamp = convertToLocalTime(gmtDateString);
+  if (localTimestamp) {
+    lastMod.textContent = `Last updated: ${localTimestamp}`;
+  }
+}
+
 const dataTableConfig = {
   // Add configurations
   // Sort by the 5th column (Date Posted) descending
@@ -346,7 +360,7 @@ async function main() {
   // --- Load Data using Fetch API ---
   async function loadJobs() {
     const url = `jobs.json?nocache=${Date.now()}`;
-    
+
     try {
       const headResponse = await fetch(url, {
         method: "HEAD",

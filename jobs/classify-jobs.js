@@ -1317,10 +1317,11 @@ function getExperience(jobDescription) {
 
       // Filter: Avoid low numbers unless it's a range
       if (
-        cleaned.includes("-") ||
-        cleaned.includes("to") ||
-        cleaned.includes("plus") ||
-        maxInMatch > 2
+        (cleaned.includes("-") ||
+          cleaned.includes("to") ||
+          cleaned.includes("plus") ||
+          maxInMatch >= 2) &&
+        maxInMatch < 40
       ) {
         requirements.add(cleaned);
 

@@ -17,6 +17,7 @@ header {
     background-color: #1f2937;
     padding: 10px;
     width: 100%;
+    max-width: 100%;
     color: white;
     text-align: center;
 }
@@ -34,6 +35,7 @@ main {
     border-radius: 8px;
     background: white;
     padding: 20px;
+    padding-bottom: 50px;
     max-width: 1200px;
 }
 
@@ -66,7 +68,7 @@ main {
 .dt-search input:focus, .dt-length select:focus {
     outline: none;
     box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-    border-color: #007bff;
+    border-color: #007bff !important;
 }
 
 
@@ -94,6 +96,9 @@ main {
 }
 
 #jobTable th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     background-color: #e9ecef;
     font-weight: bold;
 }
@@ -113,9 +118,6 @@ main {
     background-color: #cfe2ff;
 }
 
-.dt-layout-row:last-of-type {
-    margin-bottom: 3em !important;
-}
 
 footer {
     position: fixed;
@@ -179,6 +181,43 @@ a:hover, a:focus {
     background-color: #d32f2f;
 }
 
+.dt-empty {
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    background-color: #fff3cd;
+    padding: 30px;
+    color: #856404;
+    font-weight: bold;
+}
+
+
+.last-refresh {
+    margin: 0 auto;
+    margin-bottom: 0px;
+    margin-bottom: 2em;
+    width: fit-content;
+    font-style: italic;
+    text-align: center;
+}
+
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    margin-top: 5px;
+    border-radius: 3px;
+    background-color: #007bff;
+    padding: 2px 6px;
+    color: white;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple, .select2-container--default.select2-container--focus .select2-selection--single {
+    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25) !important;
+    border-color: #007bff !important;
+}
+
 /* Styles for mobile devices */
 @media (max-width: 767px) {
     main {
@@ -192,6 +231,12 @@ a:hover, a:focus {
         font-size: 1.5em;
     }
 
+    .dt-search input {
+        width: auto;
+        max-width: 500px;
+    }
+
+
     #jobTable {
         font-size: smaller;
     }
@@ -201,12 +246,17 @@ a:hover, a:focus {
     }
 
     footer {
-        zoom: 80%;
+        font-size: smaller;
     }
 
     #resetFilters {
         margin: 0 auto;
     }
+
+    .last-refresh {
+        margin-bottom: 4em !important
+    }
+
 }
 
 /* Dark mode support */
@@ -244,7 +294,7 @@ a:hover, a:focus {
 
     ul, li, .select2-selection__choice__display {
         background-color: #282828 !important;
-        color: lightgray !important;
+        color: #e0e0e0 !important;
     }
 
     .select2-container--default, .select2-selection--multiple {
