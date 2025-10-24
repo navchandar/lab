@@ -2,6 +2,10 @@
 let allJobs = [];
 let lastModified = null;
 let initialLoadComplete = false;
+let notificationPermission = "default";
+let lastNotification = null;
+// Unique tag to group/manage notifications
+const NOTIFICATION_TAG = "job-update-notification";
 
 const lastMod = document.getElementById("last-refresh");
 
@@ -349,7 +353,76 @@ function convertToLocalTime(utcDateString) {
   }
 }
 
+/**
+ * Requests browser notification permission if it hasn't been granted or denied.
+ * Updates the global notificationPermission variable.
+ */
+function requestNotificationPermission() {
+  // Check if the browser supports notifications
+  if (!("Notification" in window)) {
+    console.warn("Notifications are not supported by this browser.");
+    return;
+  }
+
+  // Check the current permission status
+  if (
+    Notification.permission === "granted" ||
+    Notification.permission === "denied"
+  ) {
+    notificationPermission = Notification.permission;
+    return;
+  }
+
+  // Request permission from the user
+  Notification.requestPermission().then((permission) => {
+    notificationPermission = permission;
+    console.log(`Notification permission status: ${permission}`);
+  });
+}
+
+/**
+ * Sends a browser notification for the job update.
+ * @param {string} refreshTime The time the jobs were updated (for display).
+ */
+function sendJobUpdateNotification(refreshTime) {
+  // Only proceed if permission has been granted
+  if (notificationPermission !== "granted") {
+    console.log("Cannot send notification: Permission not granted.");
+    return;
+  }
+
+  // Clear older notification (if it's still open)
+  if (lastNotification) {
+    lastNotification.close();
+    lastNotification = null;
+  }
+
+  // Define the notification content
+  const options = {
+    body: `The latest job posts detected! Last updated: ${refreshTime}.`,
+    tag: NOTIFICATION_TAG, // Helps manage and replace existing notifications
+    renotify: true, // Indicates that a new alert should be shown even if a notification with the same tag is already visible.
+  };
+
+  const notification = new Notification("New Jobs Posted", options);
+
+  // 2. Add behavior for when the user clicks the notification
+  notification.onclick = function (event) {
+    // This ensures the current tab/window is brought to the foreground
+    event.preventDefault();
+    window.focus();
+
+    // Close the notification after click
+    notification.close();
+  };
+
+  // 3. Store the new notification reference
+  lastNotification = notification;
+}
+
 async function main() {
+  requestNotificationPermission();
+
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
   const jobsTable = jQuery("#jobTable").DataTable(dataTableConfig);
@@ -405,6 +478,12 @@ async function main() {
 
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
+
+      // Only send notification on subsequent updates, not the initial page load
+      if (initialLoadComplete) {
+        const displayTime = convertToLocalTime(newModified);
+        sendJobUpdateNotification(displayTime || "Just Now");
+      }
 
       if (!initialLoadComplete) {
         setupEventListeners();
