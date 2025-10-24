@@ -5,6 +5,10 @@ An interactive analog and digital clock to teach time-telling for kids.
 Move clock hands or edit digital time and tell the time.
 
 
+[https://github.com/navchandar/lab/clock/](https://github.com/navchandar/lab/clock/)
+
+
+
 ## Features
 - Interactive analog and digital 12 hour clock
 - Drag clock hands or edit digital time

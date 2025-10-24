@@ -2,6 +2,11 @@
 
 An interactive color viewer for children to learn color names in multiple languages.
 
+
+[https://github.com/navchandar/lab/color/](https://github.com/navchandar/lab/color/)
+
+
+
 ## Features
 - Interactive color display
 - Learn color names in Tamil and English

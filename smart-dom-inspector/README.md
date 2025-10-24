@@ -5,6 +5,10 @@ Smart DOM Inspector is a free, browser-based tool for rendering HTML, inspecting
 This is most useful for QA Automation engineers, frontend developers, and testers.
 
 
+[https://navchandar.github.io/lab/smart-dom-inspector/](https://navchandar.github.io/lab/smart-dom-inspector/)
+
+
+
 ## Features
 - Render and inspect HTML elements in real-time
 - Generate precise CSS selectors and XPath expressions

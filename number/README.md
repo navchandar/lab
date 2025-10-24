@@ -2,6 +2,11 @@
 
 A fun and responsive number incrementor that changes color with each interaction.
 
+
+[https://github.com/navchandar/lab/number/](https://github.com/navchandar/lab/number/)
+
+
+
 ## Features
 - Interactive number display
 - Changes color on key press or tap

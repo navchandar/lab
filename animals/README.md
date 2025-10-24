@@ -2,6 +2,11 @@
 
 A fun, interactive page for learning animal images and sounds.
 
+
+[https://github.com/navchandar/lab/animals/](https://github.com/navchandar/lab/animals/)
+
+
+
 ## Features
 - Interactive display of animal images
 - Plays animal sounds on interaction

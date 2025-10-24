@@ -64,9 +64,10 @@ main {
     max-width: 500px;
 }
 
-select.dt-input{
+select.dt-input {
     text-align: center;
 }
+
 /* Focus state for a modern 'lift' effect */
 .dt-search input:focus, .dt-length select:focus {
     outline: none;
@@ -245,7 +246,9 @@ a:hover, a:focus {
     }
 
     #filters {
-        gap: 10px;
+        gap: 7px;
+        margin-bottom: 0;
+        font-size: smaller;
     }
 
     footer {
@@ -257,7 +260,8 @@ a:hover, a:focus {
     }
 
     .last-refresh {
-        margin-bottom: 4em !important
+        margin-bottom: 4em !important;
+        font-size: smaller;
     }
 
 }

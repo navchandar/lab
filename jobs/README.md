@@ -3,9 +3,14 @@
 
 Browse and filter a comprehensive list of recently posted job openings. Find remote and on-site positions easily.
 
+
+[https://github.com/navchandar/lab/jobs/](https://github.com/navchandar/lab/jobs/)
+
+
+
 ## Features
 - Browse job openings across different companies
-- Filter by date, location, remote, on-site, full-time, and part-time positions
+- Filter by date, location, role-type and other keywords
 - Responsive and user-friendly interface
 
 
