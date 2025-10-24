@@ -345,8 +345,10 @@ async function main() {
 
   // --- Load Data using Fetch API ---
   async function loadJobs() {
+    const url = `jobs.json?nocache=${Date.now()}`;
+    
     try {
-      const headResponse = await fetch("jobs.json", {
+      const headResponse = await fetch(url, {
         method: "HEAD",
         cache: "no-store",
       });
@@ -361,7 +363,7 @@ async function main() {
       lastModified = newModified;
 
       // Fetch and update table
-      const response = await fetch("jobs.json", { cache: "no-store" });
+      const response = await fetch(url, { cache: "no-store" });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
