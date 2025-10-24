@@ -257,10 +257,12 @@ self.addEventListener("install", (event) => {
         if (failed.length > 0) {
           console.error("[SW]", failed.length, "resources failed to cache:", failed);
         }
+
+        // ONLY AFTER CACHING IS COMPLETE, THEN SKIP WAITING
+        self.skipWaiting();
       });
     })
   );
-  self.skipWaiting();
 });
 
 
