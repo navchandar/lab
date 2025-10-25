@@ -1289,7 +1289,7 @@ function getExperience(jobDescription) {
 
   // Original regex
   const EXPERIENCE_REGEX_1 =
-    /(\d+\s*-\s*\d+|\d+\s*–\s*\d+|\d+\s*to\s*\d+|\d+\+?)\s*(?:years?|yrs?|y)?\s*(?:of\s*)?(?:experience|exp|background|testing|industry|relevant|hands)/gi;
+    /(\d+\s*-\s*\d+|\d+\s*–\s*\d+|\d+\s*to\s*\d+|\d+\+?)\s*(?:years?|yrs?|y)?\s*(?:of\s*)?(?:experience|exp|prof|professional|background|testing|industry|relevant|hands)/gi;
 
   // Improved regex
   const EXPERIENCE_REGEX_2 =
