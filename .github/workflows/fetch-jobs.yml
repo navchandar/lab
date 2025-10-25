@@ -2,7 +2,8 @@ name: Fetch Jobs
 
 on:
   schedule:
-    - cron: "15,45 * * * *" # every half hour
+    - cron: "10,40 * * * 1-5" # every half hour on weekdays
+    - cron: "0 */2 * * 6,0" # every two hours on weekends
   workflow_dispatch:
 
 permissions:
