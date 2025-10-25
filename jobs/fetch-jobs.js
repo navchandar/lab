@@ -11,14 +11,21 @@ const KEYWORDS = [
   "Senior QA Automation Engineer",
   "QA Automation Lead",
   "Lead QA Engineer",
+  "Lead Automation Engineer",
+  "Senior Automation Engineer",
+  "Staff SDET Automation Engineer",
+  "Staff Software Development Engineer in Test",
   "Senior SDET (Software Development Engineer in Test)",
   "SDET Lead",
   "Test Automation Lead",
   "Performance QA Engineer",
   "Quality Engineering Lead",
   "Senior Test Engineer",
-  "Automation Architect",
+  "QA Automation Architect",
   "QA Manager (Automation)",
+  "Selenium Automation",
+  "Python Automation",
+  "Performance Test Engineer",
 ];
 
 const BASE_QUERY = {
