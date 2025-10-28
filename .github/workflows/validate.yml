@@ -57,7 +57,7 @@ jobs:
           args: --base . --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
 
       - name: Validate Spelling
-        uses: rojopolis/spellcheck-github-actions@0.52.0
+        uses: rojopolis/spellcheck-github-actions@0.53.0
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
