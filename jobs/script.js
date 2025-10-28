@@ -290,7 +290,7 @@ const dataTableConfig = {
       // 2. Company Name (Index 1)
       targets: [1],
       className: "dt-head-left dt-body-left",
-      width: "15%",
+      width: "13%",
     },
     {
       // 3. Location (Index 2)
@@ -308,7 +308,7 @@ const dataTableConfig = {
       // 5. Years of Experience (Index 4)
       targets: [4],
       className: "dt-head-center dt-body-center",
-      width: "5%",
+      width: "7%",
     },
     {
       // 6. Date Posted (Index 5)
@@ -399,25 +399,42 @@ function sendJobUpdateNotification(refreshTime) {
 
   // Define the notification content
   const options = {
-    body: `The latest job posts detected! Last updated: ${refreshTime}.`,
+    body: `New job posts detected on: ${refreshTime}.`,
     tag: NOTIFICATION_TAG, // Helps manage and replace existing notifications
     renotify: true, // Indicates that a new alert should be shown even if a notification with the same tag is already visible.
   };
 
-  const notification = new Notification("New Jobs Posted", options);
+  const notification = new Notification("Updates", options);
 
   // 2. Add behavior for when the user clicks the notification
   notification.onclick = function (event) {
     // This ensures the current tab/window is brought to the foreground
     event.preventDefault();
     window.focus();
-
+    window.open(window.location.href, "_self");
     // Close the notification after click
     notification.close();
   };
 
   // 3. Store the new notification reference
   lastNotification = notification;
+}
+
+function hideSpinner() {
+  const spinner = document.getElementById("loadingSpinner");
+  const dataTable = document.getElementById("jobTable");
+  if (spinner.style.display === "none") {
+    return;
+  }
+  // Start fading out the spinner and fade in the table
+  spinner.style.opacity = "0";
+  dataTable.style.display = "block";
+  setTimeout(() => {
+    dataTable.style.opacity = "1";
+  }, 100);
+  setTimeout(() => {
+    spinner.style.display = "none";
+  }, 500);
 }
 
 async function main() {
@@ -489,8 +506,11 @@ async function main() {
         setupEventListeners();
         initialLoadComplete = true;
       }
+
+      hideSpinner();
     } catch (error) {
       console.error("Could not fetch jobs data:", error);
+      hideSpinner();
     }
   }
 

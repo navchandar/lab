@@ -354,7 +354,10 @@ function mergeAndCleanJobsData(output_data) {
     await sleep(800);
   }
 
+  console.log(`Jobs count gathered with different keywords: ${gathered.length}`);
   let deduped = uniqueBy(gathered, (r) => r.jobUrl);
+  console.log(`Jobs count after deduping all gathered jobs: ${deduped.length}`);
+
   const existingJobs = readExisting();
   const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
   // Find the largest jobId in existingJobIds - Assuming jobIds are numerical
@@ -378,8 +381,8 @@ function mergeAndCleanJobsData(output_data) {
     return isNew && isNotRepost;
   });
 
-  console.log(`Gathered: ${gathered.length}`);
-  console.log(`Deduped: ${deduped.length}`);
+  
+  console.log(`Jobs count after removing existing jobs and reposts: ${deduped.length}`);
 
   const enriched = [];
   for (const job of deduped) {

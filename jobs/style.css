@@ -16,7 +16,23 @@ body {
     padding: 0;
     color: #333;
     font-size: 1rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family:
+        /* macOS, iOS */
+        -apple-system,
+        /* Android */
+        BlinkMacSystemFont,
+        /* Windows, modern Android */
+        'Segoe UI',
+        /* Fallbacks for older/other OS */
+        Roboto,
+        Oxygen,
+        Ubuntu,
+        Cantarell,
+        'Fira Sans',
+        'Droid Sans',
+        'Helvetica Neue',
+        sans-serif;
+
 }
 
 header {
@@ -39,17 +55,58 @@ h1 {
 
 main {
     margin: 20px auto;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
     border-radius: 8px;
     background: white;
     padding: 20px;
-    padding-bottom: 6rem;
+    padding-bottom: 2rem;
     max-width: 1200px;
 }
+
+/* **Modern Spinner Styling** */
+#loadingSpinner {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 1;
+    transition: opacity 0.5s ease-out;
+    margin: 20px auto;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    padding: 40px;
+    min-height: 150px;
+    color: #666;
+    font-size: 1.1em;
+    text-align: center;
+}
+
+.spinner {
+    animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    margin-bottom: 15px;
+    border: 5px solid #e0e0e0;
+    border-top: 5px solid #007bff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 
 .controls {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 15px;
     margin-bottom: 20px;
 }
@@ -62,12 +119,13 @@ main {
     /* Transition for border color and box shadow */
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 5px;
     padding: 10px;
     max-width: 200px;
 }
 
 .dt-search input {
+    margin-right: 10px;
     width: 40vw;
     max-width: 500px;
 }
@@ -96,14 +154,16 @@ select.dt-input {
 }
 
 #jobTable {
+    opacity: 0;
+    transition: opacity 0.5s ease-in;
     margin-top: 10px;
     border-collapse: collapse;
     width: 100%;
 }
 
 #jobTable th, #jobTable td {
-    border: 1px solid #ddd;
-    padding: 12px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 15px;
     text-align: left;
 }
 
@@ -111,8 +171,14 @@ select.dt-input {
     position: sticky;
     top: 0;
     z-index: 10;
-    background-color: #e9ecef;
+    background-color: #2c3e50;
+    color: white;
     font-weight: bold;
+}
+
+
+#jobTable th:hover {
+    background-color: #1a2a3b;
 }
 
 /* Apply transition to all table rows */
@@ -180,7 +246,8 @@ a:hover, a:focus {
 }
 
 #filters .select2-container, #filters select {
-    width: 365px !important;
+    border-radius: 5px;
+    width: 360px !important;
 }
 
 #resetFilters {
@@ -220,7 +287,7 @@ a:hover, a:focus {
 
 .select2-container--default .select2-selection--multiple .select2-selection__choice {
     margin-top: 5px;
-    border-radius: 3px;
+    border-radius: 5px;
     background-color: #007bff;
     padding: 2px 6px;
     color: white;
@@ -237,6 +304,7 @@ a:hover, a:focus {
 
 /* Styles for mobile devices */
 @media (max-width: 767px) {
+
     main {
         margin: 0;
         padding: 15px;
@@ -275,6 +343,10 @@ a:hover, a:focus {
     .last-refresh {
         margin-bottom: 4em !important;
         font-size: smaller;
+    }
+
+    #jobTable th, #jobTable td {
+        padding: 5px 8px;
     }
 
 }
