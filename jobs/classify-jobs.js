@@ -1280,7 +1280,7 @@ function classifyJobs(jobs) {
   });
 }
 
-function getExperience(jobDescription) {
+function getExperience(jobDescription, jobId) {
   if (!jobDescription) {
     return null;
   }
@@ -1329,6 +1329,12 @@ function getExperience(jobDescription) {
           maxExperienceValue = maxInMatch;
           maxExperienceString = cleaned;
         }
+      } else {
+        console.log(
+          `Job: ${jobId} Skipped (filtered out):`,
+          cleaned,
+          `(max: ${maxInMatch})`
+        );
       }
     }
   };
@@ -1337,11 +1343,15 @@ function getExperience(jobDescription) {
   processMatches(matches2);
 
   if (maxExperienceString) {
-    console.log("Experiences found:", [...requirements]);
-    console.log("Maximum Experience:", maxExperienceString);
-    return normalizeExperience(maxExperienceString);
+    console.log(`Job: ${jobId}`);
+    console.log("  Experiences found:", [...requirements]);
+    console.log("  Maximum Experience:", maxExperienceString);
+    const normYOE = normalizeExperience(maxExperienceString);
+    console.log("  Normalized Experience:", normYOE);
+    return normYOE;
   }
 
+  console.log(`Job: ${jobId} - No valid experience found`);
   return null;
 }
 
@@ -1389,12 +1399,12 @@ function normalizeExperience(experienceString) {
 }
 
 function addExperienceToJobs(jobs) {
-  return jobs.map((job) => {
+  return jobs.map((j) => {
     // 1. Get the experience value
-    const requiredExp = getExperience(job.description) || UNKNOWN;
+    const requiredExp = getExperience(j.description, j.id) || UNKNOWN;
 
     return {
-      ...job,
+      ...j,
       experienceRequired: requiredExp,
     };
   });
