@@ -258,10 +258,10 @@ function updateRefreshTimeDisplay(gmtDateString) {
   if (!lastMod || !gmtDateString) {
     return;
   }
-  // convert the GMT date string to local time
-  const localTimestamp = convertToLocalTime(gmtDateString);
-  if (localTimestamp) {
-    lastMod.textContent = `Last updated: ${localTimestamp}`;
+  // convert the GMT date string to relative time
+  const relativeTime = getRelativeTimeDisplay(gmtDateString);
+  if (relativeTime) {
+    lastMod.textContent = `Last updated: ${relativeTime}`;
   }
 }
 
@@ -354,6 +354,69 @@ function convertToLocalTime(utcDateString) {
 }
 
 /**
+ * Calculates the time difference between a past date string and now,
+ * and formats it into a human-readable string (e.g., "2 hours ago", "1 hour 30 mins ago").
+ *
+ * @param {string} gmtDateString - The date string from Jobs.json.
+ * @returns {string} The human-readable relative time string.
+ */
+function getRelativeTimeDisplay(gmtDateString) {
+  const pastDate = new Date(gmtDateString);
+  const now = new Date();
+
+  // 1. Basic Validation
+  if (isNaN(pastDate.getTime())) {
+    return "Invalid Date";
+  }
+
+  // 2. Calculate Difference in Minutes
+  // Get time in milliseconds, find the absolute difference, and convert to minutes.
+  const diffMinutes = Math.floor(
+    (now.getTime() - pastDate.getTime()) / (1000 * 60)
+  );
+
+  // 3. Handle Time Ranges
+  if (diffMinutes < 1) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    // Less than 1 hour (e.g., "10 mins ago")
+    return `${diffMinutes} min${diffMinutes !== 1 ? "s" : ""} ago`;
+  } else {
+    // 1 hour or more (e.g., "2 hours ago", "1 hour 30 mins ago")
+    const hours = Math.floor(diffMinutes / 60);
+    const minutes = diffMinutes % 60;
+
+    let timeParts = [];
+
+    // Build the hours part
+    timeParts.push(`${hours} hour${hours !== 1 ? "s" : ""}`);
+
+    // Add minutes only if they are greater than 0
+    if (minutes > 0) {
+      timeParts.push(`${minutes} min${minutes !== 1 ? "s" : ""}`);
+    }
+
+    // Join the parts and append 'ago'
+    return timeParts.join(" ") + " ago";
+  }
+}
+
+function showToast(message) {
+  const toast = document.getElementById("ip-toast");
+  const message = document.getElementById("ip-toast-message");
+  const closeBtn = document.getElementById("ip-toast-close");
+  // Update message and show toast
+  toast.classList.remove("show");
+  message.textContent = `${message}`;
+  console.log(message.textContent);
+  toast.classList.add("show");
+
+  // Manual close
+  closeBtn.onclick = () => {
+    toast.classList.remove("show");
+  };
+}
+/**
  * Requests browser notification permission if it hasn't been granted or denied.
  * Updates the global notificationPermission variable.
  */
@@ -396,14 +459,15 @@ function sendJobUpdateNotification(refreshTime) {
     lastNotification.close();
     lastNotification = null;
   }
-
   // Define the notification content
+  const message = `New job posts detected on: ${refreshTime}.`;
   const options = {
-    body: `New job posts detected on: ${refreshTime}.`,
+    body: message,
     tag: NOTIFICATION_TAG, // Helps manage and replace existing notifications
     renotify: true, // Indicates that a new alert should be shown even if a notification with the same tag is already visible.
   };
 
+  showToast(message);
   const notification = new Notification("Updates", options);
 
   // 2. Add behavior for when the user clicks the notification
@@ -423,18 +487,21 @@ function sendJobUpdateNotification(refreshTime) {
 function hideSpinner() {
   const spinner = document.getElementById("loadingSpinner");
   const dataTable = document.getElementById("jobTable");
+  const filters = document.getElementById("filters");
   if (spinner.style.display === "none") {
     return;
   }
   // Start fading out the spinner and fade in the table
   spinner.style.opacity = "0";
-  dataTable.style.display = "block";
-  setTimeout(() => {
-    dataTable.style.opacity = "1";
-  }, 100);
   setTimeout(() => {
     spinner.style.display = "none";
+    dataTable.style.opacity = "1";
   }, 500);
+
+  setTimeout(() => {
+    dataTable.style.display = "block";
+    filters.style.display = "block";
+  }, 600);
 }
 
 async function main() {
@@ -509,8 +576,9 @@ async function main() {
 
       hideSpinner();
     } catch (error) {
-      console.error("Could not fetch jobs data:", error);
+      console.error("Failed to fetch jobs data:", error);
       hideSpinner();
+      showToast(`Failed to fetch jobs data:\n${error}`);
     }
   }
 

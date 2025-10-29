@@ -197,6 +197,38 @@ select.dt-input {
 }
 
 
+
+.ip-toast {
+    display: none;
+    position: fixed;
+    opacity: 0;
+    z-index: 1000;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    background-color: #87cefabd;
+    padding: 12px 20px;
+    color: #1c1c1c;
+    font-family: sans-serif;
+}
+
+.ip-toast.show {
+    display: block;
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.ip-toast-close {
+    cursor: pointer;
+    margin: 0;
+    margin-left: 10px;
+    border: none;
+    background: none;
+    color: #333;
+    font-size: 18px;
+}
+
+
 footer {
     position: fixed;
     bottom: 0;
@@ -302,6 +334,16 @@ a:hover, a:focus {
     border-color: #007bff !important;
 }
 
+
+@media (min-width: 768px) {
+    .ip-toast {
+        top: 20px;
+        right: 20px;
+        transform: translateY(-20px);
+    }
+}
+
+
 /* Styles for mobile devices */
 @media (max-width: 767px) {
 
@@ -347,6 +389,17 @@ a:hover, a:focus {
 
     #jobTable th, #jobTable td {
         padding: 5px 8px;
+    }
+
+    .ip-toast {
+        bottom: 100px;
+        transform: translateX(-50%);
+        padding: 8px;
+        font-size: smaller;
+    }
+
+    .ip-toast-close {
+        margin: 0;
     }
 
 }
@@ -405,6 +458,16 @@ a:hover, a:focus {
     #resetFilters:hover {
         background-color: #ef5350;
     }
+
+    .ip-toast {
+        background-color: #013b5ecc;
+        color: #fff;
+    }
+
+    .ip-toast-close {
+        color: #fff;
+    }
+
 
     footer {
         background-color: darkslategray;

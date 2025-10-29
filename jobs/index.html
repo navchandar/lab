@@ -58,7 +58,7 @@
     </header>
 
     <main>
-      <div id="filters">
+      <div id="filters" style="display: none;">
         <label for="companyFilter">Filter by Company:</label>
         <select id="companyFilter" multiple="multiple"></select>
 
@@ -72,7 +72,11 @@
         <div id="loadingSpinner" style="display: block;">
           <div class="spinner"></div>
         </div>
-        <table id="jobTable" class="display" style="width:100%; display:none;">
+        <table
+          id="jobTable"
+          class="display"
+          style="width: 100%; display: none;"
+        >
           <thead>
             <tr>
               <th>Job Title</th>
@@ -87,7 +91,12 @@
         </table>
       </div>
 
-      <div id="last-refresh" class="last-refresh">Last updated: Recently</div>
+      <div id="ip-toast" class="ip-toast">
+        <span id="ip-toast-message"></span>
+        <button id="ip-toast-close" class="ip-toast-close">&times;</button>
+      </div>
+
+      <div id="last-refresh" class="last-refresh">Loading Jobs Data...</div>
     </main>
 
     <footer>
