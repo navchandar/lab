@@ -460,14 +460,14 @@ function sendJobUpdateNotification(refreshTime) {
     lastNotification = null;
   }
   // Define the notification content
-  const message = `New job posts detected on: ${refreshTime}.`;
+  const msg = `New job posts detected on: ${refreshTime}.`;
   const options = {
-    body: message,
+    body: msg,
     tag: NOTIFICATION_TAG, // Helps manage and replace existing notifications
     renotify: true, // Indicates that a new alert should be shown even if a notification with the same tag is already visible.
   };
 
-  showToast(message);
+  showToast(msg);
   const notification = new Notification("Updates", options);
 
   // 2. Add behavior for when the user clicks the notification
