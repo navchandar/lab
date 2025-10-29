@@ -1401,7 +1401,7 @@ function normalizeExperience(experienceString) {
 function addExperienceToJobs(jobs) {
   return jobs.map((j) => {
     // 1. Get the experience value
-    const requiredExp = getExperience(j.description, j.id) || UNKNOWN;
+    const requiredExp = getExperience(j.description, j.jobId) || UNKNOWN;
 
     return {
       ...j,

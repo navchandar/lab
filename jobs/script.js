@@ -460,7 +460,7 @@ function sendJobUpdateNotification(refreshTime) {
     lastNotification = null;
   }
   // Define the notification content
-  const msg = `New job posts detected on: ${refreshTime}.`;
+  const msg = `New job posts detected: ${refreshTime}.`;
   const options = {
     body: msg,
     tag: NOTIFICATION_TAG, // Helps manage and replace existing notifications
@@ -488,6 +488,8 @@ function hideSpinner() {
   const spinner = document.getElementById("loadingSpinner");
   const dataTable = document.getElementById("jobTable");
   const filters = document.getElementById("filters");
+  const rows = document.querySelectorAll(".dt-layout-row");
+
   if (spinner.style.display === "none") {
     return;
   }
@@ -500,8 +502,15 @@ function hideSpinner() {
 
   setTimeout(() => {
     dataTable.style.display = "block";
-    filters.style.display = "block";
+    rows[1].style.display = "block";
+    filters.style.display = "flex";
   }, 600);
+
+  setTimeout(() => {
+    for (const row of rows) {
+      row.style.display = "block";
+    }
+  }, 700);
 }
 
 async function main() {
@@ -565,8 +574,9 @@ async function main() {
 
       // Only send notification on subsequent updates, not the initial page load
       if (initialLoadComplete) {
-        const displayTime = convertToLocalTime(newModified);
-        sendJobUpdateNotification(displayTime || "Just Now");
+        const relativeTime = getRelativeTimeDisplay(newModified);
+        // const displayTime = convertToLocalTime(newModified);
+        sendJobUpdateNotification(relativeTime || "Just Now");
       }
 
       if (!initialLoadComplete) {
