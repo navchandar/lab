@@ -114,7 +114,6 @@ function extractJobIdFromUrl(url) {
   return null;
 }
 
-
 function parseRelativeTimeToDate(input) {
   if (!input) {
     return null;
@@ -288,7 +287,11 @@ function clean_url(url) {
 }
 
 function mergeAndCleanJobsData(output_data) {
-  const existing = readExisting();
+  const json = readExisting();
+  const existing = json.data;
+  json.recentlyAddedCount = output_data.length;
+  json.recentlyUpdatedOn = new Date(Date.now()).toISOString();
+
   console.log(`Existing job posts before cleanup: ${existing.length}`);
 
   const sevenDaysAgo = Date.now() - DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
@@ -333,8 +336,9 @@ function mergeAndCleanJobsData(output_data) {
     return tb - ta;
   });
 
+  json.totalCount = finalList.length;
   console.log(`Filtered and finalized ${finalList.length} job posts`);
-  writeOutput(finalList);
+  writeOutput(json);
   console.log(`Saved ${finalList.length} jobs to ${OUTPUT_FILE}`);
   return finalList.length;
 }
@@ -354,11 +358,13 @@ function mergeAndCleanJobsData(output_data) {
     await sleep(800);
   }
 
-  console.log(`Jobs count gathered with different keywords: ${gathered.length}`);
+  console.log(
+    `Jobs count gathered with different keywords: ${gathered.length}`
+  );
   let deduped = uniqueBy(gathered, (r) => r.jobUrl);
   console.log(`Jobs count after deduping all gathered jobs: ${deduped.length}`);
 
-  const existingJobs = readExisting();
+  const existingJobs = readExisting().data;
   const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
   // Find the largest jobId in existingJobIds - Assuming jobIds are numerical
   const maxExistingJobId =
@@ -381,8 +387,9 @@ function mergeAndCleanJobsData(output_data) {
     return isNew && isNotRepost;
   });
 
-  
-  console.log(`Jobs count after removing existing jobs and reposts: ${deduped.length}`);
+  console.log(
+    `Jobs count after removing existing jobs and reposts: ${deduped.length}`
+  );
 
   const enriched = [];
   for (const job of deduped) {

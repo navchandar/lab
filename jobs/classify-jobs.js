@@ -1421,14 +1421,16 @@ if (require.main === module) {
   try {
     // Read the file
     const raw = fs.readFileSync(OUTPUT_FILE, "utf-8");
-    const jobs = JSON.parse(raw);
+    const json = JSON.parse(raw);
+    const jobs = json.data;
 
     // Classify the jobs
     const jobswithExp = addExperienceToJobs(jobs);
     const out = classifyJobs(jobswithExp);
+    json.data = out;
 
     // Convert back to a nicely formatted JSON string
-    const outputJson = JSON.stringify(out, null, 2);
+    const outputJson = JSON.stringify(json, null, 2);
 
     // Write back to the same file
     fs.writeFileSync(OUTPUT_FILE, outputJson, "utf-8");
