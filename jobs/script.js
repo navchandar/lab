@@ -401,14 +401,14 @@ function getRelativeTimeDisplay(gmtDateString) {
   }
 }
 
-function showToast(message) {
+function showToast(message_text) {
   const toast = document.getElementById("ip-toast");
   const message = document.getElementById("ip-toast-message");
   const closeBtn = document.getElementById("ip-toast-close");
   // Update message and show toast
   toast.classList.remove("show");
-  message.textContent = `${message}`;
-  console.log(message.textContent);
+  message.textContent = `${message_text}`;
+  console.log(message_text);
   toast.classList.add("show");
 
   // Manual close
