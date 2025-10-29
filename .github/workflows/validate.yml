@@ -54,7 +54,7 @@ jobs:
       - name: Validate Broken Links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --base . --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
+          args: --root-dir ${{ github.workspace }} --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
 
       - name: Validate Spelling
         uses: rojopolis/spellcheck-github-actions@0.53.0
