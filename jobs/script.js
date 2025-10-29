@@ -552,7 +552,8 @@ async function main() {
       const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       console.log("Local Timezone:", localTimeZone);
 
-      allJobs = await response.json();
+      const resp = await response.json();
+      allJobs = resp.data;
 
       updateRefreshTimeDisplay(newModified);
 
@@ -573,10 +574,15 @@ async function main() {
       populateTable(allJobs);
 
       // Only send notification on subsequent updates, not the initial page load
-      if (initialLoadComplete) {
+      if (initialLoadComplete && resp.recentlyAddedCount > 0) {
         const relativeTime = getRelativeTimeDisplay(newModified);
         // const displayTime = convertToLocalTime(newModified);
         sendJobUpdateNotification(relativeTime || "Just Now");
+      } else if (resp.recentlyAddedCount <= 0) {
+        console.log(
+          "No notification sent. Jobs recently added:",
+          resp.recentlyAddedCount
+        );
       }
 
       if (!initialLoadComplete) {

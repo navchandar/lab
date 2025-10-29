@@ -290,7 +290,11 @@ function mergeAndCleanJobsData(output_data) {
   const json = readExisting();
   const existing = json.data;
   json.recentlyAddedCount = output_data.length;
-  json.recentlyUpdatedOn = new Date(Date.now()).toISOString();
+  // Add updated on Date only if new jobs are added
+  // Dont save updated dates for removing job posts
+  if (output_data.length > 0) {
+    json.recentlyUpdatedOn = new Date(Date.now()).toISOString();
+  }
 
   console.log(`Existing job posts before cleanup: ${existing.length}`);
 
