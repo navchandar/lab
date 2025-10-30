@@ -503,27 +503,53 @@ function hideSpinner() {
   const filters = document.getElementById("filters");
   const rows = document.querySelectorAll(".dt-layout-row");
 
+  // Ensure elements are available
+  if (!spinner || !dataTable || !filters || rows.length < 2) {
+    console.warn("Required UI elements for hideSpinner not found.");
+  }
+
   if (spinner.style.display === "none") {
     return;
   }
-  // Start fading out the spinner and fade in the table
+
+  const baseDelay = 150; // ms between each step
   spinner.style.opacity = "0";
+
+  // --- Step 1: Hide Spinner and Show Table Body (After Spinner Fade) ---
   setTimeout(() => {
+    // Hide the spinner container
     spinner.style.display = "none";
+    // Show the table body and fade it in
+    // Note: The DataTables main element (likely the div wrapping the table)
+    // should have initial opacity: 0 and transition: opacity 0.5s ease;
+    dataTable.style.display = "block";
     dataTable.style.opacity = "1";
   }, 500);
 
+  // --- Step 2: Show Filters ---
   setTimeout(() => {
-    dataTable.style.display = "block";
-    rows[1].style.display = "block";
     filters.style.display = "flex";
-  }, 600);
+  }, 500 + baseDelay * 1);
 
+  // --- Step 3: Show Search & Length Menu (Top Row) ---
+  // The first DataTables layout row (usually the search box and page length)
   setTimeout(() => {
-    for (const row of rows) {
-      row.style.display = "block";
+    if (rows[0]) {
+      rows[0].style.display = "flex";
     }
-  }, 700);
+  }, 500 + baseDelay * 2);
+
+  // --- Step 4: Show Pagination & Info (Bottom Row) ---
+  // The second DataTables layout row (usually the info and pagination controls)
+  setTimeout(() => {
+    if (rows[1]) {
+      rows[1].style.display = "flex";
+    }
+    // Ensure ALL rows are visible in case of different DataTables layout configuration
+    for (let i = 2; i < rows.length; i++) {
+      rows[i].style.display = "flex";
+    }
+  }, 500 + baseDelay * 3); // 500ms + 450ms
 }
 
 async function main() {
