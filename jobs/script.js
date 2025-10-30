@@ -565,6 +565,7 @@ async function main() {
   // --- Load Data using Fetch API ---
   async function loadJobs() {
     const url = `jobs.json?nocache=${Date.now()}`;
+    closeErrorToast();
 
     try {
       const headResponse = await fetch(url, {
@@ -634,7 +635,6 @@ async function main() {
       }
 
       hideSpinner();
-      closeErrorToast();
     } catch (error) {
       hideSpinner();
       if (error instanceof TypeError) {
@@ -866,8 +866,8 @@ async function main() {
   // Run once immediately to load jobs
   await loadJobs();
 
-  // Poll every 1 minutes
-  setInterval(loadJobs, 1 * 60 * 1000); // 300000 ms = 5 minutes
+  // Poll every 2 minutes
+  setInterval(loadJobs, 2 * 60 * 1000);
 }
 
 document.addEventListener("DOMContentLoaded", main);

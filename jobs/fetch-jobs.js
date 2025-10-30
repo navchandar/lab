@@ -8,24 +8,35 @@ const randomUA = require("random-useragent");
 
 // -------- Config you can tune ----------
 const KEYWORDS = [
-  "Senior QA Automation Engineer",
-  "QA Automation Lead",
-  "Lead QA Engineer",
+  "API Test Automation",
+  "Cypress Automation Engineer",
+  "Director of QA",
+  "Head of Quality Engineering",
   "Lead Automation Engineer",
+  "Lead QA Engineer",
+  "Mobile Automation Engineer",
+  "Performance QA Engineer",
+  "Performance Test Engineer",
+  "Playwright Automation",
+  "Principal Automation Engineer",
+  "Principal Quality Engineer",
+  "Principal SDET",
+  "Python Automation",
+  "QA Automation Architect",
+  "QA Automation Lead",
+  "QA Manager (Automation)",
+  "Quality Engineering Lead",
+  "SDET Lead",
+  "Selenium Automation",
   "Senior Automation Engineer",
+  "Senior QA Automation Engineer",
+  "Senior SDET (Software Development Engineer in Test)",
+  "Senior Test Automation Engineer",
+  "Senior Test Automation Specialist",
+  "Senior Test Engineer",
   "Staff SDET Automation Engineer",
   "Staff Software Development Engineer in Test",
-  "Senior SDET (Software Development Engineer in Test)",
-  "SDET Lead",
   "Test Automation Lead",
-  "Performance QA Engineer",
-  "Quality Engineering Lead",
-  "Senior Test Engineer",
-  "QA Automation Architect",
-  "QA Manager (Automation)",
-  "Selenium Automation",
-  "Python Automation",
-  "Performance Test Engineer",
 ];
 
 const BASE_QUERY = {
@@ -35,7 +46,7 @@ const BASE_QUERY = {
   dateSincePosted: "24hr",
   experienceLevel: "senior",
   //valid values: internship, entry level, associate, senior, director, executive
-  limit: "30",
+  limit: "20",
   page: "0",
 };
 
@@ -250,7 +261,11 @@ function clean_title(job_title) {
   if (!job_title) {
     return "";
   }
-  const phrases_to_remove = ["Interesting Job Opportunity"];
+  const phrases_to_remove = [
+    "Interesting Job Opportunity",
+    ", India",
+    ",India",
+  ];
   // Remove each phrase from job_title
   phrases_to_remove.forEach((phrase) => {
     job_title = job_title.replace(phrase, "");
@@ -288,7 +303,7 @@ function clean_url(url) {
 
 function mergeAndCleanJobsData(output_data) {
   const json = readExisting();
-  const existing = json.data;
+  const existing = json ? json.data : [];
   json.recentlyAddedCount = output_data.length;
   // Add updated on Date only if new jobs are added
   // Dont save updated dates for removing job posts
@@ -318,10 +333,12 @@ function mergeAndCleanJobsData(output_data) {
     byJobId.set(j.jobId, j);
   }
 
+  let newJobsAddedCount = 0;
   for (const j of output_data) {
     const existingJob = byJobId.get(j.jobId);
     if (!existingJob) {
       byJobId.set(j.jobId, j);
+      newJobsAddedCount++;
     } else {
       const existingTime = existingJob.datePosted
         ? new Date(existingJob.datePosted).getTime()
@@ -332,6 +349,7 @@ function mergeAndCleanJobsData(output_data) {
       }
     }
   }
+  console.log(`Added ${newJobsAddedCount} new unique jobs.`);
 
   // Final sorted list
   const finalList = Array.from(byJobId.values()).sort((a, b) => {
@@ -353,14 +371,36 @@ function mergeAndCleanJobsData(output_data) {
   const gathered = [];
 
   for (const kw of KEYWORDS) {
-    const query = { ...BASE_QUERY, keyword: kw };
-    try {
-      const results = await linkedIn.query(query);
-      results.forEach((r) => gathered.push({ ...r, _keyword: kw }));
-    } catch (e) {
-      console.error(`Query failed for keyword "${kw}":`, e.message);
+    let currentPage = 0;
+    let maxPages = 5;
+
+    console.log(`--- Querying for keyword: "${kw}" ---`);
+    while (maxPages > currentPage) {
+      const query = {
+        ...BASE_QUERY,
+        keyword: kw,
+        page: String(currentPage), // Use the current page number
+      };
+
+      try {
+        const results = await linkedIn.query(query);
+        console.log(results);
+        if (results.length > 0) {
+          console.log(`Found ${results.length} jobs on page ${currentPage}`);
+          results.forEach((r) => gathered.push({ ...r, _keyword: kw }));
+          currentPage++;
+          await sleep(1000);
+        } else {
+          // If 0 results are returned, we've reached the end
+          console.log(`No more jobs found for "${kw}" on page ${currentPage}.`);
+          currentPage = 100;
+        }
+      } catch (e) {
+        console.error(`Query failed for keyword "${kw}":`, e.message);
+        currentPage = 100;
+      }
+      await sleep(2000);
     }
-    await sleep(800);
   }
 
   console.log(
@@ -464,9 +504,13 @@ function mergeAndCleanJobsData(output_data) {
     const summaryFile = process.env.GITHUB_STEP_SUMMARY;
     if (summaryFile) {
       fs.appendFileSync(summaryFile, summaryContent);
+    } else {
+      console.log("\n--- SUMMARY ---");
+      console.log(summaryContent.replace(/## /g, ""));
     }
-  } catch {
-    console.log("Error saving summaryContent:", summaryContent);
+  } catch (e) {
+    console.error("Error writing summary:", e.message);
+    console.log("Summary Content:", summaryContent);
   }
 })().catch((err) => {
   console.error(err);
