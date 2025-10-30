@@ -418,9 +418,13 @@ function showToast(message_text) {
 }
 
 function closeErrorToast() {
-  const toast = document.querySelector(".ip-toast.show");
-  const toast_message = toast.querySelector("span").textContent;
-  if (toast && toast_message.includes("Error")) {
+  const toast = document.getElementById("ip-toast");
+  const toast_message = toast.querySelector("#ip-toast-message").textContent;
+  if (
+    toast &&
+    toast.classList.contains("show") &&
+    toast_message.includes("Error")
+  ) {
     toast.classList.remove("show");
   }
 }
@@ -542,7 +546,7 @@ async function main() {
         cache: "no-store",
       });
       if (!headResponse.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`HTTP error! status: ${headResponse.status}`);
       }
 
       const newModified = headResponse.headers.get("Last-Modified");
@@ -608,10 +612,10 @@ async function main() {
     } catch (error) {
       hideSpinner();
       if (error instanceof TypeError) {
-        console.error("Network Error: Could not reach the server");
+        console.error("Network Error: Could not reach the server", error);
         showToast(`Network Error: Could not reach the server`);
       } else {
-        console.error("Error: Failed to fetch jobs data:", error.message);
+        console.error("Error: Failed to fetch jobs data:", error);
         showToast(`Error: Failed to fetch jobs data:\n${error.message}`);
       }
     }
