@@ -560,7 +560,7 @@ function mergeAndCleanJobsData(output_data) {
   let summaryContent = `## Results\n\n\n`;
   try {
     // After processing, generate Markdown for the summary
-    summaryContent += ` - Found **${enriched.length}** new job posts.\n\n`;
+    summaryContent += ` - Found **${enrichedJobs.length}** new job posts.\n\n`;
     summaryContent += ` - Total **${total_jobs}** job posts saved in json.\n`;
 
     // Append the Markdown to the summary file
