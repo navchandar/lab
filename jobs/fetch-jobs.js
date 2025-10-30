@@ -341,9 +341,10 @@ function mergeAndCleanJobsData(output_data) {
   });
 
   json.totalCount = finalList.length;
+  json.data = finalList;
   console.log(`Filtered and finalized ${finalList.length} job posts`);
   writeOutput(json);
-  console.log(`Saved ${finalList.length} jobs to ${OUTPUT_FILE}`);
+  console.log(`Saved ${json.data.length} jobs to ${OUTPUT_FILE}`);
   return finalList.length;
 }
 
