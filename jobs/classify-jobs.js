@@ -1321,7 +1321,7 @@ function getExperience(jobDescription, jobId) {
           cleaned.includes("to") ||
           cleaned.includes("plus") ||
           maxInMatch >= 2) &&
-        maxInMatch < 40
+        maxInMatch < 35
       ) {
         requirements.add(cleaned);
 

@@ -93,7 +93,7 @@ function htmlUnescape(s) {
     .replace(/&#39;/g, "'");
 }
 
-function extractJobIdFromUrl(url) {
+function extractJobIdFromLinkedInUrl(url) {
   if (!url) {
     return null;
   }
@@ -186,7 +186,92 @@ function parseRelativeTimeToDate(input) {
   return d;
 }
 
-async function fetchJobDetail(jobId) {
+/**
+ * Executes the search query across all keywords and pages,
+ * collecting initial job summary data.
+ * @param {Array<string>} KEYWORDS - List of keywords to search.
+ * @returns {Array<Object>} An array of job objects gathered from the API.
+ */
+async function gatherLinkedInSearchResults(KEYWORDS) {
+  const gathered = [];
+  const MAX_PAGES = 5;
+
+  for (const kw of KEYWORDS) {
+    let currentPage = 0;
+    console.log(`--- Querying for keyword: "${kw}" ---`);
+
+    while (currentPage < MAX_PAGES) {
+      const query = {
+        ...BASE_QUERY,
+        keyword: kw,
+        page: String(currentPage),
+      };
+
+      try {
+        const results = await linkedIn.query(query);
+        if (results.length > 0) {
+          console.log(`Found ${results.length} jobs on page ${currentPage}`);
+          results.forEach((r) => gathered.push({ ...r, _keyword: kw }));
+          currentPage++;
+          await sleep(500);
+        } else {
+          console.log(`No more jobs found for "${kw}" on page ${currentPage}.`);
+          break;
+        }
+      } catch (e) {
+        console.error(`Query failed for keyword "${kw}":`, e.message);
+        break;
+      }
+    }
+    await sleep(1000);
+  }
+
+  return gathered;
+}
+
+/**
+ * Deduplicates the gathered jobs and filters out existing jobs and old reposts from Linkedin
+ * @param {Array<Object>} gatheredJobs - Array of job objects from the gathering stage.
+ * @returns {Array<Object>} An array of unique, new job objects.
+ */
+function filterLinkedInSearchResults(gatheredJobs) {
+  // Dedupe by URL
+  let deduped = uniqueBy(gatheredJobs, (r) => clean_url(r.jobUrl));
+  console.log(`Jobs count after deduping all gathered jobs: ${deduped.length}`);
+
+  // Load and prepare existing job data
+  const existingJobs = readExisting().data;
+  const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
+
+  // Find the largest jobId in existingJobIds - Assuming jobIds are numerical
+  const maxExistingJobId =
+    existingJobIds.size > 0
+      ? Math.max(...Array.from(existingJobIds).map((id) => Number(id)))
+      : -Infinity; // Use -Infinity if the set is empty for smallest number
+
+  // Filter out existing and old reposts
+  deduped = deduped.filter((job) => {
+    const jobId = extractJobIdFromLinkedInUrl(job.jobUrl);
+    if (!jobId) {
+      console.warn("Could not parse jobId", job.jobUrl);
+      return false;
+    }
+    // Check if this already exists
+    const isNew = !existingJobIds.has(jobId);
+    // Check if the job id is actually a reposted job
+    const isNotRepost = Number(jobId) >= maxExistingJobId;
+    // Keep the job post only if it's new and not already saved
+    return isNew && isNotRepost;
+  });
+
+  console.log(
+    `Jobs count after removing existing jobs and reposts: ${deduped.length}`
+  );
+
+  return deduped;
+}
+
+async function fetchJobDetailFromLinkedIn(jobId) {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
   try {
     const headers = {
@@ -203,38 +288,131 @@ async function fetchJobDetail(jobId) {
     let listedAt = null;
     let applyUrl = null;
     let description = null;
+    let companyUrl = null;
 
     if (typeof data === "object") {
       listedAt = data.listedAt ? new Date(data.listedAt) : null;
       applyUrl = data.applyUrl || data.companyApplyUrl || null;
       description = data.description || null;
+      companyUrl = data.company || null;
     } else {
       // Fallback: parse HTML with cheerio
       const $ = cheerio.load(data);
       const postedText = $(".posted-time-ago__text").text().trim();
       listedAt = parseRelativeTimeToDate(postedText);
 
-      const descHtml = $(".description__text").html();
-      description = descHtml ? cheerio.load(descHtml).text() : null;
-      if (description) {
-        description = description
-          .replace("Show more", " ")
-          .replace("Show less", " ")
-          .replace(/\s+/g, " ")
-          .trim();
-      }
+      const contentElem = $(".show-more-less-html__markup");
+      if (contentElem.length > 0) {
+        // Get the HTML of just the content
+        let contentHtml = contentElem.html();
+        if (contentHtml) {
+          // Replace block-level tags with newline characters
+          contentHtml = contentHtml
+            .replace(/<br\s*\/?>/gi, "\n") // Replace <br> tags with a newline
+            .replace(/<\/(p|div|h[1-6]|blockquote|pre)>/gi, "\n\n") // Add two newlines after paragraphs
+            .replace(/<li[^>]*>/gi, "\n* ") // Handle opening <li> tags for bulleting and a newline
+            .replace(/<(ul|ol)[^>]*>/gi, "\n") // Treat opening <ul> or <ol> as a guaranteed newline before the list starts
+            .replace(/<\/(li|ul|ol)>/gi, "") // Remove closing list item tags
+            .replace(/<\/span>/gi, "");
 
+          // Load the modified HTML and *then* get the text
+          description = cheerio.load(contentHtml).text();
+
+          // Clean up space
+          description = description
+            .replace(/[ \t]+/g, " ")
+            .replace(/(\n\s*){3,}/g, "\n\n")
+            .trim();
+        }
+      }
       const applyMatch = data.match(/"applyUrl"\s*:\s*"([^"]+)"/);
       if (applyMatch) {
         applyUrl = applyMatch[1].replace(/\\\//g, "/");
       }
+
+      const companyLinkSelector = 'a[href*="/company/"]';
+      const linkElem = $(companyLinkSelector);
+      if (linkElem.length > 0) {
+        // get the URL from the first matching element
+        companyUrl = linkElem.attr("href");
+      }
     }
-    await sleep(1000);
-    return { resolvedDate: listedAt, applyUrl, description };
+    await sleep(500);
+    return { resolvedDate: listedAt, applyUrl, description, companyUrl };
   } catch (err) {
     console.error("Error fetching job detail:", err.message);
-    return { resolvedDate: null, applyUrl: null, description: null };
+    return {
+      resolvedDate: null,
+      applyUrl: null,
+      description: null,
+      companyUrl: null,
+    };
   }
+}
+
+/**
+ * Fetches detailed information for a list of jobs and formats them for saving.
+ * @param {Array<Object>} dedupedJobs - Array of unique, new job objects.
+ * @returns {Array<Object>} An array of fully enriched and formatted job objects.
+ */
+async function enrichLinkedInJobDetails(dedupedJobs) {
+  const enriched = [];
+
+  for (const job of dedupedJobs) {
+    const jobId = extractJobIdFromLinkedInUrl(job.jobUrl);
+    const jobUrlClean = clean_url(job.jobUrl);
+    let detail = {};
+
+    if (jobId) {
+      console.log("Parsed jobId", { jobId, jobUrl: jobUrlClean });
+      detail = await fetchJobDetailFromLinkedIn(jobId);
+    } else {
+      console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
+      continue;
+    }
+
+    let postedAt =
+      detail.resolvedDate ||
+      parseRelativeTimeToDate(job.agoTime) ||
+      (job.date ? new Date(`${job.date}T00:00:00Z`) : null);
+
+    if (!postedAt) {
+      console.warn("No postedAt; skipping", {
+        title: job.position,
+        url: job.jobUrl,
+      });
+      continue;
+    }
+    if (!withinLastHours(postedAt, HOURS_WINDOW)) {
+      console.warn("Older than window; skipping", {
+        title: job.position,
+        postedAt,
+      });
+      continue;
+    }
+
+    // Final clean and structure
+    const job_title = clean_title(job.position);
+    const company_name = clean_company(job.company);
+
+    enriched.push({
+      title: job_title,
+      company: company_name,
+      location: job.location || "India",
+      type: "Full-Time",
+      datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
+      url: detail.applyUrl || jobUrlClean || job.jobUrl,
+      source: "LinkedIn",
+      sourceUrl: job.jobUrl,
+      jobId,
+      description: detail.description || "",
+      companyUrl: detail.companyUrl || "",
+      companyLogo: job.companyLogo || null,
+      keywordMatched: job._keyword,
+    });
+  }
+
+  return enriched;
 }
 
 function withinLastHours(date, hours) {
@@ -368,131 +546,16 @@ function mergeAndCleanJobsData(output_data) {
 
 // -------- Main pipeline ----------
 (async function main() {
-  const gathered = [];
+  // gather jobs and links from searching keywords
+  const rawJobs = await gatherLinkedInSearchResults(KEYWORDS);
+  console.log(`Jobs count gathered with different keywords: ${rawJobs.length}`);
 
-  for (const kw of KEYWORDS) {
-    let currentPage = 0;
-    let maxPages = 5;
+  // filter and clean up results and save
+  const newJobs = filterLinkedInSearchResults(rawJobs);
+  const enrichedJobs = await enrichLinkedInJobDetails(newJobs);
+  console.log(`Found ${enrichedJobs.length} new job posts to save.`);
 
-    console.log(`--- Querying for keyword: "${kw}" ---`);
-    while (maxPages > currentPage) {
-      const query = {
-        ...BASE_QUERY,
-        keyword: kw,
-        page: String(currentPage), // Use the current page number
-      };
-
-      try {
-        const results = await linkedIn.query(query);
-        console.log(results);
-        if (results.length > 0) {
-          console.log(`Found ${results.length} jobs on page ${currentPage}`);
-          results.forEach((r) => gathered.push({ ...r, _keyword: kw }));
-          currentPage++;
-          await sleep(1000);
-        } else {
-          // If 0 results are returned, we've reached the end
-          console.log(`No more jobs found for "${kw}" on page ${currentPage}.`);
-          currentPage = 100;
-        }
-      } catch (e) {
-        console.error(`Query failed for keyword "${kw}":`, e.message);
-        currentPage = 100;
-      }
-      await sleep(2000);
-    }
-  }
-
-  console.log(
-    `Jobs count gathered with different keywords: ${gathered.length}`
-  );
-  let deduped = uniqueBy(gathered, (r) => r.jobUrl);
-  console.log(`Jobs count after deduping all gathered jobs: ${deduped.length}`);
-
-  const existingJobs = readExisting().data;
-  const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
-  // Find the largest jobId in existingJobIds - Assuming jobIds are numerical
-  const maxExistingJobId =
-    existingJobIds.size > 0
-      ? Math.max(...Array.from(existingJobIds).map((id) => Number(id)))
-      : -Infinity; // Use -Infinity if the set is empty for smallest number
-
-  // Filter out jobs that already exist
-  deduped = deduped.filter((job) => {
-    const jobId = extractJobIdFromUrl(job.jobUrl);
-    if (!jobId) {
-      console.warn("Could not parse jobId", job.jobUrl);
-      return false;
-    }
-    // Check if this already exists
-    const isNew = !existingJobIds.has(jobId);
-    // Check if the job id is actually a reposted job
-    const isNotRepost = Number(jobId) >= maxExistingJobId;
-    // Keep the job post only if it's new and not already saved
-    return isNew && isNotRepost;
-  });
-
-  console.log(
-    `Jobs count after removing existing jobs and reposts: ${deduped.length}`
-  );
-
-  const enriched = [];
-  for (const job of deduped) {
-    const jobId = extractJobIdFromUrl(job.jobUrl);
-    const jobUrlClean = clean_url(job.jobUrl);
-
-    let listedAt = null;
-    let applyUrl = null;
-    let description = null;
-
-    if (jobId) {
-      console.log("Parsed jobId", { jobId, jobUrl: jobUrlClean });
-
-      const detail = await fetchJobDetail(jobId);
-
-      listedAt = detail.resolvedDate;
-      applyUrl = detail.applyUrl;
-      description = detail.description || "";
-    } else {
-      console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
-    }
-
-    let postedAt =
-      listedAt ||
-      parseRelativeTimeToDate(job.agoTime) ||
-      (job.date ? new Date(`${job.date}T00:00:00Z`) : null);
-
-    if (!postedAt) {
-      console.warn("No postedAt; skipping", {
-        title: job.position,
-        url: job.jobUrl,
-      });
-    } else if (!withinLastHours(postedAt, HOURS_WINDOW)) {
-      console.warn("Older than window; skipping", {
-        title: job.position,
-        postedAt,
-      });
-    } else {
-      const job_title = clean_title(job.position);
-      const company_name = clean_company(job.company);
-      enriched.push({
-        title: job_title,
-        company: company_name,
-        location: job.location || "India",
-        type: "Full-Time",
-        datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
-        url: applyUrl || jobUrlClean || job.jobUrl,
-        source: "LinkedIn",
-        sourceUrl: job.jobUrl,
-        jobId,
-        description,
-        companyLogo: job.companyLogo || null,
-        keywordMatched: job._keyword,
-      });
-    }
-  }
-
-  const total_jobs = mergeAndCleanJobsData(enriched);
+  const total_jobs = mergeAndCleanJobsData(enrichedJobs);
 
   let summaryContent = `## Results\n\n\n`;
   try {
