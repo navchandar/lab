@@ -416,6 +416,15 @@ function showToast(message_text) {
     toast.classList.remove("show");
   };
 }
+
+function closeErrorToast() {
+  const toast = document.querySelector(".ip-toast.show");
+  const toast_message = toast.querySelector("span").textContent;
+  if (toast && toast_message.includes("Error")) {
+    toast.classList.remove("show");
+  }
+}
+
 /**
  * Requests browser notification permission if it hasn't been granted or denied.
  * Updates the global notificationPermission variable.
@@ -532,6 +541,10 @@ async function main() {
         method: "HEAD",
         cache: "no-store",
       });
+      if (!headResponse.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const newModified = headResponse.headers.get("Last-Modified");
 
       if (lastModified && newModified && newModified === lastModified) {
@@ -591,10 +604,16 @@ async function main() {
       }
 
       hideSpinner();
+      closeErrorToast();
     } catch (error) {
-      console.error("Failed to fetch jobs data:", error);
       hideSpinner();
-      showToast(`Failed to fetch jobs data:\n${error}`);
+      if (error instanceof TypeError) {
+        console.error("Network Error: Could not reach the server");
+        showToast(`Network Error: Could not reach the server`);
+      } else {
+        console.error("Error: Failed to fetch jobs data:", error.message);
+        showToast(`Error: Failed to fetch jobs data:\n${error.message}`);
+      }
     }
   }
 
@@ -802,6 +821,15 @@ async function main() {
       // Apply the search to DataTables
       jobsTable.search(searchText).draw();
       $("#dt-search-0").val(searchText);
+    });
+
+    window.addEventListener("online", loadJobs);
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        console.log("Tab is active");
+        loadJobs();
+      }
     });
   }
 
