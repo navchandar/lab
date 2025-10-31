@@ -460,7 +460,7 @@ function requestNotificationPermission() {
  * Sends a browser notification for the job update.
  * @param {string} refreshTime The time the jobs were updated (for display).
  */
-function sendJobUpdateNotification(refreshTime) {
+function sendJobUpdateNotification(refreshTime, addedJobs) {
   // Only proceed if permission has been granted
   if (notificationPermission !== "granted") {
     console.log("Cannot send notification: Permission not granted.");
@@ -473,7 +473,9 @@ function sendJobUpdateNotification(refreshTime) {
     lastNotification = null;
   }
   // Define the notification content
-  const msg = `New job posts detected: ${refreshTime}.`;
+  const msg = `${addedJobs} new job post${
+    addedJobs !== 1 ? "s" : ""
+  } detected: ${refreshTime}`;
   const options = {
     body: msg,
     tag: NOTIFICATION_TAG, // Helps manage and replace existing notifications
@@ -618,15 +620,14 @@ async function main() {
       populateTable(allJobs);
 
       // Only send notification on subsequent updates, not the initial page load
-      if (initialLoadComplete && resp.recentlyAddedCount > 0) {
+      const added = resp.recentlyAddedCount;
+      if (initialLoadComplete && added > 0) {
         const relativeTime = getRelativeTimeDisplay(newModified);
         // const displayTime = convertToLocalTime(newModified);
-        sendJobUpdateNotification(relativeTime || "Just Now");
-      } else if (resp.recentlyAddedCount <= 0) {
-        console.log(
-          "No notification sent. Jobs recently added:",
-          resp.recentlyAddedCount
-        );
+        console.log("Sending notification. Jobs recently added:", added);
+        sendJobUpdateNotification(relativeTime || "Just Now", added);
+      } else if (added <= 0) {
+        console.log("No notification sent. Jobs recently added:", added);
       }
 
       if (!initialLoadComplete) {
