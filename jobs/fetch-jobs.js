@@ -407,8 +407,6 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
       jobId,
       description: detail.description || "",
       companyUrl: detail.companyUrl || "",
-      companyLogo: job.companyLogo || null,
-      keywordMatched: job._keyword,
     });
   }
 
@@ -491,12 +489,23 @@ function mergeAndCleanJobsData(output_data) {
 
   console.log(`Existing job posts before cleanup: ${existing.length}`);
 
-  const sevenDaysAgo = Date.now() - DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const currentDayUtcMidnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  );
+  const DaysInMillis = DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
+  const cutoffTime = currentDayUtcMidnight - DaysInMillis;
+
   // Filter out old posts
   const prunedExisting = existing.filter((j) => {
+    // Convert the job post's date string to a timestamp
     const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
-    return d >= sevenDaysAgo;
+    // Keep the post if its timestamp is equal to or LATER than the cutoff time
+    return d >= cutoffTime;
   });
+
   console.log(
     `Removed ${existing.length - prunedExisting.length} old job posts`
   );
