@@ -51,8 +51,8 @@ const BASE_QUERY = {
 };
 
 const OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
-const HOURS_WINDOW = 6; // Add only jobs <= 6 hours old
-const DAYS_TO_KEEP = 7; // purge jobs > 7 days old
+const HOURS_WINDOW = 8; // Add only jobs <= 8 hours old
+const DAYS_TO_KEEP = 8; // purge jobs > 7 days old
 
 // -------- Utilities ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -258,8 +258,14 @@ function filterLinkedInSearchResults(gatheredJobs) {
     }
     // Check if this already exists
     const isNew = !existingJobIds.has(jobId);
+    if (!isNew) {
+      console.log(`Already jobId exists in json: ${jobId}`);
+    }
     // Check if the job id is actually a reposted job
     const isNotRepost = Number(jobId) >= maxExistingJobId;
+    if (!isNotRepost) {
+      console.log(`Reposted jobId: ${jobId}`);
+    }
     // Keep the job post only if it's new and not already saved
     return isNew && isNotRepost;
   });
