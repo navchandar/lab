@@ -268,6 +268,16 @@ const CATEGORIES = {
       "product roadmap",
       "stakeholder management",
       "budget",
+      // Pharma
+      "gmp",
+      "cgmp",
+      "fda",
+      "apqr",
+      "qms",
+      "validation protocol",
+      "21 cfr",
+      "sop",
+      "biosimilars",
     ],
   },
 
@@ -375,6 +385,105 @@ const CATEGORIES = {
       "stakeholder management",
       "etl",
       "data lake",
+      // Pharma
+      "apqr",
+      "biosimilars",
+      "oos",
+      "21 cfr",
+      "batch record",
+      "vmp",
+    ],
+  },
+  PharmaQA: {
+    weight: 1,
+    titleBoost: 1.5,
+    phrases: [
+      "quality management system",
+      "gmp compliance",
+      "process validation",
+      "computer system validation",
+      "apqr",
+      "quality oversight",
+      "regulatory audits",
+      "batch record review",
+      "corrective and preventive action",
+      "change control management",
+      "quality control for pharma",
+      "inspection readiness",
+      "validation protocol and report",
+      "quality operations and gmp",
+      "biosimilar operations",
+      "system compliance",
+      "design control quality management",
+    ],
+    terms: [
+      "qms",
+      "gmp",
+      "cgmp",
+      "fda",
+      "ema",
+      "oos",
+      "capa",
+      "apqr",
+      "validation",
+      "protocol",
+      "report",
+      "tpms", // Third-Party Manufacturers
+      "biosimilars",
+      "pharmaceutical",
+      "biotech",
+      "medical device",
+      "audit",
+      "inspection",
+      "deviation",
+      "change control",
+      "batch processing",
+      "sop",
+      "bpr", // Batch Production Record / Batch Processing Record
+      "bmr", // Batch Manufacturing Record
+      "dcs", // Document Control System
+      "ensur", // Specific system name (ENSUR 4.2)
+      "iso13485",
+      "eumdd",
+      "iec 62304",
+      "21 cfr part",
+      "vmp", // Validation Master Plan
+      "csv", // Computer System Validation
+      "iq", // Installation Qualification
+      "oq", // Operational Qualification
+      "pq", // Performance Qualification
+      "risk assessment",
+      "quality review",
+      "pharma",
+      "hipaa",
+      "argus safety",
+      "health science",
+    ],
+    negative: [
+      // Exclude generic SoftwareQA terms unless paired with Pharma terms
+      "selenium",
+      "cypress",
+      "python",
+      "javascript",
+      "java",
+      "ui testing",
+      "api testing",
+      "sdet",
+      // Exclude pure HardwareQA/Engineering terms
+      "pcb",
+      "rtl",
+      "fpga",
+      "mechanical",
+      "electromechanical",
+      "3d cad",
+      // Exclude generic IT roles (unless compliance/validation)
+      "full stack",
+      "backend",
+      "frontend",
+      "microservices",
+      "devops",
+      "sre",
+      "kubernetes",
     ],
   },
 
@@ -1056,6 +1165,44 @@ const TITLE_NUDGES = [
       /\b(product\s*manager|project\s*manager|program\s*manager|delivery\s*manager|product\s*owner|scrum\s*master|agile\s*coach)\b/i,
     cat: "Management",
     boost: 5,
+  },
+
+  // --- Pharma QA ---
+  {
+    regex: /\b(computer\s*system\s*validation|csv)\b/i,
+    cat: "PharmaQA",
+    boost: 5,
+  },
+  {
+    regex: /\b(gxp|cgmp|gmp)\b/i,
+    cat: "PharmaQA",
+    boost: 4,
+  },
+  {
+    regex: /\b(quality\s*management\s*system|qms)\b/i,
+    cat: "PharmaQA",
+    boost: 4,
+  },
+  {
+    regex: /\b(pharma\s*quality|medical\s*device\s*qa|biotech\s*qa)\b/i,
+    cat: "PharmaQA",
+    boost: 4,
+  },
+  {
+    regex: /\b(validation\s*specialist|validation\s*scientist)\b/i,
+    cat: "PharmaQA",
+    boost: 4,
+  },
+  {
+    regex:
+      /\b(regulatory\s*compliance|inspection\s*readiness|quality\s*auditor)\b/i,
+    cat: "PharmaQA",
+    boost: 3,
+  },
+  {
+    regex: /\b(capa|apqr|change\s*control)\b/i,
+    cat: "PharmaQA",
+    boost: 3,
   },
 ];
 
