@@ -5,6 +5,7 @@ const axios = require("axios").default;
 const cheerio = require("cheerio");
 const linkedIn = require("linkedin-jobs-api");
 const randomUA = require("random-useragent");
+const { getJson } = require("serpapi");
 
 // -------- Config you can tune ----------
 const KEYWORDS = [
@@ -54,6 +55,9 @@ const OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 const HOURS_WINDOW = 8; // Add only jobs <= 8 hours old
 const DAYS_TO_KEEP = 8; // purge jobs > 7 days old
 
+// Define the workable search query
+const SEARCH_QUERY = 'site:apply.workable.com "jobs" "india"';
+
 // -------- Utilities ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -82,6 +86,45 @@ function writeOutput(list) {
 
 function toIsoStringUTC(date) {
   return new Date(date).toISOString();
+}
+
+/**
+ * Checks if the current UTC hour is one of the desired run times (00, 08, 16).
+ * This function ensures the script runs only 3 times a day.
+ * @returns {boolean} True if the current time satisfies the 8-hour interval.
+ */
+function limitedRun() {
+  // Target hours in UTC (Covers the 8-hour interval: 00:00, 08:00, 16:00)
+  const targetHours = [0, 8, 16];
+
+  // Get the current date and time in UTC
+  const nowUtc = new Date();
+
+  // Get the current UTC hour (0-23)
+  const currentUTCHour = nowUtc.getUTCHours();
+
+  // Get the current UTC minutes (0-59)
+  const currentUTCMinutes = (now = nowUtc.getUTCMinutes());
+
+  // Check if the current hour is in the target hours array
+  const isTargetHour = targetHours.includes(currentUTCHour);
+
+  // OPTIONAL: Restrict the run to the first half-hour to avoid running twice per target hour
+  // (e.g., at 08:00 and 08:30). If you only want it to run exactly once per 8 hours,
+  // restrict it to minutes < 30.
+  const isFirstHalfHour = currentUTCMinutes < 30;
+
+  // The script should run only if it's one of the target hours AND it's in the first
+  // half hour of the GitHub Actions schedule trigger.
+  if (isTargetHour && isFirstHalfHour) {
+    console.log(`Current UTC Time: ${nowUtc}. Condition met. Starting search`);
+    return true;
+  } else {
+    console.log(
+      `Current UTC Time: ${nowUtc}. Condition NOT met. Skipping search.`
+    );
+    return false;
+  }
 }
 
 function htmlUnescape(s) {
@@ -342,9 +385,21 @@ async function fetchJobDetailFromLinkedIn(jobId) {
         // get the URL from the first matching element
         companyUrl = linkElem.attr("href");
       }
+
+      let jobClosed = false;
+      const jobClosedElem = $(".closed-job");
+      if (jobClosedElem.length > 0) {
+        jobClosed = true;
+      }
     }
     await sleep(500);
-    return { resolvedDate: listedAt, applyUrl, description, companyUrl };
+    return {
+      resolvedDate: listedAt,
+      applyUrl,
+      description,
+      companyUrl,
+      jobClosed,
+    };
   } catch (err) {
     console.error("Error fetching job detail:", err.message);
     return {
@@ -352,6 +407,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       applyUrl: null,
       description: null,
       companyUrl: null,
+      jobClosed: null,
     };
   }
 }
@@ -483,7 +539,7 @@ function clean_url(url) {
   return clean_url;
 }
 
-function mergeAndCleanJobsData(output_data) {
+async function mergeAndCleanJobsData(output_data) {
   const json = readExisting();
   const existing = json ? json.data : [];
   json.recentlyAddedCount = output_data.length;
@@ -504,8 +560,8 @@ function mergeAndCleanJobsData(output_data) {
   const DaysInMillis = DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
   const cutoffTime = currentDayUtcMidnight - DaysInMillis;
 
-  // Filter out old posts
-  const prunedExisting = existing.filter((j) => {
+  // Filter out old posts based on DAYS_TO_KEEP
+  let prunedExisting = existing.filter((j) => {
     // Convert the job post's date string to a timestamp
     const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
     // Keep the post if its timestamp is equal to or LATER than the cutoff time
@@ -518,6 +574,61 @@ function mergeAndCleanJobsData(output_data) {
   console.log(
     `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
   );
+
+  if (limitedRun()) {
+    // Check older LinkedIn posts for closure ---
+    const TWO_DAYS_IN_MILLIS = 2 * 24 * 60 * 60 * 1000;
+    const twoDayCutoffTime = Date.now() - TWO_DAYS_IN_MILLIS;
+    const jobsToCheck = [];
+    const jobsToKeep = [];
+
+    for (const j of prunedExisting) {
+      const isLinkedIn = j.source === "LinkedIn";
+      const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
+      const isOlderThan2Days = d < twoDayCutoffTime;
+
+      // Identify old LinkedIn jobs for closure check
+      if (isLinkedIn && isOlderThan2Days) {
+        jobsToCheck.push(j);
+      } else {
+        jobsToKeep.push(j);
+      }
+    }
+    console.log(
+      `Checking status for ${jobsToCheck.length} older LinkedIn jobs...`
+    );
+    let closedJobsRemovedCount = 0;
+
+    const results = await Promise.allSettled(
+      jobsToCheck.map(async (job) => {
+        const details = await fetchJobDetailFromLinkedIn(job.jobId);
+        return { job, details };
+      })
+    );
+
+    for (const result of results) {
+      if (result.status === "fulfilled") {
+        const { job, details } = result.value;
+        if (details.jobClosed) {
+          // Job is closed, remove it
+          closedJobsRemovedCount++;
+        } else {
+          // Job is still open, keep it
+          jobsToKeep.push(job);
+        }
+      } else {
+        // If the check failed (e.g., error fetching), keep the job to re-check later
+        console.warn(
+          `Failed to check job ${result.value.job.jobId}: ${result.reason}`
+        );
+        jobsToKeep.push(result.value.job);
+      }
+    }
+
+    prunedExisting = jobsToKeep;
+    console.log(`Removed ${closedJobsRemovedCount} closed LinkedIn job posts.`);
+    console.log(`Count after cleaning closed jobs: ${prunedExisting.length}`);
+  }
 
   // Use jobId as the unique key
   const byJobId = new Map();
@@ -559,6 +670,96 @@ function mergeAndCleanJobsData(output_data) {
   return finalList.length;
 }
 
+/**
+ * Searches Workable for QA jobs in India, restricting results to the last 24 hours.
+ * * @param {string} query The search query string.
+ * @returns {Promise<Array|null>} A promise that resolves to an array of search results or null on failure/no results.
+ */
+async function getWorkableSearchResults(query) {
+  // --- Configuration ---
+  const API_KEY = process.env.SERP_API_KEY;
+  if (!API_KEY) {
+    throw new Error("SERP_API_KEY environment variable is not set.");
+  }
+
+  const params = {
+    engine: "google",
+    q: query,
+    google_domain: "google.com",
+    hl: "en",
+    gl: "us",
+    api_key: API_KEY,
+    tbs: "qdr:d",
+  };
+
+  try {
+    console.log(`Searching for: "${query}" (Last 24 hours)`);
+
+    // Fetch the JSON results using async/await
+    const json = await getJson(params);
+
+    if (json.error) {
+      console.error("SerpApi Error:", json.error);
+      return null;
+    }
+    return json.organic_results || [];
+  } catch (error) {
+    console.error("An unexpected error occurred during the API call:", error);
+    return null;
+  }
+}
+
+/**
+ * Transforms the raw search results into a clean, structured JSON format.
+ * * @param {Array} results The raw organic results from the SerpApi call.
+ * @param {string} query The original search query.
+ * @returns {Array|null} The array of structured job results or null if no results.
+ */
+function processWorkableSearchResults(results, query) {
+  if (!results || results.length === 0) {
+    console.warn(`No organic results found for: "${query}"`);
+    return null;
+  }
+
+  console.log(`Found ${results.length} organic results for: "${query}"`);
+
+  // Map the results array to the desired JSON structure
+  const jsonResults = results.map((result) => {
+    return {
+      title: result.title,
+      url: result.link,
+      // Add default/placeholder values
+      company: "",
+      location: "",
+      source: "Workable",
+    };
+  });
+
+  return jsonResults;
+}
+
+/**
+ * Main function to execute the search and processing logic.
+ */
+async function runWorkableJobSearch() {
+  // Get the search results (last 24 hours)
+  const orCondition = KEYWORDS.map((kw) => `"${kw}"`).join(" OR ");
+  const finalQuery = `${SEARCH_QUERY} (${orCondition})`;
+
+  const rawResults = await getWorkableSearchResults(finalQuery);
+
+  // Process and format the results
+  const jsonOutput = processWorkableSearchResults(rawResults, SEARCH_QUERY);
+
+  if (jsonOutput) {
+    console.log("\n--- Workable Job Results ---");
+    console.log(jsonOutput);
+    return jsonOutput;
+  } else {
+    return [];
+  }
+}
+
 // -------- Main pipeline ----------
 (async function main() {
   // gather jobs and links from searching keywords
@@ -570,7 +771,11 @@ function mergeAndCleanJobsData(output_data) {
   const enrichedJobs = await enrichLinkedInJobDetails(newJobs);
   console.log(`Found ${enrichedJobs.length} new job posts to save.`);
 
-  const total_jobs = mergeAndCleanJobsData(enrichedJobs);
+  const total_jobs = await mergeAndCleanJobsData(enrichedJobs);
+
+  if (limitedRun()) {
+    // await runWorkableJobSearch();
+  }
 
   let summaryContent = `## Results\n\n\n`;
   try {
