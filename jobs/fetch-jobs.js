@@ -104,7 +104,7 @@ function limitedRun() {
   const currentUTCHour = nowUtc.getUTCHours();
 
   // Get the current UTC minutes (0-59)
-  const currentUTCMinutes = (now = nowUtc.getUTCMinutes());
+  const currentUTCMinutes = nowUtc.getUTCMinutes();
 
   // Check if the current hour is in the target hours array
   const isTargetHour = targetHours.includes(currentUTCHour);
@@ -338,6 +338,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
     let applyUrl = null;
     let description = null;
     let companyUrl = null;
+    let jobClosed = false;
 
     if (typeof data === "object") {
       listedAt = data.listedAt ? new Date(data.listedAt) : null;
@@ -386,7 +387,6 @@ async function fetchJobDetailFromLinkedIn(jobId) {
         companyUrl = linkElem.attr("href");
       }
 
-      let jobClosed = false;
       const jobClosedElem = $(".closed-job");
       if (jobClosedElem.length > 0) {
         jobClosed = true;
