@@ -541,8 +541,8 @@ function clean_string(input) {
   if (!input) {
     return null;
   }
-  /[^a-zA-Z0-9\s:,\.\-()@/•\u00A0-\u00FF]/g;
-  const regex = /[^a-zA-Z0-9\s•\u00A0-\u00FF]/g;
+  
+  const regex = /[^a-zA-Z0-9\s\\n'"<>:;,=+.?_–—\-()&@%/•*\u00A0-\u00FF]/g;
   return input.replace(regex, "");
 }
 
