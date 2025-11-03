@@ -1,5 +1,6 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+
 import { CATEGORIES, TITLE_NUDGES } from "./constants.js";
 
 const UNKNOWN = "—";

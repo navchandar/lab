@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
-const fs = require("fs");
-const path = require("path");
-const axios = require("axios").default;
-const cheerio = require("cheerio");
-const linkedIn = require("linkedin-jobs-api");
-const randomUA = require("random-useragent");
-const { getJson } = require("serpapi");
+import fs from "fs";
+import path from "path";
+import axios from "axios";
+import cheerio from "cheerio";
+import linkedIn from "linkedin-jobs-api";
+import randomUA from "random-useragent";
+import { getJson } from "serpapi";
 import { JOB_KEYWORDS as KEYWORDS } from "./constants.js";
 
 const BASE_QUERY = {
