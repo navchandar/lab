@@ -79,12 +79,10 @@ function limitedRun() {
   // The script should run only if it's one of the target hours AND it's in the first
   // half hour of the GitHub Actions schedule trigger.
   if (isTargetHour && isFirstHalfHour) {
-    console.log(`Current UTC Time: ${nowUtc}. Condition met. Starting search`);
+    console.log(`Current UTC Time: ${nowUtc}. Condition met`);
     return true;
   } else {
-    console.log(
-      `Current UTC Time: ${nowUtc}. Condition NOT met. Skipping search.`
-    );
+    console.log(`Current UTC Time: ${nowUtc}. Condition NOT met`);
     return false;
   }
 }
@@ -275,7 +273,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
   // Define threshild for a high-applicant count to trigger repost job detection
   const HIGH_APPLICANT_THRESHOLD = 100;
-  const REPOST_WINDOW_HOURS = 6;
+  const REPOST_WINDOW_HOURS = 4;
 
   try {
     const headers = {
@@ -300,7 +298,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
     if (typeof data === "object") {
       listedAt = data.listedAt ? new Date(data.listedAt) : null;
       applyUrl = data.applyUrl || data.companyApplyUrl || null;
-      description = data.description || null;
+      description = clean_string(data.description) || null;
       companyUrl = data.company || null;
     } else {
       // Fallback: parse HTML with cheerio
@@ -364,7 +362,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
         const isRecentPost = withinLastHours(listedAt, REPOST_WINDOW_HOURS);
         if (applicantsCount >= HIGH_APPLICANT_THRESHOLD && isRecentPost) {
           likelyRepost = true;
-          console.log(`${jobId} Flagged as LIKELY REPOST`);
+          // console.log(`${jobId} Flagged as LIKELY REPOST`);
         }
       }
     }
@@ -384,8 +382,8 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       applyUrl: null,
       description: null,
       companyUrl: null,
-      jobClosed: null,
-      likelyRepost: null,
+      jobClosed: true,
+      likelyRepost: true,
     };
   }
 }
@@ -427,6 +425,20 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
       console.warn("Older than window; skipping", {
         title: job.position,
         postedAt,
+      });
+      continue;
+    }
+    if (detail.jobClosed) {
+      console.warn("Closed job; skipping", {
+        title: job.position,
+        url: job.jobUrl,
+      });
+      continue;
+    }
+    if (detail.likelyRepost) {
+      console.warn("Likely Reposted job; skipping", {
+        title: job.position,
+        url: job.jobUrl,
       });
       continue;
     }
@@ -515,6 +527,23 @@ function clean_url(url) {
   // Get the base URL without query parameters
   const clean_url = urlObj.origin + urlObj.pathname;
   return clean_url;
+}
+
+function clean_string(input) {
+  // This regex matches any character that is NOT:
+  // a-z (lowercase letters)
+  // A-Z (uppercase letters)
+  // 0-9 (digits)
+  // \s (whitespace characters including space, newline \n, carriage return \r, and tabs)
+  // • (the bullet point character U+2022)
+  // \u00A0-\u00FF (Unicode range for the original extended ASCII characters)
+
+  if (!input) {
+    return null;
+  }
+  /[^a-zA-Z0-9\s:,\.\-()@/•\u00A0-\u00FF]/g;
+  const regex = /[^a-zA-Z0-9\s•\u00A0-\u00FF]/g;
+  return input.replace(regex, "");
 }
 
 async function mergeAndCleanJobsData(output_data) {

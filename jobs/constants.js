@@ -334,7 +334,12 @@ export const CATEGORIES = {
       "21 cfr",
       "sop",
       "biosimilars",
-       // other
+      "hplc",
+      "gc",
+      "karl fischer",
+      "chromatogram",
+      "dissolution",
+      // other
       "garment",
       "textile",
       "fabric",
@@ -493,6 +498,9 @@ export const CATEGORIES = {
       "biosimilar operations",
       "system compliance",
       "design control quality management",
+      "analytical method validation",
+      "impurity profiling",
+      "release testing",
     ],
     terms: [
       "qms",
@@ -501,6 +509,7 @@ export const CATEGORIES = {
       "fda",
       "ema",
       "oos",
+      "oot",
       "capa",
       "apqr",
       "validation",
@@ -532,10 +541,18 @@ export const CATEGORIES = {
       "pq", // Performance Qualification
       "risk assessment",
       "quality review",
+      "hplc",
       "pharma",
       "hipaa",
       "argus safety",
       "health science",
+      "gc",
+      "uv",
+      "ir",
+      "karl fischer",
+      "lmis",
+      "cds",
+      "chromatogram",
     ],
     negative: [
       // Exclude generic SoftwareQA terms unless paired with Pharma terms
