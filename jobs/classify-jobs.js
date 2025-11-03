@@ -359,7 +359,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 // CLI usage: node classify.js
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const input = process.argv[2];
   if (input) {
     OUTPUT_FILE = path.resolve(input);
