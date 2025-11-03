@@ -2,7 +2,7 @@
 import fs from "fs";
 import path from "path";
 import axios from "axios";
-import cheerio from "cheerio";
+import * as cheerio from "cheerio";
 import linkedIn from "linkedin-jobs-api";
 import randomUA from "random-useragent";
 import { getJson } from "serpapi";
