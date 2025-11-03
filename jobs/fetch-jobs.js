@@ -5,6 +5,7 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import linkedIn from "linkedin-jobs-api";
 import randomUA from "random-useragent";
+import { fileURLToPath } from "url";
 import { getJson } from "serpapi";
 import { JOB_KEYWORDS as KEYWORDS } from "./constants.js";
 
@@ -18,6 +19,9 @@ const BASE_QUERY = {
   limit: "20",
   page: "0",
 };
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 const HOURS_WINDOW = 8; // Add only jobs <= 8 hours old
