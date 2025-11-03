@@ -6,39 +6,7 @@ const cheerio = require("cheerio");
 const linkedIn = require("linkedin-jobs-api");
 const randomUA = require("random-useragent");
 const { getJson } = require("serpapi");
-
-// -------- Config you can tune ----------
-const KEYWORDS = [
-  "API Test Automation",
-  "Cypress Automation Engineer",
-  "Director of QA",
-  "Head of Quality Engineering",
-  "Lead Automation Engineer",
-  "Lead QA Engineer",
-  "Mobile Automation Engineer",
-  "Performance QA Engineer",
-  "Performance Test Engineer",
-  "Playwright Automation",
-  "Principal Automation Engineer",
-  "Principal Quality Engineer",
-  "Principal SDET",
-  "Python Automation",
-  "QA Automation Architect",
-  "QA Automation Lead",
-  "QA Manager (Automation)",
-  "Quality Engineering Lead",
-  "SDET Lead",
-  "Selenium Automation",
-  "Senior Automation Engineer",
-  "Senior QA Automation Engineer",
-  "Senior SDET (Software Development Engineer in Test)",
-  "Senior Test Automation Engineer",
-  "Senior Test Automation Specialist",
-  "Senior Test Engineer",
-  "Staff SDET Automation Engineer",
-  "Staff Software Development Engineer in Test",
-  "Test Automation Lead",
-];
+import { JOB_KEYWORDS as KEYWORDS } from "./constants.js";
 
 const BASE_QUERY = {
   location: "India",
@@ -542,7 +510,9 @@ function clean_url(url) {
 async function mergeAndCleanJobsData(output_data) {
   const json = readExisting();
   const existing = json ? json.data : [];
-  json.recentlyAddedCount = output_data.length;
+  if (output_data.length > 0) {
+    json.recentlyAddedCount = output_data.length;
+  }
   // Add updated on Date only if new jobs are added
   // Dont save updated dates for removing job posts
   if (output_data.length > 0) {
