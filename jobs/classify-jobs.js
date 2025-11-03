@@ -359,34 +359,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 // CLI usage: node classify.js
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const input = process.argv[2];
-  if (input) {
-    OUTPUT_FILE = path.resolve(input);
-  }
 
-  try {
-    // Read the file
-    const raw = fs.readFileSync(OUTPUT_FILE, "utf-8");
-    const json = JSON.parse(raw);
-    const jobs = json.data;
+try {
+  // Read the file
+  const raw = fs.readFileSync(OUTPUT_FILE, "utf-8");
+  const json = JSON.parse(raw);
+  const jobs = json.data;
 
-    // Classify the jobs
-    const jobswithExp = addExperienceToJobs(jobs);
-    const out = classifyJobs(jobswithExp);
-    json.data = out;
+  // Classify the jobs
+  const jobswithExp = addExperienceToJobs(jobs);
+  const out = classifyJobs(jobswithExp);
+  json.data = out;
 
-    // Convert back to a nicely formatted JSON string
-    const outputJson = JSON.stringify(json, null, 2);
+  // Convert back to a nicely formatted JSON string
+  const outputJson = JSON.stringify(json, null, 2);
 
-    // Write back to the same file
-    fs.writeFileSync(OUTPUT_FILE, outputJson, "utf-8");
+  // Write back to the same file
+  fs.writeFileSync(OUTPUT_FILE, outputJson, "utf-8");
 
-    console.log(
-      `Successfully classified ${jobs.length} entries and updated the file: ${OUTPUT_FILE}`
-    );
-  } catch (error) {
-    console.error(`Error processing file ${OUTPUT_FILE}:`, error.message);
-    process.exit(1);
-  }
+  console.log(
+    `Successfully classified ${jobs.length} entries and updated the file: ${OUTPUT_FILE}`
+  );
+} catch (error) {
+  console.error(`Error processing file ${OUTPUT_FILE}:`, error.message);
+  process.exit(1);
 }

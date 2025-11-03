@@ -31,6 +31,18 @@ export const JOB_KEYWORDS = [
   "Test Automation Lead",
 ];
 
+// LinkedIn Job Search Query to get recent posts
+export const LINKEDIN_SEARCH_QUERY = {
+  location: "India",
+  jobType: "full time",
+  sortBy: "recent", // relevant or recent
+  dateSincePosted: "24hr",
+  experienceLevel: "senior",
+  //valid values: internship, entry level, associate, senior, director, executive
+  limit: "20",
+  page: "0",
+};
+
 // Classification Categories, keywords and negative associations.
 export const CATEGORIES = {
   SoftwareDEV: {
@@ -322,6 +334,28 @@ export const CATEGORIES = {
       "21 cfr",
       "sop",
       "biosimilars",
+       // other
+      "garment",
+      "textile",
+      "fabric",
+      "merchandiser",
+      "vendor location",
+      "inline inspection",
+      "final inspection",
+      "production quality",
+      "sample evaluation",
+      "risk analysis",
+      "buyer requirements",
+      "raw materials",
+      "export house",
+      "retail quality",
+      "pattern measuring",
+      "accessories inspection",
+      "measurement review",
+      "non-conformity",
+      "factory quality",
+      "production approvals",
+      "quality communication",
     ],
   },
 

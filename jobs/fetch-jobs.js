@@ -8,17 +8,7 @@ import randomUA from "random-useragent";
 import { fileURLToPath } from "url";
 import { getJson } from "serpapi";
 import { JOB_KEYWORDS as KEYWORDS } from "./constants.js";
-
-const BASE_QUERY = {
-  location: "India",
-  jobType: "full time",
-  sortBy: "recent", // relevant or recent
-  dateSincePosted: "24hr",
-  experienceLevel: "senior",
-  //valid values: internship, entry level, associate, senior, director, executive
-  limit: "20",
-  page: "0",
-};
+import { LINKEDIN_SEARCH_QUERY } from "./constants.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -217,7 +207,7 @@ async function gatherLinkedInSearchResults(KEYWORDS) {
 
     while (currentPage < MAX_PAGES) {
       const query = {
-        ...BASE_QUERY,
+        ...LINKEDIN_SEARCH_QUERY,
         keyword: kw,
         page: String(currentPage),
       };
@@ -245,55 +235,48 @@ async function gatherLinkedInSearchResults(KEYWORDS) {
 }
 
 /**
- * Deduplicates the gathered jobs and filters out existing jobs and old reposts from Linkedin
+ * Deduplicates the gathered jobs by URL and filters out jobs whose IDs already exist in the saved data.
  * @param {Array<Object>} gatheredJobs - Array of job objects from the gathering stage.
  * @returns {Array<Object>} An array of unique, new job objects.
  */
 function filterLinkedInSearchResults(gatheredJobs) {
-  // Dedupe by URL
+  // Dedupe the current batch by clean URL to ensure no duplicates from the current scrape.
   let deduped = uniqueBy(gatheredJobs, (r) => clean_url(r.jobUrl));
-  console.log(`Jobs count after deduping all gathered jobs: ${deduped.length}`);
+  console.log(`Jobs count after URL deduplication: ${deduped.length}`);
 
   // Load and prepare existing job data
   const existingJobs = readExisting().data;
   const existingJobIds = new Set(existingJobs.map((j) => j.jobId));
 
-  // Find the largest jobId in existingJobIds - Assuming jobIds are numerical
-  const maxExistingJobId =
-    existingJobIds.size > 0
-      ? Math.max(...Array.from(existingJobIds).map((id) => Number(id)))
-      : -Infinity; // Use -Infinity if the set is empty for smallest number
-
-  // Filter out existing and old reposts
-  deduped = deduped.filter((job) => {
+  // Filter out any job whose ID already exists in the saved data.
+  const newJobs = deduped.filter((job) => {
     const jobId = extractJobIdFromLinkedInUrl(job.jobUrl);
+
     if (!jobId) {
       console.warn("Could not parse jobId", job.jobUrl);
-      return false;
+      return false; // Filter out jobs without a valid ID
     }
-    // Check if this already exists
+
+    // Check if this jobId already exists
     const isNew = !existingJobIds.has(jobId);
     if (!isNew) {
-      console.log(`Already jobId exists in json: ${jobId}`);
+      console.log(`Already existing jobId found (filtered out): ${jobId}`);
     }
-    // Check if the job id is actually a reposted job
-    const isNotRepost = Number(jobId) >= maxExistingJobId;
-    if (!isNotRepost) {
-      console.log(`Reposted jobId: ${jobId}`);
-    }
-    // Keep the job post only if it's new and not already saved
-    return isNew && isNotRepost;
+    // Keep the job post only if its ID is not already saved
+    return isNew;
   });
 
-  console.log(
-    `Jobs count after removing existing jobs and reposts: ${deduped.length}`
-  );
+  console.log(`Jobs count after removing existing jobs: ${newJobs.length}`);
 
-  return deduped;
+  return newJobs;
 }
 
 async function fetchJobDetailFromLinkedIn(jobId) {
   const url = `https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/${jobId}`;
+  // Define threshild for a high-applicant count to trigger repost job detection
+  const HIGH_APPLICANT_THRESHOLD = 100;
+  const REPOST_WINDOW_HOURS = 6;
+
   try {
     const headers = {
       "User-Agent":
@@ -311,6 +294,8 @@ async function fetchJobDetailFromLinkedIn(jobId) {
     let description = null;
     let companyUrl = null;
     let jobClosed = false;
+    let applicantsCount = null;
+    let likelyRepost = false;
 
     if (typeof data === "object") {
       listedAt = data.listedAt ? new Date(data.listedAt) : null;
@@ -322,6 +307,17 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       const $ = cheerio.load(data);
       const postedText = $(".posted-time-ago__text").text().trim();
       listedAt = parseRelativeTimeToDate(postedText);
+
+      // APPLICANTS COUNT EXTRACTION ---
+      const applicantsElem = $(".num-applicants__caption");
+      if (applicantsElem.length > 0) {
+        const applicantsText = applicantsElem.text().trim();
+        const match = applicantsText.match(/(\d+)/);
+        if (match) {
+          applicantsCount = parseInt(match[1], 10);
+          console.log(`${jobId} applicants count: ${applicantsCount}`);
+        }
+      }
 
       const contentElem = $(".show-more-less-html__markup");
       if (contentElem.length > 0) {
@@ -363,6 +359,14 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       if (jobClosedElem.length > 0) {
         jobClosed = true;
       }
+
+      if (listedAt && applicantsCount !== null) {
+        const isRecentPost = withinLastHours(listedAt, REPOST_WINDOW_HOURS);
+        if (applicantsCount >= HIGH_APPLICANT_THRESHOLD && isRecentPost) {
+          likelyRepost = true;
+          console.log(`${jobId} Flagged as LIKELY REPOST`);
+        }
+      }
     }
     await sleep(500);
     return {
@@ -371,6 +375,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       description,
       companyUrl,
       jobClosed,
+      likelyRepost,
     };
   } catch (err) {
     console.error("Error fetching job detail:", err.message);
@@ -380,6 +385,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       description: null,
       companyUrl: null,
       jobClosed: null,
+      likelyRepost: null,
     };
   }
 }
@@ -713,7 +719,7 @@ function processWorkableSearchResults(results, query) {
 }
 
 /**
- * Main function to execute the search and processing logic.
+ * Function to execute the workable search and processing logic.
  */
 async function runWorkableJobSearch() {
   // Get the search results (last 24 hours)
