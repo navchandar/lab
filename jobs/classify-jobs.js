@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 
 import { CATEGORIES, TITLE_NUDGES } from "./constants.js";
 
@@ -354,6 +355,8 @@ function addExperienceToJobs(jobs) {
   });
 }
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 // CLI usage: node classify.js
 if (require.main === module) {
