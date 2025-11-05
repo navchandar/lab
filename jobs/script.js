@@ -3,6 +3,7 @@ import { CITY_ALIAS } from "./constants.js";
 // Global variable to hold all jobs
 let allJobs = [];
 let lastModified = null;
+let lastAddedOn = null;
 let initialLoadComplete = false;
 let notificationPermission = "default";
 let lastNotification = null;
@@ -146,11 +147,15 @@ function convertToLocalTime(utcDateString) {
 }
 
 function parseMinExperience(expStr) {
-  if (!expStr || expStr === "—") {
-    return null;
+  try {
+    if (!expStr || expStr === "—") {
+      return null;
+    }
+    const match = expStr.match(/\d+/);
+    return match ? parseInt(match[0], 10) : null;
+  } catch (error) {
+    console.error(error);
   }
-  const match = expStr.match(/\d+/);
-  return match ? parseInt(match[0], 10) : null;
 }
 
 /**
@@ -205,27 +210,35 @@ function showToast(message_text) {
   const toast = document.getElementById("ip-toast");
   const message = document.getElementById("ip-toast-message");
   const closeBtn = document.getElementById("ip-toast-close");
-  // Update message and show toast
-  toast.classList.remove("show");
-  message.textContent = `${message_text}`;
-  console.log(message_text);
-  toast.classList.add("show");
-
-  // Manual close
-  closeBtn.onclick = () => {
+  try {
+    // Update message and show toast
     toast.classList.remove("show");
-  };
+    message.textContent = `${message_text}`;
+    console.log(message_text);
+    toast.classList.add("show");
+
+    // Manual close
+    closeBtn.onclick = () => {
+      toast.classList.remove("show");
+    };
+  } catch (error) {
+    console.error(error);
+  }
 }
 
 function closeErrorToast() {
-  const toast = document.getElementById("ip-toast");
-  const toast_message = toast.querySelector("#ip-toast-message").textContent;
-  if (
-    toast &&
-    toast.classList.contains("show") &&
-    toast_message.includes("Error")
-  ) {
-    toast.classList.remove("show");
+  try {
+    const toast = document.getElementById("ip-toast");
+    const toast_message = toast.querySelector("#ip-toast-message").textContent;
+    if (
+      toast &&
+      toast.classList.contains("show") &&
+      toast_message.includes("Error")
+    ) {
+      toast.classList.remove("show");
+    }
+  } catch (error) {
+    console.error(error);
   }
 }
 
@@ -354,8 +367,24 @@ function hideSpinner() {
   }, 500 + baseDelay * 3); // 500ms + 450ms
 }
 
+// --- Utility: Fetch with Error Handling ---
+async function get(url, options = {}) {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
 async function main() {
   requestNotificationPermission();
+  // Get the IANA Timezone Name
+  const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  console.log("Local Timezone:", localTimeZone);
 
   // --- Initialize an empty DataTable ---
   // We initialize it once with configuration, then add data later
@@ -370,13 +399,10 @@ async function main() {
     closeErrorToast();
 
     try {
-      const headResponse = await fetch(url, {
+      const headResponse = await get(url, {
         method: "HEAD",
         cache: "no-store",
       });
-      if (!headResponse.ok) {
-        throw new Error(`HTTP error! status: ${headResponse.status}`);
-      }
 
       const newModified = headResponse.headers.get("Last-Modified");
 
@@ -389,20 +415,14 @@ async function main() {
       lastModified = newModified;
 
       // Fetch and update table
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Get the IANA Timezone Name
-      const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      console.log("Local Timezone:", localTimeZone);
-
+      const response = await get(url, { cache: "no-store" });
       const resp = await response.json();
+
       allJobs = resp.data;
       const added = resp.recentlyAddedCount;
+      const addedOn = resp.recentlyUpdatedOn;
 
-      updateRefreshTimeDisplay(newModified, added);
+      updateRefreshTimeDisplay(addedOn, added);
 
       allJobs.forEach((job) => {
         const originalDate = job.datePosted;
@@ -421,11 +441,14 @@ async function main() {
       populateTable(allJobs);
 
       // Only send notification on subsequent updates, not the initial page load
-      if (initialLoadComplete && added > 0) {
-        const relativeTime = getRelativeTimeDisplay(newModified);
+      if (initialLoadComplete && added > 0 && lastAddedOn !== addedOn) {
+        const relativeTime = getRelativeTimeDisplay(addedOn);
         // const displayTime = convertToLocalTime(newModified);
-        console.log("Sending notification. Jobs recently added:", added);
+        console.log("Sending notification. Added:", added, "on", addedOn);
         sendJobUpdateNotification(relativeTime || "Just Now", added);
+        lastAddedOn = addedOn;
+      } else if (lastAddedOn === addedOn) {
+        console.log("No notification sent. Jobs last updated:", lastAddedOn);
       } else if (added <= 0) {
         console.log("No notification sent. Jobs recently added:", added);
       }
