@@ -221,10 +221,12 @@ function generateServiceWorker() {
     .map((file) => `'${file}'`);
 
   console.log("🧾 Files to cache:", allFilesToCache);
-  const IgnoreRegex = `^${dir}(/|$)`;
 
   const swTemplate = `
 // version=${versionString}
+
+const IGNORED_DIRS = ${JSON.stringify(IGNORED_DIRS)};
+
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
     ${allFilesToCache.join(",\n  ")}
@@ -305,9 +307,10 @@ self.addEventListener("fetch", (event) => {
 
         // ✅ Skip requests to ignored directories
         const isIgnored = IGNORED_DIRS.some(dir => {
-          const pattern = new RegExp(${IgnoreRegex});
+          const pattern = new RegExp(\`^\${dir}(/|$)\`);
           return pattern.test(requestPath);
         });
+
         if (isIgnored) {
           return fetch(event.request); // Don't cache, just fetch
         }
