@@ -381,12 +381,12 @@ async function get(url, options = {}) {
   }
 }
 function addScrollOnPagination() {
-  document.querySelectorAll(".dt-paging-button").forEach((button) => {
-    button.addEventListener("click", () => {
+  document.addEventListener("click", function (event) {
+    if (event.target.classList.contains("dt-paging-button")) {
       if (dataTable) {
         dataTable.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-    });
+    }
   });
 }
 
