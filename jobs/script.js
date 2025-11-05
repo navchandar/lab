@@ -11,6 +11,7 @@ let lastNotification = null;
 const NOTIFICATION_TAG = "job-update-notification";
 
 const lastMod = document.getElementById("last-refresh");
+const dataTable = document.getElementById("jobTable");
 
 function normalizeLocation(location) {
   if (!location) {
@@ -314,7 +315,6 @@ function sendJobUpdateNotification(refreshTime, addedJobs) {
 
 function hideSpinner() {
   const spinner = document.getElementById("loadingSpinner");
-  const dataTable = document.getElementById("jobTable");
   const filters = document.getElementById("filters");
   const rows = document.querySelectorAll(".dt-layout-row");
 
@@ -380,6 +380,15 @@ async function get(url, options = {}) {
     throw error;
   }
 }
+function addScrollOnPagination() {
+  document.querySelectorAll(".dt-paging-button").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (dataTable) {
+        dataTable.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+}
 
 async function main() {
   requestNotificationPermission();
@@ -406,12 +415,10 @@ async function main() {
       });
 
       const newModified = headResponse.headers.get("Last-Modified");
-
       if (lastModified && newModified && newModified === lastModified) {
         console.log("No changes in jobs.json");
         return;
       }
-
       // Update stored value
       lastModified = newModified;
 
@@ -440,6 +447,10 @@ async function main() {
 
       // --- Populate the table using the DataTables API ---
       populateTable(allJobs);
+
+      if (initialLoadComplete) {
+        addScrollOnPagination();
+      }
 
       // Only send notification on subsequent updates, not the initial page load
       if (initialLoadComplete && added > 0 && lastAddedOn !== addedOn) {
