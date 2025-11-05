@@ -41,15 +41,20 @@ function normalizeLocation(location) {
 }
 
 // Update last modified timestamp from Jobs.json to UI
-function updateRefreshTimeDisplay(gmtDateString) {
+function updateRefreshTimeDisplay(gmtDateString, jobsAdded) {
   if (!lastMod || !gmtDateString) {
     return;
   }
+  let txtContent = "";
   // convert the GMT date string to relative time
   const relativeTime = getRelativeTimeDisplay(gmtDateString);
   if (relativeTime) {
-    lastMod.textContent = `Last updated: ${relativeTime}`;
+    txtContent = `Last updated: ${relativeTime}`;
   }
+  if (jobsAdded) {
+    txtContent += ` ${jobsAdded} new posts detected.`;
+  }
+  lastMod.textContent = txtContent;
 }
 
 const dataTableConfig = {
@@ -395,8 +400,9 @@ async function main() {
 
       const resp = await response.json();
       allJobs = resp.data;
+      const added = resp.recentlyAddedCount;
 
-      updateRefreshTimeDisplay(newModified);
+      updateRefreshTimeDisplay(newModified, added);
 
       allJobs.forEach((job) => {
         const originalDate = job.datePosted;
@@ -415,7 +421,6 @@ async function main() {
       populateTable(allJobs);
 
       // Only send notification on subsequent updates, not the initial page load
-      const added = resp.recentlyAddedCount;
       if (initialLoadComplete && added > 0) {
         const relativeTime = getRelativeTimeDisplay(newModified);
         // const displayTime = convertToLocalTime(newModified);
@@ -471,11 +476,23 @@ async function main() {
 
     // Prepare data for DataTables. It expects an array of arrays.
     const dataToLoad = jobs.map((job) => {
-      // The order MUST match <thead> columns
+      // Add job title description
+      let titleAttr = "";
+      if (job.description) {
+        // Escape quotes (") for the HTML attribute and replace newlines (\n)
+        const descriptionTxt = job.description
+          .replace(/"/g, "&quot;") // Escape double quotes
+          .replace(/(\r\n|\r|\n)+/g, "\n")
+          .replace(/\n/g, "&#10;"); // Replace newlines for tooltip
+
+        titleAttr = `title="${descriptionTxt}"`;
+      }
       let roleType = job.classification.roleType;
       let roleTypeLink = `<a href="#" class="search-role-type">#${roleType}</a>`;
+      let jobTitleLink = `<a href="${job.url}" ${props} ${titleAttr}>${job.title}</a>`;
+      // The data order returned MUST match <thead> column titles
       return [
-        `<a href="${job.url}" ${props}>${job.title}</a>`,
+        jobTitleLink,
         job.company,
         job.location,
         roleType === "—" ? roleType : roleTypeLink,
@@ -594,48 +611,31 @@ async function main() {
     const selectedLocations = asArray($("#locationFilter").val());
     const selectedExperience = $("#experienceFilter").val(); // Single string value
 
-    // Get the global search term
-    const globalSearchTerm = jobsTable.search().toLowerCase();
+    // Get the indices of the rows that match the current global search (across all pages)
+    const filteredRowIndices = jobsTable
+      .rows({ search: "applied", page: "all" })
+      .indexes()
+      .toArray(); // Convert to a standard JS array
 
-    // Filter allJobs by the global search term ONLY
-    const globallyFilteredJobs = allJobs.filter((job) => {
-      if (!globalSearchTerm) {
-        return true;
-      }
-      // Check all relevant fields for the search term
-      return (
-        (job.title && job.title.toLowerCase().includes(globalSearchTerm)) ||
-        (job.company && job.company.toLowerCase().includes(globalSearchTerm)) ||
-        (job.location &&
-          job.location.toLowerCase().includes(globalSearchTerm)) ||
-        (job.classification.roleType &&
-          job.classification.roleType
-            .toLowerCase()
-            .includes(globalSearchTerm)) ||
-        (job.experienceRequired &&
-          job.experienceRequired.toLowerCase().includes(globalSearchTerm)) ||
-        (job.datePosted &&
-          job.datePosted.toLowerCase().includes(globalSearchTerm))
-      );
-    });
+    // Map these indices back to the original 'allJobs' array to get the job objects
+    const searchedJobs = filteredRowIndices.map((index) => allJobs[index]);
 
-    // --- Now, populate dropdowns based on this globallyFilteredJobs list ---
-
+    // --- Now, populate dropdowns based on this 'searchedJobs' list ---
     // Update Company Dropdown
     const companies = Array.from(
-      new Set(globallyFilteredJobs.map((j) => j.company))
+      new Set(searchedJobs.map((j) => j.company))
     ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     populateFilter("#companyFilter", companies, selectedCompanies);
 
     // Update Location Dropdown
     const locations = Array.from(
-      new Set(globallyFilteredJobs.map((j) => j.normalizedLocation))
+      new Set(searchedJobs.map((j) => j.normalizedLocation))
     ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
     populateFilter("#locationFilter", locations, selectedLocations);
 
     // Update Experience Dropdown
     const experienceSet = new Set();
-    globallyFilteredJobs.forEach((job) => {
+    searchedJobs.forEach((job) => {
       const exp = parseMinExperience(job.experienceRequired);
       if (exp !== null) {
         experienceSet.add(exp);
@@ -646,7 +646,7 @@ async function main() {
   }
 
   /**
-   * REVISED: Clears all filters and search, then redraws and updates dropdowns.
+   * Clears all filters and search, then redraws and updates dropdowns.
    */
   function resetAllFilters() {
     // Clear the DataTables global search
