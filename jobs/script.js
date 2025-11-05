@@ -49,10 +49,10 @@ function updateRefreshTimeDisplay(gmtDateString, jobsAdded) {
   // convert the GMT date string to relative time
   const relativeTime = getRelativeTimeDisplay(gmtDateString);
   if (relativeTime) {
-    txtContent = `Last updated: ${relativeTime}`;
+    txtContent = `Last updated: ${relativeTime}.`;
   }
   if (jobsAdded) {
-    txtContent += ` ${jobsAdded} new posts detected.`;
+    txtContent += ` ${jobsAdded} new posts detected!`;
   }
   lastMod.textContent = txtContent;
 }
