@@ -221,6 +221,7 @@ function generateServiceWorker() {
     .map((file) => `'${file}'`);
 
   console.log("🧾 Files to cache:", allFilesToCache);
+  const IgnoreRegex = `^${dir}(/|$)`;
 
   const swTemplate = `
 // version=${versionString}
@@ -291,41 +292,41 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   event.respondWith(
     (async () => {
-
       try {
         const requestUrl = new URL(event.request.url);
-        const requestPath = requestUrl.pathname.startsWith('/') 
-                             ? requestUrl.pathname.substring(1) 
-                             : requestUrl.pathname;
+        const requestPath = requestUrl.pathname.startsWith('/')
+          ? requestUrl.pathname.substring(1)
+          : requestUrl.pathname;
 
-        // Skip unsupported schemes like chrome-extension
+        // Skip unsupported schemes
         if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') {
           return fetch(event.request);
         }
-        
-        // Check if the request is one of the files we want to keep updated in the cache
-        // We use .some() for an efficient check.
-        const shouldBeCached = urlsToCache.includes(requestPath);
 
+        // ✅ Skip requests to ignored directories
+        const isIgnored = IGNORED_DIRS.some(dir => {
+          const pattern = new RegExp(${IgnoreRegex});
+          return pattern.test(requestPath);
+        });
+        if (isIgnored) {
+          return fetch(event.request); // Don't cache, just fetch
+        }
+
+        const shouldBeCached = urlsToCache.includes(requestPath);
         const cachedResponse = await caches.match(event.request);
-        
-        // Always try to fetch from the network, regardless of whether a cached copy exists
+
         const fetchPromise = fetch(event.request).then(async networkResponse => {
           try {
-                // *** Only cache the response if shouldBeCached is true ***
-                if (shouldBeCached && networkResponse.ok && networkResponse.type === 'basic') {
-                    const cache = await caches.open(CACHE_NAME);
-                    cache.put(event.request, networkResponse.clone());
-                }
+            if (shouldBeCached && networkResponse.ok && networkResponse.type === 'basic') {
+              const cache = await caches.open(CACHE_NAME);
+              cache.put(event.request, networkResponse.clone());
+            }
           } catch (cacheError) {
             console.warn("[SW] Failed to update cache:", cacheError);
           }
           return networkResponse;
         });
 
-        // If we have a cached response AND the file is in our defined cache list,
-        // return the cached response (Stale-While-Revalidate).
-        // Otherwise, wait for the network response (falling back to the original behavior for non-cached files).
         return (cachedResponse && shouldBeCached) ? cachedResponse : fetchPromise;
       } catch (error) {
         console.error("[SW] Fetch handler failed:", error);
