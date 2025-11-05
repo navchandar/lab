@@ -376,6 +376,7 @@ async function get(url, options = {}) {
     }
     return response;
   } catch (error) {
+    console.error("Request Failed to", url, error);
     throw error;
   }
 }
