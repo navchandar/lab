@@ -1,3 +1,5 @@
+import { CITY_ALIAS } from "./constants.js";
+
 // Global variable to hold all jobs
 let allJobs = [];
 let lastModified = null;
@@ -9,221 +11,6 @@ const NOTIFICATION_TAG = "job-update-notification";
 
 const lastMod = document.getElementById("last-refresh");
 
-const cityAliases = {
-  bengaluru: [
-    "bangalore",
-    "bangalore urban",
-    "bengaluru, karnataka",
-    "bangalore, karnataka",
-    "bengaluru, karnataka, india",
-    "bangalore, karnataka, india",
-    "bengaluru, india",
-    "bangalore, india",
-    "greater bangalore area",
-    "bengaluru area",
-    "bangalore area",
-    "bengaluru metropolitan region",
-    "bangalore metropolitan region",
-    "bengaluru east",
-    "electronic city",
-    "whitefield",
-  ],
-  mumbai: [
-    "bombay",
-    "mumbai, maharashtra",
-    "bombay, maharashtra",
-    "mumbai, maharashtra, india",
-    "bombay, maharashtra, india",
-    "mumbai, india",
-    "bombay, india",
-    "greater mumbai area",
-    "mumbai area",
-    "mumbai metropolitan region",
-    "mmr",
-    "navi mumbai",
-    "thane",
-  ],
-  delhi: [
-    "new delhi",
-    "delhi ncr",
-    "delhi-ncr",
-    "ncr",
-    "national capital region",
-    "national capital region (ncr)",
-    "delhi, delhi",
-    "new delhi, delhi",
-    "delhi, india",
-    "new delhi, india",
-    "greater delhi area",
-    "delhi area",
-    "delhi metropolitan area",
-  ],
-  gurgaon: [
-    "gurugram",
-    "gurgaon, haryana",
-    "gurugram, haryana",
-    "gurgaon, haryana, india",
-    "gurugram, haryana, india",
-    "gurgaon, india",
-    "gurugram, india",
-    "gurgaon area",
-    "gurugram area",
-    "gurgaon ncr",
-    "gurugram ncr",
-  ],
-  noida: [
-    "noida, uttar pradesh",
-    "noida, uttar pradesh, india",
-    "noida, u.p.",
-    "noida, up",
-    "noida, india",
-    "greater noida",
-    "greater noida, uttar pradesh",
-    "noida extension",
-    "noida area",
-    "noida ncr",
-  ],
-  hyderabad: [
-    "hyderabad, telangana",
-    "hyderabad, telangana, india",
-    "hyderabad, india",
-    "greater hyderabad area",
-    "hyderabad metropolitan area",
-    "hyderabad area",
-    "secunderabad",
-    "hyderabad/secunderabad",
-    "cyberabad",
-  ],
-  pune: [
-    "pune, maharashtra",
-    "pune, maharashtra, india",
-    "pune, india",
-    "greater pune area",
-    "pune area",
-    "pune metropolitan region",
-    "pmr",
-    "hinjewadi",
-    "pimpri-chinchwad",
-  ],
-  chennai: [
-    "madras",
-    "chennai, tamil nadu",
-    "madras, tamil nadu",
-    "chennai, tamil nadu, india",
-    "madras, tamil nadu, india",
-    "chennai, india",
-    "madras, india",
-    "greater chennai area",
-    "chennai metropolitan area",
-    "chennai area",
-  ],
-  kolkata: [
-    "calcutta",
-    "kolkata, west bengal",
-    "calcutta, west bengal",
-    "kolkata, west bengal, india",
-    "calcutta, west bengal, india",
-    "kolkata, india",
-    "calcutta, india",
-    "greater kolkata area",
-    "kolkata metropolitan area",
-    "kolkata area",
-  ],
-  ahmedabad: [
-    "ahmedabad, gujarat",
-    "ahmedabad, gujarat, india",
-    "ahmedabad, india",
-    "amdavad",
-    "greater ahmedabad area",
-    "ahmedabad area",
-    "gandhinagar",
-    "ahmedabad-gandhinagar",
-  ],
-  chandigarh: [
-    "chandigarh, chandigarh",
-    "chandigarh, india",
-    "chandigarh area",
-    "greater chandigarh area",
-    "chandigarh tricity",
-    "mohali",
-    "panchkula",
-  ],
-  jaipur: [
-    "jaipur, rajasthan",
-    "jaipur, rajasthan, india",
-    "jaipur, india",
-    "jaipur area",
-    "greater jaipur area",
-  ],
-  kochi: [
-    "cochin",
-    "kochi, kerala",
-    "cochin, kerala",
-    "kochi, kerala, india",
-    "cochin, kerala, india",
-    "kochi, india",
-    "cochin, india",
-    "ernakulam",
-    "greater kochi area",
-    "kochi area",
-  ],
-  indore: [
-    "indore, madhya pradesh",
-    "indore, madhya pradesh, india",
-    "indore, m.p.",
-    "indore, mp",
-    "indore, india",
-    "indore area",
-    "greater indore area",
-  ],
-  coimbatore: [
-    "coimbatore, tamil nadu",
-    "coimbatore, tamil nadu, india",
-    "coimbatore, india",
-    "kovai",
-    "coimbatore area",
-    "greater coimbatore area",
-  ],
-  thiruvananthapuram: [
-    "trivandrum",
-    "thiruvananthapuram, kerala",
-    "trivandrum, kerala",
-    "thiruvananthapuram, kerala, india",
-    "trivandrum, kerala, india",
-    "thiruvananthapuram, india",
-    "trivandrum, india",
-    "tvm",
-    "technopark",
-  ],
-  visakhapatnam: [
-    "vizag",
-    "visakhapatnam, andhra pradesh",
-    "vizag, andhra pradesh",
-    "visakhapatnam, andhra pradesh, india",
-    "vizag, andhra pradesh, india",
-    "visakhapatnam, india",
-    "vizag, india",
-    "visakhapatnam area",
-    "vizag area",
-  ],
-  bhubaneswar: [
-    "bhubaneswar, odisha",
-    "bhubaneswar, orissa",
-    "bhubaneswar, odisha, india",
-    "bhubaneswar, india",
-    "bhubaneswar area",
-    "cuttack-bhubaneswar",
-  ],
-  lucknow: [
-    "lucknow, uttar pradesh",
-    "lucknow, uttar pradesh, india",
-    "lucknow, u.p.",
-    "lucknow, up",
-    "lucknow, india",
-    "lucknow area",
-  ],
-};
-
 function normalizeLocation(location) {
   if (!location) {
     return "";
@@ -232,7 +19,7 @@ function normalizeLocation(location) {
   const locLower = location.toLowerCase().trim();
 
   // Normalize known city aliases
-  for (const [canonical, aliases] of Object.entries(cityAliases)) {
+  for (const [canonical, aliases] of Object.entries(CITY_ALIAS)) {
     for (const alias of aliases) {
       if (locLower.includes(alias)) {
         return canonical.charAt(0).toUpperCase() + canonical.slice(1);
@@ -351,6 +138,14 @@ function convertToLocalTime(utcDateString) {
     console.log("Error converting to local timezone");
     return null;
   }
+}
+
+function parseMinExperience(expStr) {
+  if (!expStr || expStr === "—") {
+    return null;
+  }
+  const match = expStr.match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
 }
 
 /**
@@ -660,6 +455,12 @@ async function main() {
       allowClear: true,
       width: "100%",
     });
+
+    $("#experienceFilter").select2({
+      placeholder: "Min Experience",
+      allowClear: true,
+      width: "100%",
+    });
   }
 
   // --- Function to populate the table ---
@@ -686,30 +487,45 @@ async function main() {
     // Add the new data and redraw the table
     jobsTable.rows.add(dataToLoad).draw();
 
+    // Populate filters based on ALL jobs ---
     // Extract unique company and location names
-    const companies = [...new Set(jobs.map((j) => j.company))].sort();
-    const locations = [
-      ...new Set(jobs.map((j) => j.normalizedLocation)),
-    ].sort();
+    const companies = [...new Set(jobs.map((j) => j.company))].sort((a, b) =>
+      a.toLowerCase().localeCompare(b.toLowerCase())
+    );
+    const locations = [...new Set(jobs.map((j) => j.normalizedLocation))].sort(
+      (a, b) => a.toLowerCase().localeCompare(b.toLowerCase())
+    );
 
-    populateFilter("#companyFilter", companies);
-    populateFilter("#locationFilter", locations);
-    applyFilters();
+    // Extract unique experience years
+    const experienceSet = new Set();
+    jobs.forEach((job) => {
+      const exp = parseMinExperience(job.experienceRequired);
+      if (exp !== null) {
+        experienceSet.add(exp);
+      }
+    });
+    const sortedExp = Array.from(experienceSet).sort((a, b) => a - b);
+
+    // Populate filters with ALL options and clear selections
+    populateFilter("#companyFilter", companies, []);
+    populateFilter("#locationFilter", locations, []);
+    populateFilter("#experienceFilter", sortedExp, []);
   }
 
+  /**
+   * Populates a filter dropdown.
+   * Ensures string-based comparison for selected values.
+   */
   function populateFilter(selector, options, selected) {
     const $el = $(selector);
 
     // Normalize inputs
     const opts = Array.isArray(options) ? options : [];
-    const selectedArr = Array.isArray(selected)
-      ? selected
-      : selected
-      ? [selected]
-      : [];
+    // Ensure selected is always an array of STRINGS for comparison
+    const selectedArr = asArray(selected).map((v) => String(v));
 
-    // Build a set of options and make sure existing selections stay present
-    const set = new Set(opts);
+    // Build a set of options (as strings) and make sure existing selections stay present
+    const set = new Set(opts.map((v) => String(v)));
     selectedArr.forEach((v) => {
       if (v !== undefined && v !== null && v !== "") {
         set.add(v);
@@ -718,126 +534,174 @@ async function main() {
 
     // Rebuild options
     $el.empty();
-    Array.from(set).forEach((val) => {
-      $el.append(new Option(val, val, false, selectedArr.includes(val)));
+
+    // Add blank option for single-selects to allow placeholder
+    if (!$el.prop("multiple")) {
+      $el.append(new Option());
+    }
+
+    // Sort the values
+    const sortedValues = Array.from(set);
+    // Check if all are numeric to sort properly
+    const allNumeric =
+      sortedValues.length > 0 &&
+      sortedValues.every((v) => v === "" || !isNaN(parseFloat(v)));
+
+    sortedValues.sort((a, b) => {
+      if (a === "") return -1; // Keep blank at top
+      if (b === "") return 1;
+      if (allNumeric) {
+        return (parseFloat(a) || 0) - (parseFloat(b) || 0);
+      }
+      return a.toLowerCase().localeCompare(b.toLowerCase());
     });
 
-    // trigger change
+    sortedValues.forEach((val) => {
+      if (val === "" && !$el.prop("multiple")) return; // Already added blank option
+
+      // Compare strings to strings for correct selection
+      $el.append(
+        new Option(val, val, false, selectedArr.includes(String(val)))
+      );
+    });
+
+    // Set the value *after* populating, then trigger Select2 update
+    $el.val(selected);
     $el.trigger("change.select2");
   }
 
+  /**
+   * This function just triggers a redraw.
+   * The actual filtering is handled by the DataTables search function.
+   */
   function applyFilters() {
     jobsTable.draw();
+  }
+
+  /**
+   * This function populates dropdowns based ONLY on the global search text.
+   * This fixes the "shrinking dropdowns" bug.
+   */
+  function updateDropdowns() {
+    // Get ALL current filter values to preserve them
+    const selectedCompanies = asArray($("#companyFilter").val());
+    const selectedLocations = asArray($("#locationFilter").val());
+    const selectedExperience = $("#experienceFilter").val(); // Single string value
+
+    // Get the global search term
+    const globalSearchTerm = jobsTable.search().toLowerCase();
+
+    // Filter allJobs by the global search term ONLY
+    const globallyFilteredJobs = allJobs.filter((job) => {
+      if (!globalSearchTerm) return true;
+      // Check all relevant fields for the search term
+      return (
+        (job.title && job.title.toLowerCase().includes(globalSearchTerm)) ||
+        (job.company && job.company.toLowerCase().includes(globalSearchTerm)) ||
+        (job.location &&
+          job.location.toLowerCase().includes(globalSearchTerm)) ||
+        (job.classification.roleType &&
+          job.classification.roleType
+            .toLowerCase()
+            .includes(globalSearchTerm)) ||
+        (job.experienceRequired &&
+          job.experienceRequired.toLowerCase().includes(globalSearchTerm)) ||
+        (job.datePosted &&
+          job.datePosted.toLowerCase().includes(globalSearchTerm))
+      );
+    });
+
+    // --- Now, populate dropdowns based on this globallyFilteredJobs list ---
+
+    // Update Company Dropdown
+    const companies = Array.from(
+      new Set(globallyFilteredJobs.map((j) => j.company))
+    ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    populateFilter("#companyFilter", companies, selectedCompanies);
+
+    // Update Location Dropdown
+    const locations = Array.from(
+      new Set(globallyFilteredJobs.map((j) => j.normalizedLocation))
+    ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    populateFilter("#locationFilter", locations, selectedLocations);
+
+    // Update Experience Dropdown
+    const experienceSet = new Set();
+    globallyFilteredJobs.forEach((job) => {
+      const exp = parseMinExperience(job.experienceRequired);
+      if (exp !== null) {
+        experienceSet.add(exp);
+      }
+    });
+    const sortedExp = Array.from(experienceSet).sort((a, b) => a - b);
+    populateFilter("#experienceFilter", sortedExp, asArray(selectedExperience));
+  }
+
+  /**
+   * REVISED: Clears all filters and search, then redraws and updates dropdowns.
+   */
+  function resetAllFilters() {
+    // Clear the DataTables global search
+    jobsTable.search("");
+    // Also clear the physical input box (assuming default ID)
+    $("#dt-search-0").val("");
+
+    // Clear dropdown values and update Select2 display
+    $("#companyFilter").val(null).trigger("change.select2");
+    $("#locationFilter").val(null).trigger("change.select2");
+    $("#experienceFilter").val(null).trigger("change.select2");
+
+    // Manually call applyFilters() ONCE to redraw the table with no filters
+    applyFilters();
+
+    // Manually call updateDropdowns() to repopulate them with all options
     updateDropdowns();
   }
 
-  function updateDropdowns() {
-    if (!Array.isArray(allJobs) || allJobs.length === 0) {
-      return;
-    }
-
-    // Get ALL current filter values
-    const selectedCompanies = asArray($("#companyFilter").val());
-    const selectedLocations = asArray($("#locationFilter").val());
-
-    // Get the indices of the rows currently being displayed in the table (after search/pagination)
-    const filteredRowIndices = jobsTable
-      .rows({
-        page: "all",
-        search: "applied", // only include rows that match the current search term
-      })
-      .indexes()
-      .toArray();
-
-    // Map these indices back to the original 'allJobs' array to get the currently visible job objects
-    const searchedAndFilteredJobs = filteredRowIndices.map(
-      (index) => allJobs[index]
-    );
-
-    // Use the new set of jobs for updating the dropdown options
-    const getDropdownJobs = (ignoreFilter) => {
-      return searchedAndFilteredJobs.filter((job) => {
-        if (!job || !job.company || !job.normalizedLocation) {
-          return false;
-        }
-        // For company dropdown: ignore company filter, apply location filter
-
-        const companyMatch =
-          ignoreFilter === "company" ||
-          selectedCompanies.length === 0 ||
-          selectedCompanies.includes(job.company);
-
-        // For location dropdown: ignore location filter, apply company filter
-        const locationMatch =
-          ignoreFilter === "location" ||
-          selectedLocations.length === 0 ||
-          selectedLocations.includes(job.normalizedLocation);
-
-        return companyMatch && locationMatch;
-      });
-    };
-
-    // Update Company Dropdown
-    const companyFilteredJobs = getDropdownJobs("company");
-    if (companyFilteredJobs && companyFilteredJobs.length) {
-      const companies = Array.from(
-        new Set(companyFilteredJobs.map((j) => j.company))
-      ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-
-      populateFilter("#companyFilter", companies, selectedCompanies);
-    } else {
-      // If no rows match, keep existing selections but clear available options
-      populateFilter("#companyFilter", [], selectedCompanies);
-    }
-
-    // Update Location Dropdown
-    const locationFilteredJobs = getDropdownJobs("location");
-
-    if (locationFilteredJobs && locationFilteredJobs.length) {
-      const locations = Array.from(
-        new Set(locationFilteredJobs.map((j) => j.normalizedLocation))
-      ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-
-      populateFilter("#locationFilter", locations, selectedLocations);
-    } else {
-      populateFilter("#locationFilter", [], selectedLocations);
-    }
-  }
-
-  function resetAllFilters() {
-    // Clear dropdowns (without triggering 'change' events)
-    $("#companyFilter").val(null);
-    $("#locationFilter").val(null);
-
-    // Clear the DataTables global search
-    jobsTable.search("");
-
-    // Manually call applyFilters() ONCE to sync dropdowns and redraw the table
-    applyFilters();
-  }
-
+  /**
+   * REVISED: Wires up the new, simplified filter logic.
+   */
   function setupEventListeners() {
     // Custom filtering function for DataTables
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-      const selectedCompanies = $("#companyFilter").val();
-      const selectedLocations = $("#locationFilter").val();
+      // Get values from ALL filters
+      const selectedCompanies = asArray($("#companyFilter").val());
+      const selectedLocations = asArray($("#locationFilter").val());
+      const selectedExperience = parseInt($("#experienceFilter").val(), 10);
 
+      // Get the job object from our global array
       const job = allJobs[dataIndex];
-      const company = job.company; // or data[1]
+      if (!job) {
+        // Failsafe
+        return false;
+      } 
+
+      const company = job.company;
       const location = job.normalizedLocation;
+      const jobExp = parseMinExperience(job.experienceRequired); // null or number
 
+      // Check Company match
       const companyMatch =
-        !selectedCompanies.length || selectedCompanies.includes(company);
-      const locationMatch =
-        !selectedLocations.length || selectedLocations.includes(location);
+        selectedCompanies.length === 0 || selectedCompanies.includes(company);
 
-      return companyMatch && locationMatch;
+      // Check Location match
+      const locationMatch =
+        selectedLocations.length === 0 || selectedLocations.includes(location);
+
+      // Check Experience match (Min YoE)
+      const experienceMatch =
+        isNaN(selectedExperience) ||
+        (jobExp !== null && jobExp >= selectedExperience);
+
+      // All must be true to show the row
+      return companyMatch && locationMatch && experienceMatch;
     });
 
     // Attach filter change listeners
     // When a dropdown changes, apply all filters
     $("#companyFilter").on("change", applyFilters);
     $("#locationFilter").on("change", applyFilters);
+    $("#experienceFilter").on("change", applyFilters);
 
     // When the DataTables global search input is used, update the dropdowns.
     jobsTable.on("search.dt", updateDropdowns);
