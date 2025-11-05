@@ -275,13 +275,17 @@ a:hover, a:focus {
 }
 
 #filters label {
-    margin-right: 8px;
+    margin-right: -10px;
     font-weight: 500;
 }
 
 #filters .select2-container, #filters select {
     border-radius: 5px;
-    width: 360px !important;
+    width: 300px !important;
+}
+
+#filters .select2-container:last-of-type {
+    width: 120px !important;
 }
 
 #resetFilters {

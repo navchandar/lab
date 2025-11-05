@@ -457,7 +457,7 @@ async function main() {
     });
 
     $("#experienceFilter").select2({
-      placeholder: "Min Experience",
+      placeholder: "Min Exp",
       allowClear: true,
       width: "100%",
     });
@@ -548,8 +548,12 @@ async function main() {
       sortedValues.every((v) => v === "" || !isNaN(parseFloat(v)));
 
     sortedValues.sort((a, b) => {
-      if (a === "") return -1; // Keep blank at top
-      if (b === "") return 1;
+      if (a === "") {
+        return -1;
+      } // Keep blank at top
+      if (b === "") {
+        return 1;
+      }
       if (allNumeric) {
         return (parseFloat(a) || 0) - (parseFloat(b) || 0);
       }
@@ -557,7 +561,9 @@ async function main() {
     });
 
     sortedValues.forEach((val) => {
-      if (val === "" && !$el.prop("multiple")) return; // Already added blank option
+      if (val === "" && !$el.prop("multiple")) {
+        return;
+      } // Already added blank option
 
       // Compare strings to strings for correct selection
       $el.append(
@@ -593,7 +599,9 @@ async function main() {
 
     // Filter allJobs by the global search term ONLY
     const globallyFilteredJobs = allJobs.filter((job) => {
-      if (!globalSearchTerm) return true;
+      if (!globalSearchTerm) {
+        return true;
+      }
       // Check all relevant fields for the search term
       return (
         (job.title && job.title.toLowerCase().includes(globalSearchTerm)) ||
@@ -674,7 +682,7 @@ async function main() {
       if (!job) {
         // Failsafe
         return false;
-      } 
+      }
 
       const company = job.company;
       const location = job.normalizedLocation;

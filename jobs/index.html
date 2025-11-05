@@ -58,19 +58,27 @@
     </header>
 
     <main>
-     <div id="filters" style="display: none;">
-        <label for="companyFilter">Company:</label>
+      <div id="filters" style="display: none;">
+        <label for="companyFilter" title="Filter Jobs based on Company Name"
+          >Company:</label
+        >
         <select id="companyFilter" multiple="multiple"></select>
 
-        <label for="locationFilter">Location:</label>
+        <label for="locationFilter" title="Filter Jobs based on Location"
+          >Location:</label
+        >
         <select id="locationFilter" multiple="multiple"></select>
 
-        <label for="experienceFilter">YoE:</label>
+        <label
+          for="experienceFilter"
+          title="Filter Jobs based on Minimum Years of Experience"
+          >YoE:</label
+        >
         <select id="experienceFilter">
           <option></option>
         </select>
 
-        <button id="resetFilters">Reset Filters</button>
+        <button id="resetFilters" title="Clear all search and filters">Reset Filters</button>
       </div>
 
       <div class="table-container">
