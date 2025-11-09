@@ -19,6 +19,7 @@ const DAYS_TO_KEEP = 8; // purge jobs > 7 days old
 
 // Define the workable search query
 const SEARCH_QUERY = 'site:apply.workable.com "jobs" "india"';
+let summaryContent = `## Results\n\n\n`;
 
 // -------- Utilities ----------
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -404,6 +405,7 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
     if (jobId) {
       console.log("Parsed jobId", { jobId, jobUrl: jobUrlClean });
       detail = await fetchJobDetailFromLinkedIn(jobId);
+      await sleep(500);
     } else {
       console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
       continue;
@@ -541,7 +543,7 @@ function clean_string(input) {
   if (!input) {
     return null;
   }
-  
+
   const regex = /[^a-zA-Z0-9\s\\n'"<>:;,=+.?_–—\-()&@%/•*\u00A0-\u00FF]/g;
   return input.replace(regex, "");
 }
@@ -577,9 +579,10 @@ async function mergeAndCleanJobsData(output_data) {
     return d >= cutoffTime;
   });
 
-  console.log(
-    `Removed ${existing.length - prunedExisting.length} old job posts`
-  );
+  const removedCount = existing.length - prunedExisting.length;
+  console.log(`Removed ${removedCount} old job posts`);
+  summaryContent += ` - Removed **${removedCount}** old job posts from json.\n`;
+
   console.log(
     `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
   );
@@ -637,6 +640,8 @@ async function mergeAndCleanJobsData(output_data) {
     prunedExisting = jobsToKeep;
     console.log(`Removed ${closedJobsRemovedCount} closed LinkedIn job posts.`);
     console.log(`Count after cleaning closed jobs: ${prunedExisting.length}`);
+    summaryContent += ` - Removed ${closedJobsRemovedCount} closed job posts.\n`;
+
   }
 
   // Use jobId as the unique key
@@ -779,19 +784,17 @@ async function runWorkableJobSearch() {
   const newJobs = filterLinkedInSearchResults(rawJobs);
   const enrichedJobs = await enrichLinkedInJobDetails(newJobs);
   console.log(`Found ${enrichedJobs.length} new job posts to save.`);
+  // After processing, generate Markdown for the summary
+  summaryContent += ` - Found **${enrichedJobs.length}** new job posts.\n\n`;
 
   const total_jobs = await mergeAndCleanJobsData(enrichedJobs);
+  summaryContent += ` - Total **${total_jobs}** job posts saved in json.\n`;
 
   if (limitedRun()) {
     // await runWorkableJobSearch();
   }
 
-  let summaryContent = `## Results\n\n\n`;
   try {
-    // After processing, generate Markdown for the summary
-    summaryContent += ` - Found **${enrichedJobs.length}** new job posts.\n\n`;
-    summaryContent += ` - Total **${total_jobs}** job posts saved in json.\n`;
-
     // Append the Markdown to the summary file
     const summaryFile = process.env.GITHUB_STEP_SUMMARY;
     if (summaryFile) {
