@@ -611,29 +611,23 @@ async function mergeAndCleanJobsData(output_data) {
     );
     let closedJobsRemovedCount = 0;
 
-    const results = await Promise.allSettled(
-      jobsToCheck.map(async (job) => {
+    for (const job of jobsToCheck) {
+      try {
+        // Fetch details for the *current* job and wait
         const details = await fetchJobDetailFromLinkedIn(job.jobId);
-        return { job, details };
-      })
-    );
-
-    for (const result of results) {
-      if (result.status === "fulfilled") {
-        const { job, details } = result.value;
         if (details.jobClosed) {
-          // Job is closed, remove it
+          // Job is closed, don't add it back
           closedJobsRemovedCount++;
         } else {
           // Job is still open, keep it
           jobsToKeep.push(job);
         }
-      } else {
-        // If the check failed (e.g., error fetching), keep the job to re-check later
-        console.warn(
-          `Failed to check job ${result.value.job.jobId}: ${result.reason}`
-        );
-        jobsToKeep.push(result.value.job);
+        await sleep(500);
+      } catch (error) {
+        // If the check failed, keep the job to re-check later
+        console.warn(`Failed to check job ${job.jobId}: ${error.message}`);
+        jobsToKeep.push(job);
+        await sleep(500);
       }
     }
 
@@ -641,7 +635,6 @@ async function mergeAndCleanJobsData(output_data) {
     console.log(`Removed ${closedJobsRemovedCount} closed LinkedIn job posts.`);
     console.log(`Count after cleaning closed jobs: ${prunedExisting.length}`);
     summaryContent += ` - Removed ${closedJobsRemovedCount} closed job posts.\n`;
-
   }
 
   // Use jobId as the unique key
