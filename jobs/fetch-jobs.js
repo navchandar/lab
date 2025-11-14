@@ -8,7 +8,7 @@ import randomUA from "random-useragent";
 import { fileURLToPath } from "url";
 import { getJson } from "serpapi";
 import { JOB_KEYWORDS as KEYWORDS } from "./constants.js";
-import { LINKEDIN_SEARCH_QUERY } from "./constants.js";
+import { LINKEDIN_SEARCH_QUERY, REMOVE_TITLES } from "./constants.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -493,62 +493,14 @@ function clean_title(job_title, company_name) {
   if (!job_title) {
     return "";
   }
-  const phrases_to_remove = [
+  const company_names = [
+    company_name + " -",
     company_name,
     ", " + company_name,
     "| " + company_name,
     "- " + company_name,
-    "| India",
-    " India",
-    ", India",
-    ",India",
-    "(IND) ",
-    "(IND)",
-    "(India)",
-    " (INDIA)",
-    ",Bangalore",
-    "– Bangalore",
-    "- Bangalore",
-    ", Bangalore",
-    "| Bangalore",
-    " Bangalore",
-    "- NCR Region",
-    " NCR Region",
-    "- Mumbai",
-    "-Mumbai",
-    " Mumbai",
-    "| Ahmedabad",
-    "- Ahmedabad",
-    ", Ahmedabad",
-    "(India based role – Hyderabad)",
-    "– Hyderabad",
-    "- Hyderabad",
-    ", Hyderabad",
-    "| Hyderabad",
-    " Hyderabad",
-    "– Chennai",
-    "- Chennai",
-    ", Chennai",
-    " Chennai",
-    "- Kollam",
-    ", Kollam",
-    " Kollam",
-    "- Jaipur",
-    ", Jaipur",
-    " Jaipur",
-    "Interesting Job Opportunity",
-    "In-Person Hiring Drive- ",
-    "In-Person Hiring Drive",
-    "Hiring Drive",
-    "Hiring Immediately",
-    " | Immediate Joiner |",
-    "| Immediate Joiner",
-    "(Immediate Joiner)",
-    "- ASAP Joiner Required",
-    "ASAP Joiner Required",
-    "#1 Apply fast!",
-    "Apply fast!",
   ];
+  const phrases_to_remove = company_names.concat(REMOVE_TITLES);
   // Remove each phrase from job_title
   phrases_to_remove.forEach((phrase) => {
     job_title = job_title.replace(phrase, "");

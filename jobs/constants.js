@@ -477,7 +477,7 @@ export const CATEGORIES = {
       "vmp",
     ],
   },
-  
+
   PharmaQA: {
     weight: 1,
     titleBoost: 1.5,
@@ -1149,6 +1149,54 @@ export const CATEGORIES = {
   },
 };
 
+// --- General Color Palette (for Company/Location) ---
+export const GENERAL_COLOR_PALETTE = [
+  { bg: "rgba(54, 162, 235, 0.7)" }, // Blue
+  { bg: "rgba(255, 99, 132, 0.7)" }, // Red
+  { bg: "rgba(75, 192, 192, 0.7)" }, // Green
+  { bg: "rgba(153, 102, 255, 0.7)" }, // Purple
+  { bg: "rgba(255, 159, 64, 0.7)" }, // Orange
+  { bg: "rgba(255, 206, 86, 0.7)" }, // Yellow
+  { bg: "rgba(201, 203, 207, 0.7)" }, // Grey
+  { bg: "rgba(255, 0, 255, 0.7)" }, // Magenta
+  { bg: "rgba(0, 255, 0, 0.7)" }, // Lime Green
+  { bg: "rgba(128, 0, 0, 0.7)" }, // Maroon
+  { bg: "rgba(0, 128, 128, 0.7)" }, // Teal
+  { bg: "rgba(0, 0, 128, 0.7)" }, // Navy Blue
+  { bg: "rgba(128, 128, 0, 0.7)" }, // Olive
+  { bg: "rgba(128, 0, 128, 0.7)" }, // Plum/Dark Magenta
+  { bg: "rgba(255, 105, 180, 0.7)" }, // Hot Pink
+  { bg: "rgba(255, 215, 0, 0.7)" }, // Gold
+  { bg: "rgba(173, 216, 230, 0.7)" }, // Light Blue
+  { bg: "rgba(240, 128, 128, 0.7)" }, // Light Coral
+  { bg: "rgba(144, 238, 144, 0.7)" }, // Light Green
+  { bg: "rgba(238, 130, 238, 0.7)" }, // Violet
+  { bg: "rgba(112, 128, 144, 0.7)" }, // Slate Grey
+  { bg: "rgba(189, 183, 107, 0.7)" }, // Dark Khaki
+  { bg: "rgba(255, 182, 193, 0.7)" }, // Light Pink
+  { bg: "rgba(255, 228, 181, 0.7)" }, // Moccasin
+  { bg: "rgba(100, 149, 237, 0.7)" }, // Cornflower Blue
+  { bg: "rgba(255, 99, 71, 0.7)" }, // Tomato
+  { bg: "rgba(60, 179, 113, 0.7)" }, // Medium Sea Green
+  { bg: "rgba(72, 61, 139, 0.7)" }, // Dark Slate Blue
+];
+
+// --- Semantic Role Type Colors (for byRoleType) ---
+export const ROLE_TYPE_COLOR_PALETTE = {
+  SoftwareDEV: { bg: "rgba(54, 162, 235, 0.7)" }, // Blue
+  SoftwareQA: { bg: "rgba(75, 192, 192, 0.7)" }, // Green
+  Management: { bg: "rgba(255, 99, 132, 0.7)" }, // Red
+  "ML/AI": { bg: "rgba(153, 102, 255, 0.7)" }, // Purple
+  "DevOps/SRE": { bg: "rgba(255, 159, 64, 0.7)" }, // Orange
+  DataEngg: { bg: "rgba(255, 206, 86, 0.7)" }, // Yellow
+  HardwareQA: { bg: "rgba(0, 128, 128, 0.7)" }, // Teal
+  PharmaQA: { bg: "rgba(60, 179, 113, 0.7)" }, // Medium Sea Green
+  Security: { bg: "rgba(128, 0, 0, 0.7)" }, // Maroon
+  RPA: { bg: "rgba(100, 149, 237, 0.7)" }, // Cornflower Blue
+  DBA: { bg: "rgba(100, 136, 172, 0.7)" }, // Slate Grey
+  Default: { bg: "rgba(201, 203, 207, 0.7)" }, // Grey (kept as default)
+};
+
 // Role-defining title nudges only (specific > generic). Order matters.
 export const TITLE_NUDGES = [
   // --- SoftwareQA ---
@@ -1618,3 +1666,78 @@ export const CITY_ALIAS = {
     "vijayawada east",
   ],
 };
+
+const BASE_REMOVE_TITLES = [
+  "| India",
+  ", India",
+  ",India",
+  "India",
+  "(IND) ",
+  "(IND)",
+  " (INDIA)",
+  "(India)",
+  "(India based role – Hyderabad)",
+  "- NCR Region",
+  " NCR Region",
+  "Interesting Job Opportunity",
+  "In-Person Hiring Drive- ",
+  "In-Person Hiring Drive",
+  "Hiring Drive",
+  "Hiring Immediately",
+  " | Immediate Joiner |",
+  "| Immediate Joiner",
+  "(Immediate Joiner)",
+  "- ASAP Joiner Required",
+  "ASAP Joiner Required",
+  "#1 Apply fast!",
+  "Apply fast!",
+  "Great Opportunity in TCS!",
+  "Great Opportunity",
+];
+
+const cityPrefixes = [
+  ", ", // e.g., ", Bangalore"
+  ",", // e.g., ",Bangalore"
+  "– ", // e.g., "– Bangalore" (en-dash)
+  "- ", // e.g., "- Bangalore" (hyphen)
+  "-", // e.g., "-Bangalore"
+  "| ", // e.g., "| Bangalore"
+  " ", // e.g., " Bangalore"
+];
+
+/**
+ * Generates a Set of remove strings from the CITY_ALIAS object.
+ */
+function generateCityNameCombos(aliases) {
+  const nameCombos = new Set();
+
+  // Get a single, flat array of all aliases (e.g., "bangalore", "whitefield", "ncr")
+  const allAliases = Object.values(aliases).flat();
+
+  allAliases.forEach((alias) => {
+    if (!alias) {
+      return;
+    }
+    // 1. Create a Title-Cased version (e.g., "bangalore" -> "Bangalore")
+    const titleCasedAlias = alias.charAt(0).toUpperCase() + alias.slice(1);
+    // 2. Create an Upper-Cased version (e.g., "ncr" -> "NCR")
+    const upperCasedAlias = alias.toUpperCase();
+
+    // Apply all prefixes to both versions
+    cityPrefixes.forEach((prefix) => {
+      // Add the title-cased version (e.g., ", Bangalore", ", Whitefield")
+      nameCombos.add(prefix + titleCasedAlias);
+      // Only add the all-caps version if it's different and short (4 chars or less)
+      // This adds ", NCR" but avoids adding ", BANGALORE URBAN"
+      if (titleCasedAlias !== upperCasedAlias && alias.length <= 4) {
+        nameCombos.add(prefix + upperCasedAlias);
+      }
+    });
+  });
+  return nameCombos;
+}
+
+const cityNameCombos = generateCityNameCombos(CITY_ALIAS);
+export const REMOVE_TITLES = [
+  ...new Set([...BASE_REMOVE_TITLES, ...cityNameCombos]),
+];
