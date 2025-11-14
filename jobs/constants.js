@@ -477,6 +477,7 @@ export const CATEGORIES = {
       "vmp",
     ],
   },
+  
   PharmaQA: {
     weight: 1,
     titleBoost: 1.5,

@@ -50,7 +50,7 @@ try {
   const byCompany = aggregate(jobs, (job) => job.company, 20);
 
   // 2. Jobs by Location (All)
-  const byLocation = aggregate(jobs, (job) => job.location);
+  const byLocation = aggregate(jobs, (job) => job.location, 10);
 
   // 3. Jobs by Role Type (All)
   const byRoleType = aggregate(

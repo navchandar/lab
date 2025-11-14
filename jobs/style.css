@@ -351,10 +351,10 @@ a:hover, a:focus {
 
 /* --- Chart View Styles --- */
 #chart-view {
-    /* Use Flexbox for better layout control */
     display: flex;
     flex-direction: column;
     align-items: center;
+    margin-top: 10px;
     margin-bottom: 25px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     border: 1px solid #e0e0e0;
@@ -365,7 +365,8 @@ a:hover, a:focus {
 }
 
 #chart-view h2 {
-    margin-bottom: 15px;
+    margin-top: 0;
+    margin-bottom: 10px;
     color: #1e3a8a;
     font-weight: 700;
     font-size: 1.75rem;
@@ -397,19 +398,22 @@ a:hover, a:focus {
 
 /* Description Text Styling */
 #chartDescription {
-    margin-bottom: 20px;
+    margin: 0;
+    margin-bottom: 10px;
     color: #555;
     font-size: 0.95rem;
 }
 
 /* Chart Canvas Container */
-#chart-view>div {
+#canvas-container {
     box-sizing: content-box;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    margin: 0 auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     background-color: white;
     padding: 10px;
     width: 100%;
+    max-width: 800px;
 }
 
 
@@ -592,8 +596,8 @@ a:hover, a:focus {
         color: #d1d5db;
     }
 
-    #chart-view>div {
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    #canvas-container {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         background-color: #374151;
     }
 

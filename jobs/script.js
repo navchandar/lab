@@ -423,6 +423,64 @@ async function loadChartData() {
   }
 }
 
+function getBorderColor(bgColor) {
+  if (bgColor.startsWith("rgba")) {
+    // Replace the last number (the alpha channel) with 1
+    // e.g., 'rgba(54, 162, 235, 0.7)' -> 'rgba(54, 162, 235, 1)'
+    return bgColor.replace(/,\s*[\d.]+\)$/, ", 1)");
+  }
+  // If it's a simple color (like hex or RGB without alpha), return it as is
+  return bgColor;
+}
+
+// --- 1. General Color Palette (for Company/Location) ---
+const COLOR_PALETTE = [
+  { bg: "rgba(54, 162, 235, 0.7)" }, // Blue
+  { bg: "rgba(255, 99, 132, 0.7)" }, // Red
+  { bg: "rgba(75, 192, 192, 0.7)" }, // Green
+  { bg: "rgba(153, 102, 255, 0.7)" }, // Purple
+  { bg: "rgba(255, 159, 64, 0.7)" }, // Orange
+  { bg: "rgba(255, 206, 86, 0.7)" }, // Yellow
+  { bg: "rgba(201, 203, 207, 0.7)" }, // Grey
+  { bg: "rgba(255, 0, 255, 0.7)" }, // Magenta
+  { bg: "rgba(0, 255, 0, 0.7)" }, // Lime Green
+  { bg: "rgba(128, 0, 0, 0.7)" }, // Maroon
+  { bg: "rgba(0, 128, 128, 0.7)" }, // Teal
+  { bg: "rgba(0, 0, 128, 0.7)" }, // Navy Blue
+  { bg: "rgba(128, 128, 0, 0.7)" }, // Olive
+  { bg: "rgba(128, 0, 128, 0.7)" }, // Plum/Dark Magenta
+  { bg: "rgba(255, 105, 180, 0.7)" }, // Hot Pink
+  { bg: "rgba(255, 215, 0, 0.7)" }, // Gold
+  { bg: "rgba(173, 216, 230, 0.7)" }, // Light Blue
+  { bg: "rgba(240, 128, 128, 0.7)" }, // Light Coral
+  { bg: "rgba(144, 238, 144, 0.7)" }, // Light Green
+  { bg: "rgba(238, 130, 238, 0.7)" }, // Violet
+  { bg: "rgba(112, 128, 144, 0.7)" }, // Slate Grey
+  { bg: "rgba(189, 183, 107, 0.7)" }, // Dark Khaki
+  { bg: "rgba(255, 182, 193, 0.7)" }, // Light Pink
+  { bg: "rgba(255, 228, 181, 0.7)" }, // Moccasin
+  { bg: "rgba(100, 149, 237, 0.7)" }, // Cornflower Blue
+  { bg: "rgba(255, 99, 71, 0.7)" }, // Tomato
+  { bg: "rgba(60, 179, 113, 0.7)" }, // Medium Sea Green
+  { bg: "rgba(72, 61, 139, 0.7)" }, // Dark Slate Blue
+];
+
+// --- 2. Semantic Role Type Colors (for byRoleType) ---
+const ROLE_TYPE_COLORS = {
+  SoftwareDEV: { bg: "rgba(54, 162, 235, 0.7)" }, // Blue
+  SoftwareQA: { bg: "rgba(75, 192, 192, 0.7)" }, // Green
+  Management: { bg: "rgba(255, 99, 132, 0.7)" }, // Red
+  "ML/AI": { bg: "rgba(153, 102, 255, 0.7)" }, // Purple
+  "DevOps/SRE": { bg: "rgba(255, 159, 64, 0.7)" }, // Orange
+  DataEngg: { bg: "rgba(255, 206, 86, 0.7)" }, // Yellow
+  HardwareQA: { bg: "rgba(0, 128, 128, 0.7)" }, // Teal
+  PharmaQA: { bg: "rgba(60, 179, 113, 0.7)" }, // Medium Sea Green
+  Security: { bg: "rgba(128, 0, 0, 0.7)" }, // Maroon
+  RPA: { bg: "rgba(100, 149, 237, 0.7)" }, // Cornflower Blue
+  DBA: { bg: "rgba(100, 136, 172, 0.7)" }, // Slate Grey
+  Default: { bg: "rgba(201, 203, 207, 0.7)" }, // Grey (kept as default)
+};
+
 // --- CHART RENDERING LOGIC ---
 /**
  * Renders the chart based on the selected analysis key.
@@ -442,6 +500,24 @@ function drawChart(key) {
   destroyCurrentChart();
 
   const ctx = document.getElementById("roleChart").getContext("2d");
+
+  // --- DYNAMIC COLOR GENERATION ---
+  let backgroundColors = [];
+
+  if (key === "byRoleType") {
+    // Use semantic colors for role types
+    backgroundColors = labels.map(
+      (label) => (ROLE_TYPE_COLORS[label] || ROLE_TYPE_COLORS["Default"]).bg
+    );
+  } else {
+    // Use the cycling palette for Company and Location
+    backgroundColors = counts.map(
+      (_, index) => COLOR_PALETTE[index % COLOR_PALETTE.length].bg
+    );
+  }
+
+  // Calculate the border colors from the generated background colors
+  const borderColors = backgroundColors.map(getBorderColor);
 
   // Set a dynamic title/description
   const descriptionElement = document.getElementById("chartDescription");
@@ -464,15 +540,15 @@ function drawChart(key) {
         {
           label: "Total Jobs",
           data: counts,
-          backgroundColor: "rgba(54, 162, 235, 0.7)",
-          borderColor: "rgba(54, 162, 235, 1)",
+          backgroundColor: backgroundColors,
+          borderColor: borderColors,
           borderWidth: 1,
         },
       ],
     },
     options: {
       responsive: true,
-      // Set specific options for better display if needed (e.g., horizontal bars for many locations/companies)
+      // Set specific options (e.g., horizontal bars for many locations/companies)
       indexAxis: key !== "byRoleType" ? "y" : "x", // Use horizontal bars for Company/Location
       scales: {
         // Adjust X/Y axis based on whether it's horizontal or vertical
