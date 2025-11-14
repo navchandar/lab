@@ -54,5 +54,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "build: updated Jobs data"
-          # Target the files inside /jobs
-          file_pattern: "jobs/jobs.json jobs/chartData.json"
+          # Target all .json files inside /jobs
+          file_pattern: "jobs/*.json"
