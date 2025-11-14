@@ -651,6 +651,17 @@ function updateURL() {
 function loadFiltersFromURL() {
   const params = parseUrlQuery();
 
+  // If there are no filter/search parameters in the URL, there's nothing to do.
+  if (
+    !params.length &&
+    !params.search &&
+    params.companies.length === 0 &&
+    params.locations.length === 0 &&
+    !params.yoe
+  ) {
+    return;
+  }
+
   // This must be done before the draw call
   if (params.length) {
     const len = parseInt(params.length, 10);
@@ -661,11 +672,12 @@ function loadFiltersFromURL() {
   }
 
   // Apply Global Search
+  let searchApplied = false;
   if (params.search) {
     const decodedSearch = decodeURIComponent(params.search);
     jobsTable.search(decodedSearch);
-    // Also update the physical input box
     $("#dt-search-0").val(decodedSearch);
+    searchApplied = true;
   }
 
   // --- Apply Selections to Filters (Handles Non-existent Values Gracefully) ---
@@ -676,6 +688,11 @@ function loadFiltersFromURL() {
   // Experience Filter (Single-select)
   // We use params.yoe directly (which is a string or empty string)
   $("#experienceFilter").val(params.yoe).trigger("change.select2");
+
+  if (searchApplied || params.length) {
+      jobsTable.draw();
+  }
+
 }
 
 async function main() {
@@ -755,9 +772,9 @@ async function main() {
 
       if (!initialLoadComplete) {
         setupEventListeners();
-        initialLoadComplete = true;
         // After initial load and setup, check the URL for filters
         loadFiltersFromURL();
+        initialLoadComplete = true;
       }
 
       hideSpinner();
