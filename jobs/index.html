@@ -51,6 +51,8 @@
       rel="stylesheet"
     />
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   </head>
   <body>
     <header>
@@ -78,7 +80,9 @@
           <option></option>
         </select>
 
-        <button id="resetFilters" title="Clear all search and filters">Reset Filters</button>
+        <button id="resetFilters" title="Clear all search and filters">
+          Reset Filters
+        </button>
       </div>
 
       <div class="table-container">
@@ -110,6 +114,21 @@
       </div>
 
       <div id="last-refresh" class="last-refresh">Loading Jobs Data...</div>
+
+      <div id="chart-view" style="display: none; margin-top: 20px;">
+        <h2>Job Role Distribution Analysis</h2>
+        <label for="chartSelector">Analysis:</label>
+        <select id="chartSelector">
+          <option value="byRoleType">Job Roles Distribution</option>
+          <option value="byCompany">Top Companies by Job Count</option>
+          <option value="byLocation">Job Location Distribution</option>
+        </select>
+        <p id="chartDescription" style="font-style: italic;"></p>
+
+        <div style="width: 100%; max-width: 800px; margin: 0 auto;">
+          <canvas id="roleChart"></canvas>
+        </div>
+      </div>
     </main>
 
     <footer>
@@ -137,11 +156,11 @@
             GNU GPLv3 </a
           >.
         </small>
+        <a href="#" id="toggleView">Charts</a>
       </p>
     </footer>
 
     <script type="module" src="script.js"></script>
-
     <script>
       // Initialize DataTables on your table
       $(document).ready(function () {

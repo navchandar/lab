@@ -43,9 +43,16 @@ jobs:
         working-directory: jobs
         run: npm run classify
 
+      - name: Analyze jobs data
+        working-directory: jobs
+        run: npm run analyze
+
+      - name: Git Pull Latest Changes
+        run: git pull origin ${{ github.ref_name }}
+
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "build: updated Jobs data"
           # Target the files inside /jobs
-          file_pattern: "jobs/jobs.json"
+          file_pattern: "jobs/jobs.json jobs/chartData.json"

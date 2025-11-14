@@ -390,6 +390,151 @@ function addScrollOnPagination() {
   });
 }
 
+let globalChartData = null;
+let chartLoadStatus = "unloaded"; // 'unloaded', 'loading', 'loaded', 'failed'
+let currentChartInstance = null; // Store the Chart.js instance
+
+/**
+ * Destroys any existing Chart.js instance on the canvas.
+ */
+function destroyCurrentChart() {
+  if (currentChartInstance) {
+    currentChartInstance.destroy();
+    currentChartInstance = null;
+  }
+}
+
+/**
+ * Fetches the aggregated chart data using the reusable 'get' function.
+ */
+async function loadChartData() {
+  const CHART_DATA_URL = "charts_data.json";
+  chartLoadStatus = "loading";
+  try {
+    const response = await get(CHART_DATA_URL, { cache: "no-store" });
+    globalChartData = await response.json();
+    chartLoadStatus = "loaded";
+    return true;
+  } catch (error) {
+    console.error("Error loading chart data:", error);
+    showToast(`Error loading chart data:\n${error.message}`);
+    chartLoadStatus = "failed";
+    return false;
+  }
+}
+
+// --- CHART RENDERING LOGIC ---
+/**
+ * Renders the chart based on the selected analysis key.
+ * @param {string} key - The data key to use (e.g., 'byRoleType').
+ */
+function drawChart(key) {
+  if (!globalChartData || !globalChartData[key]) {
+    console.error(`Data for key "${key}" not found.`);
+    destroyCurrentChart();
+    return;
+  }
+
+  const dataSet = globalChartData[key];
+  const labels = dataSet.map((item) => item.label);
+  const counts = dataSet.map((item) => item.count);
+
+  destroyCurrentChart();
+
+  const ctx = document.getElementById("roleChart").getContext("2d");
+
+  // Set a dynamic title/description
+  const descriptionElement = document.getElementById("chartDescription");
+  let descriptionText = "";
+
+  if (key === "byCompany") {
+    descriptionText = `Top ${dataSet.length} companies with the highest job count.`;
+  } else if (key === "byRoleType") {
+    descriptionText = `Distribution of jobs across classified role types.`;
+  } else if (key === "byLocation") {
+    descriptionText = `Distribution of jobs across various locations.`;
+  }
+  descriptionElement.textContent = descriptionText;
+
+  currentChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Total Jobs",
+          data: counts,
+          backgroundColor: "rgba(54, 162, 235, 0.7)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      // Set specific options for better display if needed (e.g., horizontal bars for many locations/companies)
+      indexAxis: key !== "byRoleType" ? "y" : "x", // Use horizontal bars for Company/Location
+      scales: {
+        // Adjust X/Y axis based on whether it's horizontal or vertical
+        [key !== "byRoleType" ? "x" : "y"]: {
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+}
+
+async function renderCharts() {
+  const toggleButton = document.getElementById("toggleView");
+  const tableView = document.querySelector(".table-container");
+  const chartView = document.getElementById("chart-view");
+  const filters = document.getElementById("filters");
+  const chartSelector = document.getElementById("chartSelector");
+
+  // Add event listener for chart selection change
+  chartSelector.addEventListener("change", (e) => {
+    if (chartLoadStatus === "loaded") {
+      drawChart(e.target.value);
+    }
+  });
+
+  // Function to toggle between table and chart views
+  toggleButton.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const isTableViewActive =
+      tableView.style.display !== "none" || dataTable.style.display !== "none";
+
+    if (isTableViewActive) {
+      // --- Switching to Chart View ---
+      tableView.style.display = "none";
+      dataTable.style.display = "none";
+      filters.style.display = "none";
+      chartView.style.display = "block";
+      toggleButton.textContent = "Switch to Job Listings Table";
+
+      // 1. Load data only if it hasn't been loaded successfully
+      if (chartLoadStatus === "unloaded") {
+        await loadChartData();
+      }
+
+      // 2. Draw the chart using the currently selected dropdown option
+      if (chartLoadStatus === "loaded") {
+        drawChart(chartSelector.value);
+      }
+    } else {
+      // --- Switching back to Table View ---
+      tableView.style.display = "block";
+      dataTable.style.display = "table";
+      filters.style.display = "flex";
+      chartView.style.display = "none";
+      toggleButton.textContent = "Switch to Data Analysis View";
+
+      // Destroy chart instance to free up resources
+      destroyCurrentChart();
+    }
+  });
+}
+
 async function main() {
   requestNotificationPermission();
   // Get the IANA Timezone Name
@@ -702,7 +847,7 @@ async function main() {
   }
 
   /**
-   * REVISED: Wires up the new, simplified filter logic.
+   * Wires up the new, simplified filter logic.
    */
   function setupEventListeners() {
     // Custom filtering function for DataTables
@@ -774,6 +919,7 @@ async function main() {
   // Run once immediately to load jobs
   await loadJobs();
 
+  await renderCharts();
   // Poll every 2 minutes
   setInterval(loadJobs, 2 * 60 * 1000);
 }

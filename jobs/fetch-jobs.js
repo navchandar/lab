@@ -375,6 +375,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       companyUrl,
       jobClosed,
       likelyRepost,
+      applicantsCount,
     };
   } catch (err) {
     console.error("Error fetching job detail:", err.message);
@@ -385,6 +386,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       companyUrl: null,
       jobClosed: true,
       likelyRepost: true,
+      applicantsCount: 0,
     };
   }
 }
@@ -446,7 +448,7 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
     }
 
     // Final clean and structure
-    const job_title = clean_title(job.position);
+    const job_title = clean_title(job.position, job.company);
     const company_name = clean_company(job.company);
 
     enriched.push({
@@ -487,14 +489,65 @@ function uniqueBy(arr, keyFn) {
   return out;
 }
 
-function clean_title(job_title) {
+function clean_title(job_title, company_name) {
   if (!job_title) {
     return "";
   }
   const phrases_to_remove = [
-    "Interesting Job Opportunity",
+    company_name,
+    ", " + company_name,
+    "| " + company_name,
+    "- " + company_name,
+    "| India",
+    " India",
     ", India",
     ",India",
+    "(IND) ",
+    "(IND)",
+    "(India)",
+    " (INDIA)",
+    ",Bangalore",
+    "– Bangalore",
+    "- Bangalore",
+    ", Bangalore",
+    "| Bangalore",
+    " Bangalore",
+    "- NCR Region",
+    " NCR Region",
+    "- Mumbai",
+    "-Mumbai",
+    " Mumbai",
+    "| Ahmedabad",
+    "- Ahmedabad",
+    ", Ahmedabad",
+    "(India based role – Hyderabad)",
+    "– Hyderabad",
+    "- Hyderabad",
+    ", Hyderabad",
+    "| Hyderabad",
+    " Hyderabad",
+    "– Chennai",
+    "- Chennai",
+    ", Chennai",
+    " Chennai",
+    "- Kollam",
+    ", Kollam",
+    " Kollam",
+    "- Jaipur",
+    ", Jaipur",
+    " Jaipur",
+    "Interesting Job Opportunity",
+    "In-Person Hiring Drive- ",
+    "In-Person Hiring Drive",
+    "Hiring Drive",
+    "Hiring Immediately",
+    " | Immediate Joiner |",
+    "| Immediate Joiner",
+    "(Immediate Joiner)",
+    "- ASAP Joiner Required",
+    "ASAP Joiner Required",
+    "#1 Apply fast!",
+    "Apply fast!",
   ];
   // Remove each phrase from job_title
   phrases_to_remove.forEach((phrase) => {
@@ -615,7 +668,7 @@ async function mergeAndCleanJobsData(output_data) {
       try {
         // Fetch details for the *current* job and wait
         const details = await fetchJobDetailFromLinkedIn(job.jobId);
-        if (details.jobClosed) {
+        if (details.jobClosed || details.applicantsCount >= 200) {
           // Job is closed, don't add it back
           closedJobsRemovedCount++;
         } else {
@@ -632,8 +685,12 @@ async function mergeAndCleanJobsData(output_data) {
     }
 
     prunedExisting = jobsToKeep;
-    console.log(`Removed ${closedJobsRemovedCount} closed LinkedIn job posts.`);
-    console.log(`Count after cleaning closed jobs: ${prunedExisting.length}`);
+    console.log(
+      `Removed ${closedJobsRemovedCount} closed/highly applied LinkedIn job posts.`
+    );
+    console.log(
+      `Count after cleaning closed/highly applied jobs: ${prunedExisting.length}`
+    );
     summaryContent += ` - Removed ${closedJobsRemovedCount} closed job posts.\n`;
   }
 
