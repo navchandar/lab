@@ -499,7 +499,19 @@ function drawChart(key) {
 
   destroyCurrentChart();
 
-  const ctx = document.getElementById("roleChart").getContext("2d");
+  const canvasElement = document.getElementById("roleChart");
+  const ctx = canvasElement.getContext("2d");
+  const descriptionElement = document.getElementById("chartDescription");
+  let descriptionText = "";
+  // Set a dynamic title/description
+  if (key === "byCompany") {
+    descriptionText = `Top ${dataSet.length} companies with the highest recent job posts.`;
+  } else if (key === "byRoleType") {
+    descriptionText = `Distribution of recent job posts across different roles.`;
+  } else if (key === "byLocation") {
+    descriptionText = `Distribution of recent job posts across various locations.`;
+  }
+  descriptionElement.textContent = descriptionText;
 
   // --- DYNAMIC COLOR GENERATION ---
   let backgroundColors = [];
@@ -515,22 +527,26 @@ function drawChart(key) {
       (_, index) => COLOR_PALETTE[index % COLOR_PALETTE.length].bg
     );
   }
-
   // Calculate the border colors from the generated background colors
   const borderColors = backgroundColors.map(getBorderColor);
 
-  // Set a dynamic title/description
-  const descriptionElement = document.getElementById("chartDescription");
-  let descriptionText = "";
+  // --- DYNAMIC HEIGHT CALCULATION ---
+  if (key !== "byRoleType") {
+    // For horizontal charts (Company/Location), set dynamic height
+    // Use approx 40px per item to ensure clear label spacing
+    const ITEM_HEIGHT = 40;
+    // Add extra padding for chart title, legend, and axis labels (e.g., 100px)
+    const requiredHeight = dataSet.length * ITEM_HEIGHT + 100;
 
-  if (key === "byCompany") {
-    descriptionText = `Top ${dataSet.length} companies with the highest job count.`;
-  } else if (key === "byRoleType") {
-    descriptionText = `Distribution of jobs across classified role types.`;
-  } else if (key === "byLocation") {
-    descriptionText = `Distribution of jobs across various locations.`;
+    // Apply the calculated height to the canvas style
+    canvasElement.style.height = `${requiredHeight}px`;
+    canvasElement.style.width = "100%"; // Maintain full width
+  } else {
+    // For vertical charts, set a fixed default height
+    // This assumes the default size is sufficient for few vertical bars
+    canvasElement.style.height = "400px";
+    canvasElement.style.width = "100%";
   }
-  descriptionElement.textContent = descriptionText;
 
   currentChartInstance = new Chart(ctx, {
     type: "bar",
@@ -548,12 +564,31 @@ function drawChart(key) {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       // Set specific options (e.g., horizontal bars for many locations/companies)
       indexAxis: key !== "byRoleType" ? "y" : "x", // Use horizontal bars for Company/Location
       scales: {
-        // Adjust X/Y axis based on whether it's horizontal or vertical
-        [key !== "byRoleType" ? "x" : "y"]: {
-          beginAtZero: true,
+        // X-Axis Configuration
+        x: {
+          // Set beginAtZero only for the VALUE axis.
+          // If indexAxis is 'y' (horizontal bars), x is the value axis.
+          beginAtZero: key !== "byRoleType",
+          // If indexAxis is 'x' (vertical bars), x is the CATEGORY axis.
+          ticks: {
+            autoSkip: key === "byRoleType" ? false : true,
+          },
+        },
+
+        // Y-Axis Configuration
+        y: {
+          // Set beginAtZero only for the VALUE axis.
+          // If indexAxis is 'x' (vertical bars), y is the value axis.
+          beginAtZero: key === "byRoleType",
+          // If indexAxis is 'y' (horizontal bars), y is the CATEGORY axis.
+          ticks: {
+            // Force display of all labels on the category axis
+            autoSkip: key !== "byRoleType" ? false : true,
+          },
         },
       },
     },
