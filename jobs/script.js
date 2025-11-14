@@ -1,4 +1,4 @@
-import { CITY_ALIAS } from "./constants.js";
+import { CITY_ALIAS, DATA_TABLE_CONFIG } from "./constants.js";
 import { GENERAL_COLOR_PALETTE as GEN_COLORS } from "./constants.js";
 import { ROLE_TYPE_COLOR_PALETTE as ROLE_COLORS } from "./constants.js";
 
@@ -18,6 +18,10 @@ const dataTable = document.getElementById("jobTable");
 let globalChartData = null;
 let chartLoadStatus = "unloaded"; // 'unloaded', 'loading', 'loaded', 'failed'
 let currentChartInstance = null; // Store the Chart.js instance
+
+// --- Initialize an empty DataTable ---
+// We initialize it once with configuration, then add data later
+const jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
 
 function normalizeLocation(location) {
   if (!location) {
@@ -64,61 +68,6 @@ function updateRefreshTimeDisplay(gmtDateString, jobsAdded) {
   }
   lastMod.textContent = txtContent;
 }
-
-const dataTableConfig = {
-  // Add configurations
-  // Sort by the 5th column (Date Posted) descending
-  // order: [[4, "desc"]],
-  order: [],
-  pageLength: 10, // Show 10 rows per page
-  lengthChange: true, // Allow user to change page length
-  responsive: true, // Make table responsive
-  autoWidth: false, // Prevent automatic column width
-  language: {
-    search: "Search jobs:",
-    lengthMenu: "Show _MENU_ job posts per page",
-    info: "Showing _START_ to _END_ of _TOTAL_ job posts",
-  },
-  columnDefs: [
-    {
-      // 1. Job Title (Index 0)
-      targets: [0],
-      className: "dt-head-left dt-body-left", // Ensure header and body text align left
-      width: "30%",
-    },
-    {
-      // 2. Company Name (Index 1)
-      targets: [1],
-      className: "dt-head-left dt-body-left",
-      width: "13%",
-    },
-    {
-      // 3. Location (Index 2)
-      targets: [2],
-      className: "dt-head-left dt-body-left",
-      width: "20%",
-    },
-    {
-      // 4. Type (Index 3 - QA / DEV / DEVOPS roles)
-      targets: [3],
-      className: "dt-head-center dt-body-center", // Center align for better visual grouping
-      width: "15%",
-    },
-    {
-      // 5. Years of Experience (Index 4)
-      targets: [4],
-      className: "dt-head-center dt-body-center",
-      width: "7%",
-    },
-    {
-      // 6. Date Posted (Index 5)
-      targets: [5],
-      type: "date", // Explicitly tell DataTables to sort this as a date
-      className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
-      width: "15%",
-    },
-  ],
-};
 
 const asArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 
@@ -735,10 +684,6 @@ async function main() {
   const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   console.log("Local Timezone:", localTimeZone);
 
-  // --- Initialize an empty DataTable ---
-  // We initialize it once with configuration, then add data later
-  const jobsTable = jQuery("#jobTable").DataTable(dataTableConfig);
-
   // Initialize Select2 on the dropdowns
   setupSelectDropdowns();
 
@@ -1125,7 +1070,7 @@ async function main() {
   }
 
   // Handle the browser's back/forward buttons for query changes
-  window.addEventListener("popstate", (event) => {
+  window.addEventListener("popstate", () => {
     // Only load filters if we're not currently in the chart view
     if (window.location.hash !== "#charts") {
       loadFiltersFromURL();

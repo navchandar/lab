@@ -43,6 +43,60 @@ export const LINKEDIN_SEARCH_QUERY = {
   page: "0",
 };
 
+export const DATA_TABLE_CONFIG = {
+  // Sort by the 5th column (Date Posted) descending
+  // order: [[4, "desc"]],
+  order: [],
+  pageLength: 10, // Show 10 rows per page
+  lengthChange: true, // Allow user to change page length
+  responsive: true, // Make table responsive
+  autoWidth: false, // Prevent automatic column width
+  language: {
+    search: "Search jobs:",
+    lengthMenu: "Show _MENU_ job posts per page",
+    info: "Showing _START_ to _END_ of _TOTAL_ job posts",
+  },
+  columnDefs: [
+    {
+      // 1. Job Title (Index 0)
+      targets: [0],
+      className: "dt-head-left dt-body-left", // Ensure header and body text align left
+      width: "30%",
+    },
+    {
+      // 2. Company Name (Index 1)
+      targets: [1],
+      className: "dt-head-left dt-body-left",
+      width: "13%",
+    },
+    {
+      // 3. Location (Index 2)
+      targets: [2],
+      className: "dt-head-left dt-body-left",
+      width: "20%",
+    },
+    {
+      // 4. Type (Index 3 - QA / DEV / DEVOPS roles)
+      targets: [3],
+      className: "dt-head-center dt-body-center", // Center align for better visual grouping
+      width: "15%",
+    },
+    {
+      // 5. Years of Experience (Index 4)
+      targets: [4],
+      className: "dt-head-center dt-body-center",
+      width: "7%",
+    },
+    {
+      // 6. Date Posted (Index 5)
+      targets: [5],
+      type: "date", // Explicitly tell DataTables to sort this as a date
+      className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
+      width: "15%",
+    },
+  ],
+};
+
 // Classification Categories, keywords and negative associations.
 export const CATEGORIES = {
   SoftwareDEV: {
