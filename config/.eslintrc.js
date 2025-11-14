@@ -23,6 +23,7 @@ module.exports = {
         "**/*.config.js",
         "jobs/fetch-jobs.js",
         "jobs/classify-jobs.js",
+        "jobs/analyze-jobs.js",
       ],
       // Override the environment setting for these files only
       env: {
@@ -37,6 +38,12 @@ module.exports = {
         node: false,
         es6: true,
         jquery: true,
+      },
+      globals: {
+        // Define global variables injected via HTML script tags
+        $: "readonly",
+        jQuery: "readonly",
+        Chart: "readonly",
       },
     },
   ],
