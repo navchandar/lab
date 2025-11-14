@@ -1,9 +1,12 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // --- Configuration ---
-const RAW_DATA_FILE = path.join(__dirname, "jobs.json");
-const CHART_DATA_FILE = path.join(__dirname, "charts_data.json");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const RAW_DATA_FILE = path.resolve(__dirname, "jobs.json");
+const CHART_DATA_FILE = path.resolve(__dirname, "charts_data.json");
 
 /**
  * Helper function to count items, sort, and apply a limit.
@@ -52,10 +55,10 @@ try {
   // 3. Jobs by Role Type (All)
   const byRoleType = aggregate(
     jobs,
-    (job) => job.classification && job.classification.roleType
+    (job) => job.classification?.roleType || "N/A"
   );
 
-  // 3. Combine the results into a single object
+  // 4. Combine the results into a single object
   const finalChartData = {
     byCompany: byCompany,
     byLocation: byLocation,
@@ -63,7 +66,7 @@ try {
     totalCount: jobs.length,
   };
 
-  // 4. Write the aggregated data to a new file
+  // 5. Write the aggregated data to a new file
   fs.writeFileSync(
     CHART_DATA_FILE,
     JSON.stringify(finalChartData, null, 2),

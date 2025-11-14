@@ -113,11 +113,8 @@
         <button id="ip-toast-close" class="ip-toast-close">&times;</button>
       </div>
 
-      <div id="last-refresh" class="last-refresh">Loading Jobs Data...</div>
-
       <div id="chart-view" style="display: none; margin-top: 20px;">
         <h2>Job Role Distribution Analysis</h2>
-        <label for="chartSelector">Analysis:</label>
         <select id="chartSelector">
           <option value="byRoleType">Job Roles Distribution</option>
           <option value="byCompany">Top Companies by Job Count</option>
@@ -129,6 +126,8 @@
           <canvas id="roleChart"></canvas>
         </div>
       </div>
+
+      <div id="last-refresh" class="last-refresh">Loading Jobs Data...</div>
     </main>
 
     <footer>
@@ -156,7 +155,7 @@
             GNU GPLv3 </a
           >.
         </small>
-        <a href="#" id="toggleView">Charts</a>
+        <a href="#" id="toggleView">Display Charts</a>
       </p>
     </footer>
 

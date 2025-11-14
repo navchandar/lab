@@ -349,6 +349,68 @@ a:hover, a:focus {
     }
 }
 
+/* --- Chart View Styles --- */
+#chart-view {
+    /* Use Flexbox for better layout control */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    background-color: #f7f9fc;
+    padding: 20px 25px;
+    text-align: center;
+}
+
+#chart-view h2 {
+    margin-bottom: 15px;
+    color: #1e3a8a;
+    font-weight: 700;
+    font-size: 1.75rem;
+}
+
+/* Selector Dropdown Styling */
+#chartSelector {
+    appearance: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    margin-bottom: 15px;
+    border: 2px solid #3b82f6;
+    border-radius: 8px;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%233b82f6'%3e%3cpath d='M7 7l3 3 3-3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+    background-position: right 10px center;
+    background-size: 12px;
+    background-repeat: no-repeat;
+    background-color: white;
+    padding: 10px 15px;
+    color: #333;
+    font-size: 1rem;
+}
+
+#chartSelector:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    border-color: #2563eb;
+}
+
+/* Description Text Styling */
+#chartDescription {
+    margin-bottom: 20px;
+    color: #555;
+    font-size: 0.95rem;
+}
+
+/* Chart Canvas Container */
+#chart-view>div {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    background-color: white;
+    padding: 10px;
+    width: 100%;
+}
+
 
 /* Styles for mobile devices */
 @media (max-width: 767px) {
@@ -410,6 +472,21 @@ a:hover, a:focus {
 
     .ip-toast-close {
         margin: 0;
+    }
+
+    #chart-view {
+        margin-top: 15px;
+        border-radius: 8px;
+        padding: 15px;
+    }
+
+    #chart-view h2 {
+        font-size: 1.5rem;
+    }
+
+    #chartSelector {
+        padding: 8px 12px;
+        font-size: 0.9rem;
     }
 
 }
@@ -486,6 +563,37 @@ a:hover, a:focus {
 
     footer a {
         color: white
+    }
+
+    #chart-view {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        border-color: #374151;
+        background-color: #1f2937;
+    }
+
+    #chart-view h2 {
+        color: #93c5fd;
+    }
+
+    #chartSelector {
+        border-color: #60a5fa;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%2360a5fa'%3e%3cpath d='M7 7l3 3 3-3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3e%3c/svg%3e");
+        background-color: #374151;
+        color: #f9fafb;
+    }
+
+    #chartSelector:focus {
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3);
+        border-color: #3b82f6;
+    }
+
+    #chartDescription {
+        color: #d1d5db;
+    }
+
+    #chart-view>div {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        background-color: #374151;
     }
 
 }

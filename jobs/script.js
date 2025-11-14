@@ -510,7 +510,7 @@ async function renderCharts() {
       dataTable.style.display = "none";
       filters.style.display = "none";
       chartView.style.display = "block";
-      toggleButton.textContent = "Switch to Job Listings Table";
+      toggleButton.textContent = "Display Job Listings";
 
       // 1. Load data only if it hasn't been loaded successfully
       if (chartLoadStatus === "unloaded") {
@@ -527,7 +527,7 @@ async function renderCharts() {
       dataTable.style.display = "table";
       filters.style.display = "flex";
       chartView.style.display = "none";
-      toggleButton.textContent = "Switch to Data Analysis View";
+      toggleButton.textContent = "Display Charts";
 
       // Destroy chart instance to free up resources
       destroyCurrentChart();
