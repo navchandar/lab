@@ -552,6 +552,7 @@ function drawChart(key) {
 async function renderCharts() {
   const toggleButton = document.getElementById("toggleView");
   const tableView = document.querySelector(".table-container");
+  const tableWrap = document.getElementById("jobTable_wrapper");
   const chartView = document.getElementById("chart-view");
   const filters = document.getElementById("filters");
   const chartSelector = document.getElementById("chartSelector");
@@ -563,41 +564,169 @@ async function renderCharts() {
     }
   });
 
-  // Function to toggle between table and chart views
-  toggleButton.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const isTableViewActive =
-      tableView.style.display !== "none" || dataTable.style.display !== "none";
-
-    if (isTableViewActive) {
+  // Function to handle the actual view toggling
+  async function toggleView(switchToCharts) {
+    // Removed pushHistory argument
+    if (switchToCharts) {
       // --- Switching to Chart View ---
       tableView.style.display = "none";
-      dataTable.style.display = "none";
+      tableWrap.style.display = "none";
       filters.style.display = "none";
       chartView.style.display = "block";
       toggleButton.textContent = "Display Job Listings";
 
-      // 1. Load data only if it hasn't been loaded successfully
       if (chartLoadStatus === "unloaded") {
         await loadChartData();
       }
 
-      // 2. Draw the chart using the currently selected dropdown option
       if (chartLoadStatus === "loaded") {
         drawChart(chartSelector.value);
       }
     } else {
       // --- Switching back to Table View ---
       tableView.style.display = "block";
-      dataTable.style.display = "table";
+      tableWrap.style.display = "block";
       filters.style.display = "flex";
       chartView.style.display = "none";
       toggleButton.textContent = "Display Charts";
 
-      // Destroy chart instance to free up resources
       destroyCurrentChart();
     }
+  }
+
+  // Add event listener for the toggle button
+  toggleButton.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const isTableViewActive =
+      tableView.style.display !== "none" || tableWrap.style.display !== "none";
+
+    // Change the URL Hash (This triggers the 'hashchange' event below)
+    if (isTableViewActive) {
+      window.location.hash = "charts";
+    } else {
+      window.location.hash = ""; // Clear hash for table view
+    }
+    // Note: The 'hashchange' listener handles toggleView.
   });
+
+  // Expose toggleView on the window for external use
+  window.toggleView = toggleView;
+}
+
+/**
+ * Sets up a listener for URL hash changes to toggle views.
+ * This handles both initial load (if hash is present) and back/forward buttons.
+ */
+function setupHashListener() {
+  const hashHandler = () => {
+    // Check if the hash is #charts
+    const switchToCharts = window.location.hash === "#charts";
+    if (window.toggleView) {
+      window.toggleView(switchToCharts);
+    }
+  };
+  // Handle view change when the URL hash is modified (by click or back/forward)
+  window.addEventListener("hashchange", hashHandler);
+
+  //Handle the initial load
+  hashHandler();
+}
+
+/**
+ * Parses the URL query string and returns an object of key-value pairs.
+ * @returns {Object} { c: 'val1,val2', l: 'val3', y: 'val4', ... }
+ */
+function parseUrlQuery() {
+  const params = {};
+  const searchParams = new URLSearchParams(window.location.search);
+
+  // Define short keys for URL brevity
+  params.companies = searchParams.get("c")?.split(",") || [];
+  params.locations = searchParams.get("l")?.split(",") || [];
+  params.yoe = searchParams.get("y") || "";
+  params.length = searchParams.get("len") || "";
+  params.search = searchParams.get("s") || "";
+
+  return params;
+}
+
+/**
+ * Reads current filter values, updates the URL query string, and pushes the state.
+ */
+function updateURL() {
+  const url = new URL(window.location.href);
+  const params = url.searchParams;
+
+  // Clear existing filter/search parameters
+  params.delete("c");
+  params.delete("l");
+  params.delete("y");
+  params.delete("s");
+  params.delete("len");
+
+  // Get current filter values
+  const selectedCompanies = asArray($("#companyFilter").val());
+  const selectedLocations = asArray($("#locationFilter").val());
+  const selectedExperience = $("#experienceFilter").val();
+  const currentSearch = jobsTable.search(); // Get the global search value
+  const pageLength = jobsTable.page.len(); // Get DataTables page length
+
+  // Add non-empty values to the URL using short keys
+  if (selectedCompanies.length > 0) {
+    // Join multiple selections with a comma
+    params.set("c", selectedCompanies.join(","));
+  }
+  if (selectedLocations.length > 0) {
+    params.set("l", selectedLocations.join(","));
+  }
+  if (selectedExperience) {
+    params.set("y", selectedExperience);
+  }
+  if (currentSearch) {
+    // URL-encode the search string
+    params.set("s", encodeURIComponent(currentSearch));
+  }
+  // Store page length
+  if (pageLength && pageLength !== 10) {
+    // Only store if not the default
+    params.set("len", pageLength);
+  }
+
+  // Update the URL without reloading the page
+  // Note: history.pushState is better than just changing window.location.search
+  // because it adds an entry for the back button.
+  history.pushState(null, "", url.toString());
+}
+
+// Add this new function
+function loadFiltersFromURL() {
+  const params = parseUrlQuery();
+
+  // This must be done before the draw call
+  if (params.length) {
+    const len = parseInt(params.length, 10);
+    // DataTables accepts -1 for 'All'
+    if (len > 0 || len === -1) {
+      jobsTable.page.len(len);
+    }
+  }
+
+  // Apply Global Search
+  if (params.search) {
+    const decodedSearch = decodeURIComponent(params.search);
+    jobsTable.search(decodedSearch);
+    // Also update the physical input box
+    $("#dt-search-0").val(decodedSearch);
+  }
+
+  // --- Apply Selections to Filters (Handles Non-existent Values Gracefully) ---
+  // Company Filter (Multi-select)
+  $("#companyFilter").val(params.companies).trigger("change.select2");
+  // Location Filter (Multi-select)
+  $("#locationFilter").val(params.locations).trigger("change.select2");
+  // Experience Filter (Single-select)
+  // We use params.yoe directly (which is a string or empty string)
+  $("#experienceFilter").val(params.yoe).trigger("change.select2");
 }
 
 async function main() {
@@ -682,6 +811,8 @@ async function main() {
       if (!initialLoadComplete) {
         setupEventListeners();
         initialLoadComplete = true;
+        // After initial load and setup, check the URL for filters
+        loadFiltersFromURL();
       }
 
       hideSpinner();
@@ -848,6 +979,7 @@ async function main() {
    */
   function applyFilters() {
     jobsTable.draw();
+    updateURL();
   }
 
   /**
@@ -892,6 +1024,7 @@ async function main() {
     });
     const sortedExp = Array.from(experienceSet).sort((a, b) => a - b);
     populateFilter("#experienceFilter", sortedExp, asArray(selectedExperience));
+    updateURL();
   }
 
   /**
@@ -907,6 +1040,10 @@ async function main() {
     $("#companyFilter").val(null).trigger("change.select2");
     $("#locationFilter").val(null).trigger("change.select2");
     $("#experienceFilter").val(null).trigger("change.select2");
+
+    // Push a clean URL state
+    const clean_url = window.location.pathname + window.location.hash;
+    history.pushState(null, "", clean_url);
 
     // Manually call applyFilters() ONCE to redraw the table with no filters
     applyFilters();
@@ -963,6 +1100,8 @@ async function main() {
     // When the DataTables global search input is used, update the dropdowns.
     jobsTable.on("search.dt", updateDropdowns);
 
+    jobsTable.on("length.dt", updateURL);
+
     // When reset is clicked, clear all filters and redraw
     $("#resetFilters").on("click", resetAllFilters);
 
@@ -985,10 +1124,22 @@ async function main() {
     });
   }
 
+  // Handle the browser's back/forward buttons for query changes
+  window.addEventListener("popstate", (event) => {
+    // Only load filters if we're not currently in the chart view
+    if (window.location.hash !== "#charts") {
+      loadFiltersFromURL();
+    }
+  });
+
   // Run once immediately to load jobs
   await loadJobs();
 
+  // Setup the chart view components
   await renderCharts();
+  // Setup the simplified history handling (hash listener)
+  setupHashListener();
+
   // Poll every 2 minutes
   setInterval(loadJobs, 2 * 60 * 1000);
 }
