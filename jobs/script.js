@@ -301,25 +301,15 @@ function hideSpinner() {
     filters.style.display = "flex";
   }, 500 + baseDelay * 1);
 
-  // --- Step 3: Show Search & Length Menu (Top Row) ---
-  // The first DataTables layout row (usually the search box and page length)
-  setTimeout(() => {
-    if (rows[0]) {
-      rows[0].style.display = "flex";
-    }
-  }, 500 + baseDelay * 2);
-
-  // --- Step 4: Show Pagination & Info (Bottom Row) ---
-  // The second DataTables layout row (usually the info and pagination controls)
-  setTimeout(() => {
-    if (rows[1]) {
-      rows[1].style.display = "flex";
-    }
-    // Ensure ALL rows are visible in case of different DataTables layout configuration
-    for (let i = 2; i < rows.length; i++) {
-      rows[i].style.display = "flex";
-    }
-  }, 500 + baseDelay * 3); // 500ms + 450ms
+  // --- Steps 3: Show DataTables Rows ---
+  // Apply a dynamic delay for sequential showing
+  rows.forEach((row, index) => {
+    setTimeout(() => {
+      // Append '!important' to the inline style value.
+      // This forces the inline style to win over the external CSS '!important' rule.
+      row.style.setProperty("display", "flex", "important");
+    }, 500 + baseDelay * (2 + index));
+  });
 }
 
 // --- Utility: Fetch with Error Handling ---
@@ -335,12 +325,40 @@ async function get(url, options = {}) {
     throw error;
   }
 }
-function addScrollOnPagination() {
+
+/**
+ * Scrolls the main content area or the table container into view.
+ */
+function scrollToTableTop() {
+  const mainContent = document.querySelector("main");
+
+  if (mainContent) {
+    // Scroll the main container to the top of the viewport
+    mainContent.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  } else {
+    // Fallback: scroll the table container itself if 'main' isn't found
+    const tableView = document.querySelector(".table-container");
+    if (tableView) {
+      tableView.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }
+}
+
+/**
+ * Attaches a single delegated click listener to handle pagination clicks.
+ */
+function setupPaginationScrollListener() {
   document.addEventListener("click", function (event) {
-    if (event.target.classList.contains("dt-paging-button")) {
-      if (dataTable) {
-        dataTable.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+    // Check if the clicked element (or its closest parent) has the target class.
+    const clickedButton = event.target.closest(".dt-paging-button");
+    if (clickedButton) {
+      scrollToTableTop();
     }
   });
 }
@@ -769,7 +787,6 @@ async function main() {
       populateTable(allJobs);
 
       if (initialLoadComplete) {
-        addScrollOnPagination();
         // Since jobs.json changed, the chart data is now stale.
         // Reset the status to 'unloaded' and clear the old data.
         chartLoadStatus = "unloaded";
@@ -961,6 +978,7 @@ async function main() {
   function applyFilters() {
     jobsTable.draw();
     updateURL();
+    scrollToTableTop();
   }
 
   /**
@@ -1093,9 +1111,12 @@ async function main() {
       // Apply the search to DataTables
       jobsTable.search(searchText).draw();
       $("#dt-search-0").val(searchText);
+      scrollToTableTop();
     });
 
     window.addEventListener("online", loadJobs);
+
+    setupPaginationScrollListener();
 
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {

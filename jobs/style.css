@@ -127,6 +127,36 @@ main {
     max-width: 500px;
 }
 
+/* General Select2 Styling (Selection Box) */
+.select2-container--default .select2-selection--multiple,
+.select2-container--default .select2-selection--single {
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid #bdbdbd;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 0;
+    height: auto !important;
+    min-height: 40px;
+}
+
+/* Select2 Dropdown Menu (The options list that appears on click) */
+.select2-container--default .select2-results__option {
+    transition: background-color 0.2s;
+    padding: 10px 15px;
+    color: #333;
+}
+
+.select2-results__option.select2-results__option--selectable:hover {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+/* Select2 Dropdown Hover/Active */
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
 /* Focus state (using Primary Blue) */
 .dt-search input:focus, .dt-length select:focus,
 .select2-container--default.select2-container--focus .select2-selection--multiple,
@@ -135,10 +165,6 @@ main {
     box-shadow: 0 0 0 1px #1976D2;
     border-width: 2px;
     border-color: #1976D2 !important;
-}
-
-.select2-selection--single {
-    min-height: 40px;
 }
 
 #filters {
@@ -180,13 +206,21 @@ main {
     background-color: #C62828;
 }
 
+#resetFilters:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background-color: #B71C1C;
+}
+
 /* Select2 Tag Styling */
 .select2-container--default .select2-selection .select2-selection__choice {
-    margin-top: 5px;
-    border-radius: 5px;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    border-radius: 4px;
     background-color: #2196F3;
     padding: 2px 6px;
     color: white;
+
 }
 
 .select2-container--default .select2-selection .select2-selection__choice__remove {
@@ -197,7 +231,7 @@ main {
 /* DATA TABLE */
 /* ================================================= */
 .dt-layout-row {
-    display: none;
+    display: none !important;
 }
 
 .table-container {
@@ -442,11 +476,17 @@ footer p {
         font-size: 1.5em;
     }
 
+    #loadingSpinner {
+        padding: 30px;
+        min-height: auto;
+    }
+
     #jobTable {
         font-size: smaller;
     }
 
     #filters {
+        flex-wrap: wrap;
         justify-content: flex-start;
         gap: 7px;
         margin-bottom: 0;
@@ -458,23 +498,33 @@ footer p {
     }
 
     .dt-search input {
-        width: 100%;
+        width: 60%;
         max-width: none;
     }
 
+    #filters .select2-selection {
+        padding: 5px;
+    }
+
     #filters .select2-container, #filters select {
-        width: 100% !important;
+        width: 96% !important;
     }
 
     #filters .select2-container:last-of-type {
-        width: 100% !important;
+        width: calc(55% - 5px) !important;
     }
 
     #resetFilters {
-        margin-left: auto;
+        order: 1;
+        margin-left: 0;
+        width: calc(40%);
+        min-height: 35px;
+        font-weight: bold;
+        font-size: smaller;
     }
 
     .last-refresh {
+        margin-top: 10px !important;
         margin-bottom: 4em !important;
         font-size: smaller;
     }
@@ -488,11 +538,11 @@ footer p {
     }
 
     .dt-layout-row {
-        display: flex !important;
+        display: none !important;
         flex-direction: column;
         align-items: flex-start;
-        gap: 8px;
-        margin-top: 10px;
+        gap: 2px;
+        margin-top: 8px !important;
     }
 
     .dt-layout-row .dt-layout-cell.dt-layout-end {
@@ -550,6 +600,50 @@ footer p {
         color: #f0f0f0;
     }
 
+    /* Select2 Selection Box */
+    .select2-container--default .select2-selection--multiple,
+    .select2-container--default .select2-selection--single {
+        border-color: #555;
+        background-color: #282828 !important;
+        color: #f0f0f0 !important;
+    }
+
+    /* Selected Tags in Dark Mode */
+    .select2-container--default .select2-selection .select2-selection__choice {
+        background-color: #4CAF50 !important;
+        color: white !important;
+    }
+
+    /* Select2 Dropdown Menu (Options List) */
+    .select2-dropdown {
+        border-color: #555;
+        background-color: #282828 !important;
+    }
+
+    /* Select2 Dropdown Options Text */
+    .select2-container--default .select2-results__option {
+        background-color: #454545 !important;
+        color: #f0f0f0 !important;
+    }
+
+    .select2-results__option.select2-results__option--selectable:hover {
+        background-color: #374151 !important;
+        color: #f0f0f0 !important;
+    }
+
+    /* Select2 Dropdown Hover/Active in Dark Mode */
+    .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+        background-color: rgba(100, 181, 246, 0.2);
+        color: #64B5F6;
+    }
+
+    /* Ensure the search box inside the dropdown is dark mode compliant */
+    .select2-search__field {
+        border-color: #555 !important;
+        background-color: #333 !important;
+        color: #f0f0f0 !important;
+    }
+
     .dt-search input:focus, .dt-length select:focus,
     .select2-container--default.select2-container--focus .select2-selection--multiple,
     .select2-container--default.select2-container--focus .select2-selection--single {
@@ -584,6 +678,11 @@ footer p {
 
     #resetFilters:hover {
         background-color: #CF6679;
+    }
+
+    #resetFilters:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     }
 
     footer {
