@@ -384,6 +384,17 @@ function getBorderColor(bgColor) {
   return bgColor;
 }
 
+// Function to determine the best text color
+function getTextColor() {
+  // Check for dark mode preference
+  const isDarkMode =
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+  // Return a light gray for dark mode, or a dark gray for light mode
+  return isDarkMode ? "#EEEEEE" : "#333333";
+}
+
 // --- CHART RENDERING LOGIC ---
 /**
  * Renders the chart based on the selected analysis key.
@@ -468,6 +479,13 @@ function drawChart(key) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: {
+            color: getTextColor(),
+          },
+        },
+      },
       // Set specific options (e.g., horizontal bars for many locations/companies)
       indexAxis: key !== "byRoleType" ? "y" : "x", // Use horizontal bars for Company/Location
       scales: {
@@ -479,6 +497,7 @@ function drawChart(key) {
           // If indexAxis is 'x' (vertical bars), x is the CATEGORY axis.
           ticks: {
             autoSkip: key === "byRoleType" ? false : true,
+            color: getTextColor(),
           },
         },
 
@@ -491,6 +510,7 @@ function drawChart(key) {
           ticks: {
             // Force display of all labels on the category axis
             autoSkip: key !== "byRoleType" ? false : true,
+            color: getTextColor(),
           },
         },
       },
@@ -690,9 +710,8 @@ function loadFiltersFromURL() {
   $("#experienceFilter").val(params.yoe).trigger("change.select2");
 
   if (searchApplied || params.length) {
-      jobsTable.draw();
+    jobsTable.draw();
   }
-
 }
 
 async function main() {

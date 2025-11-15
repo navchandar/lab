@@ -52,9 +52,10 @@ function toIsoStringUTC(date) {
 }
 
 /**
- * Checks if the current UTC hour is one of the desired run times (00, 08, 16).
- * This function ensures the script runs only 3 times a day.
- * @returns {boolean} True if the current time satisfies the 8-hour interval.
+ * Checks if the current UTC hour is one of the desired run times (00, 08, 16)
+ * and if the minutes are within the first 40 of that hour.
+ * Prints which condition was not met if the run is skipped.
+ * @returns {boolean} True if the current time satisfies the 8-hour interval and minutes window.
  */
 function limitedRun() {
   // Target hours in UTC (Covers the 8-hour interval: 00:00, 08:00, 16:00)
@@ -72,18 +73,37 @@ function limitedRun() {
   // Check if the current hour is in the target hours array
   const isTargetHour = targetHours.includes(currentUTCHour);
 
-  // OPTIONAL: Restrict the run to the first half-hour to avoid running twice per target hour
-  // (e.g., at 08:00 and 08:30). If you only want it to run exactly once per 8 hours,
-  // restrict it to minutes < 30.
-  const isFirstHalfHour = currentUTCMinutes < 30;
+  // Restrict the run to the first 40 minutes (0 to 49)
+  const isFirstHalfHour = currentUTCMinutes < 40;
 
-  // The script should run only if it's one of the target hours AND it's in the first
-  // half hour of the GitHub Actions schedule trigger.
+  const timeNow = `Current UTC Time: ${nowUtc.toISOString()}.`;
+  // The script should run only if both conditions are met.
   if (isTargetHour && isFirstHalfHour) {
-    console.log(`Current UTC Time: ${nowUtc}. Condition met`);
+    console.log(`${timeNow} Condition met. Script can run.`);
     return true;
   } else {
-    console.log(`Current UTC Time: ${nowUtc}. Condition NOT met`);
+    // --- Condition Failed: Print the reason ---
+    let failureReason = "";
+    if (!isTargetHour) {
+      failureReason += `Hour condition not met: Current hour (${currentUTCHour} UTC) is not one of the target hours (${targetHours.join(
+        ", "
+      )} UTC).`;
+    }
+
+    if (!isFirstHalfHour) {
+      if (failureReason) {
+        failureReason += " AND ";
+      }
+      failureReason += `Minute condition not met: Current minutes (${currentUTCMinutes}) are 40 or greater.`;
+    }
+
+    // Fallback if both were somehow true but the overall IF failed (shouldn't happen)
+    if (!failureReason) {
+      failureReason = "Unknown condition failure.";
+    }
+
+    console.log(`${timeNow} Condition NOT met. Script will skip.`);
+    console.log(`Failure Reason: ${failureReason}`);
     return false;
   }
 }
