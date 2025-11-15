@@ -191,6 +191,7 @@ main {
 #resetFilters {
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
+    margin-left: 2em;
     border: none;
     border-radius: 4px;
     background-color: #D32F2F;
@@ -217,15 +218,25 @@ main {
     margin-top: 4px;
     margin-bottom: 4px;
     border-radius: 4px;
-    background-color: #2196F3;
+    background-color: #2196F3 !important;
     padding: 2px 6px;
-    color: white;
+    color: white !important;
 
 }
 
-.select2-container--default .select2-selection .select2-selection__choice__remove {
-    color: rgba(255, 255, 255, 0.8);
+.select2-container--default .select2-selection .select2-selection__choice__remove, .select2-selection__clear {
+    color: rgba(255, 255, 255, 0.8) !important;
 }
+
+.select2-selection--single .select2-selection__rendered {
+    color: #444 !important;
+    line-height: normal;
+}
+
+.select2-selection__rendered {
+    text-shadow: 1px 1px 1px black !important;
+}
+
 
 /* ================================================= */
 /* DATA TABLE */
@@ -452,10 +463,6 @@ footer p {
     font-size: 18px;
 }
 
-.select2-selection__rendered {
-    line-height: normal;
-}
-
 
 /* ================================================= */
 /* MEDIA QUERIES (MOBILE) */
@@ -516,7 +523,7 @@ footer p {
 
     #resetFilters {
         order: 1;
-        margin-left: 0;
+        margin-left: 0 !important;
         width: calc(40%);
         min-height: 35px;
         font-weight: bold;
@@ -591,6 +598,7 @@ footer p {
 
     a:hover, a:focus {
         border-bottom: 2px solid #BBDEFB;
+        color: #69a0f1;
     }
 
     /* Inputs */
@@ -650,6 +658,12 @@ footer p {
         box-shadow: 0 0 0 1px #64B5F6;
         border-color: #64B5F6 !important;
     }
+
+    .select2-selection--single .select2-selection__rendered {
+        color: #f0f0f0 !important;
+        line-height: normal;
+    }
+
 
     /* Table */
     #jobTable th {
