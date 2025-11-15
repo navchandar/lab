@@ -433,15 +433,15 @@ footer p {
 .ip-toast {
     display: none;
     position: fixed;
+    top: 10px;
     right: 20px;
-    bottom: 20px;
     transform: translateY(20px);
     opacity: 0;
     z-index: 1000;
     transition: opacity 0.5s ease, transform 0.5s ease;
     box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
     border-radius: 4px;
-    background-color: #323232;
+    background-color: #00509f;
     padding: 12px 20px;
     color: #ffffff;
     font-family: sans-serif;
@@ -734,6 +734,10 @@ footer p {
     #canvas-container {
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
         background-color: #374151;
+    }
+
+    .ip-toast {
+        background-color: #002334;
     }
 
 }

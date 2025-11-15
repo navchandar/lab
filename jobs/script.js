@@ -21,7 +21,18 @@ let currentChartInstance = null; // Store the Chart.js instance
 
 // --- Initialize an empty DataTable ---
 // We initialize it once with configuration, then add data later
-const jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
+let jobsTable = null;
+if (typeof jQuery === "undefined") {
+  showToast("Error: jQuery failed to load");
+} else {
+  console.log("jQuery is loaded. Initializing DataTable.");
+  try {
+    jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
+  } catch (e) {
+    showToast("Error initializing the jobs table. Check console!");
+    console.error("DataTable initialization failed:", e);
+  }
+}
 
 function normalizeLocation(location) {
   if (!location) {
