@@ -328,7 +328,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 10px;
+    margin-top: 2px;
     margin-bottom: 25px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     border: 1px solid #e0e0e0;
@@ -475,7 +475,7 @@ footer p {
         margin: 0;
         box-shadow: none;
         border-radius: 0;
-        padding: 15px;
+        padding: 10px 10px 20px 10px;
     }
 
     header {
@@ -543,7 +543,7 @@ footer p {
         padding: 8px 8px;
     }
 
-    #jobTableBody td:nth-child(2), #jobTableBody td:nth-child(3) {
+    #jobTableBody td:is(:nth-child(2), :nth-child(3), :nth-child(4), :nth-child(5), :nth-child(6)) {
         font-size: smaller;
     }
 
@@ -552,7 +552,7 @@ footer p {
         flex-direction: column;
         align-items: flex-start;
         gap: 2px;
-        margin-top: 8px !important;
+        margin: 5px 2px !important;
     }
 
     .dt-layout-row .dt-layout-cell.dt-layout-end {
