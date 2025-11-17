@@ -403,19 +403,15 @@ function clean_string(jobs) {
 
     // **D. Cleanup Spacing**
     // Replace any remaining non-standard spaces (\p{Zs}) and multiple spaces with a single space.
-    // 1. Remove space/tab before common punctuation: " ;" -> ";"
-    desc = desc.replace(/[ \t]+([.,;:])([ \t]+)?/g, "$1");
-
-    // 2. Ensure a single space follows punctuation for readability: "word." -> "word. "
+    // Ensure a single space follows punctuation for readability: "word." -> "word. "
     desc = desc.replace(/([.,;:])([ \t]+)?/g, "$1 ");
 
-    // 3. Collapse multiple consecutive common punctuation
+    // Collapse multiple consecutive common punctuation
     desc = desc.replace(/[.]{2,}/g, ".");
     desc = desc.replace(/[,]{2,}/g, ",");
     desc = desc.replace(/;{2,}/g, ";");
 
     desc = desc.replace(/\p{Zs}/gu, " ");
-    desc = desc.replace(/[^\S\n]+/g, " ");
     desc = desc.trim();
 
     // **E. (Optional) Sanitize - only use if you want to remove ALL characters not in your list**

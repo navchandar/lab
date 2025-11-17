@@ -326,6 +326,7 @@ function hideSpinner() {
 // --- Utility: Fetch with Error Handling ---
 async function get(url, options = {}) {
   try {
+    console.log(`Loading ${url}`);
     const response = await fetch(url, options);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -334,6 +335,51 @@ async function get(url, options = {}) {
   } catch (error) {
     console.error("Request Failed to", url, error);
     throw error;
+  }
+}
+
+// -- Get jobs.json.gz compressed file and decompress --
+async function fetchAndDecompressGzip(url) {
+  // 1. Fetch the compressed file as a binary response
+  const response = await get(url, { cache: "no-store" });
+  // 2. Treat response as a binary stream (Blob is the easiest way)
+  const blob = await response.blob();
+  // 3. Decompress the stream
+  const ds = new DecompressionStream("gzip");
+  // Pipe the blob's stream through the decompressor
+  const decompressedStream = blob.stream().pipeThrough(ds);
+  // 4. Read the decompressed text and parse JSON
+  const decompressedText = await new Response(decompressedStream).text();
+  return JSON.parse(decompressedText);
+}
+
+async function fetchJobsData() {
+  // Determine if GZIP is supported
+  const supportsGzip = "DecompressionStream" in window;
+  console.log(`GZIP support: ${supportsGzip}`);
+
+  // Base URL for the JSON file
+  const jsonUrl = `jobs.json?nocache=${Date.now()}`;
+  const gzipUrl = `jobs.json.gz?nocache=${Date.now()}`;
+
+  if (supportsGzip) {
+    try {
+      return await fetchAndDecompressGzip(gzipUrl);
+    } catch (e) {
+      console.warn(
+        `GZIP fetch/decompression failed. Falling back to JSON. Error: ${e.message}`
+      );
+    }
+  }
+
+  // --- Fallback to Direct JSON Fetch (Runs if GZIP failed or was unsupported) ---
+  try {
+    const response = await get(jsonUrl, { cache: "no-store" });
+    return await response.json();
+  } catch (jsonError) {
+    throw new Error(
+      `Failed to fetch job data (GZIP failed/unsupported, JSON failed): ${jsonError.message}`
+    );
   }
 }
 
@@ -772,8 +818,7 @@ async function main() {
       lastModified = newModified;
 
       // Fetch and update table
-      const response = await get(url, { cache: "no-store" });
-      const resp = await response.json();
+      const resp = await fetchJobsData();
 
       allJobs = resp.data;
       const added = resp.recentlyAddedCount;

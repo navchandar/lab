@@ -1772,6 +1772,7 @@ const BASE_REMOVE_TITLES = [
   "Apply fast!",
   "Great Opportunity in TCS!",
   "Great Opportunity",
+  "Title ",
 ];
 
 const prefix = [
