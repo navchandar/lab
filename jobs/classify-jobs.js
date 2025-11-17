@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { CATEGORIES, TITLE_NUDGES } from "./constants.js";
+import { CATEGORIES, TITLE_NUDGES, WORD_TO_NUM } from "./constants.js";
 
 const UNKNOWN = "—";
 
@@ -225,20 +225,36 @@ function classifyJobs(jobs) {
   });
 }
 
-const WORD_TO_NUM = {
-  one: 1,
-  two: 2,
-  three: 3,
-  four: 4,
-  five: 5,
-  six: 6,
-  seven: 7,
-  eight: 8,
-  nine: 9,
-  ten: 10,
-  eleven: 11,
-  twelve: 12,
-};
+// Regex 1: General numeric patterns with "experience"
+const REGEX_GENERAL =
+  /\b(\d{1,2})(?:\s*[-–to]\s*(\d{1,2}))?\s*\+?\s*(?:years?|yrs?|y)\b(?!\s*full\s+time\s+education)(?:\s*(?:of\s+)?(?:experience|exp|prof|professional|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
+
+// Regex 2: Header-based patterns
+const REGEX_HEADER =
+  /\b(?:Experience|Years\s+of\s+Experience|Required\s+Exp)\s*[:\s-]?\s*(\d{1,2})(?:\s*[-–to]\s*(\d{1,2}))?\s*\+?/gi;
+
+// Regex 3: Written numbers
+const REGEX_WRITTEN =
+  /\b(?:at\s+least|minimum\s+of)?\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s+(?:experience|industry|related))/gi;
+
+// Regex 4: Simple "X+ years" without experience keyword
+const REGEX_SIMPLE_PLUS =
+  /\b(\d{1,2})\s*\+\s*(?:years?|yrs?|y)\b(?!\s*of\s*experience)/gi;
+
+// Regex 5: Match numbers in words
+const NUMBER_WORDS_RE = new RegExp(
+  "\\b(" + Object.keys(WORD_TO_NUM).join("|") + ")\\b",
+  "gi"
+);
+
+const REGEX_EXP =
+  /^(Experience|Years of Experience|YoE|Years of Exp|Yrs of Exp|Overall)\s*[:-]?\s*/i;
+
+const REGEX_EXP_TO_PLUS = /(\d+)\s*(?:[-–to]\s*(\d+))?(\+)?/i;
+
+function wordToNumber(word) {
+  return WORD_TO_NUM[word.toLowerCase()] ?? null;
+}
 
 function getExperience(jobDescription, jobId) {
   if (!jobDescription) {
@@ -246,23 +262,7 @@ function getExperience(jobDescription, jobId) {
   }
 
   // Normalize whitespace and remove newlines
-  const desc = jobDescription.toString().replace(/\s+/g, " ");
-
-  // Regex 1: General numeric patterns with "experience"
-  const REGEX_GENERAL =
-    /\b(\d{1,2})(?:\s*[-–to]\s*(\d{1,2}))?\s*\+?\s*(?:years?|yrs?|y)\b(?!\s*full\s+time\s+education)(?:\s*(?:of\s+)?(?:experience|exp|prof|professional|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
-
-  // Regex 2: Header-based patterns
-  const REGEX_HEADER =
-    /\b(?:Experience|Years\s+of\s+Experience|Required\s+Exp)\s*[:\s-]?\s*(\d{1,2})(?:\s*[-–to]\s*(\d{1,2}))?\s*\+?/gi;
-
-  // Regex 3: Written numbers
-  const REGEX_WRITTEN =
-    /\b(?:at\s+least|minimum\s+of)?\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s+(?:experience|industry|related))/gi;
-
-  // Regex 4: Simple "X+ years" without experience keyword
-  const REGEX_SIMPLE_PLUS =
-    /\b(\d{1,2})\s*\+\s*(?:years?|yrs?|y)\b(?!\s*of\s*experience)/gi;
+  const desc = norm(jobDescription).replace(/\s+/g, " ");
 
   const matches = [
     ...desc.matchAll(REGEX_GENERAL),
@@ -283,10 +283,7 @@ function getExperience(jobDescription, jobId) {
     let cleaned = raw.replace(/\s+/g, " ").trim();
 
     // Convert written numbers to digits
-    cleaned = cleaned.replace(
-      /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/gi,
-      (word) => WORD_TO_NUM[word.toLowerCase()]
-    );
+    cleaned = cleaned.replace(NUMBER_WORDS_RE, wordToNumber);
 
     const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
       parseInt(m[0], 10)
@@ -332,21 +329,9 @@ function normalizeExperience(experienceString) {
     return "";
   }
 
-  let cleanedString = experienceString
-    .replace(
-      /^(Experience|Years of Experience|YoE|Years of Exp|Yrs of Exp|Overall)\s*[:-]?\s*/i,
-      ""
-    )
-    .trim();
-
-  cleanedString = cleanedString.replace(
-    /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/gi,
-    (word) => WORD_TO_NUM[word.toLowerCase()]
-  );
-
-  const regex = /(\d+)\s*(?:[-–to]\s*(\d+))?(\+)?/i;
-  const match = cleanedString.match(regex);
-
+  let cleanedString = experienceString.replace(REGEX_EXP, "").trim();
+  cleanedString = cleanedString.replace(NUMBER_WORDS_RE, wordToNumber);
+  const match = cleanedString.match(REGEX_EXP_TO_PLUS);
   if (match) {
     const firstNum = parseInt(match[1], 10);
     const secondNum = match[2] ? parseInt(match[2], 10) : null;
@@ -381,7 +366,7 @@ function addExperienceToJobs(jobs) {
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
-// CLI usage: node classify.js
+// CLI usage: node classify-jobs.js
 
 try {
   // Read the file
