@@ -63,6 +63,18 @@ function normalizeLocation(location) {
   return location;
 }
 
+/**
+ * Updates the UI with the download percentage.
+ * @param {number} percentage The current download percentage (0-100).
+ */
+function updateDownloadProgress(percentage) {
+  if (lastMod) {
+    // Round to nearest integer for display
+    const roundedPercentage = Math.round(percentage);
+    lastMod.textContent = `Loading Jobs Data: ${roundedPercentage}%`;
+  }
+}
+
 // Update last modified timestamp from Jobs.json to UI
 function updateRefreshTimeDisplay(gmtDateString, jobsAdded) {
   if (!lastMod || !gmtDateString) {
@@ -353,6 +365,72 @@ async function fetchAndDecompressGzip(url) {
   return JSON.parse(decompressedText);
 }
 
+/**
+ * Fetches data using the fetch API, tracks progress by reading the stream,
+ * and optionally decompresses GZIP using DecompressionStream.
+ * @param {string} url The URL of the resource.
+ * @param {boolean} isGzip Whether the resource is GZIP compressed.
+ * @returns {Promise<object>} A promise that resolves with the parsed JSON data.
+ */
+async function fetchWithProgressAndDecompress(url, isGzip) {
+  const response = await get(url, { cache: "no-store" });
+
+  // Get the total size of the compressed file from the header
+  const contentLength = response.headers.get("Content-Length");
+  const totalSize = contentLength ? parseInt(contentLength, 10) : null;
+
+  let loaded = 0;
+  const chunks = [];
+
+  // Start with the raw response body stream
+  let stream = response.body;
+
+  // Pipe the stream through a decompressor if it's GZIP
+  if (isGzip) {
+    if (!("DecompressionStream" in window)) {
+      throw new Error("Browser does not support DecompressionStream for GZIP.");
+    }
+    stream = stream.pipeThrough(new DecompressionStream("gzip"));
+  }
+
+  const reader = stream.getReader();
+
+  // Read the stream chunk by chunk to track progress
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    chunks.push(value);
+    loaded += value.length;
+
+    // Calculate and display progress if total size is known
+    if (totalSize) {
+      // Use the *compressed* totalSize vs. the *decompressed* loaded size.
+      // This is imperfect but provides the desired visual feedback during the network transfer.
+      const percentage = Math.min((loaded / totalSize) * 100, 100);
+      updateDownloadProgress(percentage);
+    }
+  }
+
+  // Combine chunks (now fully downloaded and decompressed, if GZIP)
+  const allChunks = new Uint8Array(loaded);
+  let offset = 0;
+  for (const chunk of chunks) {
+    allChunks.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  // Decode to string and parse JSON
+  const decoder = new TextDecoder("utf-8");
+  const jsonString = decoder.decode(allChunks);
+
+  // Reset progress display once download is done
+  updateDownloadProgress(100);
+
+  return JSON.parse(jsonString);
+}
+
 async function fetchJobsData() {
   // Determine if GZIP is supported
   const supportsGzip = "DecompressionStream" in window;
@@ -364,7 +442,8 @@ async function fetchJobsData() {
 
   if (supportsGzip) {
     try {
-      return await fetchAndDecompressGzip(gzipUrl);
+      return await fetchWithProgressAndDecompress(gzipUrl, true);
+      // return await fetchAndDecompressGzip(gzipUrl);
     } catch (e) {
       console.warn(
         `GZIP fetch/decompression failed. Falling back to JSON. Error: ${e.message}`
@@ -374,8 +453,9 @@ async function fetchJobsData() {
 
   // --- Fallback to Direct JSON Fetch (Runs if GZIP failed or was unsupported) ---
   try {
-    const response = await get(jsonUrl, { cache: "no-store" });
-    return await response.json();
+    return await fetchWithProgressAndDecompress(jsonUrl, false);
+    // const response = await get(jsonUrl, { cache: "no-store" });
+    // return await response.json();
   } catch (jsonError) {
     throw new Error(
       `Failed to fetch job data (GZIP failed/unsupported, JSON failed): ${jsonError.message}`
