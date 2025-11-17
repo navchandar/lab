@@ -586,120 +586,209 @@ function getTextColor() {
  */
 function drawChart(key) {
   if (!globalChartData || !globalChartData[key]) {
-    console.error(`Data for key "${key}" not found.`);
+    console.error(`Error: Data for key "${key}" not found.`);
+    showToast(`Error: Failed to display Chart. "${key}" data not found.`);
     destroyCurrentChart();
     return;
   }
-
-  const dataSet = globalChartData[key];
-  const labels = dataSet.map((item) => item.label);
-  const counts = dataSet.map((item) => item.count);
 
   destroyCurrentChart();
 
   const canvasElement = document.getElementById("roleChart");
   const ctx = canvasElement.getContext("2d");
   const descriptionElement = document.getElementById("chartDescription");
-  let descriptionText = "";
-  // Set a dynamic title/description
-  if (key === "byCompany") {
-    descriptionText = `Top ${dataSet.length} companies with the highest recent job posts.`;
-  } else if (key === "byRoleType") {
-    descriptionText = `Distribution of recent job posts across different roles.`;
-  } else if (key === "byLocation") {
-    descriptionText = `Distribution of recent job posts across various locations.`;
+  const dataSet = globalChartData[key];
+
+  let chartProps;
+
+  // --- Delegation Logic (replaces the large if/else block) ---
+  switch (key) {
+    case "byCompany":
+    case "byLocation":
+      chartProps = prepareSimpleHorizontalChart(key, dataSet);
+      break;
+    case "byRoleType":
+      chartProps = prepareRoleTypeChart(dataSet);
+      break;
+    case "companyVsExperience":
+      chartProps = prepareStackedExperienceChart(
+        dataSet,
+        globalChartData.experienceRanges
+      );
+      break;
+    default:
+      console.error(`Unknown chart key: ${key}`);
+      destroyCurrentChart();
+      return;
   }
+
+  // --- Applying Prepared Properties ---
+  const {
+    labels,
+    datasets,
+    descriptionText,
+    indexAxis,
+    isStacked,
+    dynamicHeight,
+  } = chartProps;
+
   descriptionElement.textContent = descriptionText;
+  canvasElement.style.height = dynamicHeight;
+  canvasElement.style.width = "100%";
 
-  // --- DYNAMIC COLOR GENERATION ---
-  let backgroundColors = [];
-
-  if (key === "byRoleType") {
-    // Use semantic colors for role types
-    backgroundColors = labels.map(
-      (label) => (ROLE_COLORS[label] || ROLE_COLORS["Default"]).bg
-    );
-  } else {
-    // Use the cycling palette for Company and Location
-    backgroundColors = counts.map(
-      (_, index) => GEN_COLORS[index % GEN_COLORS.length].bg
-    );
-  }
-  // Calculate the border colors from the generated background colors
-  const borderColors = backgroundColors.map(getBorderColor);
-
-  // --- DYNAMIC HEIGHT CALCULATION ---
-  if (key !== "byRoleType") {
-    // For horizontal charts (Company/Location), set dynamic height
-    // Use approx 40px per item to ensure clear label spacing
-    const ITEM_HEIGHT = 40;
-    // Add extra padding for chart title, legend, and axis labels (e.g., 100px)
-    const requiredHeight = dataSet.length * ITEM_HEIGHT + 100;
-
-    // Apply the calculated height to the canvas style
-    canvasElement.style.height = `${requiredHeight}px`;
-    canvasElement.style.width = "100%"; // Maintain full width
-  } else {
-    // For vertical charts, set a fixed default height
-    // This assumes the default size is sufficient for few vertical bars
-    canvasElement.style.height = "400px";
-    canvasElement.style.width = "100%";
-  }
-
+  // --- CHART INITIALIZATION ---
   currentChartInstance = new Chart(ctx, {
     type: "bar",
     data: {
       labels: labels,
-      datasets: [
-        {
-          label: "Total Jobs",
-          data: counts,
-          backgroundColor: backgroundColors,
-          borderColor: borderColors,
-          borderWidth: 1,
-        },
-      ],
+      datasets: datasets,
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
         legend: {
-          labels: {
-            color: getTextColor(),
-          },
+          labels: { color: getTextColor() },
         },
       },
-      // Set specific options (e.g., horizontal bars for many locations/companies)
-      indexAxis: key !== "byRoleType" ? "y" : "x", // Use horizontal bars for Company/Location
+      indexAxis: indexAxis,
       scales: {
-        // X-Axis Configuration
         x: {
-          // Set beginAtZero only for the VALUE axis.
-          // If indexAxis is 'y' (horizontal bars), x is the value axis.
-          beginAtZero: key !== "byRoleType",
-          // If indexAxis is 'x' (vertical bars), x is the CATEGORY axis.
-          ticks: {
-            autoSkip: key === "byRoleType" ? false : true,
-            color: getTextColor(),
-          },
+          stacked: isStacked,
+          beginAtZero: true,
+          ticks: { color: getTextColor() },
         },
-
-        // Y-Axis Configuration
         y: {
-          // Set beginAtZero only for the VALUE axis.
-          // If indexAxis is 'x' (vertical bars), y is the value axis.
-          beginAtZero: key === "byRoleType",
-          // If indexAxis is 'y' (horizontal bars), y is the CATEGORY axis.
+          stacked: isStacked,
+          // Only beginAtZero for Y axis if it's the value axis (i.e., vertical bars)
+          beginAtZero: indexAxis === "x",
           ticks: {
-            // Force display of all labels on the category axis
-            autoSkip: key !== "byRoleType" ? false : true,
+            autoSkip: indexAxis !== "y",
             color: getTextColor(),
           },
         },
       },
     },
   });
+}
+
+// --- HELPER FUNCTIONS FOR CHART LOGIC ---
+/**
+ * Prepares data and settings for simple count charts (byCompany, byLocation).
+ */
+function prepareSimpleHorizontalChart(key, dataSet) {
+  const labels = dataSet.map((item) => item.label);
+  const counts = dataSet.map((item) => item.count);
+
+  let descriptionText = "";
+  if (key === "byCompany") {
+    descriptionText = `Top ${dataSet.length} companies with the highest recent job posts.`;
+  } else if (key === "byLocation") {
+    descriptionText = `Distribution of recent job posts across various locations.`;
+  }
+
+  // Color logic (using cycling palette)
+  const backgroundColors = counts.map(
+    (_, index) => GEN_COLORS[index % GEN_COLORS.length].bg
+  );
+  const borderColors = backgroundColors.map(getBorderColor);
+
+  const datasets = [
+    {
+      label: "Total Jobs",
+      data: counts,
+      backgroundColor: backgroundColors,
+      borderColor: borderColors,
+      borderWidth: 1,
+    },
+  ];
+
+  const ITEM_HEIGHT = 40;
+  const requiredHeight = dataSet.length * ITEM_HEIGHT + 100;
+
+  return {
+    labels,
+    datasets,
+    descriptionText,
+    indexAxis: "y",
+    isStacked: false,
+    dynamicHeight: `${requiredHeight}px`,
+  };
+}
+
+/**
+ * Prepares data and settings for the simple vertical 'byRoleType' chart.
+ */
+function prepareRoleTypeChart(dataSet) {
+  const labels = dataSet.map((item) => item.label);
+  const counts = dataSet.map((item) => item.count);
+
+  const descriptionText = `Distribution of recent job posts across different roles.`;
+
+  // Color logic (using semantic colors)
+  const backgroundColors = labels.map(
+    (label) => (ROLE_COLORS[label] || ROLE_COLORS["Default"]).bg
+  );
+  const borderColors = backgroundColors.map(getBorderColor);
+
+  const datasets = [
+    {
+      label: "Total Jobs",
+      data: counts,
+      backgroundColor: backgroundColors,
+      borderColor: borderColors,
+      borderWidth: 1,
+    },
+  ];
+
+  return {
+    labels,
+    datasets,
+    descriptionText,
+    indexAxis: "x",
+    isStacked: false,
+    dynamicHeight: "400px", // Fixed height for vertical
+  };
+}
+
+/**
+ * Prepares data and settings for the stacked 'companyVsExperience' chart.
+ */
+function prepareStackedExperienceChart(dataSet, experienceRanges) {
+  const descriptionText = `Distribution of job experience requirements within the Top ${dataSet.length} companies.`;
+  const labels = dataSet.map((item) => item.company);
+
+  // Prepare Datasets (one dataset for each experience range)
+  const datasets = experienceRanges.map((rangeLabel, rangeIndex) => {
+    const colorSet = GEN_COLORS[rangeIndex % GEN_COLORS.length];
+    const backgroundColor = colorSet.bg;
+    const borderColor = getBorderColor(backgroundColor);
+
+    return {
+      label: rangeLabel,
+      data: dataSet.map((companyData) => {
+        const rangeItem = companyData.distribution.find(
+          (d) => d.range === rangeLabel
+        );
+        return rangeItem ? rangeItem.count : 0;
+      }),
+      backgroundColor: backgroundColor,
+      borderColor: borderColor,
+      borderWidth: 1,
+    };
+  });
+
+  const ITEM_HEIGHT = 40;
+  const requiredHeight = dataSet.length * ITEM_HEIGHT + 100;
+
+  return {
+    labels,
+    datasets,
+    descriptionText,
+    indexAxis: "y",
+    isStacked: true,
+    dynamicHeight: `${requiredHeight}px`,
+  };
 }
 
 async function renderCharts() {

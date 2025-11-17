@@ -10,6 +10,63 @@ const RAW_DATA_FILE = path.resolve(__dirname, "jobs.json");
 const CHART_DATA_FILE = path.resolve(__dirname, "charts_data.json");
 const GZ_FILE = path.resolve(__dirname, "jobs.json.gz");
 
+// --- Experience Range Configuration ---
+// Define the ranges. The 'to' is inclusive for the range label.
+const EXPERIENCE_RANGES = [
+  { label: "0-3 Years", min: 0, max: 3 },
+  { label: "4-6 Years", min: 4, max: 6 },
+  { label: "7-9 Years", min: 7, max: 9 },
+  { label: "10-12 Years", min: 10, max: 12 },
+  { label: "13-16 Years", min: 13, max: 16 },
+  { label: "17-20 Years", min: 17, max: 20 },
+  { label: "21+ Years", min: 21, max: Infinity }, // The catch-all for high experience
+];
+
+/**
+ * Parses the experienceRequired string (e.g., "3 - 5", "21", "8+", "—")
+ * and returns the average years of experience, or null if unparseable.
+ * @param {string} expStr - The experience string from the job data.
+ * @returns {number|null} The average experience in years, or null.
+ */
+function parseExperience(expStr) {
+  if (!expStr || expStr === "—" || expStr === "-") {
+    return null;
+  }
+
+  // Handle range (e.g., "3 - 5")
+  const rangeMatch = expStr.match(/(\d+)\s*-\s*(\d+)/);
+  if (rangeMatch) {
+    const min = parseInt(rangeMatch[1], 10);
+    const max = parseInt(rangeMatch[2], 10);
+    // Return the average
+    return (min + max) / 2;
+  }
+
+  // Handle single number or "N+" (e.g., "21", "8+")
+  const singleMatch = expStr.match(/(\d+)/);
+  if (singleMatch) {
+    return parseInt(singleMatch[1], 10);
+  }
+
+  return null;
+}
+
+/**
+ * Categorizes a job based on its experience into a defined range label.
+ * @param {object} job - The job object.
+ * @returns {string} The experience range label (e.g., "4-6 Years") or "N/A".
+ */
+function categorizeExperience(job) {
+  const avgExp = parseExperience(job.experienceRequired);
+  if (avgExp === null) {
+    return "N/A";
+  }
+  const range = EXPERIENCE_RANGES.find(
+    (r) => avgExp >= r.min && avgExp <= r.max
+  );
+  return range ? range.label : "N/A";
+}
+
 /**
  * Helper function to count items, sort, and apply a limit.
  * Since every object is a job, counting the objects acts as counting 'jobId's.
@@ -38,6 +95,68 @@ function aggregate(jobs, keyExtractor, limit = null) {
     result = result.slice(0, limit);
   }
   return result;
+}
+
+/**
+ * Performs a grouped aggregation, specifically for Company vs. Experience Range.
+ * @param {Array} jobs - The array of job objects.
+ * @param {number} topN - The number of top companies to include.
+ * @returns {Array<{company: string, totalJobs: number, distribution: Array<{range: string, count: number}>}>}
+ */
+function aggregateCompanyVsExperience(jobs, topN = 20) {
+  // 1. Get the list of Top N companies
+  const topCompanies = aggregate(jobs, (job) => job.company, topN).map(
+    (item) => item.label
+  );
+  const topCompanySet = new Set(topCompanies);
+
+  // Initialize a map for the final results: { company: { totalJobs: N, distribution: { 'range': count } } }
+  const companyAnalysis = new Map();
+
+  // Initialize distribution structure for all ranges to ensure every company has all range keys
+  const initialDistribution = {};
+  for (const range of EXPERIENCE_RANGES) {
+    initialDistribution[range.label] = 0;
+  }
+
+  // 2. Iterate through all jobs and aggregate for only the top companies
+  jobs.forEach((job) => {
+    const company = job.company;
+    const expRange = categorizeExperience(job);
+
+    if (topCompanySet.has(company)) {
+      if (!companyAnalysis.has(company)) {
+        companyAnalysis.set(company, {
+          company: company,
+          totalJobs: 0,
+          distribution: { ...initialDistribution }, // Deep copy
+        });
+      }
+
+      const data = companyAnalysis.get(company);
+      data.totalJobs += 1;
+
+      // Increment count for the specific range
+      if (expRange !== "N/A" && data.distribution.hasOwnProperty(expRange)) {
+        data.distribution[expRange] += 1;
+      }
+    }
+  });
+
+  // 3. Format the final output
+  const finalResult = Array.from(companyAnalysis.values())
+    .map((item) => ({
+      company: item.company,
+      totalJobs: item.totalJobs,
+      distribution: Object.keys(item.distribution).map((range) => ({
+        range: range,
+        count: item.distribution[range],
+      })),
+    }))
+    // Sort by totalJobs count, descending
+    .sort((a, b) => b.totalJobs - a.totalJobs);
+
+  return finalResult;
 }
 
 /**
@@ -96,12 +215,17 @@ async function runAnalysis() {
       (job) => job.classification?.roleType || "N/A"
     );
 
-    // 4. Combine the results into a single object
+    // 4. Jobs by Company vs Experience Range (Top 20) - NEW REQUIRED ANALYSIS
+    const companyVsExperience = aggregateCompanyVsExperience(jobs, 20);
+
+    // 5. Combine the results into a single object
     const finalChartData = {
       byCompany: byCompany,
       byLocation: byLocation,
       byRoleType: byRoleType,
+      companyVsExperience: companyVsExperience,
       totalCount: jobs.length,
+      experienceRanges: EXPERIENCE_RANGES.map((r) => r.label),
     };
 
     // 5. Write the aggregated data to a new file
