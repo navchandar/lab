@@ -71,7 +71,11 @@ function updateDownloadProgress(percentage) {
   if (lastMod) {
     // Round to nearest integer for display
     const roundedPercentage = Math.round(percentage);
-    lastMod.textContent = `Loading Jobs Data: ${roundedPercentage}%`;
+    if (percentage > 100) {
+      lastMod.textContent = "Processing Jobs Data...";
+    } else {
+      lastMod.textContent = `Loading Jobs Data: ${roundedPercentage}%`;
+    }
   }
 }
 
@@ -379,42 +383,64 @@ async function fetchWithProgressAndDecompress(url, isGzip) {
   const contentLength = response.headers.get("Content-Length");
   const totalSize = contentLength ? parseInt(contentLength, 10) : null;
 
-  let loaded = 0;
-  const chunks = [];
+  // tee() creates two identical, independent streams from the original response body.
+  const [downloadStream, processingStream] = response.body.tee();
+  // --- 1. Progress Tracking (Reads the RAW compressed stream) ---
+  const progressReader = downloadStream.getReader();
 
-  // Start with the raw response body stream
-  let stream = response.body;
+  // This promise runs asynchronously to update the UI while the other stream processes the data.
+  const progressPromise = (async () => {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { done, value } = await progressReader.read();
 
-  // Pipe the stream through a decompressor if it's GZIP
+      // Once the raw download is finished, update the UI to 100%
+      if (done) {
+        if (totalSize) {
+          updateDownloadProgress(100);
+        }
+        break;
+      }
+      // 'value' here is a chunk of the *compressed* data.
+      loaded += value.length;
+      if (totalSize) {
+        const percentage = Math.min((loaded / totalSize) * 100, 100);
+        updateDownloadProgress(percentage);
+      }
+    }
+  })();
+
+  // --- Data Processing (Decompresses and Collects the file) ---
+  let finalStream = processingStream;
   if (isGzip) {
     if (!("DecompressionStream" in window)) {
       throw new Error("Browser does not support DecompressionStream for GZIP.");
     }
-    stream = stream.pipeThrough(new DecompressionStream("gzip"));
+    // Pipe the second stream through the decompressor
+    finalStream = finalStream.pipeThrough(new DecompressionStream("gzip"));
   }
 
-  const reader = stream.getReader();
+  // Read the processed (decompressed or raw JSON) stream
+  const finalReader = finalStream.getReader();
 
-  // Read the stream chunk by chunk to track progress
+  // eslint-disable-next-line no-constant-condition
   while (true) {
-    const { done, value } = await reader.read();
+    const { done, value } = await finalReader.read();
     if (done) {
       break;
     }
     chunks.push(value);
-    loaded += value.length;
-
-    // Calculate and display progress if total size is known
-    if (totalSize) {
-      // Use the *compressed* totalSize vs. the *decompressed* loaded size.
-      // This is imperfect but provides the desired visual feedback during the network transfer.
-      const percentage = Math.min((loaded / totalSize) * 100, 100);
-      updateDownloadProgress(percentage);
-    }
   }
+  // Read the stream chunk by chunk to track progress
 
-  // Combine chunks (now fully downloaded and decompressed, if GZIP)
-  const allChunks = new Uint8Array(loaded);
+  // --- Wait for both to finish and return the result ---
+  // Ensure the progress tracking finishes before we proceed
+  await progressPromise;
+
+  // Combine chunks (now fully downloaded and decompressed/collected)
+  const allChunks = new Uint8Array(
+    chunks.reduce((acc, chunk) => acc + chunk.length, 0)
+  );
   let offset = 0;
   for (const chunk of chunks) {
     allChunks.set(chunk, offset);
@@ -425,9 +451,7 @@ async function fetchWithProgressAndDecompress(url, isGzip) {
   const decoder = new TextDecoder("utf-8");
   const jsonString = decoder.decode(allChunks);
 
-  // Reset progress display once download is done
-  updateDownloadProgress(100);
-
+  updateDownloadProgress(101);
   return JSON.parse(jsonString);
 }
 
