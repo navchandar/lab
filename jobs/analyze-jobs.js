@@ -137,7 +137,7 @@ function aggregateCompanyVsExperience(jobs, topN = 20) {
       data.totalJobs += 1;
 
       // Increment count for the specific range
-      if (expRange !== "N/A" && data.distribution.hasOwnProperty(expRange)) {
+      if (expRange !== "N/A" && expRange in data.distribution) {
         data.distribution[expRange] += 1;
       }
     }
