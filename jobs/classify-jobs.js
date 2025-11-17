@@ -363,6 +363,72 @@ function addExperienceToJobs(jobs) {
   });
 }
 
+function clean_string(jobs) {
+  // 1. Regex to target invisible/control/separator characters (including LS and PS)
+  const invisibleCharsRegex = /[\uFEFF\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Zl}\p{Zp}]/gu;
+
+  // 2. Replacement map for common conversions (curly quotes, long dashes, etc.)
+  const conversionMap = {
+    // Curly Quotes / Single Quotes
+    "‘": "'", // U+2018 LEFT SINGLE QUOTATION MARK
+    "’": "'", // U+2019 RIGHT SINGLE QUOTATION MARK (your specific character)
+    // Double Quotes
+    "“": '"', // U+201C LEFT DOUBLE QUOTATION MARK
+    "”": '"', // U+201D RIGHT DOUBLE QUOTATION MARK
+    // Dashes
+    "–": "-", // U+2013 EN DASH
+    "—": "-", // U+2014 EM DASH
+    // Ellipsis
+    "…": "...", // U+2026 HORIZONTAL ELLIPSIS
+    // No-Break Space (U+00A0) - replace with regular space
+    "\u00A0": " ",
+  };
+
+  return jobs.map((j) => {
+    let desc = j.description || "";
+
+    // **A. Normalize Unicode**
+    // NFKC normalization handles many of these conversions implicitly,
+    // especially for things like combining characters and some smart quotes/dashes.
+    desc = desc.normalize("NFKC");
+
+    // **B. Apply Explicit Conversions**
+    // Iterates through the map and applies replacements
+    for (const [key, value] of Object.entries(conversionMap)) {
+      desc = desc.replace(new RegExp(key, "g"), value);
+    }
+
+    // **C. Remove Invisible Characters (LS, PS, BOM, ZWS, etc.)**
+    desc = desc.replace(invisibleCharsRegex, "");
+
+    // **D. Cleanup Spacing**
+    // Replace any remaining non-standard spaces (\p{Zs}) and multiple spaces with a single space.
+    // 1. Remove space/tab before common punctuation: " ;" -> ";"
+    desc = desc.replace(/[ \t]+([.,;:])([ \t]+)?/g, "$1");
+
+    // 2. Ensure a single space follows punctuation for readability: "word." -> "word. "
+    desc = desc.replace(/([.,;:])([ \t]+)?/g, "$1 ");
+
+    // 3. Collapse multiple consecutive common punctuation
+    desc = desc.replace(/[.]{2,}/g, ".");
+    desc = desc.replace(/[,]{2,}/g, ",");
+    desc = desc.replace(/;{2,}/g, ";");
+
+    desc = desc.replace(/\p{Zs}/gu, " ");
+    desc = desc.replace(/[^\S\n]+/g, " ");
+    desc = desc.trim();
+
+    // **E. (Optional) Sanitize - only use if you want to remove ALL characters not in your list**
+    // const originalSanitizeRegex = /[^a-zA-Z0-9\s\\n'"<>:;,=+.?_–—\-()&@%/•*\u00A0-\u00FF]/g;
+    // desc = desc.replace(originalSanitizeRegex, "");
+
+    return {
+      ...j,
+      description: desc,
+    };
+  });
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
@@ -375,7 +441,8 @@ try {
   const jobs = json.data;
 
   // Classify the jobs
-  const jobswithExp = addExperienceToJobs(jobs);
+  const jobswithDesc = clean_string(jobs);
+  const jobswithExp = addExperienceToJobs(jobswithDesc);
   const out = classifyJobs(jobswithExp);
   json.data = out;
 
