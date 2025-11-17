@@ -1732,6 +1732,7 @@ const BASE_REMOVE_TITLES = [
   "(India)",
   "(India based role – Hyderabad)",
   "- NCR Region",
+  "Location",
   " NCR Region",
   "Interesting Job Opportunity",
   "In-Person Hiring Drive- ",
@@ -1749,7 +1750,7 @@ const BASE_REMOVE_TITLES = [
   "Great Opportunity",
 ];
 
-const cityPrefixes = [
+const prefix = [
   ", ", // e.g., ", Bangalore"
   ",", // e.g., ",Bangalore"
   "– ", // e.g., "– Bangalore" (en-dash)
@@ -1778,7 +1779,7 @@ function generateCityNameCombos(aliases) {
     const upperCasedAlias = alias.toUpperCase();
 
     // Apply all prefixes to both versions
-    cityPrefixes.forEach((prefix) => {
+    prefix.forEach((prefix) => {
       // Add the title-cased version (e.g., ", Bangalore", ", Whitefield")
       nameCombos.add(prefix + titleCasedAlias);
       // Only add the all-caps version if it's different and short (4 chars or less)

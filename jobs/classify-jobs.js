@@ -225,74 +225,101 @@ function classifyJobs(jobs) {
   });
 }
 
+const WORD_TO_NUM = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+};
+
 function getExperience(jobDescription, jobId) {
   if (!jobDescription) {
     return null;
   }
 
-  const desc = jobDescription.toString();
+  // Normalize whitespace and remove newlines
+  const desc = jobDescription.toString().replace(/\s+/g, " ");
 
-  // Original regex
-  const EXPERIENCE_REGEX_1 =
-    /(\d+)(?:\s*-\s*\d+|\s*–\s*\d+|\s*to\s*\d+|\s*\+)?\s*(?:years?|yrs?|y|year|year\(s\))(?:\s*of)?(?:\s*(?:experience|exp|prof|professional|background|testing|industry|relevant|hands))/gi;
+  // Regex 1: General numeric patterns with "experience"
+  const REGEX_GENERAL =
+    /\b(\d{1,2})(?:\s*[-–to]\s*(\d{1,2}))?\s*\+?\s*(?:years?|yrs?|y)\b(?!\s*full\s+time\s+education)(?:\s*(?:of\s+)?(?:experience|exp|prof|professional|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
 
-  // Improved regex
-  const EXPERIENCE_REGEX_2 =
-    /\b(?:experience\s*[:-]?\s*|need\s+a\s*|overall\s*)?(?:(\d{1,2})\s*(?:–|-|to|plus|\+)?\s*(\d{1,2})?|\d{1,2}\s*\+?)\s*(?:years?|yrs?|y)\b(?!\s*full\s+time\s+education)(?:\s*of)?(?:\s*(?:experience|exp|background|testing|industry|relevant|hands[- ]on|experienced))?/gi;
+  // Regex 2: Header-based patterns
+  const REGEX_HEADER =
+    /\b(?:Experience|Years\s+of\s+Experience|Required\s+Exp)\s*[:\s-]?\s*(\d{1,2})(?:\s*[-–to]\s*(\d{1,2}))?\s*\+?/gi;
 
-  const matches1 = [...desc.matchAll(EXPERIENCE_REGEX_1)];
-  const matches2 = [...desc.matchAll(EXPERIENCE_REGEX_2)];
+  // Regex 3: Written numbers
+  const REGEX_WRITTEN =
+    /\b(?:at\s+least|minimum\s+of)?\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s+(?:experience|industry|related))/gi;
+
+  // Regex 4: Simple "X+ years" without experience keyword
+  const REGEX_SIMPLE_PLUS =
+    /\b(\d{1,2})\s*\+\s*(?:years?|yrs?|y)\b(?!\s*of\s*experience)/gi;
+
+  const matches = [
+    ...desc.matchAll(REGEX_GENERAL),
+    ...desc.matchAll(REGEX_HEADER),
+    ...desc.matchAll(REGEX_SIMPLE_PLUS),
+    ...desc.matchAll(REGEX_WRITTEN),
+  ];
 
   const requirements = new Set();
   let maxExperienceValue = 0;
   let maxExperienceString = null;
 
-  const processMatches = (matches) => {
-    for (const match of matches) {
-      const raw = match[0];
-      const cleaned = raw.replace(/\s+/g, " ").trim();
+  let bestMatch = null;
+  let bestScore = 0;
 
-      // Extract all numbers from the string
-      const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
-        parseInt(m[0], 10)
-      );
+  for (const match of matches) {
+    let raw = match[0];
+    let cleaned = raw.replace(/\s+/g, " ").trim();
 
-      // Determine the highest number in the match
-      const maxInMatch = Math.max(...numMatches);
+    // Convert written numbers to digits
+    cleaned = cleaned.replace(
+      /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/gi,
+      (word) => WORD_TO_NUM[word.toLowerCase()]
+    );
 
-      // Filter: Avoid low numbers unless it's a range
-      if (
-        (cleaned.includes("-") ||
-          cleaned.includes("to") ||
-          cleaned.includes("plus") ||
-          maxInMatch >= 2) &&
-        maxInMatch < 30
-      ) {
-        requirements.add(cleaned);
-
-        if (maxInMatch > maxExperienceValue) {
-          maxExperienceValue = maxInMatch;
-          maxExperienceString = cleaned;
-        }
-      } else {
-        console.log(
-          `Job: ${jobId} Skipped (filtered out):`,
-          cleaned,
-          `(max: ${maxInMatch})`
-        );
-      }
+    const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
+      parseInt(m[0], 10)
+    );
+    if (numMatches.length === 0) {
+      continue;
     }
-  };
 
-  processMatches(matches1);
-  processMatches(matches2);
+    const hasRange =
+      cleaned.includes("-") || cleaned.includes("–") || cleaned.includes("to");
+    const hasPlus = cleaned.includes("+");
 
-  if (maxExperienceString) {
+    let score = 0;
+    if (hasRange && numMatches.length > 1) {
+      score = numMatches[1]; // upper bound
+    } else if (hasPlus) {
+      score = numMatches[0] + 0.5; // prioritize plus slightly
+    } else {
+      score = numMatches[0];
+    }
+
+    if (score > bestScore && score < 30) {
+      bestScore = score;
+      bestMatch = cleaned;
+    }
+  }
+
+  if (bestMatch) {
     console.log(`Job: ${jobId}`);
-    console.log("  Experiences found:", [...requirements]);
-    console.log("  Maximum Experience:", maxExperienceString);
-    const normYOE = normalizeExperience(maxExperienceString);
-    console.log("  Normalized Experience:", normYOE);
+    console.log(" Experiences found:", [...requirements]);
+    console.log(" Best Match:", bestMatch);
+    const normYOE = normalizeExperience(bestMatch);
+    console.log(" Normalized Experience:", normYOE);
     return normYOE;
   }
 
@@ -300,45 +327,41 @@ function getExperience(jobDescription, jobId) {
   return null;
 }
 
-/**
- * Cleans and normalizes the experience string to only contain
- * the numeric requirement (e.g., "5+", "2 - 4", "10").
- * * @param {string} experienceString The raw value from experienceRequired.
- * @returns {string} The normalized experience value.
- */
 function normalizeExperience(experienceString) {
   if (!experienceString) {
     return "";
   }
 
-  // 1. Pre-cleanup to handle prefixes like "Experience", "Overall", etc.
   let cleanedString = experienceString
-    .replace(/^(Experience|Overall)\s*[:-]?\s*/i, "")
+    .replace(
+      /^(Experience|Years of Experience|YoE|Years of Exp|Yrs of Exp|Overall)\s*[:-]?\s*/i,
+      ""
+    )
     .trim();
 
-  // 2. Regular Expression to capture the desired pattern:
-  // This reliably extracts the numbers, range, or plus sign from the start.
-  const regex = /^(\d+)(\s*[-]\s*(\d+))?([+])?/;
+  cleanedString = cleanedString.replace(
+    /\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/gi,
+    (word) => WORD_TO_NUM[word.toLowerCase()]
+  );
 
+  const regex = /(\d+)\s*(?:[-–to]\s*(\d+))?(\+)?/i;
   const match = cleanedString.match(regex);
 
   if (match) {
-    const firstNum = match[1];
-    const rangePart = match[2];
-    const plusSign = match[4];
-
-    if (rangePart) {
+    const firstNum = parseInt(match[1], 10);
+    const secondNum = match[2] ? parseInt(match[2], 10) : null;
+    const plusSign = match[3];
+    if (secondNum) {
       // Reconstruct as "X - Y"
-      return `${firstNum} - ${match[3]}`;
-    } else if (plusSign) {
+      return `${firstNum} - ${secondNum}`;
+    }
+    if (plusSign) {
       // Reconstruct as "X+"
       return `${firstNum}+`;
-    } else {
-      // Just a single number
-      return firstNum;
     }
+    // or return just a single number
+    return `${firstNum}`;
   }
-
   // Fallback if no expected pattern is found
   return "";
 }
