@@ -272,9 +272,6 @@ function getExperience(jobTitle, jobDescription, jobId) {
   ];
 
   const requirements = new Set();
-  let maxExperienceValue = 0;
-  let maxExperienceString = null;
-
   let bestMatch = null;
   let bestScore = 0;
 

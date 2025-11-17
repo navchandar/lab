@@ -24,12 +24,14 @@ let currentChartInstance = null; // Store the Chart.js instance
 let jobsTable = null;
 if (typeof jQuery === "undefined") {
   showToast("Error: jQuery failed to load");
+  lastMod.textContent = "Error: jQuery failed to load";
 } else {
   console.log("jQuery is loaded. Initializing DataTable.");
   try {
     jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
   } catch (e) {
     showToast("Error initializing the jobs table. Check console!");
+    lastMod.textContent = "Error: Failed to initialize DataTable";
     console.error("DataTable initialization failed:", e);
   }
 }
@@ -382,6 +384,9 @@ async function fetchWithProgressAndDecompress(url, isGzip) {
   // Get the total size of the compressed file from the header
   const contentLength = response.headers.get("Content-Length");
   const totalSize = contentLength ? parseInt(contentLength, 10) : null;
+
+  let loaded = 0;
+  const chunks = [];
 
   // tee() creates two identical, independent streams from the original response body.
   const [downloadStream, processingStream] = response.body.tee();
@@ -976,13 +981,17 @@ async function main() {
       hideSpinner();
     } catch (error) {
       hideSpinner();
+      let msg = "";
       if (error instanceof TypeError) {
+        msg = "Network Error: Could not reach the server";
         console.error("Network Error: Could not reach the server", error);
-        showToast(`Network Error: Could not reach the server`);
+        showToast(msg);
       } else {
-        console.error("Error: Failed to fetch jobs data:", error);
-        showToast(`Error: Failed to fetch jobs data:\n${error.message}`);
+        msg = "Error: Failed to fetch jobs data";
+        console.error(console, error);
+        showToast(`${console}:\n${error.message}`);
       }
+      lastMod.textContent = msg;
     }
   }
 
