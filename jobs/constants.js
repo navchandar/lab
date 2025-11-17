@@ -1766,6 +1766,8 @@ const BASE_REMOVE_TITLES = [
   " | Immediate Joiner |",
   "| Immediate Joiner",
   "(Immediate Joiner)",
+  "/ Immediate Joiners"
+  "| Immediate Joiners"
   "- ASAP Joiner Required",
   "ASAP Joiner Required",
   "#1 Apply fast!",

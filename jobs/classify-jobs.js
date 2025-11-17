@@ -256,11 +256,11 @@ function wordToNumber(word) {
   return WORD_TO_NUM[word.toLowerCase()] ?? null;
 }
 
-function getExperience(jobDescription, jobId) {
+function getExperience(jobTitle, jobDescription, jobId) {
   if (!jobDescription) {
     return null;
   }
-
+  jobDescription = jobTitle + " " + jobDescription;
   // Normalize whitespace and remove newlines
   const desc = norm(jobDescription).replace(/\s+/g, " ");
 
@@ -351,14 +351,13 @@ function normalizeExperience(experienceString) {
   return "";
 }
 
+// -- Get the experience value from title/description --
 function addExperienceToJobs(jobs) {
   return jobs.map((j) => {
-    // 1. Get the experience value
-    const requiredExp = getExperience(j.description, j.jobId) || UNKNOWN;
-
+    const exp = getExperience(j.title, j.description, j.jobId);
     return {
       ...j,
-      experienceRequired: requiredExp,
+      experienceRequired: exp || UNKNOWN,
     };
   });
 }

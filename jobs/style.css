@@ -225,7 +225,7 @@ main {
 }
 
 .select2-container--default .select2-selection .select2-selection__choice__remove, .select2-selection__clear {
-    color: rgba(255, 255, 255, 0.8) !important;
+    color: rgba(105, 105, 105, 0.8) !important;
 }
 
 .select2-selection--single .select2-selection__rendered {
@@ -234,9 +234,12 @@ main {
 }
 
 .select2-selection__rendered {
-    text-shadow: 1px 1px 1px black !important;
+    text-shadow: 0px 0.5px 0.5px #00000099 !important
 }
 
+.select2-selection__placeholder {
+    text-shadow: none;
+}
 
 /* ================================================= */
 /* DATA TABLE */
@@ -664,6 +667,9 @@ footer p {
         line-height: normal;
     }
 
+    .select2-container--default .select2-selection .select2-selection__choice__remove, .select2-selection__clear {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
 
     /* Table */
     #jobTable th {
