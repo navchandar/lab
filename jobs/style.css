@@ -543,7 +543,7 @@ footer p {
         padding: 8px 8px;
     }
 
-    #jobTableBody td:is(:nth-child(2), :nth-child(3), :nth-child(4), :nth-child(5), :nth-child(6)) {
+    #jobTableBody td:nth-child(2), #jobTableBody td:nth-child(3), #jobTableBody td:nth-child(4), #jobTableBody td:nth-child(5), #jobTableBody td:nth-child(6) {
         font-size: smaller;
     }
 

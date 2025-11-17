@@ -1247,8 +1247,10 @@ async function main() {
     // Get ALL current filter values to preserve them
     const selectedCompanies = asArray($("#companyFilter").val());
     const selectedLocations = asArray($("#locationFilter").val());
-    const selectedExperience = $("#experienceFilter").val(); // Single string value
+    // Note: selectedExperience is a single string/value, not an array
+    const selectedExperience = $("#experienceFilter").val();
 
+    // IF no custom filters are active, narrow the dropdown options based on the global search results.
     // Get the indices of the rows that match the current global search (across all pages)
     const filteredRowIndices = jobsTable
       .rows({ search: "applied", page: "all" })
@@ -1258,29 +1260,97 @@ async function main() {
     // Map these indices back to the original 'allJobs' array to get the job objects
     const searchedJobs = filteredRowIndices.map((index) => allJobs[index]);
 
-    // --- Now, populate dropdowns based on this 'searchedJobs' list ---
-    // Update Company Dropdown
+    // Define the filtering function for a job
+    const passesAllOtherFilters = (job, excludeDropdown) => {
+      const company = job.company;
+      const location = job.normalizedLocation;
+      const jobExp = parseMinExperience(job.experienceRequired);
+      const selectedExpInt = parseInt(selectedExperience, 10);
+
+      // Check Company match (only if we're NOT excluding the company filter)
+      const companyMatch =
+        excludeDropdown === "company" ||
+        selectedCompanies.length === 0 ||
+        selectedCompanies.includes(company);
+
+      // Check Location match (only if we're NOT excluding the location filter)
+      const locationMatch =
+        excludeDropdown === "location" ||
+        selectedLocations.length === 0 ||
+        selectedLocations.includes(location);
+
+      // Check Experience match (only if we're NOT excluding the experience filter)
+      const experienceMatch =
+        excludeDropdown === "experience" ||
+        isNaN(selectedExpInt) ||
+        (jobExp !== null && jobExp >= selectedExpInt);
+
+      return companyMatch && locationMatch && experienceMatch;
+    };
+
+    // --- Update Company Dropdown ---
+    // Only consider jobs that pass the Location and YoE filters (and global search)
+    const companyJobs = searchedJobs.filter((j) =>
+      passesAllOtherFilters(j, "company")
+    );
     const companies = Array.from(
-      new Set(searchedJobs.map((j) => j.company))
+      new Set(companyJobs.map((j) => j.company))
     ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    populateFilter("#companyFilter", companies, selectedCompanies);
 
-    // Update Location Dropdown
+    // Crucially, we only update the options if there is no selection in the filter itself
+    // to preserve all options for multi-select after a user starts filtering.
+    if (selectedCompanies.length === 0) {
+      populateFilter("#companyFilter", companies, selectedCompanies);
+    } else {
+      // If a filter is selected, ensure the full set of options is restored
+      // based on the initial load, so the user can select more.
+      // This is complex, so for simplicity and to honor the multi-select requirement,
+      // we'll rely on the initial load to provide the full list.
+      // A simple compromise: just check if the current selection exists in the new list.
+      // In this complex scenario, the best multi-select fix is to only narrow
+      // options if the filter is completely empty.
+      // Since we're here, we only ensure the selected items remain available.
+      // If we want a full set always when selected, we rely on the initial load.
+      // We'll proceed with conditional narrowing only if no selection is made.
+    }
+
+    // --- Update Location Dropdown ---
+    // Only consider jobs that pass the Company and YoE filters (and global search)
+    const locationJobs = searchedJobs.filter((j) =>
+      passesAllOtherFilters(j, "location")
+    );
     const locations = Array.from(
-      new Set(searchedJobs.map((j) => j.normalizedLocation))
+      new Set(locationJobs.map((j) => j.normalizedLocation))
     ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-    populateFilter("#locationFilter", locations, selectedLocations);
 
-    // Update Experience Dropdown
+    if (selectedLocations.length === 0) {
+      populateFilter("#locationFilter", locations, selectedLocations);
+    }
+
+    // --- Update Experience Dropdown ---
+    // Only consider jobs that pass the Company and Location filters (and global search)
+    const experienceJobs = searchedJobs.filter((j) =>
+      passesAllOtherFilters(j, "experience")
+    );
     const experienceSet = new Set();
-    searchedJobs.forEach((job) => {
+    experienceJobs.forEach((job) => {
       const exp = parseMinExperience(job.experienceRequired);
       if (exp !== null) {
         experienceSet.add(exp);
       }
     });
     const sortedExp = Array.from(experienceSet).sort((a, b) => a - b);
-    populateFilter("#experienceFilter", sortedExp, asArray(selectedExperience));
+
+    // Note: Experience is single-select, so conditional narrowing is less critical
+    // but still applied for consistency.
+    if (selectedExperience === null || selectedExperience === "") {
+      populateFilter(
+        "#experienceFilter",
+        sortedExp,
+        asArray(selectedExperience)
+      );
+    }
+
     updateURL();
   }
 
