@@ -561,7 +561,6 @@ function clean_string(input) {
   // a-z (lowercase letters)
   // A-Z (uppercase letters)
   // 0-9 (digits)
-  // \s (whitespace characters including space, newline \n, carriage return \r, and tabs)
   // • (the bullet point character U+2022)
   // \u00A0-\u00FF (Unicode range for the original extended ASCII characters)
 
@@ -569,7 +568,7 @@ function clean_string(input) {
     return null;
   }
 
-  const regex = /[^a-zA-Z0-9\s\\n'"<>:;,=+.?_–—\-()&@%/•*\u00A0-\u00FF]/g;
+  const regex = /[^a-zA-Z0-9'"<>:;,=+.?_–—\-()&@%/•*\u00A0-\u00FF]/g;
   return input.replace(regex, "");
 }
 
