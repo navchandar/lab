@@ -22,17 +22,21 @@ let currentChartInstance = null; // Store the Chart.js instance
 // --- Initialize an empty DataTable ---
 // We initialize it once with configuration, then add data later
 let jobsTable = null;
-if (typeof jQuery === "undefined") {
-  showToast("Error: jQuery failed to load");
-  lastMod.textContent = "Error: jQuery failed to load";
-} else {
-  console.log("jQuery is loaded. Initializing DataTable.");
-  try {
-    jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
-  } catch (e) {
-    showToast("Error initializing the jobs table. Check console!");
-    lastMod.textContent = "Error: Failed to initialize DataTable";
-    console.error("DataTable initialization failed:", e);
+
+// --- Function to safely initialize DataTable ---
+function initializeJobsTable() {
+  if (typeof jQuery !== "undefined" && jQuery.fn.dataTable) {
+    console.log("jQuery and DataTable are available. Initializing DataTable.");
+    try {
+      jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
+    } catch (e) {
+      showToast("Error initializing the jobs table. Check console!");
+      lastMod.textContent = "Error: Failed to initialize DataTable";
+      console.error("DataTable initialization failed:", e);
+    }
+  } else {
+    showToast("Fatal Error: DataTables or jQuery is missing.");
+    lastMod.textContent = "Fatal Error: DataTables or jQuery is missing.";
   }
 }
 
@@ -1050,6 +1054,9 @@ async function main() {
   const localTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   console.log("Local Timezone:", localTimeZone);
 
+  // Initialize Jobs table
+  initializeJobsTable();
+
   // Initialize Select2 on the dropdowns
   setupSelectDropdowns();
   setupDisclaimer();
@@ -1580,6 +1587,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (window.startAfterResources) {
     window.startAfterResources(main);
   } else {
-    console.error("The resourceLoader.js script failed to load or execute.");
+    console.error("resourceLoader.js script failed to load or execute.");
   }
 });
