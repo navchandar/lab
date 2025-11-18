@@ -44,6 +44,7 @@ module.exports = {
         $: "readonly",
         jQuery: "readonly",
         Chart: "readonly",
+        tippy: "readonly",
       },
     },
   ],

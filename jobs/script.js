@@ -1574,4 +1574,12 @@ async function main() {
   setInterval(loadJobs, 2 * 60 * 1000);
 }
 
-document.addEventListener("DOMContentLoaded", main);
+// Wait for the DOM to be ready before initiating the loading process
+document.addEventListener("DOMContentLoaded", () => {
+  // Pass your main function to the loader as the callback to run
+  if (window.startAfterResources) {
+    window.startAfterResources(main);
+  } else {
+    console.error("The resourceLoader.js script failed to load or execute.");
+  }
+});
