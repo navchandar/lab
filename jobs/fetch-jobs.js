@@ -52,14 +52,14 @@ function toIsoStringUTC(date) {
 }
 
 /**
- * Checks if the current UTC hour is one of the desired run times (00, 08, 16)
+ * Checks if the current UTC hour is one of the desired run times
  * and if the minutes are within the first 40 of that hour.
  * Prints which condition was not met if the run is skipped.
  * @returns {boolean} True if the current time satisfies the 8-hour interval and minutes window.
  */
 function limitedRun() {
-  // Target hours in UTC (Covers the 8-hour interval: 00:00, 08:00, 16:00)
-  const targetHours = [0, 8, 16];
+  // Target hours in UTC (Covers the 6-hour interval)
+  const targetHours = [0, 6, 12, 18];
 
   // Get the current date and time in UTC
   const nowUtc = new Date();
@@ -613,9 +613,9 @@ async function mergeAndCleanJobsData(output_data) {
   );
 
   if (limitedRun()) {
-    // Check older LinkedIn posts for closure ---
-    const TWO_DAYS_IN_MILLIS = 2 * 24 * 60 * 60 * 1000;
-    const twoDayCutoffTime = Date.now() - TWO_DAYS_IN_MILLIS;
+    // Check 10hr old LinkedIn posts for closure ---
+    const timeInMillis = 10 * 60 * 60 * 1000;
+    const twoDayCutoffTime = Date.now() - timeInMillis;
     const jobsToCheck = [];
     const jobsToKeep = [];
 
