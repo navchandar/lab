@@ -164,26 +164,6 @@ const LOAD_ORDER = [
 // =======================================================================
 
 /**
- * Checks for a loaded script by checking a global object it exposes.
- * @param {string} globalName - The name of the global variable (e.g., 'jQuery', 'Chart').
- * @returns {boolean}
- */
-function isLoaded(globalName) {
-  if (globalName.includes(".")) {
-    // Handle nested checks like 'jQuery.fn.dataTable'
-    const parts = globalName.split(".");
-    let current = window;
-    for (const part of parts) {
-      if (!current[part]) {
-        return false;
-      }
-      current = current[part];
-    }
-    return true;
-  }
-  return !!window[globalName];
-}
-/**
  * Loads a resource (script or CSS) from a list of URLs with failover logic using Promises.
  * @param {string} type - 'script' or 'link' (for CSS).
  * @param {string[]} urls - Array of URLs to try in sequence.
@@ -249,7 +229,7 @@ function loadSingleResource(type, url, timeoutDuration) {
 
 /**
  * Checks if a global variable exists (supports nested checks like 'jQuery.fn.dataTable').
- * @param {string} globalName
+ * @param {string} globalName - The name of the global variable (e.g., 'jQuery', 'Chart').
  * @returns {boolean}
  */
 function isLoaded(globalName) {
@@ -258,8 +238,11 @@ function isLoaded(globalName) {
   }
   const parts = globalName.split(".");
   let current = window;
+
+  // This loop handles both 'jQuery' and 'jQuery.fn.dataTable' gracefully.
   for (const part of parts) {
-    if (!current[part]) {
+    // If the current part does not exist on the current object, the path is broken.
+    if (!current || typeof current[part] === "undefined") {
       return false;
     }
     current = current[part];
