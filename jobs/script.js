@@ -1197,20 +1197,37 @@ async function main() {
     // Add the new data and redraw the table
     jobsTable.rows.add(dataToLoad).draw();
 
+    // detect current theme
     const isDarkMode =
       window.matchMedia &&
       window.matchMedia("(prefers-color-scheme: dark)").matches;
+    // detects touch devices
+    const isMobile =
+      window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+    // Calculate maxWidth based on viewport size
+    const viewportWidth = window.innerWidth;
+    const maxWidth =
+      viewportWidth < 768 ? 250 : viewportWidth < 1200 ? 500 : 900;
 
     // Initialize Tippy after table draw
-    tippy(".job-title-link", {
-      content(reference) {
-        return reference.getAttribute("data-description") || "";
-      },
-      allowHTML: true,
-      interactive: true,
-      theme: isDarkMode ? "material" : "light-border",
-      maxWidth: 350,
-      placement: "bottom",
+    document.querySelectorAll("#jobTable tbody tr").forEach((row) => {
+      // Job Title cell
+      const td = row.querySelector("td:first-child");
+      const description =
+        td.querySelector("a")?.getAttribute("data-description") || "";
+
+      if (description) {
+        tippy(td, {
+          content: description,
+          allowHTML: true,
+          interactive: true,
+          theme: isDarkMode ? "material" : "light-border",
+          maxWidth: maxWidth,
+          placement: "bottom",
+          trigger: isMobile ? "click" : "mouseenter",
+          hideOnClick: true,
+        });
+      }
     });
 
     // Populate filters based on ALL jobs ---
@@ -1524,6 +1541,16 @@ async function main() {
         console.log("Tab is active");
         loadJobs();
       }
+    });
+
+    window.addEventListener("resize", () => {
+      const newWidth =
+        window.innerWidth < 768 ? 250 : window.innerWidth < 1200 ? 500 : 900;
+      document.querySelectorAll(".job-title-link").forEach((el) => {
+        if (el._tippy) {
+          el._tippy.setProps({ maxWidth: newWidth });
+        }
+      });
     });
   }
 
