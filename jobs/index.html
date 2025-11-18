@@ -35,6 +35,19 @@
       href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.css"
     />
 
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/tippy.js@6/themes/light.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/tippy.js@6/themes/light-border.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/tippy.js@6/themes/material.css"
+    />
+
     <link rel="stylesheet" href="style.css" />
 
     <script
@@ -115,6 +128,9 @@
 
       <div id="chart-view" style="display: none;">
         <h2>Recent Job Posts Distribution Analysis</h2>
+        <button id="closeChartView" class="chart-view-close-btn">
+          &larr; Back to Listings
+        </button>
         <select id="chartSelector">
           <option value="byCompany">Top Companies by Job Count</option>
           <option value="companyVsExperience">
@@ -127,6 +143,30 @@
 
         <div id="canvas-container">
           <canvas id="roleChart"></canvas>
+        </div>
+      </div>
+
+      <div id="disclaimerModal" class="modal" style="display: none;">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <span class="modal-close-btn">&times;</span>
+          <h2>Disclaimer</h2>
+          <p>
+            The job listings and related data displayed on this site are sourced
+            from third-party platforms. We make no representations or warranties
+            regarding the accuracy, completeness, timeliness, or reliability of
+            the information provided. Job availability and details may change
+            without notice. Users are encouraged to verify all information
+            directly with the respective employers or official sources.
+          </p>
+          <p>
+            Please exercise caution when following external links. Third-party
+            platforms may occasionally contain fraudulent job postings or
+            impersonated companies. Always confirm the legitimacy of any
+            opportunity and never pay any fees for job applications, interviews,
+            or employment offers. Legitimate employers do not request payment
+            for hiring processes or background verification.
+          </p>
         </div>
       </div>
 
@@ -155,12 +195,16 @@
             target="_blank"
             rel="noopener noreferrer license"
           >
-            GNU GPLv3 </a
-          >.
+            GNU GPLv3
+          </a>
         </small>
-        <a href="#" id="toggleView">Display Charts</a>
+        | <a href="#" id="toggleView">Display Charts</a> |
+        <a href="#" id="openDisclaimerModal">Disclaimer</a>
       </p>
     </footer>
+
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
 
     <script type="module" src="script.js"></script>
     <script>

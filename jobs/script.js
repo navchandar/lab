@@ -798,6 +798,7 @@ async function renderCharts() {
   const chartView = document.getElementById("chart-view");
   const filters = document.getElementById("filters");
   const chartSelector = document.getElementById("chartSelector");
+  const closeChartBtn = document.getElementById("closeChartView");
 
   // Add event listener for chart selection change
   chartSelector.addEventListener("change", (e) => {
@@ -850,6 +851,14 @@ async function renderCharts() {
     }
     // Note: The 'hashchange' listener handles toggleView.
   });
+
+  if (closeChartBtn) {
+    closeChartBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      // Triggers hashchange listener to switch view
+      window.location.hash = "";
+    });
+  }
 
   // Expose toggleView on the window for external use
   window.toggleView = toggleView;
@@ -987,6 +996,54 @@ function loadFiltersFromURL() {
   }
 }
 
+/** Handle the click events to show and hide the modal */
+function setupDisclaimer() {
+  const openModalBtn = document.getElementById("openDisclaimerModal");
+  const modal = document.getElementById("disclaimerModal");
+  const closeModalBtn = modal.querySelector(".modal-close-btn");
+  const modalBackdrop = modal.querySelector(".modal-backdrop");
+
+  // Function to open the modal
+  const openModal = (event) => {
+    event.preventDefault();
+    // Use class to enable CSS transition (opacity/transform)
+    modal.classList.add("show");
+    // Ensure screen readers know the main content is inactive
+    document.body.style.overflow = "hidden";
+  };
+
+  // Function to close the modal
+  const closeModal = () => {
+    // Remove class to trigger CSS transition
+    modal.classList.remove("show");
+    document.body.style.overflow = "";
+  };
+
+  // 1. Open the modal when the footer link is clicked
+  if (openModalBtn) {
+    openModalBtn.addEventListener("click", openModal);
+  }
+
+  // 2. Close the modal when the 'X' button is clicked
+  if (closeModalBtn) {
+    // Use an event listener on the parent modal element to ensure closure
+    closeModalBtn.addEventListener("click", closeModal);
+  }
+
+  // 3. Close the modal when the backdrop is clicked
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener("click", closeModal);
+  }
+
+  // 4. Close the modal when the ESC key is pressed
+  document.addEventListener("keydown", (event) => {
+    // Check if the modal has the 'show' class
+    if (event.key === "Escape" && modal.classList.contains("show")) {
+      closeModal();
+    }
+  });
+}
+
 async function main() {
   requestNotificationPermission();
   // Get the IANA Timezone Name
@@ -995,6 +1052,7 @@ async function main() {
 
   // Initialize Select2 on the dropdowns
   setupSelectDropdowns();
+  setupDisclaimer();
 
   // --- Load Data using Fetch API ---
   async function loadJobs() {
@@ -1111,22 +1169,21 @@ async function main() {
     let props = 'target="_blank" rel="noopener noreferrer"';
 
     // Prepare data for DataTables. It expects an array of arrays.
-    const dataToLoad = jobs.map((job) => {
-      // Add job title description
-      let titleAttr = "";
-      if (job.description) {
-        // Escape quotes (") for the HTML attribute and replace newlines (\n)
-        const descriptionTxt = job.description
-          .replace(/"/g, "&quot;") // Escape double quotes
-          .replace(/(\r\n|\r|\n)+/g, "\n")
-          .replace(/\n/g, "&#10;"); // Replace newlines for tooltip
 
-        titleAttr = `title="${descriptionTxt}"`;
+    const dataToLoad = jobs.map((job) => {
+      let descriptionAttr = "";
+      if (job.description) {
+        const descriptionTxt = job.description
+          .replace(/"/g, "&quot;")
+          .replace(/(\r\n|\r|\n)+/g, "\n")
+          .replace(/\n/g, "<br>"); // Use <br> for better formatting
+        descriptionAttr = `data-description="${descriptionTxt}"`;
       }
+
       let roleType = job.classification.roleType;
       let roleTypeLink = `<a href="#" class="search-role-type">#${roleType}</a>`;
-      let jobTitleLink = `<a href="${job.url}" ${props} ${titleAttr}>${job.title}</a>`;
-      // The data order returned MUST match <thead> column titles
+      let jobTitleLink = `<a href="${job.url}" ${props} class="job-title-link" ${descriptionAttr}>${job.title}</a>`;
+
       return [
         jobTitleLink,
         job.company,
@@ -1139,6 +1196,22 @@ async function main() {
 
     // Add the new data and redraw the table
     jobsTable.rows.add(dataToLoad).draw();
+
+    const isDarkMode =
+      window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    // Initialize Tippy after table draw
+    tippy(".job-title-link", {
+      content(reference) {
+        return reference.getAttribute("data-description") || "";
+      },
+      allowHTML: true,
+      interactive: true,
+      theme: isDarkMode ? "material" : "light-border",
+      maxWidth: 350,
+      placement: "bottom",
+    });
 
     // Populate filters based on ALL jobs ---
     // Extract unique company and location names
