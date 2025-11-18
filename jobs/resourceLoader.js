@@ -183,149 +183,120 @@ function isLoaded(globalName) {
   }
   return !!window[globalName];
 }
-
 /**
- * Loads a resource (script or link) from a list of URLs with failover logic.
+ * Loads a resource (script or CSS) from a list of URLs with failover logic using Promises.
  * @param {string} type - 'script' or 'link' (for CSS).
  * @param {string[]} urls - Array of URLs to try in sequence.
- * @param {function} successCallback - Function to call if loaded successfully.
- * @param {function} errorCallback - Function to call if all attempts fail.
  * @param {number} timeoutDuration - Timeout per attempt in milliseconds.
- * @param {number} index - Internal index for recursion.
+ * @returns {Promise<void>} Resolves when resource is loaded or rejects after all attempts fail.
  */
-function loadResourceWithFallback(
-  type,
-  urls,
-  successCallback,
-  errorCallback,
-  timeoutDuration = 5000,
-  index = 0
-) {
-  if (index >= urls.length) {
-    console.error(`All attempts failed for resource type ${type}.`);
-    errorCallback(); // Run the final error handler
-    return;
-  }
-
-  const url = urls[index];
-  const element = document.createElement(type);
-
-  // Configure element based on type
-  if (type === "script") {
-    element.src = url;
-    element.async = true;
-  } else {
-    // type === 'link'
-    element.rel = "stylesheet";
-    element.href = url;
-  }
-
-  // Set up the timeout for this specific URL attempt
-  let timeoutId = setTimeout(() => {
-    console.warn(
-      `[FAILOVER] ${type} timed out from: ${url}. Trying next fallback.`
-    );
-    if (element.parentNode) {
-      element.parentNode.removeChild(element);
+async function loadResourceWithFallback(type, urls, timeoutDuration = 5000) {
+  for (const url of urls) {
+    try {
+      await loadSingleResource(type, url, timeoutDuration);
+      console.log(`[SUCCESS] ${type} loaded from: ${url}`);
+      return; // Stop after first success
+    } catch (err) {
+      console.warn(`[FAILOVER] ${type} failed from: ${url}. Trying next...`);
     }
-    loadResourceWithFallback(
-      type,
-      urls,
-      successCallback,
-      errorCallback,
-      timeoutDuration,
-      index + 1
-    );
-  }, timeoutDuration);
-
-  // --- Success/Failure Handlers ---
-  const handleLoad = () => {
-    clearTimeout(timeoutId);
-    console.log(`[SUCCESS] ${type} loaded from: ${url}`);
-    successCallback();
-  };
-
-  const handleError = () => {
-    clearTimeout(timeoutId);
-    console.warn(
-      `[FAILOVER] ${type} failed to load (Error event) from: ${url}. Trying next fallback.`
-    );
-    if (element.parentNode) {
-      element.parentNode.removeChild(element);
-    }
-    loadResourceWithFallback(
-      type,
-      urls,
-      successCallback,
-      errorCallback,
-      timeoutDuration,
-      index + 1
-    );
-  };
-
-  element.onload = handleLoad;
-  element.onerror = handleError;
-
-  // Append the element to the <head> to start loading
-  document.head.appendChild(element);
+  }
+  throw new Error(`All attempts failed for resource type ${type}.`);
 }
 
-// =======================================================================
-// === 3. LOADING CHAIN INITIATOR ========================================
-// =======================================================================
-
 /**
- * The core function that runs the loading process sequentially based on LOAD_ORDER.
- * It is exposed globally so your main script can call it to begin execution.
- * @param {function} callback - The function (e.g., main() function) to call when all resources are processed.
+ * Loads a single resource with timeout.
+ * @param {string} type - 'script' or 'link'.
+ * @param {string} url - Resource URL.
+ * @param {number} timeoutDuration - Timeout in ms.
+ * @returns {Promise<void>}
  */
-window.startAfterResources = function (callback) {
-  let index = 0;
+function loadSingleResource(type, url, timeoutDuration) {
+  return new Promise((resolve, reject) => {
+    const element = document.createElement(type);
 
-  function runNextStep() {
-    if (index >= LOAD_ORDER.length) {
-      console.log("All dependencies processed. Calling main application");
-      callback();
-      return;
+    if (type === "script") {
+      element.src = url;
+      element.async = true;
+    } else {
+      element.rel = "stylesheet";
+      element.href = url;
     }
 
-    const key = LOAD_ORDER[index];
-    const config = RESOURCES_CONFIG[key];
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error(`Timeout loading ${url}`));
+    }, timeoutDuration);
 
-    // Criticality check for specific libraries
+    const cleanup = () => {
+      clearTimeout(timeoutId);
+      element.onload = null;
+      element.onerror = null;
+    };
+
+    element.onload = () => {
+      cleanup();
+      resolve();
+    };
+
+    element.onerror = () => {
+      cleanup();
+      reject(new Error(`Error loading ${url}`));
+    };
+
+    document.head.appendChild(element);
+  });
+}
+
+/**
+ * Checks if a global variable exists (supports nested checks like 'jQuery.fn.dataTable').
+ * @param {string} globalName
+ * @returns {boolean}
+ */
+function isLoaded(globalName) {
+  if (!globalName) {
+    return true;
+  }
+  const parts = globalName.split(".");
+  let current = window;
+  for (const part of parts) {
+    if (!current[part]) {
+      return false;
+    }
+    current = current[part];
+  }
+  return true;
+}
+
+/**
+ * Sequentially loads resources based on LOAD_ORDER.
+ * @param {function} callback - Called when all resources are loaded.
+ */
+async function startAfterResources(callback) {
+  for (const key of LOAD_ORDER) {
+    const config = RESOURCES_CONFIG[key];
     const isCritical = key === "JQUERY_JS" || key === "DATATABLES_JS";
 
-    loadResourceWithFallback(
-      config.type,
-      config.urls,
-      // Success: Check global variable if specified, then move on
-      () => {
-        if (config.globalCheck && !isLoaded(config.globalCheck)) {
-          console.error(
-            `[CRITICAL WARNING] ${key} reported success but global check failed (${config.globalCheck}).`
-          );
-          // Even if the global check fails after load, we proceed but log a warning.
-        }
-        index++;
-        runNextStep();
-      },
-      // Error: Handle ultimate failure for the resource
-      () => {
-        console.error(`[FATAL ERROR] Failed to load resource: ${key}.`);
-        if (isCritical) {
-          // Halt the application entirely if a core dependency fails.
-          document.getElementById(
-            "last-refresh"
-          ).textContent = `CRITICAL ERROR: Failed to load ${key}. Cannot load application.`;
-          return;
-        }
-        // Non-critical resource failed, log and move to the next item.
-        index++;
-        runNextStep();
+    try {
+      await loadResourceWithFallback(config.type, config.urls);
+      if (config.globalCheck && !isLoaded(config.globalCheck)) {
+        console.error(
+          `[WARNING] ${key} loaded but global check failed (${config.globalCheck}).`
+        );
       }
-    );
+    } catch (err) {
+      console.error(`[FATAL ERROR] Failed to load resource: ${key}.`, err);
+      if (isCritical) {
+        const msg = `CRITICAL ERROR: Failed to load ${key}. Cannot load application!`;
+        document.getElementById("last-refresh").textContent = msg;
+        // Stop execution for critical failure
+        return;
+      }
+    }
   }
 
-  // Start the recursive loading process
-  runNextStep();
-};
+  console.log("All dependencies processed. Calling main application.");
+  callback();
+}
+
+// Expose globally
+window.startAfterResources = startAfterResources;
