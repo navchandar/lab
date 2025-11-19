@@ -255,6 +255,16 @@ async function runAnalysis() {
     const jobData = JSON.parse(rawData);
     const jobs = jobData.data || [];
 
+    let existingChartData = {};
+    try {
+      if (fs.existsSync(CHART_DATA_FILE)) {
+        const existingRaw = fs.readFileSync(CHART_DATA_FILE, "utf8");
+        existingChartData = JSON.parse(existingRaw);
+      }
+    } catch (e) {
+      console.warn("Could not read existing charts_data.json.");
+    }
+
     // --- 2. Perform all required analyses ---
 
     // 1. Jobs by Company (Top 20)

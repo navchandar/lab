@@ -580,7 +580,10 @@ function clean_text(input) {
   let cleaned = String(input);
 
   // 1. Remove non-printable control characters (ASCII 0-31) that often corrupt JSON
-  cleaned = cleaned.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  cleaned = cleaned.replace(
+    /[\u0000-\u0009\u000B\u000C\u000E-\u001F\u007F]/g,
+    ""
+  );
   // 2. Replace all newlines and tabs with a single space.
   cleaned = cleaned.replace(/[\n\r\t]+/g, " ");
   // 3. Normalize remaining multiple spaces to a single space.
@@ -602,9 +605,10 @@ function clean_string_multiline(input) {
   // (e.g., NULL, vertical tab, form feed, non-breaking spaces, zero-width spaces).
   // \u200B is the zero-width space, common in web scraping.
   cleaned = cleaned.replace(
-    /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u00A0\u200B]/g,
+    /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u00A0\u200B]/g,
     ""
   );
+
   // 2. Normalize multiple spaces and tabs within a line to a single space.
   cleaned = cleaned.replace(/[ \t]{2,}/g, " ");
   // 3. Normalize multiple newlines/carriage returns to a maximum of two,
