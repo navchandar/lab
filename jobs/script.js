@@ -604,8 +604,9 @@ function drawChart(key) {
   const dataSet = globalChartData[key];
 
   let chartProps;
+  let chartType = "bar";
 
-  // --- Delegation Logic (replaces the large if/else block) ---
+  // --- Delegation Logic ---
   switch (key) {
     case "byCompany":
     case "byLocation":
@@ -619,6 +620,10 @@ function drawChart(key) {
         dataSet,
         globalChartData.experienceRanges
       );
+      break;
+    case "dailyJobCounts":
+      chartProps = prepareDailyJobCountChart(dataSet);
+      chartType = "line";
       break;
     default:
       console.error(`Unknown chart key: ${key}`);
@@ -642,7 +647,7 @@ function drawChart(key) {
 
   // --- CHART INITIALIZATION ---
   currentChartInstance = new Chart(ctx, {
-    type: "bar",
+    type: chartType,
     data: {
       labels: labels,
       datasets: datasets,
@@ -659,13 +664,14 @@ function drawChart(key) {
       scales: {
         x: {
           stacked: isStacked,
-          beginAtZero: true,
+          // Only beginAtZero for bar charts
+          beginAtZero: chartType === "bar" ? true : false,
           ticks: { color: getTextColor() },
         },
         y: {
           stacked: isStacked,
-          // Only beginAtZero for Y axis if it's the value axis (i.e., vertical bars)
-          beginAtZero: indexAxis === "x",
+          // Counts should always start at zero for clarity
+          beginAtZero: true,
           ticks: {
             autoSkip: indexAxis !== "y",
             color: getTextColor(),
@@ -792,6 +798,49 @@ function prepareStackedExperienceChart(dataSet, experienceRanges) {
     indexAxis: "y",
     isStacked: true,
     dynamicHeight: `${requiredHeight}px`,
+  };
+}
+
+/**
+ * Prepares data and settings for the daily job counts line chart.
+ * @param {Array<Object>} dataSet - The dailyJobCounts array.
+ */
+function prepareDailyJobCountChart(dataSet) {
+  const descriptionText = `Daily trend of new job postings over time.`;
+
+  // Format dates: "YYYY-MM-DD" to a shorter, readable format like "Nov 19"
+  const labels = dataSet.map((item) => {
+    // Assuming item.date is a valid date string like 'YYYY-MM-DD'
+    const date = new Date(item.date);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  });
+
+  const counts = dataSet.map((item) => item.count);
+
+  const datasets = [
+    {
+      label: "Job Posts per day",
+      data: counts,
+      backgroundColor: "rgba(54, 162, 235, 0.5)", // Light blue fill
+      borderColor: "rgb(54, 162, 235)", // Blue line
+      borderWidth: 2,
+      pointRadius: 5,
+      pointHoverRadius: 8,
+      fill: true, // Fill the area under the line
+      tension: 0.2, // Smooths the line
+    },
+  ];
+
+  return {
+    labels,
+    datasets,
+    descriptionText,
+    indexAxis: "x",
+    isStacked: false,
+    dynamicHeight: "400px",
   };
 }
 
