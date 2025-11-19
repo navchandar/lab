@@ -295,8 +295,8 @@ async function runAnalysis() {
       byRoleType,
       companyVsExperience,
       dailyJobCounts,
-      totalCount: jobs.length,
       experienceRanges: EXPERIENCE_RANGES.map((r) => r.label),
+      totalCount: jobs.length,
     };
 
     // 5. Write the aggregated data to a new file

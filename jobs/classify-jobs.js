@@ -361,8 +361,7 @@ function addExperienceToJobs(jobs) {
 
 function clean_string(jobs) {
   // 1. Regex to target invisible/control/separator characters (including LS and PS)
-  const invisibleCharsRegex = /[\uFEFF\p{Cc}\p{Cf}\p{Co}\p{Cn}\p{Zl}\p{Zp}]/gu;
-
+  const invisibleCharsRegex = /[\uFEFF\p{Cf}\p{Co}\p{Cn}\u2028\u2029]/gu;
   // 2. Replacement map for common conversions (curly quotes, long dashes, etc.)
   const conversionMap = {
     // Curly Quotes / Single Quotes
@@ -408,6 +407,7 @@ function clean_string(jobs) {
     desc = desc.replace(/;{2,}/g, ";");
 
     desc = desc.replace(/\p{Zs}/gu, " ");
+    desc = desc.replace(/[ \t]{2,}/g, " ");
     desc = desc.trim();
 
     // **E. (Optional) Sanitize - only use if you want to remove ALL characters not in your list**
