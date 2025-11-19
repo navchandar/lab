@@ -160,6 +160,60 @@ function aggregateCompanyVsExperience(jobs, topN = 20) {
 }
 
 /**
+ *  Calculates jobs found per day and adds to historical data.
+ * - Ignores counts for "Today" (incomplete day).
+ * - Limits history to 5 years.
+ * * @param {Array} currentJobs - The list of current jobs.
+ * @param {Array} existingHistory - The existing dailyJobCounts array from charts_data.json.
+ * @returns {Array} The updated history array sorted by date.
+ */
+function updateDailyJobCounts(currentJobs, existingHistory = []) {
+  // 1. Aggregate counts from the current jobs list
+  const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  const currentCounts = {};
+
+  currentJobs.forEach((job) => {
+    if (job.datePosted) {
+      // Extract YYYY-MM-DD
+      const date = new Date(job.datePosted).toISOString().split("T")[0];
+
+      // Only count if date is valid and NOT today
+      if (date && date < today) {
+        currentCounts[date] = (currentCounts[date] || 0) + 1;
+      }
+    }
+  });
+
+  // 2. Convert existing history to a Map for quick lookup
+  // Map: DateString -> Object { date, count }
+  const historyMap = new Map();
+  existingHistory.forEach((entry) => {
+    historyMap.set(entry.date, entry);
+  });
+
+  // 3. Merge job counts
+  Object.keys(currentCounts).forEach((date) => {
+    historyMap.set(date, {
+      date: date,
+      count: currentCounts[date],
+    });
+  });
+
+  // 4. Convert back to array and sort by date (Ascending)
+  let mergedHistory = Array.from(historyMap.values()).sort(
+    (a, b) => new Date(a.date) - new Date(b.date)
+  );
+
+  // 5. Limit to max 5 years (~1825 entries)
+  const MAX_ENTRIES = 5 * 365;
+  if (mergedHistory.length > MAX_ENTRIES) {
+    mergedHistory = mergedHistory.slice(mergedHistory.length - MAX_ENTRIES);
+  }
+
+  return mergedHistory;
+}
+
+/**
  * Compresses a file using Gzip.
  * @param {string} inputPath - Path to the file to compress.
  * @param {string} outputPath - Path for the resulting .gz file.
@@ -218,12 +272,19 @@ async function runAnalysis() {
     // 4. Jobs by Company vs Experience Range (Top 20) - NEW REQUIRED ANALYSIS
     const companyVsExperience = aggregateCompanyVsExperience(jobs, 20);
 
-    // 5. Combine the results into a single object
+    // 5. Update Daily Job Counts History
+    const dailyJobCounts = updateDailyJobCounts(
+      jobs,
+      existingChartData.dailyJobCounts || []
+    );
+
+    // 6. Combine the results into a single object
     const finalChartData = {
-      byCompany: byCompany,
-      byLocation: byLocation,
-      byRoleType: byRoleType,
-      companyVsExperience: companyVsExperience,
+      byCompany,
+      byLocation,
+      byRoleType,
+      companyVsExperience,
+      dailyJobCounts,
       totalCount: jobs.length,
       experienceRanges: EXPERIENCE_RANGES.map((r) => r.label),
     };

@@ -319,7 +319,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
     if (typeof data === "object") {
       listedAt = data.listedAt ? new Date(data.listedAt) : null;
       applyUrl = data.applyUrl || data.companyApplyUrl || null;
-      description = clean_string(data.description) || null;
+      description = data.description || null;
       companyUrl = data.company || null;
     } else {
       // Fallback: parse HTML with cheerio
@@ -343,22 +343,33 @@ async function fetchJobDetailFromLinkedIn(jobId) {
         // Get the HTML of just the content
         let contentHtml = contentElem.html();
         if (contentHtml) {
-          // Replace block-level tags with newline characters
-          contentHtml = contentHtml
-            .replace(/<br\s*\/?>/gi, "\n") // Replace <br> tags with a newline
-            .replace(/<\/(p|div|h[1-6]|blockquote|pre)>/gi, "\n\n") // Add two newlines after paragraphs
-            .replace(/<li[^>]*>/gi, "\n* ") // Handle opening <li> tags for bulleting and a newline
-            .replace(/<(ul|ol)[^>]*>/gi, "\n") // Treat opening <ul> or <ol> as a guaranteed newline before the list starts
-            .replace(/<\/(li|ul|ol)>/gi, "") // Remove closing list item tags
-            .replace(/<\/span>/gi, "");
+          // Replace <li> tags with a standard bullet point (Unicode U+2022)
+          contentHtml = contentHtml.replace(/<li[^>]*>/gi, "\n - ");
 
-          // Load the modified HTML and *then* get the text
-          description = cheerio.load(contentHtml).text();
+          // Replace block-level closing tags with guaranteed newlines
+          contentHtml = contentHtml.replace(
+            /<\/(p|div|h[1-6]|blockquote|pre)>/gi,
+            "\n\n"
+          );
 
-          // Clean up space
+          // Replace <br> tags with a single newline
+          contentHtml = contentHtml.replace(/<br\s*\/?>/gi, "\n");
+
+          // Replace H tags with text and ASCII separators for "heading"
+          contentHtml = contentHtml.replace(
+            /<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi,
+            (match, p1) => `\n\n== ${p1.trim()} ==\n\n`
+          );
+
+          // Remove remaining structural/unwanted tags (ul, ol, li closing, span, etc.)
+          contentHtml = contentHtml.replace(/<[^>]*>/g, "");
+          description = htmlUnescape(contentHtml);
+
+          // Clean up space and newlines
           description = description
-            .replace(/[ \t]+/g, " ")
-            .replace(/(\n\s*){3,}/g, "\n\n")
+            .replace(/[ \t]+/g, " ") // Normalize multiple spaces/tabs to a single space
+            .replace(/(\n\s*){4,}/g, "\n\n\n") // Normalize excessive newlines to at most three
+            .replace(/(\s*\n\s*){2,}/g, "\n\n") // Condense multiple newlines separated by space/tabs to two
             .trim();
         }
       }
@@ -474,14 +485,14 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
     enriched.push({
       title: job_title,
       company: company_name,
-      location: job.location || "India",
+      location: clean_text(job.location) || "India",
       type: "Full-Time",
       datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
       url: detail.applyUrl || jobUrlClean || job.jobUrl,
       source: "LinkedIn",
       sourceUrl: job.jobUrl,
       jobId,
-      description: detail.description || "",
+      description: clean_string_multiline(detail.description),
       companyUrl: detail.companyUrl || "",
     });
   }
@@ -513,6 +524,7 @@ function clean_title(job_title, company_name) {
   if (!job_title) {
     return "";
   }
+  job_title = clean_text(job_title);
   const company_names = [
     company_name + " -",
     company_name,
@@ -534,6 +546,7 @@ function clean_company(company_name) {
   if (!company_name) {
     return "";
   }
+  company_name = clean_text(company_name);
   const phrases_to_remove = ["®", "©", "™"];
   // Remove each phrase from job_title
   phrases_to_remove.forEach((phrase) => {
@@ -556,22 +569,50 @@ function clean_url(url) {
   return clean_url;
 }
 
-function clean_string(input) {
-  // This regex matches any character that is NOT:
-  // a-z (lowercase letters)
-  // A-Z (uppercase letters)
-  // 0-9 (digits)
-  // • (the bullet point character U+2022)
-  // \u00A0-\u00FF (Unicode range for the original extended ASCII characters)
-
+/**
+ * Cleans single-line strings (title, company, location) for JSON.
+ * Removes control characters and excess whitespace.
+ */
+function clean_text(input) {
   if (!input) {
-    return null;
+    return "";
   }
+  let cleaned = String(input);
 
-  const regex = /[^a-zA-Z0-9'"<>:;,=+.?_–—\-()&@%/•*\u00A0-\u00FF]/g;
-  return input.replace(regex, "");
+  // 1. Remove non-printable control characters (ASCII 0-31) that often corrupt JSON
+  cleaned = cleaned.replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F]/g, "");
+  // 2. Replace all newlines and tabs with a single space.
+  cleaned = cleaned.replace(/[\n\r\t]+/g, " ");
+  // 3. Normalize remaining multiple spaces to a single space.
+  cleaned = cleaned.replace(/[ ]{2,}/g, " ");
+  // 4. Remove leading/trailing whitespace.
+  return cleaned.trim();
 }
+/**
+ * Cleans multi-line strings (description) for JSON.
+ * Removes control characters but preserves spaces, newlines, and common punctuation.
+ */
+function clean_string_multiline(input) {
+  if (!input) {
+    return "";
+  }
+  let cleaned = String(input);
 
+  // 1. Remove non-printable control characters that can corrupt JSON
+  // (e.g., NULL, vertical tab, form feed, non-breaking spaces, zero-width spaces).
+  // \u200B is the zero-width space, common in web scraping.
+  cleaned = cleaned.replace(
+    /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\u00A0\u200B]/g,
+    ""
+  );
+  // 2. Normalize multiple spaces and tabs within a line to a single space.
+  cleaned = cleaned.replace(/[ \t]{2,}/g, " ");
+  // 3. Normalize multiple newlines/carriage returns to a maximum of two,
+  // preventing giant empty gaps, while preserving paragraph breaks.
+  cleaned = cleaned.replace(/(\r?\n){3,}/g, "\n\n");
+  // 4. Remove leading/trailing whitespace from the whole description.
+  return cleaned.trim();
+}
 async function mergeAndCleanJobsData(output_data) {
   const json = readExisting();
   const existing = json ? json.data : [];
