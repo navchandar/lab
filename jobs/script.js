@@ -1169,6 +1169,48 @@ async function main() {
     });
   }
 
+  /**
+   * Limits the Tippy popover's height to not exceed the height of a parent element
+   * * @param {object} instance - The Tippy instance object provided by the onShow hook.
+   * @param {string} boundaryElementId - The ID of the element (the container) to limit
+   */
+  function limitTippyHeight(instance, boundaryElementId) {
+    // 1. Get Elements and Dimensions
+    const boundaryElement = document.getElementById(boundaryElementId);
+    if (!boundaryElement) {
+      return;
+    }
+
+    const boundaryRect = boundaryElement.getBoundingClientRect();
+    const tdRect = instance.reference.getBoundingClientRect();
+    const content = instance.popper.querySelector(".tippy-content");
+
+    // 2. Determine the Actual Placement
+    const currentPlacement = instance.popper.getAttribute("data-placement");
+
+    let availableHeight;
+    // 3. Calculate Max Height based on Placement
+    if (currentPlacement.startsWith("bottom")) {
+      // Placed at the BOTTOM (expands downwards)
+      // Limit is: (Boundary Bottom) - (Cell Bottom)
+      availableHeight = boundaryRect.bottom - tdRect.bottom;
+    } else if (currentPlacement.startsWith("top")) {
+      // Placed at the TOP (expands upwards)
+      // Limit is: (Cell Top) - (Boundary Top)
+      availableHeight = tdRect.top - boundaryRect.top;
+    } else {
+      // Ignore other placements (left/right)
+      return;
+    }
+
+    // 4. Apply Max Height and Allow Scrolling
+    if (content) {
+      // 10px Buffer for padding/arrow clearance
+      content.style.maxHeight = `${availableHeight - 10}px`;
+      content.style.overflowY = "auto";
+    }
+  }
+
   // --- Function to populate the table ---
   function populateTable(jobs) {
     // Clear the existing data
@@ -1233,6 +1275,7 @@ async function main() {
           placement: "bottom",
           trigger: isMobile ? "click" : "mouseenter",
           hideOnClick: true,
+          onShow: (i) => limitTippyHeight(i, "jobTable"),
         });
       }
     });
