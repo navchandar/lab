@@ -573,6 +573,7 @@ function clean_url(url) {
  * Cleans single-line strings (title, company, location) for JSON.
  * Removes control characters and excess whitespace.
  */
+/* eslint-disable no-control-regex */
 function clean_text(input) {
   if (!input) {
     return "";
@@ -591,6 +592,7 @@ function clean_text(input) {
   // 4. Remove leading/trailing whitespace.
   return cleaned.trim();
 }
+
 /**
  * Cleans multi-line strings (description) for JSON.
  * Removes control characters but preserves spaces, newlines, and common punctuation.
@@ -617,6 +619,8 @@ function clean_string_multiline(input) {
   // 4. Remove leading/trailing whitespace from the whole description.
   return cleaned.trim();
 }
+/* eslint-enable no-control-regex */
+
 async function mergeAndCleanJobsData(output_data) {
   const json = readExisting();
   const existing = json ? json.data : [];
