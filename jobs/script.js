@@ -29,6 +29,7 @@ function initializeJobsTable() {
     console.log("jQuery and DataTable are available. Initializing DataTable.");
     try {
       jobsTable = jQuery("#jobTable").DataTable(DATA_TABLE_CONFIG);
+      jobsTable.on("draw.dt", initializeTippyOnVisibleRows);
     } catch (e) {
       showToast("Error initializing the jobs table. Check console!");
       lastMod.textContent = "Error: Failed to initialize DataTable";
@@ -1153,21 +1154,22 @@ function setupDisclaimer() {
 function limitTippyHeight(instance, boundaryElementId) {
   // 1. Get Elements and Dimensions
   const boundaryElement = document.getElementById(boundaryElementId);
-  if (!boundaryElement && !instance) {
+  const content = instance?.popper?.querySelector(".tippy-content");
+
+  if (!boundaryElement || !content) {
+    console.warn("Tippy boundary or content element not found.");
     return;
   }
 
   const boundaryRect = boundaryElement.getBoundingClientRect();
   const tdRect = instance.reference.getBoundingClientRect();
-  const content = instance.popper.querySelector(".tippy-content");
-
-  // 2. Determine the Actual Placement
   const currentPlacement = instance.popper.getAttribute("data-placement");
   if (!currentPlacement) {
     return;
   }
 
-  let availableHeight;
+  let availableHeight = 0;
+  const paddingBuffer = 15;
   // 3. Calculate Max Height based on Placement
   if (currentPlacement.startsWith("bottom")) {
     // Placed at the BOTTOM (expands downwards)
@@ -1181,13 +1183,11 @@ function limitTippyHeight(instance, boundaryElementId) {
     // Ignore other placements (left/right)
     return;
   }
-
-  // 4. Apply Max Height and Allow Scrolling
-  if (content) {
-    // 10px Buffer for padding/arrow clearance
-    content.style.maxHeight = `${availableHeight - 10}px`;
-    content.style.overflowY = "auto";
-  }
+  const finalMaxHeight = availableHeight - paddingBuffer;
+  // Use Math.max to ensure the height is never set below a useful minimum (e.g., 50px)
+  const safeMaxHeight = Math.max(50, finalMaxHeight);
+  content.style.maxHeight = `${safeMaxHeight}px`;
+  content.style.overflowY = "auto";
 }
 
 /**
@@ -1691,8 +1691,6 @@ async function main() {
     jobsTable.on("search.dt", updateDropdowns);
 
     jobsTable.on("length.dt", updateURL);
-
-    jobsTable.on("draw.dt", initializeTippyOnVisibleRows);
 
     // When reset is clicked, clear all filters and redraw
     $("#resetFilters").on("click", resetAllFilters);
