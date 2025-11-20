@@ -182,12 +182,12 @@ function scoreDoc(job, config = CATEGORIES) {
   }
 
   // Unknown if very low confidence
-  if (conf < 0.35 || bestScore < 3) {
+  if (conf < 0.4 || bestScore < 3) {
     // Check for strong non-tech signals before defaulting to UNKNOWN
     if (
       /\b(talent acquisition|recruitment|hiring|recruiter)\b/.test(title) ||
       /\b(compliance|audit)\b/.test(title) ||
-      /\b(civil|construction|mep)\b/.test(title)
+      /\b(civil|construction|mep|repair)\b/.test(title)
     ) {
       finalCat = UNKNOWN; // This is definitely not a tech role we cover
     } else if (bestScore < 3) {
