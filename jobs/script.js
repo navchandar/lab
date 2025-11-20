@@ -148,6 +148,53 @@ function parseMinExperience(expStr) {
 }
 
 /**
+ * Parses a job experience string (e.g., "2-5", "5+", "10") into a min/max object.
+ * @param {string} expStr - The raw experience string from the job data.
+ * @returns {object|null} {min: number, max: number} or null if N/A.
+ */
+function parseJobExperienceRange(expStr) {
+  try {
+    if (!expStr || expStr === "—" || expStr.toLowerCase() === "n/a") {
+      return null;
+    }
+
+    // 1. Match Range: "X-Y" (e.g., "2-5")
+    const rangeMatch = expStr.match(/(\d+)\s*-\s*(\d+)/);
+    if (rangeMatch) {
+      return {
+        min: parseInt(rangeMatch[1], 10),
+        max: parseInt(rangeMatch[2], 10),
+      };
+    }
+
+    // 2. Match Minimum: "X+" (e.g., "5+")
+    const plusMatch = expStr.match(/(\d+)\s*\+/);
+    if (plusMatch) {
+      return {
+        min: parseInt(plusMatch[1], 10),
+        // Set maximum as minimum + 4 years
+        max: parseInt(plusMatch[1], 10) + 4,
+      };
+    }
+
+    // 3. Match Single Value: "X" (e.g., "10")
+    const singleMatch = expStr.match(/^(\d+)$/);
+    if (singleMatch) {
+      const minMax = parseInt(singleMatch[1], 10);
+      return {
+        min: minMax - 3,
+        max: minMax + 1,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error parsing job experience range:", expStr, error);
+    return null;
+  }
+}
+
+/**
  * Calculates the time difference between a past date string and now,
  * and formats it into a human-readable string (e.g., "2 hours ago", "1 hour 30 mins ago").
  *
@@ -1588,7 +1635,26 @@ async function main() {
 
       const company = job.company;
       const location = job.normalizedLocation;
-      const jobExp = parseMinExperience(job.yoe); // null or number
+      const jobExpRange = parseJobExperienceRange(job.yoe); // null or number
+
+      // Check Experience match (Range Inclusion)
+      let experienceMatch = false;
+      // Show all jobs if filter is empty/invalid
+      if (isNaN(selectedExperience)) {
+        experienceMatch = true;
+      }
+      // Case 2: Filter is selected AND job has an experience range
+      else if (jobExpRange !== null) {
+        // A job is a match if the selected experience falls anywhere
+        // within the job's required experience range.
+        experienceMatch =
+          selectedExperience >= jobExpRange.min &&
+          selectedExperience <= jobExpRange.max;
+      }
+      // Case 3: Job has no experience data (null) but filter is selected
+      else {
+        experienceMatch = false;
+      }
 
       // Check Company match
       const companyMatch =
@@ -1597,11 +1663,6 @@ async function main() {
       // Check Location match
       const locationMatch =
         selectedLocations.length === 0 || selectedLocations.includes(location);
-
-      // Check Experience match (Min YoE)
-      const experienceMatch =
-        isNaN(selectedExperience) ||
-        (jobExp !== null && jobExp >= selectedExperience);
 
       // All must be true to show the row
       return companyMatch && locationMatch && experienceMatch;

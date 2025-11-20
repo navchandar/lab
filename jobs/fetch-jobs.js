@@ -295,6 +295,9 @@ async function fetchJobDetailFromLinkedIn(jobId) {
   // Define threshild for a high-applicant count to trigger repost job detection
   const HIGH_APPLICANT_THRESHOLD = 100;
   const REPOST_WINDOW_HOURS = 4;
+  let jobClosed = false;
+  let likelyRepost = false;
+  let applicantsCount = null;
 
   try {
     const headers = {
@@ -312,9 +315,6 @@ async function fetchJobDetailFromLinkedIn(jobId) {
     let applyUrl = null;
     let description = null;
     let companyUrl = null;
-    let jobClosed = false;
-    let applicantsCount = null;
-    let likelyRepost = false;
 
     if (typeof data === "object") {
       listedAt = data.listedAt ? new Date(data.listedAt) : null;
@@ -409,14 +409,20 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       applicantsCount,
     };
   } catch (err) {
+    const statusCode = err.response ? err.response.status : null;
+    // failure codes: 404 (Not Found) or 410 (Gone), 403 (Forbidden)
+    const failureCodes = [404, 410, 403];
     console.error("Error fetching job detail:", err.message);
+    if (statusCode && failureCodes.includes(statusCode)) {
+      jobClosed = true;
+    }
     return {
       resolvedDate: null,
       applyUrl: null,
       description: null,
       companyUrl: null,
-      jobClosed: true,
-      likelyRepost: true,
+      jobClosed: jobClosed,
+      likelyRepost: likelyRepost,
       applicantsCount: 0,
     };
   }
@@ -483,17 +489,17 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
     const company_name = clean_company(job.company);
 
     enriched.push({
+      jobId,
       title: job_title,
       company: company_name,
+      companyUrl: detail.companyUrl || "",
+      applicants: job.applicantsCount || 0,
       location: clean_text(job.location) || "India",
-      type: "Full-Time",
       datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
       url: detail.applyUrl || jobUrlClean || job.jobUrl,
       source: "LinkedIn",
-      // sourceUrl: job.jobUrl,
-      jobId,
+      type: "Full-Time",
       description: clean_string_multiline(detail.description),
-      companyUrl: detail.companyUrl || "",
     });
   }
 
@@ -671,9 +677,12 @@ async function mergeAndCleanJobsData(output_data) {
       const isLinkedIn = j.source === "LinkedIn";
       const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
       const isOlderThan2Days = d < twoDayCutoffTime;
+      const isApplicantsHigh = j.applicantsCount
+        ? j.applicantsCount > 100
+        : false;
 
       // Identify old LinkedIn jobs for closure check
-      if (isLinkedIn && isOlderThan2Days) {
+      if (isLinkedIn && isOlderThan2Days && isApplicantsHigh) {
         jobsToCheck.push(j);
       } else {
         jobsToKeep.push(j);
@@ -688,12 +697,17 @@ async function mergeAndCleanJobsData(output_data) {
       try {
         // Fetch details for the *current* job and wait
         const details = await fetchJobDetailFromLinkedIn(job.jobId);
+        const updatedJob = {
+          ...job,
+          applicants: details.applicantsCount || job.applicantsCount,
+        };
+
         if (details.jobClosed || details.applicantsCount >= 200) {
           // Job is closed, don't add it back
           closedJobsRemovedCount++;
         } else {
           // Job is still open, keep it
-          jobsToKeep.push(job);
+          jobsToKeep.push(updatedJob);
         }
         await sleep(200);
       } catch (error) {
@@ -725,15 +739,32 @@ async function mergeAndCleanJobsData(output_data) {
   for (const j of output_data) {
     const existingJob = byJobId.get(j.jobId);
     if (!existingJob) {
+      // Case 1: New job, add it to json
       byJobId.set(j.jobId, j);
       newJobsAddedCount++;
     } else {
+      // Case 2: Job already Exists in json
+      // 1. Check for a newer datePosted (and update ALL fields if newer)
       const existingTime = existingJob.datePosted
         ? new Date(existingJob.datePosted).getTime()
         : 0;
       const newTime = j.datePosted ? new Date(j.datePosted).getTime() : 0;
+
+      // A. New post date is newer: Overwrite everything.
       if (newTime > existingTime) {
         byJobId.set(j.jobId, { ...existingJob, ...j });
+      } else {
+        // B. Post date is not newer, but we should update applicantsCount
+        const existingApplicants = existingJob.applicants || 0;
+        const newApplicants = j.applicantsCount || 0;
+
+        // Only update if the new applicants count is greater
+        if (newApplicants > existingApplicants) {
+          byJobId.set(j.jobId, {
+            ...existingJob,
+            applicants: newApplicants,
+          });
+        }
       }
     }
   }
