@@ -161,29 +161,30 @@ function parseJobExperienceRange(expStr) {
     // 1. Match Range: "X-Y" (e.g., "2-5")
     const rangeMatch = expStr.match(/(\d+)\s*-\s*(\d+)/);
     if (rangeMatch) {
-      return {
-        min: parseInt(rangeMatch[1], 10),
-        max: parseInt(rangeMatch[2], 10),
-      };
+      const min = parseInt(rangeMatch[1], 10);
+      const max = parseInt(rangeMatch[2], 10);
+      // Ensure min is not greater than max (handles bad data)
+      return { min: Math.min(min, max), max: Math.max(min, max) };
     }
 
     // 2. Match Minimum: "X+" (e.g., "5+")
     const plusMatch = expStr.match(/(\d+)\s*\+/);
     if (plusMatch) {
+      const min = parseInt(plusMatch[1], 10);
       return {
-        min: parseInt(plusMatch[1], 10),
-        // Set maximum as minimum + 4 years
-        max: parseInt(plusMatch[1], 10) + 4,
+        min: min,
+        // Set maximum as minimum + 3 years
+        max: min + 3,
       };
     }
 
     // 3. Match Single Value: "X" (e.g., "10")
     const singleMatch = expStr.match(/^(\d+)$/);
     if (singleMatch) {
-      const minMax = parseInt(singleMatch[1], 10);
+      const min = parseInt(singleMatch[1], 10);
       return {
-        min: minMax - 3,
-        max: minMax + 1,
+        min: min - 1,
+        max: min + 2,
       };
     }
 
