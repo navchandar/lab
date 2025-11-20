@@ -1287,7 +1287,7 @@ async function main() {
         job.company,
         job.location,
         roleType === "—" ? roleType : roleTypeLink,
-        job.experienceRequired,
+        job.yoe,
         job.datePosted,
       ];
     });
@@ -1341,7 +1341,7 @@ async function main() {
     // Extract unique experience years
     const experienceSet = new Set();
     jobs.forEach((job) => {
-      const exp = parseMinExperience(job.experienceRequired);
+      const exp = parseMinExperience(job.yoe);
       if (exp !== null) {
         experienceSet.add(exp);
       }
@@ -1453,7 +1453,7 @@ async function main() {
     const passesAllOtherFilters = (job, excludeDropdown) => {
       const company = job.company;
       const location = job.normalizedLocation;
-      const jobExp = parseMinExperience(job.experienceRequired);
+      const jobExp = parseMinExperience(job.yoe);
       const selectedExpInt = parseInt(selectedExperience, 10);
 
       // Check Company match (only if we're NOT excluding the company filter)
@@ -1523,7 +1523,7 @@ async function main() {
     );
     const experienceSet = new Set();
     experienceJobs.forEach((job) => {
-      const exp = parseMinExperience(job.experienceRequired);
+      const exp = parseMinExperience(job.yoe);
       if (exp !== null) {
         experienceSet.add(exp);
       }
@@ -1588,7 +1588,7 @@ async function main() {
 
       const company = job.company;
       const location = job.normalizedLocation;
-      const jobExp = parseMinExperience(job.experienceRequired); // null or number
+      const jobExp = parseMinExperience(job.yoe); // null or number
 
       // Check Company match
       const companyMatch =

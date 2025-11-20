@@ -354,7 +354,7 @@ function addExperienceToJobs(jobs) {
     const exp = getExperience(j.title, j.description, j.jobId);
     return {
       ...j,
-      experienceRequired: exp || UNKNOWN,
+      yoe: exp || UNKNOWN,
     };
   });
 }

@@ -11,44 +11,6 @@
 // =======================================================================
 // === 1. RESOURCE CONFIGURATION =========================================
 // =======================================================================
-// <script src="https://unpkg.com/@popperjs/core@2"></script>
-// <script src="https://unpkg.com/tippy.js@6"></script>
-
-// <link
-//   rel="stylesheet"
-//   href="https://cdn.datatables.net/2.3.4/css/dataTables.dataTables.css"
-// />
-
-// <link
-//   rel="stylesheet"
-//   href="https://unpkg.com/tippy.js@6/themes/light.css"
-// />
-// <link
-//   rel="stylesheet"
-//   href="https://unpkg.com/tippy.js@6/themes/light-border.css"
-// />
-// <link
-//   rel="stylesheet"
-//   href="https://unpkg.com/tippy.js@6/themes/material.css"
-// />
-
-// <link rel="stylesheet" href="style.css" />
-
-// <script
-//   src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
-//   integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
-//   crossorigin="anonymous"
-//   referrerpolicy="no-referrer"
-// ></script>
-
-// <script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
-
-// <link
-//   href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css"
-//   rel="stylesheet"
-// />
-// <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-// <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 const RESOURCES_CONFIG = {
   JQUERY_JS: {
@@ -143,20 +105,29 @@ const RESOURCES_CONFIG = {
 };
 
 /**
- * Defines the order in which resources must be loaded due to dependencies.
- * Critical resources are placed early.
+ * Grouped resources to allow parallel loading.
+ * Inner arrays load simultaneously. Outer arrays load sequentially.
  */
-const LOAD_ORDER = [
-  "JQUERY_JS", // Must be first
-  "DATATABLES_JS", // Depends on JQUERY
-  "POPPERJS_JS", // Depends on JQUERY
-  "DATATABLES_CSS",
-  "SELECT2_JS",
-  "SELECT2_CSS",
-  "TIPPYJS_JS", // Depends on POPPERJS
-  "TIPPY_CSS_LIGHT",
-  "TIPPY_CSS_MATERIAL",
-  "CHARTJS_JS", // Independent
+const LOAD_STAGES = [
+  // === STAGE 1: Core Libraries & All CSS (Parallel) ===
+  // These start downloading immediately and simultaneously.
+  [
+    "JQUERY_JS", // Core dependency
+    "POPPERJS_JS", // Core dependency (indep of jQuery)
+    "CHARTJS_JS", // Independent
+    "DATATABLES_CSS", // CSS can always load parallel
+    "SELECT2_CSS",
+    "TIPPY_CSS_LIGHT",
+    "TIPPY_CSS_MATERIAL",
+  ],
+
+  // === STAGE 2: Dependent Plugins (Parallel) ===
+  // These start only after ALL items in Stage 1 are finished.
+  [
+    "DATATABLES_JS", // Needs jQuery
+    "SELECT2_JS", // Needs jQuery
+    "TIPPYJS_JS", // Needs Popper
+  ],
 ];
 
 // =======================================================================
@@ -251,33 +222,66 @@ function isLoaded(globalName) {
 }
 
 /**
- * Sequentially loads resources based on LOAD_ORDER.
- * @param {function} callback - Called when all resources are loaded.
+ * Loads resources in stages. Items in the same stage load in parallel.
+ * @param {function} callback - Called when all stages are complete.
  */
 async function startAfterResources(callback) {
-  for (const key of LOAD_ORDER) {
-    const config = RESOURCES_CONFIG[key];
-    const isCritical = key === "JQUERY_JS" || key === "DATATABLES_JS";
+  console.log("Starting optimized parallel resource loader...");
+  const lastMod = document.getElementById("last-refresh");
 
-    try {
-      await loadResourceWithFallback(config.type, config.urls);
-      if (config.globalCheck && !isLoaded(config.globalCheck)) {
-        console.error(
-          `[WARNING] ${key} loaded but global check failed (${config.globalCheck}).`
-        );
-      }
-    } catch (err) {
-      console.error(`[FATAL ERROR] Failed to load resource: ${key}.`, err);
-      if (isCritical) {
-        const msg = `CRITICAL ERROR: Failed to load ${key}. Cannot load application!`;
-        document.getElementById("last-refresh").textContent = msg;
-        // Stop execution for critical failure
-        return;
+  // 1. Initial Status
+  if (lastMod) {
+    lastMod.textContent = "Loading resources...";
+  }
+
+  for (let i = 0; i < LOAD_STAGES.length; i++) {
+    const stage = LOAD_STAGES[i];
+    console.log(`--- Starting Stage ${i + 1} ---`);
+
+    // 2. Update UI for the current stage
+    if (lastMod) {
+      lastMod.textContent = `Loading resources... Stage ${i + 1}`;
+    }
+
+    // 3. Create an array of promises for this stage
+    const promises = stage.map((key) => {
+      const config = RESOURCES_CONFIG[key];
+      return loadResourceWithFallback(config.type, config.urls)
+        .then(() => ({ key, status: "success" }))
+        .catch((err) => ({ key, status: "error", error: err }));
+    });
+
+    // 4. Wait for EVERYTHING in this stage to finish (Parallel execution)
+    const results = await Promise.all(promises);
+
+    // 5. Post-Stage Check: Did anything critical fail?
+    for (const result of results) {
+      if (result.status === "error") {
+        console.error(`[FATAL] Failed to load ${result.key}`);
+
+        // Identify if this is a critical failure
+        if (
+          ["JQUERY_JS", "DATATABLES_JS", "POPPERJS_JS"].includes(result.key)
+        ) {
+          if (lastMod) {
+            lastMod.textContent = `CRITICAL ERROR: Failed to load ${result.key}. App stopped.`;
+          }
+          return; // Stop execution
+        }
+      } else {
+        // Check globals if they exist
+        const config = RESOURCES_CONFIG[result.key];
+        if (config.globalCheck && !isLoaded(config.globalCheck)) {
+          console.warn(
+            `[WARNING] ${result.key} loaded but global '${config.globalCheck}' not found.`
+          );
+        }
       }
     }
   }
 
   console.log("All dependencies processed. Calling main application.");
+
   callback();
 }
 

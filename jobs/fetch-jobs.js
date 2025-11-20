@@ -218,7 +218,7 @@ function parseRelativeTimeToDate(input) {
  */
 async function gatherLinkedInSearchResults(KEYWORDS) {
   const gathered = [];
-  const MAX_PAGES = 5;
+  const MAX_PAGES = 3;
 
   for (const kw of KEYWORDS) {
     let currentPage = 0;
@@ -247,7 +247,7 @@ async function gatherLinkedInSearchResults(KEYWORDS) {
         break;
       }
     }
-    await sleep(1000);
+    await sleep(500);
   }
 
   return gathered;
@@ -278,9 +278,9 @@ function filterLinkedInSearchResults(gatheredJobs) {
 
     // Check if this jobId already exists
     const isNew = !existingJobIds.has(jobId);
-    if (!isNew) {
-      console.log(`Already existing jobId found (filtered out): ${jobId}`);
-    }
+    // if (!isNew) {
+    //   console.log(`Already existing jobId found (filtered out): ${jobId}`);
+    // }
     // Keep the job post only if its ID is not already saved
     return isNew;
   });
@@ -490,7 +490,7 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
       datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
       url: detail.applyUrl || jobUrlClean || job.jobUrl,
       source: "LinkedIn",
-      sourceUrl: job.jobUrl,
+      // sourceUrl: job.jobUrl,
       jobId,
       description: clean_string_multiline(detail.description),
       companyUrl: detail.companyUrl || "",
@@ -695,7 +695,7 @@ async function mergeAndCleanJobsData(output_data) {
           // Job is still open, keep it
           jobsToKeep.push(job);
         }
-        await sleep(500);
+        await sleep(200);
       } catch (error) {
         // If the check failed, keep the job to re-check later
         console.warn(`Failed to check job ${job.jobId}: ${error.message}`);

@@ -57,7 +57,7 @@ function parseExperience(expStr) {
  * @returns {string} The experience range label (e.g., "4-6 Years") or "N/A".
  */
 function categorizeExperience(job) {
-  const avgExp = parseExperience(job.experienceRequired);
+  const avgExp = parseExperience(job.yoe);
   if (avgExp === null) {
     return "N/A";
   }
