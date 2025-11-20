@@ -237,7 +237,7 @@ async function gatherLinkedInSearchResults(KEYWORDS) {
           console.log(`Found ${results.length} jobs on page ${currentPage}`);
           results.forEach((r) => gathered.push({ ...r, _keyword: kw }));
           currentPage++;
-          await sleep(500);
+          await sleep(200);
         } else {
           console.log(`No more jobs found for "${kw}" on page ${currentPage}.`);
           break;
@@ -247,7 +247,7 @@ async function gatherLinkedInSearchResults(KEYWORDS) {
         break;
       }
     }
-    await sleep(500);
+    await sleep(200);
   }
 
   return gathered;
@@ -444,9 +444,24 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
     if (jobId) {
       console.log("Parsed jobId", { jobId, jobUrl: jobUrlClean });
       detail = await fetchJobDetailFromLinkedIn(jobId);
-      await sleep(500);
+      await sleep(100);
     } else {
       console.warn("Could not parse jobId", { jobUrl: jobUrlClean });
+      continue;
+    }
+
+    if (detail.jobClosed) {
+      console.warn("Closed job; skipping", {
+        title: job.position,
+        url: job.jobUrl,
+      });
+      continue;
+    }
+    if (detail.likelyRepost) {
+      console.warn("Likely Reposted job; skipping", {
+        title: job.position,
+        url: job.jobUrl,
+      });
       continue;
     }
 
@@ -466,20 +481,6 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
       console.warn("Older than window; skipping", {
         title: job.position,
         postedAt,
-      });
-      continue;
-    }
-    if (detail.jobClosed) {
-      console.warn("Closed job; skipping", {
-        title: job.position,
-        url: job.jobUrl,
-      });
-      continue;
-    }
-    if (detail.likelyRepost) {
-      console.warn("Likely Reposted job; skipping", {
-        title: job.position,
-        url: job.jobUrl,
       });
       continue;
     }
@@ -709,7 +710,7 @@ async function mergeAndCleanJobsData(output_data) {
           // Job is still open, keep it
           jobsToKeep.push(updatedJob);
         }
-        await sleep(200);
+        await sleep(100);
       } catch (error) {
         // If the check failed, keep the job to re-check later
         console.warn(`Failed to check job ${job.jobId}: ${error.message}`);

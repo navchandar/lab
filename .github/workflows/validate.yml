@@ -51,16 +51,23 @@ jobs:
       - name: Validate JS
         run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
 
-      - name: Validate Broken Links
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: --root-dir ${{ github.workspace }} --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
-
       - name: Validate Spelling
         uses: rojopolis/spellcheck-github-actions@0.54.0
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
+
+      - name: Restore lychee cache
+        uses: actions/cache@v4
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.sha }}
+          restore-keys: cache-lychee-
+
+      - name: Validate Broken Links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --cache --max-cache-age 1d --root-dir ${{ github.workspace }} --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
 
       - name: Commit and push if changed
         if: github.event_name == 'push'
