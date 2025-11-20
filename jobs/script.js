@@ -1274,7 +1274,7 @@ async function main() {
   function limitTippyHeight(instance, boundaryElementId) {
     // 1. Get Elements and Dimensions
     const boundaryElement = document.getElementById(boundaryElementId);
-    if (!boundaryElement) {
+    if (!boundaryElement && !instance) {
       return;
     }
 
@@ -1284,6 +1284,9 @@ async function main() {
 
     // 2. Determine the Actual Placement
     const currentPlacement = instance.popper.getAttribute("data-placement");
+    if (!currentPlacement) {
+      return;
+    }
 
     let availableHeight;
     // 3. Calculate Max Height based on Placement

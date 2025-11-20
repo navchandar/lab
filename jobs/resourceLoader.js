@@ -53,6 +53,7 @@ const RESOURCES_CONFIG = {
   },
   POPPERJS_JS: {
     type: "script",
+    globalCheck: "Popper",
     urls: [
       "https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.8/umd/popper.min.js",
       "https://unpkg.com/@popperjs/core@2.11.8/dist/umd/popper.min.js",
@@ -109,7 +110,7 @@ const RESOURCES_CONFIG = {
  * Inner arrays load simultaneously. Outer arrays load sequentially.
  */
 const LOAD_STAGES = [
-  // === STAGE 1: Core Libraries & All CSS (Parallel) ===
+  // === Core Libraries & All CSS (Parallel) ===
   // These start downloading immediately and simultaneously.
   [
     "JQUERY_JS", // Core dependency
@@ -121,11 +122,13 @@ const LOAD_STAGES = [
     "TIPPY_CSS_MATERIAL",
   ],
 
-  // === STAGE 2: Dependent Plugins (Parallel) ===
+  // === Dependent Plugins (Parallel) ===
   // These start only after ALL items in Stage 1 are finished.
   [
     "DATATABLES_JS", // Needs jQuery
     "SELECT2_JS", // Needs jQuery
+  ],
+  [
     "TIPPYJS_JS", // Needs Popper
   ],
 ];
