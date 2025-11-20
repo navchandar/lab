@@ -160,15 +160,15 @@ function generateIndexHtml() {
 ${appLinks}
             </ul>
 
-             <div class="sidebar-info">
-                <h3>🛠️ Maintainer</h3>
-                <a target="_blank" href="https://navchandar.github.io/">Naveenchandar</a>
+            <div class="version-label">${versionString}</div>
 
-                <h3>📑 License</h3>
-                <a target="_blank" href="https://github.com/navchandar/lab/blob/main/LICENSE">GPLv3</a>
+            <div class="sidebar-info">
+              <h3>🛠️ Maintainer</h3>
+              <a target="_blank" href="https://navchandar.github.io/">Naveenchandar</a>
+              <h3>📑 License</h3>
+              <a target="_blank" href="https://github.com/navchandar/lab/blob/main/LICENSE">GPLv3</a>
             </div>
         </div>
-        <div class="version-label">${versionString}</div>
       </nav>
       <main><iframe name="appFrame" title="App Frame" id="appFrame"></iframe></main>
     </div>
