@@ -1145,6 +1145,94 @@ function setupDisclaimer() {
   });
 }
 
+/**
+ * Limits the Tippy popover's height to not exceed the height of a parent element
+ * * @param {object} instance - The Tippy instance object provided by the onShow hook.
+ * @param {string} boundaryElementId - The ID of the element (the container) to limit
+ */
+function limitTippyHeight(instance, boundaryElementId) {
+  // 1. Get Elements and Dimensions
+  const boundaryElement = document.getElementById(boundaryElementId);
+  if (!boundaryElement && !instance) {
+    return;
+  }
+
+  const boundaryRect = boundaryElement.getBoundingClientRect();
+  const tdRect = instance.reference.getBoundingClientRect();
+  const content = instance.popper.querySelector(".tippy-content");
+
+  // 2. Determine the Actual Placement
+  const currentPlacement = instance.popper.getAttribute("data-placement");
+  if (!currentPlacement) {
+    return;
+  }
+
+  let availableHeight;
+  // 3. Calculate Max Height based on Placement
+  if (currentPlacement.startsWith("bottom")) {
+    // Placed at the BOTTOM (expands downwards)
+    // Limit is: (Boundary Bottom) - (Cell Bottom)
+    availableHeight = boundaryRect.bottom - tdRect.bottom;
+  } else if (currentPlacement.startsWith("top")) {
+    // Placed at the TOP (expands upwards)
+    // Limit is: (Cell Top) - (Boundary Top)
+    availableHeight = tdRect.top - boundaryRect.top;
+  } else {
+    // Ignore other placements (left/right)
+    return;
+  }
+
+  // 4. Apply Max Height and Allow Scrolling
+  if (content) {
+    // 10px Buffer for padding/arrow clearance
+    content.style.maxHeight = `${availableHeight - 10}px`;
+    content.style.overflowY = "auto";
+  }
+}
+
+/**
+ * Initializes Tippy on all currently visible job title cells.
+ */
+function initializeTippyOnVisibleRows() {
+  // detect current theme
+  const isDarkMode =
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // detects touch devices
+  const isMobile =
+    window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+  // Calculate maxWidth based on viewport size
+  const viewportWidth = window.innerWidth;
+  const maxWidth = viewportWidth < 768 ? 250 : viewportWidth < 1200 ? 500 : 900;
+
+  // Use the DataTable API selector for efficiency, targeting only *visible* rows
+  document.querySelectorAll("#jobTable tbody tr").forEach((row) => {
+    // Job Title cell (assuming it's the first <td>)
+    const td = row.querySelector("td:first-child");
+    const description =
+      td.querySelector("a")?.getAttribute("data-description") || "";
+
+    // **CHECK**: If the element already has a tippy instance, skip it.
+    // This prevents re-initialization on subsequent draws.
+    if (td._tippy || !description) {
+      return;
+    }
+
+    tippy(td, {
+      content: description,
+      allowHTML: true,
+      interactive: true,
+      theme: isDarkMode ? "material" : "light-border",
+      maxWidth: maxWidth,
+      placement: "bottom",
+      trigger: isMobile ? "click" : "mouseenter",
+      hideOnClick: true,
+      // Pass the necessary variables to the onShow hook
+      onShow: (i) => limitTippyHeight(i, "jobTable"),
+    });
+  });
+}
+
 async function main() {
   requestNotificationPermission();
   // Get the IANA Timezone Name
@@ -1266,51 +1354,6 @@ async function main() {
     });
   }
 
-  /**
-   * Limits the Tippy popover's height to not exceed the height of a parent element
-   * * @param {object} instance - The Tippy instance object provided by the onShow hook.
-   * @param {string} boundaryElementId - The ID of the element (the container) to limit
-   */
-  function limitTippyHeight(instance, boundaryElementId) {
-    // 1. Get Elements and Dimensions
-    const boundaryElement = document.getElementById(boundaryElementId);
-    if (!boundaryElement && !instance) {
-      return;
-    }
-
-    const boundaryRect = boundaryElement.getBoundingClientRect();
-    const tdRect = instance.reference.getBoundingClientRect();
-    const content = instance.popper.querySelector(".tippy-content");
-
-    // 2. Determine the Actual Placement
-    const currentPlacement = instance.popper.getAttribute("data-placement");
-    if (!currentPlacement) {
-      return;
-    }
-
-    let availableHeight;
-    // 3. Calculate Max Height based on Placement
-    if (currentPlacement.startsWith("bottom")) {
-      // Placed at the BOTTOM (expands downwards)
-      // Limit is: (Boundary Bottom) - (Cell Bottom)
-      availableHeight = boundaryRect.bottom - tdRect.bottom;
-    } else if (currentPlacement.startsWith("top")) {
-      // Placed at the TOP (expands upwards)
-      // Limit is: (Cell Top) - (Boundary Top)
-      availableHeight = tdRect.top - boundaryRect.top;
-    } else {
-      // Ignore other placements (left/right)
-      return;
-    }
-
-    // 4. Apply Max Height and Allow Scrolling
-    if (content) {
-      // 10px Buffer for padding/arrow clearance
-      content.style.maxHeight = `${availableHeight - 10}px`;
-      content.style.overflowY = "auto";
-    }
-  }
-
   // --- Function to populate the table ---
   function populateTable(jobs) {
     // Clear the existing data
@@ -1345,40 +1388,6 @@ async function main() {
 
     // Add the new data and redraw the table
     jobsTable.rows.add(dataToLoad).draw();
-
-    // detect current theme
-    const isDarkMode =
-      window.matchMedia &&
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
-    // detects touch devices
-    const isMobile =
-      window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-    // Calculate maxWidth based on viewport size
-    const viewportWidth = window.innerWidth;
-    const maxWidth =
-      viewportWidth < 768 ? 250 : viewportWidth < 1200 ? 500 : 900;
-
-    // Initialize Tippy after table draw
-    document.querySelectorAll("#jobTable tbody tr").forEach((row) => {
-      // Job Title cell
-      const td = row.querySelector("td:first-child");
-      const description =
-        td.querySelector("a")?.getAttribute("data-description") || "";
-
-      if (description) {
-        tippy(td, {
-          content: description,
-          allowHTML: true,
-          interactive: true,
-          theme: isDarkMode ? "material" : "light-border",
-          maxWidth: maxWidth,
-          placement: "bottom",
-          trigger: isMobile ? "click" : "mouseenter",
-          hideOnClick: true,
-          onShow: (i) => limitTippyHeight(i, "jobTable"),
-        });
-      }
-    });
 
     // Populate filters based on ALL jobs ---
     // Extract unique company and location names
@@ -1682,6 +1691,8 @@ async function main() {
     jobsTable.on("search.dt", updateDropdowns);
 
     jobsTable.on("length.dt", updateURL);
+
+    jobsTable.on("draw.dt", initializeTippyOnVisibleRows);
 
     // When reset is clicked, clear all filters and redraw
     $("#resetFilters").on("click", resetAllFilters);
