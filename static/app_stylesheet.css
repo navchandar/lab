@@ -86,9 +86,7 @@ header {
 }
 
 .sidebar-info {
-    margin-top: 1em;
-    border-top: 1px solid #444;
-    padding: 1em 2em;
+    padding: 0 1em 1em 3em;
     color: #555555cc;
     font-size: 0.9em;
 }
@@ -111,6 +109,7 @@ header {
 #app-links {
     flex-grow: 1;
     padding: 0.5rem 0;
+    padding-bottom: 25em;
     overflow-y: auto;
     list-style: none;
 }
@@ -151,7 +150,7 @@ header {
     border: none;
     border-radius: 8px;
     background: #0b767a;
-    padding: 6px 10px;
+    padding: 10px 15px;
     color: white;
     font-size: 24px;
     line-height: 1;
@@ -159,13 +158,13 @@ header {
 
 #hamburger-menu.menu-open {
     background: #111;
-    padding-right: 15px;
-    padding-left: 15px;
+    padding-right: 20px;
+    padding-left: 20px;
 }
-
 
 #hamburger-menu:hover {
     background-color: #025457;
+    text-shadow: 0px 1px 2px black;
 }
 
 #hamburger-menu:active {
@@ -227,11 +226,9 @@ header {
 }
 
 .version-label {
-    margin-top: auto;
-    margin-bottom: 8px;
+    margin: 0;
     border-top: 1px solid #444;
-    padding: 8px;
-    padding-left: 2em;
+    padding: 2em 1em 1em 3.5em;
     font-size: 0.85em;
     text-wrap: nowrap;
 }
@@ -241,6 +238,10 @@ header {
 
     main {
         margin-left: 0;
+    }
+
+    #app-links {
+        padding-bottom: 5em;
     }
 
     #sidebar {
@@ -299,7 +300,8 @@ header {
     }
 
     #hamburger-menu:hover {
-        background-color: #2c2c2c;
+        background-color: #003934;
+        text-shadow: 0px 1px 1px #bdbdbd;
     }
 
     .sidebar-info h3 {

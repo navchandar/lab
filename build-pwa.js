@@ -38,13 +38,14 @@ const now = new Date();
 // Convert to IST (UTC + 5:30)
 const istOffset = 5.5 * 60 * 60 * 1000;
 const istTime = new Date(now.getTime() + istOffset);
-
+const yr = String(istTime.getFullYear());
+const mon = String(istTime.getMonth() + 1).padStart(2, "0");
+const date = String(istTime.getDate()).padStart(2, "0");
+const hh = String(istTime.getHours()).padStart(2, "0");
+const mm = String(istTime.getMinutes()).padStart(2, "0");
 // Format: vYYYY.MM.DD_HH.MM
-const versionString = `v${istTime.getFullYear()}.${String(
-  istTime.getMonth() + 1
-).padStart(2, "0")}.${String(istTime.getDate()).padStart(2, "0")}_${String(
-  istTime.getHours()
-).padStart(2, "0")}.${String(istTime.getMinutes()).padStart(2, "0")}`;
+const versionString = `v${yr}.${mon}.${date}`;
+// +`_${hh}.${mm}`;
 
 console.log(`Version: ${versionString}`);
 
