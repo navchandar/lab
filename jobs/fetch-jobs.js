@@ -591,8 +591,13 @@ function clean_title(job_title, company_name) {
   phrases_to_remove.forEach((phrase) => {
     job_title = job_title.replace(phrase, "");
   });
-  // Remove colons and trim whitespace
-  job_title = job_title.replace(/:/g, "").trim();
+  // Remove comma, colons, hyphen and trim whitespace
+  job_title = job_title
+    .replace(/:/g, "")
+    .replace(/^-+|-+$/g, "")
+    .replace(/^,+|,+$/g, "")
+    .replace(/^\|+|\|+$/g, "")
+    .trim();
   return job_title;
 }
 
