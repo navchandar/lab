@@ -344,7 +344,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
   const REPOST_WINDOW_HOURS = 4;
   let jobClosed = false;
   let likelyRepost = false;
-  let applicantsCount = null;
+  let applicants = null;
 
   try {
     const headers = {
@@ -380,8 +380,8 @@ async function fetchJobDetailFromLinkedIn(jobId) {
         const applicantsText = applicantsElem.text().trim();
         const match = applicantsText.match(/(\d+)/);
         if (match) {
-          applicantsCount = parseInt(match[1], 10);
-          console.log(`${jobId} applicants count: ${applicantsCount}`);
+          applicants = parseInt(match[1], 10);
+          console.log(`${jobId} applicants count: ${applicants}`);
         }
       }
 
@@ -437,9 +437,9 @@ async function fetchJobDetailFromLinkedIn(jobId) {
         jobClosed = true;
       }
 
-      if (listedAt && applicantsCount !== null) {
+      if (listedAt && applicants !== null) {
         const isRecentPost = withinLastHours(listedAt, REPOST_WINDOW_HOURS);
-        if (applicantsCount >= HIGH_APPLICANT_THRESHOLD && isRecentPost) {
+        if (applicants >= HIGH_APPLICANT_THRESHOLD && isRecentPost) {
           likelyRepost = true;
           // console.log(`${jobId} Flagged as LIKELY REPOST`);
         }
@@ -453,7 +453,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       companyUrl,
       jobClosed,
       likelyRepost,
-      applicantsCount,
+      applicants,
     };
   } catch (err) {
     const statusCode = err.response ? err.response.status : null;
@@ -470,7 +470,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
       companyUrl: null,
       jobClosed: jobClosed,
       likelyRepost: likelyRepost,
-      applicantsCount: 0,
+      applicants: 0,
     };
   }
 }
@@ -541,7 +541,7 @@ async function enrichLinkedInJobDetails(dedupedJobs) {
       title: job_title,
       company: company_name,
       companyUrl: detail.companyUrl || "",
-      applicants: job.applicantsCount || 0,
+      applicants: detail.applicants || 0,
       location: clean_text(job.location) || "India",
       datePosted: postedAt ? toIsoStringUTC(postedAt) : null,
       url: detail.applyUrl || jobUrlClean || job.jobUrl,
@@ -716,21 +716,24 @@ async function mergeAndCleanJobsData(output_data) {
 
   if (limitedRun(2)) {
     // Check 10hr old LinkedIn posts for closure ---
-    const timeInMillis = 10 * 60 * 60 * 1000;
-    const twoDayCutoffTime = Date.now() - timeInMillis;
+    const tenHours = 10 * 60 * 60 * 1000;
+    const twoDays = 2 * 24 * 60 * 60 * 1000;
+    const initialCutoff = Date.now() - tenHours;
+    const twoDayCutoff = Date.now() - twoDays;
     const jobsToCheck = [];
     const jobsToKeep = [];
 
     for (const j of prunedExisting) {
       const isLinkedIn = j.source === "LinkedIn";
       const d = j.datePosted ? new Date(j.datePosted).getTime() : 0;
-      const isOlderThan2Days = d < twoDayCutoffTime;
-      const isApplicantsHigh = j.applicantsCount
-        ? j.applicantsCount > 100
-        : false;
+      const is10HrsOld = d < initialCutoff;
+      const is2DaysOld = d < twoDayCutoff;
+      const isApplicantsHigh = j.applicants ? j.applicants > 100 : false;
 
       // Identify old LinkedIn jobs for closure check
-      if (isLinkedIn && isOlderThan2Days && isApplicantsHigh) {
+      if (isLinkedIn && is10HrsOld && isApplicantsHigh) {
+        jobsToCheck.push(j);
+      } else if (isLinkedIn && is2DaysOld) {
         jobsToCheck.push(j);
       } else {
         jobsToKeep.push(j);
@@ -747,10 +750,10 @@ async function mergeAndCleanJobsData(output_data) {
         const details = await fetchJobDetailFromLinkedIn(job.jobId);
         const updatedJob = {
           ...job,
-          applicants: details.applicantsCount || job.applicantsCount,
+          applicants: details.applicants || job.applicants,
         };
 
-        if (details.jobClosed || details.applicantsCount >= 200) {
+        if (details.jobClosed || details.applicants >= 200) {
           // Job is closed, don't add it back
           closedJobsRemovedCount++;
         } else {
@@ -802,9 +805,9 @@ async function mergeAndCleanJobsData(output_data) {
       if (newTime > existingTime) {
         byJobId.set(j.jobId, { ...existingJob, ...j });
       } else {
-        // B. Post date is not newer, but we should update applicantsCount
+        // B. Post date is not newer, but we should update applicants
         const existingApplicants = existingJob.applicants || 0;
-        const newApplicants = j.applicantsCount || 0;
+        const newApplicants = j.applicants || 0;
 
         // Only update if the new applicants count is greater
         if (newApplicants > existingApplicants) {
