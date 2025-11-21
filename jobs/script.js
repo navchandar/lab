@@ -694,9 +694,63 @@ function drawChart(key) {
   canvasElement.style.height = dynamicHeight;
   canvasElement.style.width = "100%";
 
-  // Change default options for ALL charts
+  // Change default options for ALL charts labels
   Chart.defaults.set("plugins.datalabels", {
-    color: "#FE777B",
+    // 1. Dynamic Color Logic
+    color: function (context) {
+      const dataset = context.dataset;
+      const isLineChart = context.chart.config.type === "line";
+
+      // Line Chart Logic: Use the line's point border/background color
+      if (isLineChart) {
+        // Prioritize pointBorderColor, then pointBackgroundColor, then borderColor
+        let color =
+          dataset.pointBorderColor ||
+          dataset.pointBackgroundColor ||
+          dataset.borderColor;
+        if (Array.isArray(color)) {
+          color = color[context.dataIndex];
+        }
+        // Use getTextColor as a fallback
+        return getBorderColor(color || getTextColor());
+      }
+
+      // Bar Chart Logic: Use the dataset's border/background color
+      // This handles both single colors and arrays of colors for different bars
+      const colors = dataset.borderColor || dataset.backgroundColor;
+      let color = Array.isArray(colors) ? colors[context.dataIndex] : colors;
+
+      // Use your existing function to ensure color is opaque/readable
+      return getBorderColor(color || getTextColor());
+    },
+
+    // 2. Dynamic Positioning Logic
+    // Anchor point to the end of the element (bar tip or line point)
+    anchor: "end",
+    align: function (context) {
+      const chartType = context.chart.type;
+      const indexAxis = context.chart.options.indexAxis;
+      if (chartType === "line") {
+        // For line charts, 'end' aligns the label above the data point
+        return "end";
+      }
+      // For Bar Charts
+      if (indexAxis === "y") {
+        // Horizontal Bar: Align label to the right (end)
+        return "right";
+      } else {
+        // Vertical Bar: Align label to the top (end)
+        return "top";
+      }
+    },
+    // 3. Formatting and Offset
+    offset: 4,
+    font: {
+      weight: "bold",
+    },
+    formatter: function (value) {
+      return value.toLocaleString();
+    },
   });
 
   // --- CHART INITIALIZATION ---
