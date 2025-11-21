@@ -1322,6 +1322,19 @@ async function main() {
         console.log("No changes in jobs.json");
         return;
       }
+
+      // Preserve Current Filters BEFORE fetching/populating
+      // We only read from the DOM if the initial load is complete
+      let currentCompanyFilters = [];
+      let currentLocationFilters = [];
+      let currentExperienceFilter = [];
+
+      if (initialLoadComplete) {
+        currentCompanyFilters = $("#companyFilter").val() || [];
+        currentLocationFilters = $("#locationFilter").val() || [];
+        currentExperienceFilter = $("#experienceFilter").val() || "";
+      }
+
       // Update stored value
       lastModified = newModified;
 
@@ -1348,7 +1361,13 @@ async function main() {
       });
 
       // --- Populate the table using the DataTables API ---
-      populateTable(allJobs);
+      // PASS the preserved filter selections to populateTable
+      populateTable(
+        allJobs,
+        currentCompanyFilters,
+        currentLocationFilters,
+        currentExperienceFilter
+      );
 
       if (initialLoadComplete) {
         // Since jobs.json changed, the chart data is now stale.
@@ -1415,7 +1434,12 @@ async function main() {
   }
 
   // --- Function to populate the table ---
-  function populateTable(jobs) {
+  function populateTable(
+    jobs,
+    selectedCompanies = [],
+    selectedLocations = [],
+    selectedExperience = ""
+  ) {
     // Clear the existing data
     jobsTable.clear();
     let props = 'target="_blank" rel="noopener noreferrer"';
@@ -1468,10 +1492,10 @@ async function main() {
     });
     const sortedExp = Array.from(experienceSet).sort((a, b) => a - b);
 
-    // Populate filters with ALL options and clear selections
-    populateFilter("#companyFilter", companies, []);
-    populateFilter("#locationFilter", locations, []);
-    populateFilter("#experienceFilter", sortedExp, []);
+    // Populate filters with ALL options and USE the saved selections
+    populateFilter("#companyFilter", companies, selectedCompanies);
+    populateFilter("#locationFilter", locations, selectedLocations);
+    populateFilter("#experienceFilter", sortedExp, selectedExperience);
   }
 
   /**
