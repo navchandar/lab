@@ -1,4 +1,4 @@
-// version=v2025.11.21
+// version=v2025.11.22
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","smart-dom-inspector"];
 
@@ -61,8 +61,18 @@ const urlsToCache = [
   'static/icons/ico/ms-icon-70x70.png',
   'static/icons/settings-open.svg',
   'static/icons/settings.svg',
-  'static/images/cat.jpg',
-  'static/images/dog.jpg',
+  'static/images/cat_1.jpg',
+  'static/images/cat_2.jpg',
+  'static/images/cat_3.jpg',
+  'static/images/cat_4.jpg',
+  'static/images/cat_5.jpg',
+  'static/images/dog_1.jpg',
+  'static/images/dog_2.jpg',
+  'static/images/dog_3.jpg',
+  'static/images/dog_4.jpg',
+  'static/images/dog_5.jpg',
+  'static/images/dog_6.jpg',
+  'static/images/dog_7.jpg',
   'static/settings.css',
   'static/speech_helper.js',
   'static/utils.js'
