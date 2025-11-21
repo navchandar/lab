@@ -51,6 +51,15 @@ const RESOURCES_CONFIG = {
       "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js",
     ],
   },
+  CHART2_JS: {
+    type: "script",
+    globalCheck: "ChartDataLabels",
+    urls: [
+      "https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js",
+      "https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0",
+      "https://unpkg.com/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js",
+    ],
+  },
   POPPERJS_JS: {
     type: "script",
     globalCheck: "Popper",
@@ -127,6 +136,7 @@ const LOAD_STAGES = [
   [
     "DATATABLES_JS", // Needs jQuery
     "SELECT2_JS", // Needs jQuery
+    "CHART2_JS", // Needs Chart.js
   ],
   [
     "TIPPYJS_JS", // Needs Popper

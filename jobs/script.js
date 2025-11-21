@@ -694,8 +694,14 @@ function drawChart(key) {
   canvasElement.style.height = dynamicHeight;
   canvasElement.style.width = "100%";
 
+  // Change default options for ALL charts
+  Chart.defaults.set("plugins.datalabels", {
+    color: "#FE777B",
+  });
+
   // --- CHART INITIALIZATION ---
   currentChartInstance = new Chart(ctx, {
+    plugins: [ChartDataLabels],
     type: chartType,
     data: {
       labels: labels,
