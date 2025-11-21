@@ -374,7 +374,6 @@ function hideSpinner() {
     // Show the table body and fade it in
     // Note: The DataTables main element (likely the div wrapping the table)
     // should have initial opacity: 0 and transition: opacity 0.5s ease;
-    dataTable.style.display = "block";
     dataTable.style.opacity = "1";
   }, 500);
 
