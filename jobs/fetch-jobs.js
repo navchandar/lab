@@ -54,12 +54,59 @@ function toIsoStringUTC(date) {
 /**
  * Checks if the current UTC hour is one of the desired run times
  * and if the minutes are within the first 40 of that hour.
- * Prints which condition was not met if the run is skipped.
- * @returns {boolean} True if the current time satisfies the 8-hour interval and minutes window.
+ *
+ * This version supports any positive integer for runsPerDay by calculating
+ * an approximate interval and rounding the resulting target hours.
+ *
+ * @param {number} runsPerDay The number of times the script should run each day (must be a positive integer).
+ * @returns {boolean} True if the current time satisfies the calculated interval and minutes window.
  */
-function limitedRun() {
-  // Target hours in UTC (Covers the 6-hour interval)
-  const targetHours = [0, 6, 12, 18];
+function limitedRun(runsPerDay) {
+  if (
+    typeof runsPerDay !== "number" ||
+    !Number.isInteger(runsPerDay) ||
+    runsPerDay < 1
+  ) {
+    console.error(
+      `runsPerDay must be a positive integer. Input: ${runsPerDay}`
+    );
+    return false;
+  }
+
+  // Calculate the raw interval in hours (e.g., 24 / 5 runs = 4.8 hours)
+  const rawInterval = 24 / runsPerDay;
+
+  // Generate the target hours array by rounding the hours
+  const targetHours = [];
+
+  // Start at 0:00 UTC
+  targetHours.push(0);
+
+  // Calculate the subsequent hours
+  for (let i = 1; i < runsPerDay; i++) {
+    const calculatedHour = i * rawInterval;
+    // Round to the nearest whole hour for the target hour
+    const roundedHour = Math.round(calculatedHour);
+
+    // Ensure the hour is unique and within the 0-23 range
+    // The conditional check is mainly for robustness against edge cases and prevents
+    // the final iteration from calculating 24 and pushing it.
+    if (roundedHour < 24 && !targetHours.includes(roundedHour)) {
+      targetHours.push(roundedHour);
+    }
+  }
+
+  // Target hours in UTC (e.g., [0, 5, 10, 14, 19] for 5 runs, where the interval is ~4.8 hours)
+  console.log(
+    `Target run times set for ${runsPerDay} times a day with an approximate interval of ${rawInterval.toFixed(
+      2
+    )} hours.`
+  );
+  console.log(
+    `Rounded Target UTC Hours: ${targetHours.sort((a, b) => a - b).join(", ")}.`
+  );
+
+  // --- 2. Check Current Time against Conditions ---
 
   // Get the current date and time in UTC
   const nowUtc = new Date();
@@ -73,10 +120,11 @@ function limitedRun() {
   // Check if the current hour is in the target hours array
   const isTargetHour = targetHours.includes(currentUTCHour);
 
-  // Restrict the run to the first 40 minutes (0 to 49)
+  // Restrict the run to the first 40 minutes (0 to 39)
   const isFirstHalfHour = currentUTCMinutes < 40;
 
   const timeNow = `Current UTC Time: ${nowUtc.toISOString()}.`;
+
   // The script should run only if both conditions are met.
   if (isTargetHour && isFirstHalfHour) {
     console.log(`${timeNow} Condition met. Script can run.`);
@@ -97,7 +145,6 @@ function limitedRun() {
       failureReason += `Minute condition not met: Current minutes (${currentUTCMinutes}) are 40 or greater.`;
     }
 
-    // Fallback if both were somehow true but the overall IF failed (shouldn't happen)
     if (!failureReason) {
       failureReason = "Unknown condition failure.";
     }
@@ -667,7 +714,7 @@ async function mergeAndCleanJobsData(output_data) {
     `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
   );
 
-  if (limitedRun()) {
+  if (limitedRun(2)) {
     // Check 10hr old LinkedIn posts for closure ---
     const timeInMillis = 10 * 60 * 60 * 1000;
     const twoDayCutoffTime = Date.now() - timeInMillis;
@@ -892,7 +939,7 @@ async function runWorkableJobSearch() {
   const total_jobs = await mergeAndCleanJobsData(enrichedJobs);
   summaryContent += ` - Total **${total_jobs}** job posts saved in json.\n`;
 
-  if (limitedRun()) {
+  if (limitedRun(1)) {
     // await runWorkableJobSearch();
   }
 

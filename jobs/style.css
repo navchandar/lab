@@ -127,6 +127,7 @@ main {
     max-width: 500px;
 }
 
+
 /* General Select2 Styling (Selection Box) */
 .select2-container--default .select2-selection--multiple,
 .select2-container--default .select2-selection--single {
@@ -311,12 +312,12 @@ main {
 .dt-paging-button {
     transition: background-color 0.2s, box-shadow 0.2s, color 0.2s;
     margin: 0 2px;
+    border: 1px solid rgb(0 0 0 / 70%) !important;
     border-radius: 4px;
 }
 
-.dt-paging-button.current {
-    background-color: #2196F3;
-    color: white !important;
+.dt-paging-button:hover {
+    border: 1px solid rgb(0 0 0 / 90%) !important;
 }
 
 .dt-paging-button:not(.current):not(.disabled):hover {
@@ -744,6 +745,15 @@ footer p a {
         background-color: #282828;
         color: #f0f0f0;
     }
+
+    .dt-paging-button {
+        border: 1px solid rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .dt-paging-button:hover {
+        border: 1px solid rgba(255, 255, 255, 0.9) !important;
+    }
+
 
     /* Select2 Selection Box */
     .select2-container--default .select2-selection--multiple,
