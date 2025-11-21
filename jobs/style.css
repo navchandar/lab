@@ -320,11 +320,9 @@ main {
     border: 1px solid rgb(0 0 0 / 90%) !important;
 }
 
-.dt-paging-button:not(.current):not(.disabled):hover {
-    background-color: #bbdefb;
-    color: #333;
+.dt-paging-button.current:not(.disabled) {
+    background: linear-gradient(to bottom, rgb(182 230 255) 0%, #a7d3ff 100%) !important;
 }
-
 
 /* ================================================= */
 /* CHART VIEW */
@@ -753,6 +751,11 @@ footer p a {
     .dt-paging-button:hover {
         border: 1px solid rgba(255, 255, 255, 0.9) !important;
     }
+
+    .dt-paging-button.current:not(.disabled) {
+        background: linear-gradient(to bottom, rgb(87 136 161) 0%, #1b3248 100%) !important;
+    }
+
 
 
     /* Select2 Selection Box */
