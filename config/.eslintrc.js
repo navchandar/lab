@@ -43,8 +43,10 @@ module.exports = {
         // Define global variables injected via HTML script tags
         $: "readonly",
         jQuery: "readonly",
-        Chart: "readonly",
+        Popper: "readonly",
         tippy: "readonly",
+        Chart: "readonly",
+        ChartDataLabels: "readonly",
       },
     },
   ],
