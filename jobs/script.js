@@ -267,12 +267,11 @@ function showToast(message_text) {
 function closeErrorToast() {
   try {
     const toast = document.getElementById("ip-toast");
-    const toast_message = toast.querySelector("#ip-toast-message").textContent;
-    if (
-      toast &&
-      toast.classList.contains("show") &&
-      toast_message.includes("Error")
-    ) {
+    let toast_message = toast.querySelector("#ip-toast-message").textContent;
+    toast_message = toast_message.toLowerCase();
+    const errMsg =
+      toast_message.includes("error") || toast_message.includes("fail");
+    if (toast && toast.classList.contains("show") && errMsg) {
       toast.classList.remove("show");
     }
   } catch (error) {
@@ -1319,6 +1318,7 @@ async function main() {
       const newModified = headResponse.headers.get("Last-Modified");
       if (lastModified && newModified && newModified === lastModified) {
         console.log("No changes in jobs.json");
+        closeErrorToast();
         return;
       }
 
