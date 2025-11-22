@@ -27,8 +27,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: config
-        run: |
-          npm ci
+        run: npm ci
 
       # Make locally installed CLIs discoverable without npx
       - name: Add node_modules to PATH
@@ -57,17 +56,28 @@ jobs:
           config_path: config/.spellcheck.yml
           task_name: HTML
 
+      # Restore the specific cache for this branch
       - name: Restore lychee cache
-        uses: actions/cache@v4
+        id: restore-cache
+        uses: actions/cache/restore@v4
         with:
           path: .lycheecache
-          key: cache-lychee-${{ github.sha }}
-          restore-keys: cache-lychee-
+          key: cache-lychee-${{ github.ref_name }}
+          restore-keys: cache-lychee-main
 
+      # Run Lychee and output updates to local file
       - name: Validate Broken Links
         uses: lycheeverse/lychee-action@v2
         with:
-          args: --cache --max-cache-age 1d --root-dir ${{ github.workspace }} --verbose --no-progress "./**/*.md" "./**/*.html" --exclude-path "node_modules"
+          args: --cache --max-cache-age 1d --root-dir ${{ github.workspace }} --verbose --no-progress --output .lycheecache "./**/*.md" "./**/*.html" --exclude-path "node_modules"
+
+      # Save the new cache
+      - name: Save lychee cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .lycheecache
+          key: cache-lychee-${{ github.ref_name }}
 
       - name: Commit and push if changed
         if: github.event_name == 'push'
