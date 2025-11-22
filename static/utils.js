@@ -257,8 +257,9 @@ export function bodyAction(callback) {
  */
 export function getRandomColor(previousColor, currentColor) {
   let newColor;
+  const listLength = COLORS_LIST.length;
   do {
-    newColor = COLORS_LIST[Math.floor(Math.random() * colorsList.length)];
+    newColor = COLORS_LIST[Math.floor(Math.random() * listLength)];
   } while (newColor === currentColor || newColor === previousColor);
   return newColor;
 }
