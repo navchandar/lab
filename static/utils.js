@@ -1,3 +1,25 @@
+// CONSTANTS
+export const COLORS_LIST = [
+  "Black",
+  "DarkSlateGray",
+  "SlateGray",
+  "Maroon",
+  "Red",
+  "SaddleBrown",
+  "DarkGoldenrod",
+  "Gold",
+  "YellowGreen",
+  "OliveDrab",
+  "ForestGreen",
+  "Green",
+  "Teal",
+  "DeepSkyblue",
+  "Blue",
+  "MidnightBlue",
+  "Indigo",
+  "Purple",
+];
+
 // =========================================================================
 // UTILITY & HELPER FUNCTIONS
 // =========================================================================
@@ -233,11 +255,29 @@ export function bodyAction(callback) {
  * Gets a new random color, avoiding the current and previous colors.
  * @returns {string} A new color name from the given list.
  */
-export function getNewColor(colorsList, previousColor, currentColor) {
+export function getRandomColor(previousColor, currentColor) {
   let newColor;
   do {
-    newColor = colorsList[Math.floor(Math.random() * colorsList.length)];
+    newColor = COLORS_LIST[Math.floor(Math.random() * colorsList.length)];
   } while (newColor === currentColor || newColor === previousColor);
+  return newColor;
+}
+
+/**
+ * Gets the next sequential color from the list, skipping the previousColor.
+ * * @returns {string} The next color name in sequence.
+ */
+export function getNextColor(previousColor, currentColor) {
+  let newColor;
+  const listLength = COLORS_LIST.length;
+  // If currentColor is found, start calculating from its position.
+  // If not found, indexOf returns -1, and start at index 0.
+  let startIndex = COLORS_LIST.indexOf(currentColor);
+  do {
+    // Increment the starting index and wrap around (Modulo)
+    startIndex = (startIndex + 1) % listLength;
+    newColor = COLORS_LIST[startIndex];
+  } while (newColor === previousColor);
   return newColor;
 }
 

@@ -21,17 +21,6 @@ let Locale = null;
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 
-const colors = [
-  "red",
-  "blue",
-  "green",
-  "white",
-  "orange",
-  "brown",
-  "pink",
-  "yellow",
-];
-
 // =========================
 // Utility Functions
 // =========================
@@ -51,18 +40,19 @@ function speaker() {
 function incrementNumber() {
   // Determine which mode to use (random or sequential)
   const isRandomEnabled = utils.getIsRandomEnabled();
+  previousColor = currentColor;
 
   setTimeout(() => {
     if (isRandomEnabled) {
       // select random number between 1 and 100.
       const randomValue = Math.floor(Math.random() * 100) + 1;
       numberElement.textContent = randomValue;
+      currentColor = utils.getRandomColor(previousColor, currentColor);
     } else {
       number++;
       numberElement.textContent = number;
+      currentColor = utils.getNextColor(previousColor, currentColor);
     }
-    previousColor = currentColor;
-    currentColor = utils.getNewColor(colors, previousColor, currentColor);
     numberElement.style.color = currentColor;
     setTimeout(speaker, 700);
   }, 200);

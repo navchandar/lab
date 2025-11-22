@@ -28,22 +28,7 @@ const shapes = [
   "decagon", // 10 sides
   "star",
   "circle",
-  "egg",
-];
-
-const colors = [
-  "black",
-  "darkgray",
-  "red",
-  "maroon",
-  "gold",
-  "olive",
-  "lime",
-  "green",
-  "teal",
-  "blue",
-  "navy",
-  "purple",
+  "ellipse",
 ];
 
 let intervalID = null;
@@ -81,6 +66,8 @@ function updateShape() {
 
   // Determine which mode to use (random or sequential)
   const isRandomEnabled = utils.getIsRandomEnabled();
+  previousColor = currentColor;
+
   if (isRandomEnabled) {
     let randomIndex;
     let currentShape = shapes[currentShapeIndex];
@@ -97,17 +84,17 @@ function updateShape() {
     // Update indices
     previousShapeIndex = currentShapeIndex;
     currentShapeIndex = randomIndex;
+    currentColor = utils.getRandomColor(previousColor, currentColor);
   } else {
     // Update index
     currentShapeIndex = (currentShapeIndex + 1) % shapes.length;
+    currentColor = utils.getNextColor(previousColor, currentColor);
   }
 
   // Add new shape class
   newShape = shapes[currentShapeIndex];
   shapeElement.classList.add(newShape);
-  // Apply random background color
-  previousColor = currentColor;
-  currentColor = utils.getNewColor(colors, previousColor, currentColor);
+  // Apply background color to the shape
   shapeElement.style.backgroundColor = currentColor;
   changeTextColor(currentColor, newShape);
   utils.hideSettings();

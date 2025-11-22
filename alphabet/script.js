@@ -18,16 +18,6 @@ const lang = urlParams.get("lang")?.toLowerCase() || "english";
 const languageData = window.alphabets[lang] || window.alphabets.english;
 const Alphabet = languageData.chars;
 const Locale = languageData.locale;
-const colors = [
-  "red",
-  "blue",
-  "green",
-  "white",
-  "orange",
-  "brown",
-  "pink",
-  "yellow",
-];
 
 let currentColor = null;
 let previousColor = null;
@@ -97,13 +87,15 @@ function getNextRandomChar() {
 function updateCharacter() {
   const isRandomAlphabetEnabled = utils.getIsRandomEnabled();
   let charToDisplay;
-
+  previousColor = currentColor;
   // Determine which mode to use (random or sequential)
   if (isRandomAlphabetEnabled) {
     charToDisplay = getNextRandomChar();
+    currentColor = utils.getRandomColor(previousColor, currentColor);
     currentIndex = -1; // Reset sequential index for clarity
   } else {
     charToDisplay = getNextSequentialChar();
+    currentColor = utils.getNextColor(previousColor, currentColor);
     history = []; // Clear history when switching to sequential mode
   }
 
@@ -111,8 +103,6 @@ function updateCharacter() {
   numberElement.textContent = charToDisplay;
 
   // Change and apply a new color
-  previousColor = currentColor;
-  currentColor = utils.getNewColor(colors, previousColor, currentColor);
   numberElement.style.color = currentColor;
 
   // Speak the new character

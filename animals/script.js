@@ -17,7 +17,7 @@ const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 const randomizeCheckbox = document.getElementById("randomize");
 const autoplayCheckbox = document.getElementById("autoplay");
-
+const loadingSpinner = document.getElementById("loadingSpinner");
 /**
  * Speaks the given text displayed on the screen.
  */
@@ -146,6 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadAndDisplayImage(animal) {
     // Hide the current animal name
     animalName.style.opacity = 0;
+    loadingSpinner.classList.remove("spinner-hidden");
     let path = getCurrentImagePath(animal);
 
     try {
@@ -157,6 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Increment the index for the next time this animal comes up
       animal.imageIndex++;
+      loadingSpinner.classList.add("spinner-hidden");
       updateAnimalUI(animal, successfulPath);
     } catch (failedPath) {
       // 2. Error: The current indexed image does not exist (e.g., cat_2.jpg failed)
@@ -178,6 +180,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Success: Load the first image and set index to 1 for the next pass
         animal.imageIndex++;
         animal.maxIndexFound = Math.max(animal.maxIndexFound, 0); // Max index found is at least 0
+        loadingSpinner.classList.add("spinner-hidden");
         updateAnimalUI(animal, firstPath);
       } catch (err) {
         // FATAL Error: Even the first image is missing
@@ -185,6 +188,7 @@ document.addEventListener("DOMContentLoaded", () => {
           `FATAL: Could not load first image for ${animal.name}: ${path}`,
           err
         );
+        loadingSpinner.classList.add("spinner-hidden");
         animalName.textContent = `${animal.name} (Image Missing)`;
         animalName.style.opacity = 1;
         utils.hideSettings();
