@@ -245,23 +245,34 @@ function getCompressionRatio(inputPath, outputPath) {
 async function gzipFile(inputPath, outputPath) {
   try {
     // Read json file and parse the data
+    console.log(`Reading file: ${inputPath}`);
     const fileData = await fsPromises.readFile(inputPath, "utf8");
     const json = JSON.parse(fileData);
+    const keysToRemove = [
+      "debugScores",
+      "jobId",
+      "applicants",
+      "companyUrl",
+      "confidence",
+    ];
 
     // Modify & Stringify using the safe Replacer function
     const modifiedJson = JSON.stringify(json, (key, value) => {
       // If the key is 'debugScores', return undefined to remove it
-      if (key === "debugScores") {
+      if (keysToRemove.includes(key)) {
         return undefined;
       }
       return value;
     });
 
     // Compress the modified string asynchronously
+    console.log("Compressing data...");
+
     const buffer = await gzip(modifiedJson, { level: 9 });
 
     // Write the compressed buffer to the output path asynchronously
     await fsPromises.writeFile(outputPath, buffer);
+    console.log(`Successfully wrote gzipped file to: ${outputPath}`);
 
     // Log compression stats
     getCompressionRatio(inputPath, outputPath);
