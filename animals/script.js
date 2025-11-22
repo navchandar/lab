@@ -18,6 +18,8 @@ const settingsIcon = document.getElementById("settings-icon");
 const randomizeCheckbox = document.getElementById("randomize");
 const autoplayCheckbox = document.getElementById("autoplay");
 const loadingSpinner = document.getElementById("loadingSpinner");
+let initialLoadComplete = false;
+
 /**
  * Speaks the given text displayed on the screen.
  */
@@ -147,9 +149,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Hide the current animal name
     animalName.style.opacity = 0;
     // Display spinner in 1 second
+    const currentDelay = initialLoadComplete ? 1000 : 0;
     let spinnerTimer = setTimeout(() => {
       loadingSpinner.classList.remove("spinner-hidden");
-    }, 1000);
+    }, currentDelay);
     // Get image path of given animal
     let path = getCurrentImagePath(animal);
 
@@ -159,6 +162,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
       clearTimeout(spinnerTimer);
       loadingSpinner.classList.add("spinner-hidden");
+      if (!initialLoadComplete) {
+        initialLoadComplete = true;
+      }
 
       // Update successful state
       animal.maxIndexFound = Math.max(animal.maxIndexFound, animal.imageIndex);
