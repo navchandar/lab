@@ -2,6 +2,8 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import zlib from "zlib";
+import fsPromises from "fs/promises";
+import { promisify } from "util";
 
 // --- Configuration ---
 const __filename = fileURLToPath(import.meta.url);
@@ -9,6 +11,9 @@ const __dirname = path.dirname(__filename);
 const RAW_DATA_FILE = path.resolve(__dirname, "jobs.json");
 const CHART_DATA_FILE = path.resolve(__dirname, "charts_data.json");
 const GZ_FILE = path.resolve(__dirname, "jobs.json.gz");
+
+// Promisify zlib.gzip for use with async/await
+const gzip = promisify(zlib.gzip);
 
 // --- Experience Range Configuration ---
 // Define the ranges. The 'to' is inclusive for the range label.
@@ -213,39 +218,59 @@ function updateDailyJobCounts(currentJobs, existingHistory = []) {
   return mergedHistory;
 }
 
+/** Calculate the compression ratio between json file and json.gz file */
+function getCompressionRatio(inputPath, outputPath) {
+  try {
+    const inputSize = fs.statSync(inputPath).size;
+    const outputSize = fs.statSync(outputPath).size;
+
+    const sizeDiff = inputSize - outputSize;
+    const compressionRatio = ((sizeDiff / inputSize) * 100).toFixed(2);
+
+    console.log(
+      `Compressed ${path.basename(inputPath)} to ${path.basename(outputPath)}.`
+    );
+    console.log(`(Saved ${compressionRatio}%)`);
+  } catch (err) {
+    console.error("Error calculating compression stats:", err.message);
+  }
+}
+
 /**
- * Compresses a file using Gzip.
+ * Compresses a file using Gzip (Async/Await version).
  * @param {string} inputPath - Path to the file to compress.
  * @param {string} outputPath - Path for the resulting .gz file.
  * @returns {Promise<void>}
  */
-function gzipFile(inputPath, outputPath) {
-  return new Promise((resolve, reject) => {
-    const input = fs.createReadStream(inputPath);
-    const output = fs.createWriteStream(outputPath);
-    const gzip = zlib.createGzip();
+async function gzipFile(inputPath, outputPath) {
+  try {
+    // Read json file and parse the data
+    const fileData = await fsPromises.readFile(inputPath, "utf8");
+    const json = JSON.parse(fileData);
 
-    input
-      .pipe(gzip)
-      .pipe(output)
-      .on("finish", () => {
-        const inputSize = fs.statSync(inputPath).size;
-        const outputSize = fs.statSync(outputPath).size;
-        const sizeDiff = inputSize - outputSize;
-        const compressionRatio = ((sizeDiff / inputSize) * 100).toFixed(2);
-        console.log(
-          `Compressed ${path.basename(inputPath)} to ${path.basename(
-            outputPath
-          )}.`
-        );
-        console.log(`(Saved ${compressionRatio}%)`);
-        resolve();
-      })
-      .on("error", (err) => {
-        console.error(`Gzip failed for ${inputPath}: ${err.message}`);
-        reject(err);
-      });
-  });
+    // Modify & Stringify using the safe Replacer function
+    const modifiedJson = JSON.stringify(json, (key, value) => {
+      // If the key is 'debugScores', return undefined to remove it
+      if (key === "debugScores") {
+        return undefined;
+      }
+      return value;
+    });
+
+    // Compress the modified string asynchronously
+    const buffer = await gzip(modifiedJson, { level: 9 });
+
+    // Write the compressed buffer to the output path asynchronously
+    await fsPromises.writeFile(outputPath, buffer);
+
+    // Log compression stats
+    getCompressionRatio(inputPath, outputPath);
+  } catch (error) {
+    // All errors (read, parse, gzip, write, or stat) bubble up here.
+    console.error(`Gzip operation failed for ${inputPath}: ${error.message}`);
+    // Rethrow the error to maintain the Promise chain
+    throw error;
+  }
 }
 
 async function runAnalysis() {
