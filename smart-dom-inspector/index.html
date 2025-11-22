@@ -119,31 +119,75 @@
           </label>
         </div>
       </section>
+
+      <div id="disclaimerModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <span class="modal-close-btn">&times;</span>
+          <h2>Disclaimer</h2>
+          <ul>
+            <li>
+              <strong>Privacy & Security:</strong> This site processes all input
+              entirely within your browser. No code, DOM structures, or text is
+              transmitted to or stored on any external server.
+            </li>
+            <li>
+              <strong>Sensitive Data:</strong> Please do not paste real PII
+              (Personally Identifiable Information), API keys, or passwords.
+              While this site do not store this data, we cannot guarantee safety
+              against other third-party browser extensions you may have
+              installed.
+            </li>
+            <li>
+              <strong>Untrusted Code:</strong> Exercise caution when rendering
+              HTML from untrusted sources. Pasting malicious scripts could
+              result in execution within your local browser context (Self-XSS).
+            </li>
+            <li>
+              <strong>Usage:</strong> The automatically generated
+              selectors/locators are suggestions. Please verify that they locate
+              the element you need, before using them in your automation test
+              suites.
+            </li>
+          </ul>
+
+          <p class="legal-small">
+            This software is provided "as is", without warranty of any kind,
+            express or implied.
+          </p>
+        </div>
+      </div>
     </main>
+
     <footer>
       <p>
-        Disclaimer: This site processes the input within your browser client. No
-        data is stored or transmitted externally. <br />
+        Powered by
         <a
           href="https://github.com/navchandar/lab/tree/main/smart-dom-inspector"
           target="_blank"
           rel="noopener noreferrer"
-          >GitHub</a
         >
+          GitHub
+        </a>
         | Copyright &copy;
         <script>
           document.write(new Date().getFullYear());
         </script>
-        Naveenchandar. | This work is licensed under the
-        <a
-          href="https://github.com/navchandar/lab/blob/main/LICENSE"
-          target="_blank"
-          rel="noopener noreferrer license"
-        >
-          GNU GPLv3</a
-        >.
+        Naveenchandar.<br />
+        <small>
+          This work is licensed under the
+          <a
+            href="https://github.com/navchandar/lab/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer license"
+          >
+            GNU GPLv3
+          </a>
+        </small>
+        | <a href="#" id="openDisclaimerModal">Disclaimer</a>
       </p>
     </footer>
+
     <script type="module" src="script.js"></script>
   </body>
 </html>

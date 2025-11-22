@@ -1692,7 +1692,52 @@ function setupIframe({ textareaId = "htmlInput" } = {}) {
   });
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  setupDisclaimer();
+});
+
+/** Handle the click events to show and hide the modal */
+function setupDisclaimer() {
+  const openModalBtn = document.getElementById("openDisclaimerModal");
+  const modal = document.getElementById("disclaimerModal");
+
+  if (!openModalBtn || !modal) {
+    return;
+  }
+
+  const closeModalBtn = modal.querySelector(".modal-close-btn");
+  const modalBackdrop = modal.querySelector(".modal-backdrop");
+
+  // Function to open the modal
+  const openModal = (event) => {
+    event.preventDefault();
+    modal.classList.add("show");
+    // Prevent background scrolling
+    document.body.style.overflow = "hidden";
+  };
+
+  // Function to close the modal
+  const closeModal = () => {
+    modal.classList.remove("show");
+    document.body.style.overflow = "";
+  };
+
+  openModalBtn.addEventListener("click", openModal);
+  if (closeModalBtn) {
+    closeModalBtn.addEventListener("click", closeModal);
+  }
+  if (modalBackdrop) {
+    modalBackdrop.addEventListener("click", closeModal);
+  }
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && modal.classList.contains("show")) {
+      closeModal();
+    }
+  });
+}
+
 // Initalize setup
 window.onload = cleanInputs;
 updateButtons();
 setupIframe();
+setupDisclaimer();
