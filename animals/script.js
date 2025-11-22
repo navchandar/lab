@@ -146,19 +146,23 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadAndDisplayImage(animal) {
     // Hide the current animal name
     animalName.style.opacity = 0;
-    loadingSpinner.classList.remove("spinner-hidden");
+    // Display spinner in 1 second
+    let spinnerTimer = setTimeout(() => {
+      loadingSpinner.classList.remove("spinner-hidden");
+    }, 1000);
+    // Get image path of given animal
     let path = getCurrentImagePath(animal);
 
     try {
       // 1. Try to load the current indexed image (e.g., cat_2.jpg)
       const successfulPath = await loadImage(path);
 
-      // Success: The current index worked. Update max found index.
-      animal.maxIndexFound = Math.max(animal.maxIndexFound, animal.imageIndex);
-
-      // Increment the index for the next time this animal comes up
-      animal.imageIndex++;
+      clearTimeout(spinnerTimer);
       loadingSpinner.classList.add("spinner-hidden");
+
+      // Update successful state
+      animal.maxIndexFound = Math.max(animal.maxIndexFound, animal.imageIndex);
+      animal.imageIndex++;
       updateAnimalUI(animal, successfulPath);
     } catch (failedPath) {
       // 2. Error: The current indexed image does not exist (e.g., cat_2.jpg failed)
@@ -176,19 +180,21 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         // 3. Try to load the first image (e.g., cat_1.jpg)
         const firstPath = await loadImage(path);
+        clearTimeout(spinnerTimer);
+        loadingSpinner.classList.add("spinner-hidden");
 
-        // Success: Load the first image and set index to 1 for the next pass
+        // Update successful state
         animal.imageIndex++;
         animal.maxIndexFound = Math.max(animal.maxIndexFound, 0); // Max index found is at least 0
-        loadingSpinner.classList.add("spinner-hidden");
         updateAnimalUI(animal, firstPath);
       } catch (err) {
+        clearTimeout(spinnerTimer);
+        loadingSpinner.classList.add("spinner-hidden");
         // FATAL Error: Even the first image is missing
         console.error(
           `FATAL: Could not load first image for ${animal.name}: ${path}`,
           err
         );
-        loadingSpinner.classList.add("spinner-hidden");
         animalName.textContent = `${animal.name} (Image Missing)`;
         animalName.style.opacity = 1;
         utils.hideSettings();
