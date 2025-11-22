@@ -188,6 +188,9 @@ document.addEventListener("DOMContentLoaded", () => {
         const firstPath = await loadImage(path);
         clearTimeout(spinnerTimer);
         loadingSpinner.classList.add("spinner-hidden");
+        if (!initialLoadComplete) {
+          initialLoadComplete = true;
+        }
 
         // Update successful state
         animal.imageIndex++;
@@ -248,8 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- EVENT LISTENERS ---
 
   function setupEventListeners() {
-    container.addEventListener("click", showNextAnimal);
-
     function handleKeydown(event) {
       const target = event.target;
 
