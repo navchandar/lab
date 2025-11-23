@@ -1210,12 +1210,12 @@ function setupDisclaimer() {
  * @param {string} boundaryElementId - The ID of the element (the container) to limit
  */
 function limitTippyHeight(instance, boundaryElementId) {
-  // 1. Get Elements and Dimensions
+  // Get Elements and Dimensions
   const boundaryElement = document.getElementById(boundaryElementId);
-  const content = instance?.popper?.querySelector(".tippy-content");
+  const tippyBox = instance?.popper?.querySelector(".tippy-box");
 
-  if (!boundaryElement || !content) {
-    console.warn("Tippy boundary or content element not found.");
+  if (!boundaryElement || !tippyBox) {
+    console.warn("Tippy box element not found.");
     return;
   }
 
@@ -1227,8 +1227,7 @@ function limitTippyHeight(instance, boundaryElementId) {
   }
 
   let availableHeight = 0;
-  const paddingBuffer = 15;
-  // 3. Calculate Max Height based on Placement
+  // Calculate Max Height based on Placement
   if (currentPlacement.startsWith("bottom")) {
     // Placed at the BOTTOM (expands downwards)
     // Limit is: (Boundary Bottom) - (Cell Bottom)
@@ -1238,16 +1237,22 @@ function limitTippyHeight(instance, boundaryElementId) {
     // Limit is: (Cell Top) - (Boundary Top)
     availableHeight = tdRect.top - boundaryRect.top;
   } else {
-    // Ignore other placements (left/right)
     return;
   }
-  const finalMaxHeight = availableHeight - paddingBuffer;
-  // Use Math.max to ensure the height is never set below a useful minimum (e.g., 50px)
-  const safeMaxHeight = Math.max(50, finalMaxHeight);
-  content.style.maxHeight = `${safeMaxHeight}px`;
-  content.style.overflowY = "auto";
-}
 
+  const paddingBuffer = 15;
+  const finalMaxHeight = availableHeight - paddingBuffer;
+
+  // Use Math.max to ensure the height is never set below a useful minimum
+  const safeMaxHeight = Math.max(50, finalMaxHeight);
+
+  // Apply Styles to the .tippy-box (which contains .tippy-content)
+  tippyBox.style.maxHeight = `${safeMaxHeight}px`;
+  tippyBox.style.overflowY = "auto";
+
+  // Update Tippy/Popper.js to update its position
+  instance.popperInstance.update();
+}
 /**
  * Initializes Tippy on all currently visible job title cells.
  */
