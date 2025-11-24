@@ -905,14 +905,14 @@ function prepareTechByRoleChart(roleDataMap) {
     };
   }
 
-  // 3. Identify ALL unique technologies that appear in the Top 10 for ANY role
+  // 3. Identify ALL unique technologies that appear in the Top 5 for ANY role
   // This is needed to create one dataset for each relevant technology.
   const allTopTechs = new Set();
   sortedRoles.forEach((role) => {
-    // Sort tech within the role by count and take the top 10
+    // Sort tech within the role by count and take the top
     const topTechsInRole = roleDataMap[role]
       .sort((a, b) => b.count - a.count)
-      .slice(0, 10);
+      .slice(0, 5);
 
     topTechsInRole.forEach((tech) => allTopTechs.add(tech.label));
   });
@@ -931,7 +931,7 @@ function prepareTechByRoleChart(roleDataMap) {
       const roleSpecificTechs = roleDataMap[role] || [];
       const found = roleSpecificTechs.find((t) => t.label === techName);
 
-      // Crucial: Only include the count if this tech is in the Top 10 for this specific role.
+      // Crucial: Only include the count if this tech is in the Top for this specific role.
       // This is ensured by the prior sorting logic. We just return the count (or 0 if not found).
       const count = found ? found.count : 0;
 
