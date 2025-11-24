@@ -935,8 +935,8 @@ function prepareTechByRoleChart(roleDataMap) {
       // This is ensured by the prior sorting logic. We just return the count (or 0 if not found).
       const count = found ? found.count : 0;
 
-      // Return the count if > 0, otherwise return null
-      return count > 0 ? count : null;
+      // Return the count if > 0
+      return count > 0 ? count : "";
     });
 
     return {
