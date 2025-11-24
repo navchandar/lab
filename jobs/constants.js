@@ -1802,7 +1802,7 @@ export const TITLE_NUDGES = [
   // --- HardwareQA / Embedded / Silicon / Mechanical ---
   {
     regex:
-      /\b(asic|fpga|rtl|post-?silicon|pre-?silicon|silicon\s*validation)\b/i,
+      /\b(manufacturing|quality\scontrol|asic|fpga|rtl|post-?silicon|pre-?silicon|silicon\s*validation)\b/i,
     cat: "HardwareQA",
     boost: 5,
   },
