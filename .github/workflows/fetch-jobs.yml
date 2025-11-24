@@ -39,6 +39,9 @@ jobs:
         working-directory: jobs
         run: npm run fetch
 
+      - name: Git Pull Latest Changes
+        run: git pull origin ${{ github.ref_name }}
+
       - name: Classify jobs
         working-directory: jobs
         run: npm run classify
@@ -46,9 +49,6 @@ jobs:
       - name: Analyze jobs data
         working-directory: jobs
         run: npm run analyze
-
-      - name: Git Pull Latest Changes
-        run: git pull origin ${{ github.ref_name }}
 
       - name: Commit and push if changed
         uses: stefanzweifel/git-auto-commit-action@v7
