@@ -2238,6 +2238,7 @@ export const CITY_ALIAS = {
 
 const BASE_REMOVE_TITLES = [
   "| India",
+  "|| Pan India",
   ", India",
   ",India",
   "India",
@@ -2301,6 +2302,7 @@ const BASE_REMOVE_TITLES = [
   "🚀 is Hiring in",
   "is Hiring in",
   "is Hiring",
+  "| Pan",
   "Title ",
   " - Mumbai",
   ");/Chennai; Permanent",

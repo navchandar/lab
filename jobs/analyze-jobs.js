@@ -27,6 +27,87 @@ const EXPERIENCE_RANGES = [
   { label: "21+ Years", min: 21, max: Infinity }, // The catch-all for high experience
 ];
 
+// --- Tech Stack Configuration ---
+const TECH_KEYWORDS = {
+  // Languages
+  JavaScript: [/javascript/i, /\bjs\b/i, /\bes6\b/i],
+  TypeScript: [/typescript/i, /\bts\b/i],
+  Python: [/python/i, /\bpy\b/i, /\bpytest\b/i],
+  Java: [/\bjava\b/i, /\bjee\b/i],
+  "C#": [/c#/i, /\.net/i, /\bdotnet\b/i],
+  "C++": [/c\+\+/i],
+  Go: [/\bgolang\b/i, /\bgo\b/i],
+  Rust: [/\brust\b/i],
+  PHP: [/\bphp\b/i],
+  Ruby: [/\bruby\b/i],
+  Swift: [/\bswift\b/i],
+  Kotlin: [/\bkotlin\b/i],
+
+  // Frontend Frameworks
+  React: [/react/i, /react\.js/i, /reactjs/i],
+  Angular: [/angular/i, /angularjs/i],
+  Vue: [/vue/i, /vue\.js/i],
+  NextJS: [/next\.js/i, /nextjs/i],
+  Tailwind: [/tailwind/i, /tailwindcss/i, /tailwind css/i],
+
+  // Backend & Runtime
+  NodeJS: [/node\.js/i, /nodejs/i, /node js/i, /\bnode\b/i],
+  Django: [/django/i],
+  SpringBoot: [/spring boot/i, /spring framework/i],
+  Express: [/express\.js/i, /\bexpress\b/i, /\bexpressjs\b/i],
+
+  // Databases
+  SQL: [/\bsql\b/i, /mysql/i, /postgres/i, /postgresql/i, /sql server/i],
+  NoSQL: [/nosql/i, /mongodb/i, /mongo/i, /cassandra/i, /dynamodb/i],
+  Redis: [/redis/i],
+
+  // Cloud & DevOps
+  AWS: [
+    /\baws\b/i,
+    /amazon web services/i,
+    /amazonwebservices/i,
+    /ec2/i,
+    /lambda/i,
+  ],
+  Azure: [/\bazure\b/i, /\bazuredevops\b/i, /azure devops/i],
+  GCP: [/\bgcp\b/i, /google cloud/i, /googlecloud/i],
+  Docker: [/docker/i, /dockerfile/i, /dockercompose/i, /docker compose/i],
+  Kubernetes: [/kubernetes/i, /\bk8s\b/i],
+  Terraform: [/terraform/i],
+  Jenkins: [/jenkins/i],
+  Git: [/\bgit\b/i, /github/i, /gitlab/i, /bitbucket/i],
+
+  // AI/ML
+  ML: [
+    /machine learning/i,
+    /\bml\b/i,
+    /\bai\/ml\b/i,
+    /\bmlops\b/i,
+    /pytorch/i,
+    /tensorflow/i,
+  ],
+  GenAI: [/genai/i, /generative ai/i, /\bllm\b/i, /large language model/i],
+
+  // QA & Testing
+  Selenium: [/selenium/i, /seleniumbase/i],
+  Cypress: [/cypress/i],
+  Playwright: [/playwright/i],
+  Appium: [/appium/i],
+  RestAssured: [/rest assured/i, /restassured/i],
+  Postman: [/\bpostman\b/i, /\bnewman\b/i],
+  JMeter: [/jmeter/i, /blazemeter/i],
+  Cucumber: [/cucumber/i, /\bbdd\b/i],
+  JUnit: [/junit/i],
+  TestNG: [/testng/i, /test ng/i],
+
+  // Management & Methodologies
+  Agile: [/\bagile\b/i, /\bsafe\b/i],
+  Scrum: [/\bscrum\b/i],
+  Kanban: [/kanban/i],
+  Jira: [/jira/i],
+  Confluence: [/confluence/i],
+  PMP: [/\bpmp\b/i, /project management professional/i],
+};
 /**
  * Parses the experienceRequired string (e.g., "3 - 5", "21", "8+", "—")
  * and returns the average years of experience, or null if unparseable.
@@ -218,6 +299,61 @@ function updateDailyJobCounts(currentJobs, existingHistory = []) {
   return mergedHistory;
 }
 
+/**
+ * Aggregates tech stack counts grouped by job Role Type.
+ * @param {Array} jobs - The array of job objects.
+ * @returns {object} Map of RoleType -> Array<{label: string, count: number}>
+ */
+function aggregateTechByRole(jobs) {
+  const rawCounts = {};
+
+  jobs.forEach((job) => {
+    // 1. Get the Role Type
+    const roleType = job.classification?.roleType;
+
+    // 2. FILTER: Ignore if role is missing, null, or 'Uncategorized'
+    if (!roleType || roleType === "Uncategorized" || roleType === "—") {
+      return;
+    }
+
+    const textToScan = `${job.title} ${job.description}`.toLowerCase();
+
+    // 3. Ensure this role exists in our map
+    if (!rawCounts[roleType]) {
+      rawCounts[roleType] = {};
+    }
+
+    // 4. Scan against the global TECH_KEYWORDS dictionary
+    Object.keys(TECH_KEYWORDS).forEach((techLabel) => {
+      const patterns = TECH_KEYWORDS[techLabel];
+
+      // Check if any pattern matches
+      const isPresent = patterns.some((pattern) => pattern.test(textToScan));
+
+      if (isPresent) {
+        // Increment count for this specific Role + Tech combo
+        rawCounts[roleType][techLabel] =
+          (rawCounts[roleType][techLabel] || 0) + 1;
+      }
+    });
+  });
+
+  // 5. Format the output (Sort Descending by Count)
+  const formattedResult = {};
+
+  Object.keys(rawCounts).forEach((role) => {
+    const techList = Object.entries(rawCounts[role])
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count);
+
+    // Only add roles that actually have data
+    if (techList.length > 0) {
+      formattedResult[role] = techList;
+    }
+  });
+
+  return formattedResult;
+}
 /** Calculate the compression ratio between json file and json.gz file */
 function getCompressionRatio(inputPath, outputPath) {
   try {
@@ -315,20 +451,24 @@ async function runAnalysis() {
       (job) => job.classification?.roleType || "N/A"
     );
 
-    // 4. Jobs by Company vs Experience Range (Top 20) - NEW REQUIRED ANALYSIS
+    // 4. Jobs by Company vs Experience Range (Top 20)
     const companyVsExperience = aggregateCompanyVsExperience(jobs, 20);
 
-    // 5. Update Daily Job Counts History
+    // 5. Jobs by Tech Stack per Job roletype
+    const techVsRole = aggregateTechByRole(jobs);
+
+    // Update Daily Job Counts History
     const dailyJobCounts = updateDailyJobCounts(
       jobs,
       existingChartData.dailyJobCounts || []
     );
 
-    // 6. Combine the results into a single object
+    // Combine the results into a single object
     const finalChartData = {
       byCompany,
       byLocation,
       byRoleType,
+      techVsRole,
       companyVsExperience,
       dailyJobCounts,
       experienceRanges: EXPERIENCE_RANGES.map((r) => r.label),

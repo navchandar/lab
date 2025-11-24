@@ -662,6 +662,9 @@ function drawChart(key) {
     case "byRoleType":
       chartProps = prepareRoleTypeChart(dataSet);
       break;
+    case "techVsRole":
+      chartProps = prepareTechByRoleChart(dataSet);
+      break;
     case "companyVsExperience":
       chartProps = prepareStackedExperienceChart(
         dataSet,
@@ -865,6 +868,79 @@ function prepareRoleTypeChart(dataSet) {
     indexAxis: "x",
     isStacked: false,
     dynamicHeight: "400px", // Fixed height for vertical
+  };
+}
+
+/**
+ * Prepares data for Tech vs Role by calculating the Top 5 technologies
+ * @param {Object} roleDataMap - The 'techByRole' object (Role -> Array of Techs).
+ */
+function prepareTechByRoleChart(roleDataMap) {
+  const descriptionText =
+    "Prevalence of the Top Technologies among different roles.";
+
+  // 1. Calculate Total Counts for all technologies across all roles
+  const allTechCounts = {};
+
+  Object.keys(roleDataMap).forEach((role) => {
+    roleDataMap[role].forEach((techItem) => {
+      allTechCounts[techItem.label] =
+        (allTechCounts[techItem.label] || 0) + techItem.count;
+    });
+  });
+
+  // 2. Identify the Top 10 Technologies overall
+  const sortedTechs = Object.entries(allTechCounts)
+    .sort(([, countA], [, countB]) => countB - countA)
+    .slice(0, 10);
+
+  const topTechs = sortedTechs.map(([label]) => label);
+  if (topTechs.length === 0) {
+    console.warn("No valid tech stack data found.");
+    return {
+      labels: [],
+      datasets: [],
+      descriptionText: "No data available.",
+      indexAxis: "y",
+      isStacked: false,
+      dynamicHeight: "300px",
+    };
+  }
+
+  // 3. Prepare Labels (The Roles)
+  const roles = Object.keys(roleDataMap);
+
+  // 4. Create Datasets (One for each of the Top 10 Techs)
+  const datasets = topTechs.map((techName, index) => {
+    const colorSet = GEN_COLORS[index % GEN_COLORS.length];
+
+    // Calculate data: For every Role, find the count of this specific Tech
+    const dataPoints = roles.map((role) => {
+      const roleSpecificTechs = roleDataMap[role] || [];
+      const found = roleSpecificTechs.find((t) => t.label === techName);
+      return found ? found.count : 0;
+    });
+
+    return {
+      label: techName,
+      data: dataPoints,
+      backgroundColor: colorSet.bg,
+      borderColor: getBorderColor(colorSet.bg),
+      borderWidth: 1,
+    };
+  });
+
+  // Calculate dynamic height
+  const ITEM_HEIGHT = 50;
+  const requiredHeight = roles.length * ITEM_HEIGHT + 150;
+
+  return {
+    labels: roles,
+    datasets: datasets,
+    descriptionText,
+    indexAxis: "y",
+    isStacked: false,
+    dynamicHeight: `${requiredHeight}px`,
   };
 }
 
