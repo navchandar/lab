@@ -879,23 +879,21 @@ function prepareTechByRoleChart(roleDataMap) {
   const descriptionText =
     "Prevalence of the Top Technologies among different roles.";
 
-  // 1. Calculate Total Counts for all technologies across all roles
-  const allTechCounts = {};
-
+  // 1. Calculate the total technology count for each role for sorting
+  const roleTotal = {};
   Object.keys(roleDataMap).forEach((role) => {
-    roleDataMap[role].forEach((techItem) => {
-      allTechCounts[techItem.label] =
-        (allTechCounts[techItem.label] || 0) + techItem.count;
-    });
+    roleTotal[role] = roleDataMap[role].reduce(
+      (sum, techItem) => sum + techItem.count,
+      0
+    );
   });
 
-  // 2. Identify the Top 10 Technologies overall
-  const sortedTechs = Object.entries(allTechCounts)
-    .sort(([, countA], [, countB]) => countB - countA)
-    .slice(0, 10);
+  // 2. Sort the Roles based on the total count (max count first)
+  const sortedRoles = Object.keys(roleDataMap).sort(
+    (roleA, roleB) => roleTotal[roleB] - roleTotal[roleA]
+  );
 
-  const topTechs = sortedTechs.map(([label]) => label);
-  if (topTechs.length === 0) {
+  if (sortedRoles.length === 0) {
     console.warn("No valid tech stack data found.");
     return {
       labels: [],
@@ -907,18 +905,38 @@ function prepareTechByRoleChart(roleDataMap) {
     };
   }
 
-  // 3. Prepare Labels (The Roles)
-  const roles = Object.keys(roleDataMap);
+  // 3. Identify ALL unique technologies that appear in the Top 10 for ANY role
+  // This is needed to create one dataset for each relevant technology.
+  const allTopTechs = new Set();
+  sortedRoles.forEach((role) => {
+    // Sort tech within the role by count and take the top 10
+    const topTechsInRole = roleDataMap[role]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10);
 
-  // 4. Create Datasets (One for each of the Top 10 Techs)
-  const datasets = topTechs.map((techName, index) => {
+    topTechsInRole.forEach((tech) => allTopTechs.add(tech.label));
+  });
+
+  // Convert Set to Array for ordered processing
+  const uniqueTopTechLabels = Array.from(allTopTechs);
+
+  // --- Prepare Datasets ---
+
+  // 4. Create Datasets (One for each unique Top Tech)
+  const datasets = uniqueTopTechLabels.map((techName, index) => {
     const colorSet = GEN_COLORS[index % GEN_COLORS.length];
 
-    // Calculate data: For every Role, find the count of this specific Tech
-    const dataPoints = roles.map((role) => {
+    // Calculate data: For every *Sorted* Role, find the count of this specific Tech
+    const dataPoints = sortedRoles.map((role) => {
       const roleSpecificTechs = roleDataMap[role] || [];
       const found = roleSpecificTechs.find((t) => t.label === techName);
-      return found ? found.count : 0;
+
+      // Crucial: Only include the count if this tech is in the Top 10 for this specific role.
+      // This is ensured by the prior sorting logic. We just return the count (or 0 if not found).
+      const count = found ? found.count : 0;
+
+      // Return the count if > 0, otherwise return null
+      return count > 0 ? count : null;
     });
 
     return {
@@ -930,12 +948,12 @@ function prepareTechByRoleChart(roleDataMap) {
     };
   });
 
-  // Calculate dynamic height
-  const ITEM_HEIGHT = 50;
-  const requiredHeight = roles.length * ITEM_HEIGHT + 150;
+  // Calculate dynamic height using the sorted roles
+  const ITEM_HEIGHT = 120;
+  const requiredHeight = sortedRoles.length * ITEM_HEIGHT + 150;
 
   return {
-    labels: roles,
+    labels: sortedRoles, // Use the newly sorted roles array
     datasets: datasets,
     descriptionText,
     indexAxis: "y",
