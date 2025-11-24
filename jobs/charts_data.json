@@ -2,11 +2,11 @@
   "byCompany": [
     {
       "label": "Oracle",
-      "count": 308
+      "count": 309
     },
     {
       "label": "PwC India",
-      "count": 143
+      "count": 144
     },
     {
       "label": "Tata Consultancy Services",
@@ -21,20 +21,20 @@
       "count": 100
     },
     {
+      "label": "EXL",
+      "count": 88
+    },
+    {
       "label": "Reliance Industries Limited",
       "count": 88
     },
     {
-      "label": "EXL",
+      "label": "Uplers",
       "count": 87
     },
     {
-      "label": "Uplers",
-      "count": 86
-    },
-    {
       "label": "AlgoSec",
-      "count": 85
+      "count": 86
     },
     {
       "label": "EY",
@@ -84,19 +84,19 @@
   "byLocation": [
     {
       "label": "Bengaluru, Karnataka, India",
-      "count": 1796
+      "count": 1802
     },
     {
       "label": "Hyderabad, Telangana, India",
-      "count": 651
+      "count": 654
     },
     {
       "label": "Pune, Maharashtra, India",
-      "count": 516
+      "count": 519
     },
     {
       "label": "Chennai, Tamil Nadu, India",
-      "count": 360
+      "count": 361
     },
     {
       "label": "India",
@@ -104,11 +104,11 @@
     },
     {
       "label": "Gurugram, Haryana, India",
-      "count": 235
+      "count": 238
     },
     {
       "label": "Noida, Uttar Pradesh, India",
-      "count": 213
+      "count": 214
     },
     {
       "label": "Mumbai, Maharashtra, India",
@@ -119,38 +119,38 @@
       "count": 165
     },
     {
-      "label": "Mumbai Metropolitan Region",
-      "count": 119
+      "label": "New Delhi, Delhi, India",
+      "count": 120
     }
   ],
   "byRoleType": [
     {
       "label": "SoftwareQA",
-      "count": 1474
+      "count": 1485
     },
     {
       "label": "SoftwareDEV",
-      "count": 1370
+      "count": 1376
     },
     {
       "label": "Management",
-      "count": 1352
+      "count": 1358
     },
     {
       "label": "ML/AI",
-      "count": 529
+      "count": 531
     },
     {
       "label": "DevOps/SRE",
-      "count": 526
+      "count": 528
     },
     {
       "label": "—",
-      "count": 440
+      "count": 441
     },
     {
       "label": "HardwareQA",
-      "count": 317
+      "count": 318
     },
     {
       "label": "DataEngg",
@@ -170,58 +170,224 @@
     }
   ],
   "techVsRole": {
-    "SoftwareDEV": [
+    "ML/AI": [
       {
-        "label": "Java",
-        "count": 669
-      },
-      {
-        "label": "JavaScript",
-        "count": 591
-      },
-      {
-        "label": "Agile",
-        "count": 542
-      },
-      {
-        "label": "SQL",
-        "count": 534
-      },
-      {
-        "label": "React",
-        "count": 487
-      },
-      {
-        "label": "Git",
-        "count": 475
-      },
-      {
-        "label": "AWS",
-        "count": 445
+        "label": "ML",
+        "count": 486
       },
       {
         "label": "Python",
-        "count": 435
+        "count": 420
       },
       {
-        "label": "Azure",
+        "label": "GenAI",
         "count": 365
       },
       {
-        "label": "Docker",
-        "count": 327
+        "label": "AWS",
+        "count": 256
       },
       {
-        "label": "NoSQL",
-        "count": 322
+        "label": "Azure",
+        "count": 237
+      },
+      {
+        "label": "GCP",
+        "count": 196
+      },
+      {
+        "label": "SQL",
+        "count": 189
+      },
+      {
+        "label": "Docker",
+        "count": 147
       },
       {
         "label": "Kubernetes",
-        "count": 299
+        "count": 123
+      },
+      {
+        "label": "Agile",
+        "count": 95
+      },
+      {
+        "label": "Java",
+        "count": 86
+      },
+      {
+        "label": "Git",
+        "count": 78
+      },
+      {
+        "label": "NoSQL",
+        "count": 52
+      },
+      {
+        "label": "Go",
+        "count": 45
+      },
+      {
+        "label": "JavaScript",
+        "count": 41
+      },
+      {
+        "label": "React",
+        "count": 39
+      },
+      {
+        "label": "C++",
+        "count": 28
+      },
+      {
+        "label": "NodeJS",
+        "count": 27
+      },
+      {
+        "label": "Jenkins",
+        "count": 18
       },
       {
         "label": "TypeScript",
-        "count": 285
+        "count": 17
+      },
+      {
+        "label": "C#",
+        "count": 16
+      },
+      {
+        "label": "Rust",
+        "count": 13
+      },
+      {
+        "label": "Redis",
+        "count": 12
+      },
+      {
+        "label": "Django",
+        "count": 10
+      },
+      {
+        "label": "Angular",
+        "count": 10
+      },
+      {
+        "label": "Express",
+        "count": 9
+      },
+      {
+        "label": "Terraform",
+        "count": 9
+      },
+      {
+        "label": "Jira",
+        "count": 6
+      },
+      {
+        "label": "Confluence",
+        "count": 5
+      },
+      {
+        "label": "Scrum",
+        "count": 5
+      },
+      {
+        "label": "Swift",
+        "count": 3
+      },
+      {
+        "label": "Kotlin",
+        "count": 3
+      },
+      {
+        "label": "Vue",
+        "count": 3
+      },
+      {
+        "label": "PHP",
+        "count": 2
+      },
+      {
+        "label": "Ruby",
+        "count": 2
+      },
+      {
+        "label": "Kanban",
+        "count": 2
+      },
+      {
+        "label": "Cucumber",
+        "count": 1
+      },
+      {
+        "label": "RestAssured",
+        "count": 1
+      },
+      {
+        "label": "Cypress",
+        "count": 1
+      },
+      {
+        "label": "Playwright",
+        "count": 1
+      },
+      {
+        "label": "SpringBoot",
+        "count": 1
+      }
+    ],
+    "SoftwareDEV": [
+      {
+        "label": "Java",
+        "count": 670
+      },
+      {
+        "label": "JavaScript",
+        "count": 594
+      },
+      {
+        "label": "Agile",
+        "count": 547
+      },
+      {
+        "label": "SQL",
+        "count": 537
+      },
+      {
+        "label": "React",
+        "count": 490
+      },
+      {
+        "label": "Git",
+        "count": 477
+      },
+      {
+        "label": "AWS",
+        "count": 447
+      },
+      {
+        "label": "Python",
+        "count": 436
+      },
+      {
+        "label": "Azure",
+        "count": 366
+      },
+      {
+        "label": "Docker",
+        "count": 329
+      },
+      {
+        "label": "NoSQL",
+        "count": 324
+      },
+      {
+        "label": "Kubernetes",
+        "count": 301
+      },
+      {
+        "label": "TypeScript",
+        "count": 287
       },
       {
         "label": "GCP",
@@ -229,11 +395,11 @@
       },
       {
         "label": "NodeJS",
-        "count": 244
+        "count": 245
       },
       {
         "label": "Angular",
-        "count": 237
+        "count": 240
       },
       {
         "label": "SpringBoot",
@@ -249,7 +415,7 @@
       },
       {
         "label": "Scrum",
-        "count": 163
+        "count": 166
       },
       {
         "label": "C++",
@@ -261,7 +427,7 @@
       },
       {
         "label": "C#",
-        "count": 126
+        "count": 128
       },
       {
         "label": "Cypress",
@@ -277,7 +443,7 @@
       },
       {
         "label": "Redis",
-        "count": 90
+        "count": 91
       },
       {
         "label": "JUnit",
@@ -301,11 +467,11 @@
       },
       {
         "label": "Ruby",
-        "count": 50
+        "count": 51
       },
       {
         "label": "Terraform",
-        "count": 41
+        "count": 42
       },
       {
         "label": "Kotlin",
@@ -333,11 +499,11 @@
       },
       {
         "label": "Cucumber",
-        "count": 23
+        "count": 24
       },
       {
         "label": "PHP",
-        "count": 23
+        "count": 24
       },
       {
         "label": "NextJS",
@@ -372,102 +538,284 @@
         "count": 1
       }
     ],
-    "SoftwareQA": [
-      {
-        "label": "Selenium",
-        "count": 704
-      },
-      {
-        "label": "Agile",
-        "count": 699
-      },
-      {
-        "label": "Java",
-        "count": 545
-      },
+    "DevOps/SRE": [
       {
         "label": "Python",
-        "count": 509
-      },
-      {
-        "label": "Git",
-        "count": 464
-      },
-      {
-        "label": "SQL",
-        "count": 451
-      },
-      {
-        "label": "Jenkins",
-        "count": 376
-      },
-      {
-        "label": "Jira",
-        "count": 369
-      },
-      {
-        "label": "JavaScript",
-        "count": 352
-      },
-      {
-        "label": "Azure",
-        "count": 337
-      },
-      {
-        "label": "Playwright",
-        "count": 332
-      },
-      {
-        "label": "Postman",
-        "count": 310
+        "count": 315
       },
       {
         "label": "AWS",
-        "count": 274
+        "count": 297
       },
       {
-        "label": "Cucumber",
+        "label": "Kubernetes",
+        "count": 278
+      },
+      {
+        "label": "Azure",
         "count": 273
       },
       {
-        "label": "Scrum",
-        "count": 263
+        "label": "Docker",
+        "count": 223
       },
       {
-        "label": "JMeter",
-        "count": 235
-      },
-      {
-        "label": "RestAssured",
-        "count": 229
-      },
-      {
-        "label": "Cypress",
-        "count": 225
-      },
-      {
-        "label": "Appium",
-        "count": 201
-      },
-      {
-        "label": "TestNG",
-        "count": 194
-      },
-      {
-        "label": "TypeScript",
-        "count": 154
-      },
-      {
-        "label": "C#",
-        "count": 147
+        "label": "Java",
+        "count": 221
       },
       {
         "label": "GCP",
-        "count": 145
+        "count": 213
+      },
+      {
+        "label": "Git",
+        "count": 207
+      },
+      {
+        "label": "Terraform",
+        "count": 193
+      },
+      {
+        "label": "Agile",
+        "count": 154
+      },
+      {
+        "label": "Go",
+        "count": 151
+      },
+      {
+        "label": "Jenkins",
+        "count": 149
+      },
+      {
+        "label": "SQL",
+        "count": 133
+      },
+      {
+        "label": "ML",
+        "count": 127
+      },
+      {
+        "label": "GenAI",
+        "count": 86
+      },
+      {
+        "label": "NoSQL",
+        "count": 77
+      },
+      {
+        "label": "C#",
+        "count": 53
+      },
+      {
+        "label": "React",
+        "count": 46
+      },
+      {
+        "label": "JavaScript",
+        "count": 45
+      },
+      {
+        "label": "Redis",
+        "count": 42
+      },
+      {
+        "label": "C++",
+        "count": 38
+      },
+      {
+        "label": "NodeJS",
+        "count": 36
+      },
+      {
+        "label": "Scrum",
+        "count": 32
+      },
+      {
+        "label": "Jira",
+        "count": 32
+      },
+      {
+        "label": "TypeScript",
+        "count": 27
+      },
+      {
+        "label": "SpringBoot",
+        "count": 24
+      },
+      {
+        "label": "Angular",
+        "count": 20
+      },
+      {
+        "label": "Ruby",
+        "count": 17
+      },
+      {
+        "label": "Selenium",
+        "count": 16
+      },
+      {
+        "label": "Confluence",
+        "count": 14
+      },
+      {
+        "label": "JMeter",
+        "count": 13
+      },
+      {
+        "label": "Kotlin",
+        "count": 12
+      },
+      {
+        "label": "Cucumber",
+        "count": 12
+      },
+      {
+        "label": "Express",
+        "count": 11
+      },
+      {
+        "label": "JUnit",
+        "count": 9
+      },
+      {
+        "label": "Cypress",
+        "count": 8
+      },
+      {
+        "label": "Kanban",
+        "count": 7
+      },
+      {
+        "label": "Rust",
+        "count": 4
+      },
+      {
+        "label": "Playwright",
+        "count": 4
+      },
+      {
+        "label": "PMP",
+        "count": 3
+      },
+      {
+        "label": "Django",
+        "count": 2
+      },
+      {
+        "label": "Postman",
+        "count": 2
+      },
+      {
+        "label": "Vue",
+        "count": 2
+      },
+      {
+        "label": "NextJS",
+        "count": 1
+      },
+      {
+        "label": "RestAssured",
+        "count": 1
+      }
+    ],
+    "SoftwareQA": [
+      {
+        "label": "Selenium",
+        "count": 712
+      },
+      {
+        "label": "Agile",
+        "count": 707
+      },
+      {
+        "label": "Java",
+        "count": 552
+      },
+      {
+        "label": "Python",
+        "count": 515
+      },
+      {
+        "label": "Git",
+        "count": 467
+      },
+      {
+        "label": "SQL",
+        "count": 454
+      },
+      {
+        "label": "Jenkins",
+        "count": 378
+      },
+      {
+        "label": "Jira",
+        "count": 373
+      },
+      {
+        "label": "JavaScript",
+        "count": 355
+      },
+      {
+        "label": "Azure",
+        "count": 339
+      },
+      {
+        "label": "Playwright",
+        "count": 333
+      },
+      {
+        "label": "Postman",
+        "count": 312
+      },
+      {
+        "label": "AWS",
+        "count": 278
+      },
+      {
+        "label": "Cucumber",
+        "count": 275
+      },
+      {
+        "label": "Scrum",
+        "count": 265
+      },
+      {
+        "label": "JMeter",
+        "count": 238
+      },
+      {
+        "label": "RestAssured",
+        "count": 232
+      },
+      {
+        "label": "Cypress",
+        "count": 226
+      },
+      {
+        "label": "Appium",
+        "count": 203
+      },
+      {
+        "label": "TestNG",
+        "count": 195
+      },
+      {
+        "label": "TypeScript",
+        "count": 155
+      },
+      {
+        "label": "C#",
+        "count": 149
+      },
+      {
+        "label": "GCP",
+        "count": 147
       },
       {
         "label": "Docker",
-        "count": 134
+        "count": 136
       },
       {
         "label": "JUnit",
@@ -475,22 +823,22 @@
       },
       {
         "label": "ML",
-        "count": 107
+        "count": 108
       },
       {
         "label": "Kubernetes",
-        "count": 104
+        "count": 105
       },
       {
         "label": "Go",
-        "count": 87
-      },
-      {
-        "label": "NoSQL",
-        "count": 66
+        "count": 89
       },
       {
         "label": "GenAI",
+        "count": 67
+      },
+      {
+        "label": "NoSQL",
         "count": 66
       },
       {
@@ -499,19 +847,19 @@
       },
       {
         "label": "Confluence",
-        "count": 52
+        "count": 53
       },
       {
         "label": "NodeJS",
         "count": 43
       },
       {
-        "label": "C++",
+        "label": "Angular",
         "count": 25
       },
       {
-        "label": "Angular",
-        "count": 23
+        "label": "C++",
+        "count": 25
       },
       {
         "label": "Terraform",
@@ -534,12 +882,12 @@
         "count": 10
       },
       {
-        "label": "SpringBoot",
+        "label": "Redis",
         "count": 9
       },
       {
-        "label": "Redis",
-        "count": 8
+        "label": "SpringBoot",
+        "count": 9
       },
       {
         "label": "Kotlin",
@@ -561,7 +909,7 @@
     "Management": [
       {
         "label": "Agile",
-        "count": 255
+        "count": 256
       },
       {
         "label": "Go",
@@ -732,188 +1080,6 @@
         "count": 1
       }
     ],
-    "DevOps/SRE": [
-      {
-        "label": "Python",
-        "count": 314
-      },
-      {
-        "label": "AWS",
-        "count": 295
-      },
-      {
-        "label": "Kubernetes",
-        "count": 277
-      },
-      {
-        "label": "Azure",
-        "count": 271
-      },
-      {
-        "label": "Docker",
-        "count": 222
-      },
-      {
-        "label": "Java",
-        "count": 220
-      },
-      {
-        "label": "GCP",
-        "count": 211
-      },
-      {
-        "label": "Git",
-        "count": 206
-      },
-      {
-        "label": "Terraform",
-        "count": 192
-      },
-      {
-        "label": "Agile",
-        "count": 153
-      },
-      {
-        "label": "Go",
-        "count": 151
-      },
-      {
-        "label": "Jenkins",
-        "count": 149
-      },
-      {
-        "label": "SQL",
-        "count": 132
-      },
-      {
-        "label": "ML",
-        "count": 126
-      },
-      {
-        "label": "GenAI",
-        "count": 86
-      },
-      {
-        "label": "NoSQL",
-        "count": 76
-      },
-      {
-        "label": "C#",
-        "count": 53
-      },
-      {
-        "label": "React",
-        "count": 45
-      },
-      {
-        "label": "JavaScript",
-        "count": 44
-      },
-      {
-        "label": "Redis",
-        "count": 42
-      },
-      {
-        "label": "C++",
-        "count": 38
-      },
-      {
-        "label": "NodeJS",
-        "count": 36
-      },
-      {
-        "label": "Jira",
-        "count": 32
-      },
-      {
-        "label": "Scrum",
-        "count": 31
-      },
-      {
-        "label": "TypeScript",
-        "count": 27
-      },
-      {
-        "label": "SpringBoot",
-        "count": 23
-      },
-      {
-        "label": "Angular",
-        "count": 20
-      },
-      {
-        "label": "Ruby",
-        "count": 17
-      },
-      {
-        "label": "Selenium",
-        "count": 16
-      },
-      {
-        "label": "Confluence",
-        "count": 14
-      },
-      {
-        "label": "JMeter",
-        "count": 13
-      },
-      {
-        "label": "Kotlin",
-        "count": 12
-      },
-      {
-        "label": "Cucumber",
-        "count": 12
-      },
-      {
-        "label": "Express",
-        "count": 11
-      },
-      {
-        "label": "JUnit",
-        "count": 9
-      },
-      {
-        "label": "Cypress",
-        "count": 8
-      },
-      {
-        "label": "Kanban",
-        "count": 7
-      },
-      {
-        "label": "Rust",
-        "count": 4
-      },
-      {
-        "label": "Playwright",
-        "count": 4
-      },
-      {
-        "label": "PMP",
-        "count": 3
-      },
-      {
-        "label": "Django",
-        "count": 2
-      },
-      {
-        "label": "Postman",
-        "count": 2
-      },
-      {
-        "label": "Vue",
-        "count": 2
-      },
-      {
-        "label": "NextJS",
-        "count": 1
-      },
-      {
-        "label": "RestAssured",
-        "count": 1
-      }
-    ],
     "PharmaQA": [
       {
         "label": "Agile",
@@ -1067,172 +1233,6 @@
       },
       {
         "label": "Cucumber",
-        "count": 1
-      }
-    ],
-    "ML/AI": [
-      {
-        "label": "ML",
-        "count": 484
-      },
-      {
-        "label": "Python",
-        "count": 418
-      },
-      {
-        "label": "GenAI",
-        "count": 365
-      },
-      {
-        "label": "AWS",
-        "count": 255
-      },
-      {
-        "label": "Azure",
-        "count": 236
-      },
-      {
-        "label": "GCP",
-        "count": 195
-      },
-      {
-        "label": "SQL",
-        "count": 189
-      },
-      {
-        "label": "Docker",
-        "count": 147
-      },
-      {
-        "label": "Kubernetes",
-        "count": 123
-      },
-      {
-        "label": "Agile",
-        "count": 95
-      },
-      {
-        "label": "Java",
-        "count": 86
-      },
-      {
-        "label": "Git",
-        "count": 78
-      },
-      {
-        "label": "NoSQL",
-        "count": 52
-      },
-      {
-        "label": "Go",
-        "count": 45
-      },
-      {
-        "label": "JavaScript",
-        "count": 41
-      },
-      {
-        "label": "React",
-        "count": 39
-      },
-      {
-        "label": "C++",
-        "count": 28
-      },
-      {
-        "label": "NodeJS",
-        "count": 27
-      },
-      {
-        "label": "Jenkins",
-        "count": 18
-      },
-      {
-        "label": "TypeScript",
-        "count": 17
-      },
-      {
-        "label": "C#",
-        "count": 16
-      },
-      {
-        "label": "Rust",
-        "count": 13
-      },
-      {
-        "label": "Redis",
-        "count": 12
-      },
-      {
-        "label": "Django",
-        "count": 10
-      },
-      {
-        "label": "Angular",
-        "count": 10
-      },
-      {
-        "label": "Express",
-        "count": 9
-      },
-      {
-        "label": "Terraform",
-        "count": 9
-      },
-      {
-        "label": "Jira",
-        "count": 6
-      },
-      {
-        "label": "Confluence",
-        "count": 5
-      },
-      {
-        "label": "Scrum",
-        "count": 5
-      },
-      {
-        "label": "Swift",
-        "count": 3
-      },
-      {
-        "label": "Kotlin",
-        "count": 3
-      },
-      {
-        "label": "Vue",
-        "count": 3
-      },
-      {
-        "label": "PHP",
-        "count": 2
-      },
-      {
-        "label": "Ruby",
-        "count": 2
-      },
-      {
-        "label": "Kanban",
-        "count": 2
-      },
-      {
-        "label": "Cucumber",
-        "count": 1
-      },
-      {
-        "label": "RestAssured",
-        "count": 1
-      },
-      {
-        "label": "Cypress",
-        "count": 1
-      },
-      {
-        "label": "Playwright",
-        "count": 1
-      },
-      {
-        "label": "SpringBoot",
         "count": 1
       }
     ],
@@ -1522,7 +1522,7 @@
   "companyVsExperience": [
     {
       "company": "Oracle",
-      "totalJobs": 308,
+      "totalJobs": 309,
       "distribution": [
         {
           "range": "0-3 Years",
@@ -1556,7 +1556,7 @@
     },
     {
       "company": "PwC India",
-      "totalJobs": 143,
+      "totalJobs": 144,
       "distribution": [
         {
           "range": "0-3 Years",
@@ -1564,7 +1564,7 @@
         },
         {
           "range": "4-6 Years",
-          "count": 30
+          "count": 31
         },
         {
           "range": "7-9 Years",
@@ -1691,6 +1691,40 @@
       ]
     },
     {
+      "company": "EXL",
+      "totalJobs": 88,
+      "distribution": [
+        {
+          "range": "0-3 Years",
+          "count": 6
+        },
+        {
+          "range": "4-6 Years",
+          "count": 27
+        },
+        {
+          "range": "7-9 Years",
+          "count": 11
+        },
+        {
+          "range": "10-12 Years",
+          "count": 4
+        },
+        {
+          "range": "13-16 Years",
+          "count": 1
+        },
+        {
+          "range": "17-20 Years",
+          "count": 1
+        },
+        {
+          "range": "21+ Years",
+          "count": 0
+        }
+      ]
+    },
+    {
       "company": "Reliance Industries Limited",
       "totalJobs": 88,
       "distribution": [
@@ -1725,46 +1759,12 @@
       ]
     },
     {
-      "company": "EXL",
+      "company": "Uplers",
       "totalJobs": 87,
       "distribution": [
         {
           "range": "0-3 Years",
-          "count": 6
-        },
-        {
-          "range": "4-6 Years",
-          "count": 27
-        },
-        {
-          "range": "7-9 Years",
-          "count": 11
-        },
-        {
-          "range": "10-12 Years",
-          "count": 4
-        },
-        {
-          "range": "13-16 Years",
-          "count": 1
-        },
-        {
-          "range": "17-20 Years",
-          "count": 1
-        },
-        {
-          "range": "21+ Years",
-          "count": 0
-        }
-      ]
-    },
-    {
-      "company": "Uplers",
-      "totalJobs": 86,
-      "distribution": [
-        {
-          "range": "0-3 Years",
-          "count": 29
+          "count": 30
         },
         {
           "range": "4-6 Years",
@@ -1794,11 +1794,11 @@
     },
     {
       "company": "AlgoSec",
-      "totalJobs": 85,
+      "totalJobs": 86,
       "distribution": [
         {
           "range": "0-3 Years",
-          "count": 32
+          "count": 33
         },
         {
           "range": "4-6 Years",
@@ -2264,5 +2264,5 @@
     "17-20 Years",
     "21+ Years"
   ],
-  "totalCount": 6290
+  "totalCount": 6319
 }
