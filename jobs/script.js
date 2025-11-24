@@ -872,7 +872,7 @@ function prepareRoleTypeChart(dataSet) {
 }
 
 /**
- * Prepares data for Tech vs Role by calculating the Top 5 technologies
+ * Prepares data for Tech vs Role by calculating the Top 10 technologies
  * @param {Object} roleDataMap - The 'techByRole' object (Role -> Array of Techs).
  */
 function prepareTechByRoleChart(roleDataMap) {
@@ -931,21 +931,21 @@ function prepareTechByRoleChart(roleDataMap) {
       const dataPoints = sortedRoles.map((role) => {
         const roleSpecificTechs = roleDataMap[role] || [];
 
-        // CRITICAL NEW PART: Pre-sort the role's tech stack and take Top 5
+        // CRITICAL NEW PART: Pre-sort the role's tech stack and take Top 10
         const topTechsInRole = roleSpecificTechs
           .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
+          .slice(0, 10);
 
         const found = topTechsInRole.find((t) => t.label === techName);
 
-        // Return the count if the tech is in the Top 5 for THIS role.
+        // Return the count if the tech is in the Top 10 for THIS role.
         const count = found ? found.count : 0;
 
         // Return the count if > 0
         return count > 0 ? count : "";
       });
 
-      // Only create a dataset if it has data in the Top 5 for at least one role
+      // Only create a dataset if it has data in the Top 10 for at least one role
       if (dataPoints.every((d) => d === "")) {
         return null;
       }
@@ -959,7 +959,7 @@ function prepareTechByRoleChart(roleDataMap) {
       };
     })
     .filter(Boolean);
-  // Remove null entries (techs that never made any role's Top 5)
+  // Remove null entries (techs that never made any role's Top 10)
 
   // Calculate dynamic height using the sorted roles
   const ITEM_HEIGHT = 250;
