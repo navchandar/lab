@@ -630,6 +630,114 @@ function getTextColor() {
   return isDarkMode ? "#EEEEEE" : "#333333";
 }
 
+/**
+ * Generates the specific Chart.js options based on the chart type.
+ * @param {string} chartType - 'bar', 'line', 'bubble', etc.
+ * @param {Object} config - Metadata needed for options (labels, yLabels, indexAxis, isStacked).
+ * @returns {Object} The Chart.js options object.
+ */
+function getChartOptions(chartType, config) {
+  const { labels, yLabels, indexAxis, isStacked } = config;
+  const commonTextColor = getTextColor();
+
+  // =========================================================
+  // OPTION SET A: BUBBLE CHART (MATRIX)
+  // =========================================================
+  if (chartType === "bubble") {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: commonTextColor } },
+        datalabels: { display: false }, // Hide numbers inside bubbles
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              const raw = context.raw;
+              return `${raw.x} - ${raw.y}: ${raw._rawCount} Jobs`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: {
+          type: "category",
+          labels: labels, // Explicitly map X labels
+          ticks: { color: commonTextColor },
+          grid: { display: false },
+        },
+        y: {
+          type: "category",
+          labels: yLabels, // Explicitly map Y labels
+          offset: true,
+          ticks: { color: commonTextColor },
+          grid: { color: "#44444422" },
+        },
+      },
+    };
+  }
+
+  // =========================================================
+  // OPTION SET B: STANDARD CHARTS (Bar, Line, Stacked)
+  // =========================================================
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: indexAxis,
+    plugins: {
+      legend: { labels: { color: commonTextColor } },
+      datalabels: {
+        color: function (context) {
+          const dataset = context.dataset;
+          const isLineChart = context.chart.config.type === "line";
+
+          if (isLineChart) {
+            let color =
+              dataset.pointBorderColor ||
+              dataset.pointBackgroundColor ||
+              dataset.borderColor;
+            if (Array.isArray(color)) {
+              color = color[context.dataIndex];
+            }
+            return getBorderColor(color || commonTextColor);
+          }
+
+          const colors = dataset.borderColor || dataset.backgroundColor;
+          let color = Array.isArray(colors)
+            ? colors[context.dataIndex]
+            : colors;
+          return getBorderColor(color || commonTextColor);
+        },
+        anchor: "end",
+        align: function (context) {
+          const cType = context.chart.config.type;
+          const iAxis = context.chart.options.indexAxis;
+          if (cType === "line") return "end";
+          return iAxis === "y" ? "right" : "top";
+        },
+        offset: 4,
+        font: { weight: "bold" },
+        formatter: (value) => value.toLocaleString(),
+      },
+    },
+    scales: {
+      x: {
+        stacked: isStacked,
+        beginAtZero: chartType === "bar",
+        ticks: { color: commonTextColor },
+      },
+      y: {
+        stacked: isStacked,
+        beginAtZero: true,
+        ticks: {
+          autoSkip: indexAxis !== "y",
+          color: commonTextColor,
+        },
+      },
+    },
+  };
+}
+
 // --- CHART RENDERING LOGIC ---
 /**
  * Renders the chart based on the selected analysis key.
@@ -652,6 +760,7 @@ function drawChart(key) {
 
   let chartProps;
   let chartType = "bar";
+  // Default type is bar, but individual functions can override it
 
   // --- Delegation Logic ---
   switch (key) {
@@ -663,7 +772,9 @@ function drawChart(key) {
       chartProps = prepareRoleTypeChart(dataSet);
       break;
     case "techVsRole":
-      chartProps = prepareTechByRoleChart(dataSet);
+      // chartProps = prepareTechByRoleChart(dataSet);
+      chartProps = prepareTechRoleBubbleChart(dataSet);
+      chartType = "bubble";
       break;
     case "companyVsExperience":
       chartProps = prepareStackedExperienceChart(
@@ -689,72 +800,23 @@ function drawChart(key) {
     indexAxis,
     isStacked,
     dynamicHeight,
+    yLabels,
   } = chartProps;
 
+  // Update DOM content and size
   descriptionElement.textContent = descriptionText;
   canvasElement.style.height = dynamicHeight;
   canvasElement.style.width = "100%";
 
-  // Change default options for ALL charts labels
-  Chart.defaults.set("plugins.datalabels", {
-    // 1. Dynamic Color Logic
-    color: function (context) {
-      const dataset = context.dataset;
-      const isLineChart = context.chart.config.type === "line";
-
-      // Line Chart Logic: Use the line's point border/background color
-      if (isLineChart) {
-        // Prioritize pointBorderColor, then pointBackgroundColor, then borderColor
-        let color =
-          dataset.pointBorderColor ||
-          dataset.pointBackgroundColor ||
-          dataset.borderColor;
-        if (Array.isArray(color)) {
-          color = color[context.dataIndex];
-        }
-        // Use getTextColor as a fallback
-        return getBorderColor(color || getTextColor());
-      }
-
-      // Bar Chart Logic: Use the dataset's border/background color
-      // This handles both single colors and arrays of colors for different bars
-      const colors = dataset.borderColor || dataset.backgroundColor;
-      let color = Array.isArray(colors) ? colors[context.dataIndex] : colors;
-
-      // Use your existing function to ensure color is opaque/readable
-      return getBorderColor(color || getTextColor());
-    },
-
-    // 2. Dynamic Positioning Logic
-    // Anchor point to the end of the element (bar tip or line point)
-    anchor: "end",
-    align: function (context) {
-      const chartType = context.chart.type;
-      const indexAxis = context.chart.options.indexAxis;
-      if (chartType === "line") {
-        // For line charts, 'end' aligns the label above the data point
-        return "end";
-      }
-      // For Bar Charts
-      if (indexAxis === "y") {
-        // Horizontal Bar: Align label to the right (end)
-        return "right";
-      } else {
-        // Vertical Bar: Align label to the top (end)
-        return "top";
-      }
-    },
-    // 3. Formatting and Offset
-    offset: 4,
-    font: {
-      weight: "bold",
-    },
-    formatter: function (value) {
-      return value.toLocaleString();
-    },
+  // --- OPTIONS GENERATION ---
+  const specificOptions = getChartOptions(chartType, {
+    labels,
+    yLabels,
+    indexAxis,
+    isStacked,
   });
 
-  // --- CHART INITIALIZATION ---
+  // --- FINAL CHART INSTANTIATION ---
   currentChartInstance = new Chart(ctx, {
     plugins: [ChartDataLabels],
     type: chartType,
@@ -762,33 +824,7 @@ function drawChart(key) {
       labels: labels,
       datasets: datasets,
     },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: { color: getTextColor() },
-        },
-      },
-      indexAxis: indexAxis,
-      scales: {
-        x: {
-          stacked: isStacked,
-          // Only beginAtZero for bar charts
-          beginAtZero: chartType === "bar" ? true : false,
-          ticks: { color: getTextColor() },
-        },
-        y: {
-          stacked: isStacked,
-          // Counts should always start at zero for clarity
-          beginAtZero: true,
-          ticks: {
-            autoSkip: indexAxis !== "y",
-            color: getTextColor(),
-          },
-        },
-      },
-    },
+    options: specificOptions,
   });
 }
 
@@ -973,6 +1009,86 @@ function prepareTechByRoleChart(roleDataMap) {
     // for sorting PER-ROLE, we need isStacked: true
     isStacked: false,
     dynamicHeight: `${requiredHeight}px`,
+  };
+}
+
+/**
+ * Prepares a Bubble Chart (Matrix) to visualize Tech Clusters.
+ * X-Axis: Roles
+ * Y-Axis: Technologies
+ * Bubble Size: Prevalence
+ */
+function prepareTechRoleBubbleChart(roleDataMap) {
+  const descriptionText =
+    "Tech Stack per role. Bubble size represents job count";
+
+  // 1. Sort Roles by total volume (so biggest roles are on the left)
+  const roleTotal = {};
+  Object.keys(roleDataMap).forEach((role) => {
+    roleTotal[role] = roleDataMap[role].reduce((sum, t) => sum + t.count, 0);
+  });
+  const sortedRoles = Object.keys(roleDataMap).sort(
+    (a, b) => roleTotal[b] - roleTotal[a]
+  );
+
+  // 2. Identify the "Significant" Techs across the board
+  // We don't want to list every single tech if it only appears once.
+  // Let's take the Top 15 techs from EVERY role and create a unique set.
+  const relevantTechs = new Set();
+  sortedRoles.forEach((role) => {
+    // Take top 15 from this role
+    roleDataMap[role]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+      .forEach((t) => relevantTechs.add(t.label));
+  });
+
+  // Convert to array and sort Alphabetically (or by Global popularity) for the Y-Axis
+  const yAxisLabels = Array.from(relevantTechs).sort();
+
+  // 3. Create Datasets
+  // In a Bubble chart, we can have one dataset per Role to keep the color coding consistent
+  const datasets = sortedRoles.map((role, index) => {
+    const colorSet = GEN_COLORS[index % GEN_COLORS.length];
+
+    // Create a bubble for every tech this role actually uses
+    const dataPoints = roleDataMap[role]
+      .filter((t) => relevantTechs.has(t.label)) // Only show if it's in our "relevant" list
+      .map((t) => {
+        // Scaling logic: Square root makes area proportional to value (better for human eye)
+        // We clamp the min size to 3px so it's visible, and scale relative to the max count.
+        const r_val = Math.max(3, Math.sqrt(t.count) * 1.5);
+
+        return {
+          x: role, // X-Axis Category
+          y: t.label, // Y-Axis Category
+          r: r_val, // Bubble Radius
+          _rawCount: t.count, // Store raw count for tooltip
+        };
+      });
+
+    return {
+      label: role,
+      data: dataPoints,
+      backgroundColor: colorSet.bg,
+      borderColor: getBorderColor(colorSet.bg),
+      borderWidth: 1,
+    };
+  });
+
+  // Calculate dynamic height based on number of Technologies (Y-axis)
+  // Give each Tech row about 30px of breathing room
+  const requiredHeight = yAxisLabels.length * 30 + 100;
+
+  return {
+    labels: sortedRoles, // This helps Chart.js set up the X axis
+    yLabels: yAxisLabels, // Pass this to options to set up Y axis manually
+    datasets: datasets,
+    descriptionText,
+    indexAxis: "x", // Standard orientation
+    isStacked: false,
+    dynamicHeight: `${requiredHeight}px`,
+    type: "bubble", // Explicitly return type for the switcher
   };
 }
 

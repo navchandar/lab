@@ -108,6 +108,7 @@ const TECH_KEYWORDS = {
   Confluence: [/confluence/i],
   PMP: [/\bpmp\b/i, /project management professional/i],
 };
+
 /**
  * Parses the experienceRequired string (e.g., "3 - 5", "21", "8+", "—")
  * and returns the average years of experience, or null if unparseable.
@@ -246,7 +247,7 @@ function aggregateCompanyVsExperience(jobs, topN = 20) {
 }
 
 /**
- *  Calculates jobs found per day and adds to historical data.
+ * Calculates jobs found per day and adds to historical data.
  * - Ignores counts for "Today" (incomplete day).
  * - Limits history to 5 years.
  * * @param {Array} currentJobs - The list of current jobs.
@@ -254,6 +255,8 @@ function aggregateCompanyVsExperience(jobs, topN = 20) {
  * @returns {Array} The updated history array sorted by date.
  */
 function updateDailyJobCounts(currentJobs, existingHistory = []) {
+  existingHistory = existingHistory || [];
+
   // 1. Aggregate counts from the current jobs list
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   const currentCounts = {};
@@ -279,10 +282,18 @@ function updateDailyJobCounts(currentJobs, existingHistory = []) {
 
   // 3. Merge job counts
   Object.keys(currentCounts).forEach((date) => {
-    historyMap.set(date, {
-      date: date,
-      count: currentCounts[date],
-    });
+    const newCount = currentCounts[date];
+    const existingEntry = historyMap.get(date);
+
+    // Update if:
+    // A) The date doesn't exist yet (New Data) OR
+    // B) The new count is higher than the old count
+    if (!existingEntry || newCount > existingEntry.count) {
+      historyMap.set(date, {
+        date: date,
+        count: newCount,
+      });
+    }
   });
 
   // 4. Convert back to array and sort by date (Ascending)
@@ -354,6 +365,7 @@ function aggregateTechByRole(jobs) {
 
   return formattedResult;
 }
+
 /** Calculate the compression ratio between json file and json.gz file */
 function getCompressionRatio(inputPath, outputPath) {
   try {
@@ -460,7 +472,7 @@ async function runAnalysis() {
     // Update Daily Job Counts History
     const dailyJobCounts = updateDailyJobCounts(
       jobs,
-      existingChartData.dailyJobCounts || []
+      existingChartData.dailyJobCounts
     );
 
     // Combine the results into a single object
