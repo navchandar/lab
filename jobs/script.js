@@ -652,9 +652,11 @@ function getChartOptions(chartType, config) {
         datalabels: { display: false }, // Hide numbers inside bubbles
         tooltip: {
           callbacks: {
+            // CUSTOM TOOLTIP using hidden props
             label: function (context) {
               const raw = context.raw;
-              return `${raw.x} - ${raw.y}: ${raw._rawCount} Jobs`;
+              // use _roleName and _techName because x/y are now just numbers
+              return `${raw._roleName} - ${raw._techName}: ${raw._rawCount} Jobs`;
             },
           },
         },
@@ -662,17 +664,24 @@ function getChartOptions(chartType, config) {
       scales: {
         x: {
           type: "category",
-          labels: labels, // Explicitly map X labels
+          labels: labels, // Maps Index 0 -> Role A, Index 1 -> Role B
+          offset: true,
           ticks: { color: commonTextColor },
           grid: { display: false },
         },
         y: {
           type: "category",
-          labels: yLabels, // Explicitly map Y labels
+          labels: yLabels, // Maps Index 0 -> Java, Index 1 -> Python
           offset: true,
           ticks: { color: commonTextColor },
-          grid: { color: "#44444422" },
+          grid: {
+            color: "#44444422",
+            tickLength: 0,
+          },
         },
+      },
+      layout: {
+        padding: 10,
       },
     };
   }
@@ -712,7 +721,9 @@ function getChartOptions(chartType, config) {
         align: function (context) {
           const cType = context.chart.config.type;
           const iAxis = context.chart.options.indexAxis;
-          if (cType === "line") return "end";
+          if (cType === "line") {
+            return "end";
+          }
           return iAxis === "y" ? "right" : "top";
         },
         offset: 4,
@@ -1021,8 +1032,7 @@ function prepareTechByRoleChart(roleDataMap) {
 function prepareTechRoleBubbleChart(roleDataMap) {
   const descriptionText =
     "Tech Stack per role. Bubble size represents job count";
-
-  // 1. Sort Roles by total volume (so biggest roles are on the left)
+  // 1. Sort Roles by highest count (X-Axis)
   const roleTotal = {};
   Object.keys(roleDataMap).forEach((role) => {
     roleTotal[role] = roleDataMap[role].reduce((sum, t) => sum + t.count, 0);
@@ -1031,39 +1041,43 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     (a, b) => roleTotal[b] - roleTotal[a]
   );
 
-  // 2. Identify the "Significant" Techs across the board
-  // We don't want to list every single tech if it only appears once.
-  // Let's take the Top 15 techs from EVERY role and create a unique set.
+  // 2. Identify Relevant Techs (Y-Axis)
   const relevantTechs = new Set();
   sortedRoles.forEach((role) => {
-    // Take top 15 from this role
     roleDataMap[role]
       .sort((a, b) => b.count - a.count)
       .slice(0, 15)
       .forEach((t) => relevantTechs.add(t.label));
   });
-
   // Convert to array and sort Alphabetically (or by Global popularity) for the Y-Axis
   const yAxisLabels = Array.from(relevantTechs).sort();
 
-  // 3. Create Datasets
-  // In a Bubble chart, we can have one dataset per Role to keep the color coding consistent
-  const datasets = sortedRoles.map((role, index) => {
-    const colorSet = GEN_COLORS[index % GEN_COLORS.length];
+  // --- CONFIGURATION ---
+  const ROW_HEIGHT = 60;
+  const MAX_RADIUS = ROW_HEIGHT / 2 - 4;
 
-    // Create a bubble for every tech this role actually uses
+  // 3. Create Datasets with INDEX MAPPING
+  const datasets = sortedRoles.map((role, roleIndex) => {
+    // roleIndex = X position
+    const colorSet = GEN_COLORS[roleIndex % GEN_COLORS.length];
+
     const dataPoints = roleDataMap[role]
-      .filter((t) => relevantTechs.has(t.label)) // Only show if it's in our "relevant" list
+      .filter((t) => relevantTechs.has(t.label))
       .map((t) => {
-        // Scaling logic: Square root makes area proportional to value (better for human eye)
-        // We clamp the min size to 3px so it's visible, and scale relative to the max count.
-        const r_val = Math.max(3, Math.sqrt(t.count) * 1.5);
+        // Find the specific integer index for this tech
+        const techIndex = yAxisLabels.indexOf(t.label); // techIndex = Y position
+
+        // Scaling logic
+        let rawRadius = Math.sqrt(t.count) * 2;
+        const r_val = Math.min(Math.max(3, rawRadius), MAX_RADIUS);
 
         return {
-          x: role, // X-Axis Category
-          y: t.label, // Y-Axis Category
-          r: r_val, // Bubble Radius
-          _rawCount: t.count, // Store raw count for tooltip
+          x: roleIndex, // <--- SEND NUMBER (0, 1, 2...)
+          y: techIndex, // <--- SEND NUMBER (0, 1, 2...)
+          r: r_val,
+          _rawCount: t.count,
+          _roleName: role, // Store string for Tooltip
+          _techName: t.label, // Store string for Tooltip
         };
       });
 
@@ -1076,19 +1090,17 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     };
   });
 
-  // Calculate dynamic height based on number of Technologies (Y-axis)
-  // Give each Tech row about 30px of breathing room
-  const requiredHeight = yAxisLabels.length * 30 + 100;
+  const requiredHeight = yAxisLabels.length * ROW_HEIGHT + 100;
 
   return {
-    labels: sortedRoles, // This helps Chart.js set up the X axis
-    yLabels: yAxisLabels, // Pass this to options to set up Y axis manually
+    labels: sortedRoles, // Needed for X-Axis text
+    yLabels: yAxisLabels, // Needed for Y-Axis text
     datasets: datasets,
     descriptionText,
-    indexAxis: "x", // Standard orientation
+    indexAxis: "x",
     isStacked: false,
     dynamicHeight: `${requiredHeight}px`,
-    type: "bubble", // Explicitly return type for the switcher
+    type: "bubble",
   };
 }
 
