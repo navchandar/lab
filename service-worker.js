@@ -1,4 +1,4 @@
-// version=v2025.11.24
+// version=v2025.11.25
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","smart-dom-inspector"];
 
@@ -62,13 +62,25 @@ const urlsToCache = [
   'static/icons/settings-open.svg',
   'static/icons/settings.svg',
   'static/images/buffalo_1.jpg',
+  'static/images/buffalo_2.jpg',
+  'static/images/buffalo_3.jpg',
+  'static/images/buffalo_4.jpg',
+  'static/images/buffalo_5.jpg',
   'static/images/camel_1.jpg',
+  'static/images/camel_2.jpg',
+  'static/images/camel_3.jpg',
+  'static/images/camel_4.jpg',
+  'static/images/camel_5.jpg',
   'static/images/cat_1.jpg',
   'static/images/cat_2.jpg',
   'static/images/cat_3.jpg',
   'static/images/cat_4.jpg',
   'static/images/cat_5.jpg',
   'static/images/chicken_1.jpg',
+  'static/images/chicken_2.jpg',
+  'static/images/chicken_3.jpg',
+  'static/images/chicken_4.jpg',
+  'static/images/chicken_5.jpg',
   'static/images/cow_1.jpg',
   'static/images/cow_2.jpg',
   'static/images/cow_3.jpg',
@@ -101,7 +113,15 @@ const urlsToCache = [
   'static/images/rabbit_4.jpg',
   'static/images/rabbit_5.jpg',
   'static/images/rooster_1.jpg',
-  'static/images/sheep_1.jpg',
+  'static/images/rooster_2.jpg',
+  'static/images/rooster_3.jpg',
+  'static/images/rooster_4.jpg',
+  'static/images/rooster_5.jpg',
+  'static/images/sheep_1.png',
+  'static/images/sheep_2.jpg',
+  'static/images/sheep_3.png',
+  'static/images/sheep_4.png',
+  'static/images/sheep_5.png',
   'static/settings.css',
   'static/speech_helper.js',
   'static/utils.js'
