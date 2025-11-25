@@ -1095,8 +1095,8 @@ function prepareTechRoleBubbleChart(roleDataMap) {
 
       // Push to the flat array
       allPoints.push({
-        x: roleIndex, // Integer X
-        y: techIndex, // Integer Y
+        x: role, // Integer X
+        y: t.label, // Integer Y
         r: r_val,
         _rawCount: t.count, // Hidden data for tooltip
         _roleName: role, // Hidden data for tooltip
