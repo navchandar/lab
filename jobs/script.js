@@ -670,11 +670,26 @@ function getChartOptions(chartType, config) {
       scales: {
         x: {
           type: "category",
-          labels: labels, // Maps Index 0 -> Role A
-          offset: true, // Centers the column
-          ticks: { color: commonTextColor },
+          labels: labels,
+          offset: true,
+          position: "bottom", // Default bottom axis
+          ticks: {
+            color: commonTextColor,
+          },
           grid: {
-            display: false, // No vertical grid lines
+            display: false,
+          },
+        },
+        xTop: {
+          type: "category",
+          labels: labels,
+          offset: true,
+          position: "top", // Display at top
+          ticks: {
+            color: commonTextColor,
+          },
+          grid: {
+            display: false,
           },
         },
         y: {
