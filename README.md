@@ -3,7 +3,7 @@
 
 This Repo for creative tools, experiments and interactive web apps for learning. 
 
-Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use.
+Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use and non-commercial use.
 
 ## 🚀 Project Index
 
