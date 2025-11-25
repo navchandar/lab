@@ -648,15 +648,21 @@ function getChartOptions(chartType, config) {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { labels: { color: commonTextColor } },
-        datalabels: { display: false }, // Hide numbers inside bubbles
+        // Legend is less useful here since we have one dataset,
+        // but the X-Axis labels explain the data clearly.
+        legend: {
+          display: false,
+          labels: { color: commonTextColor },
+        },
+        datalabels: { display: false },
         tooltip: {
+          displayColors: true,
           callbacks: {
-            // CUSTOM TOOLTIP using hidden props
+            // Use our hidden properties for the tooltip
+            title: () => null, // Hide title to clean up look
             label: function (context) {
               const raw = context.raw;
-              // use _roleName and _techName because x/y are now just numbers
-              return `${raw._roleName} - ${raw._techName}: ${raw._rawCount} Jobs`;
+              return `${raw._roleName} — ${raw._techName}: ${raw._rawCount} Jobs`;
             },
           },
         },
@@ -664,15 +670,17 @@ function getChartOptions(chartType, config) {
       scales: {
         x: {
           type: "category",
-          labels: labels, // Maps Index 0 -> Role A, Index 1 -> Role B
-          offset: true,
+          labels: labels, // Maps Index 0 -> Role A
+          offset: true, // Centers the column
           ticks: { color: commonTextColor },
-          grid: { display: false },
+          grid: {
+            display: false, // No vertical grid lines
+          },
         },
         y: {
           type: "category",
-          labels: yLabels, // Maps Index 0 -> Java, Index 1 -> Python
-          offset: true,
+          labels: yLabels, // Maps Index 0 -> Java
+          offset: true, // Centers the row
           ticks: { color: commonTextColor },
           grid: {
             color: "#44444422",
@@ -681,7 +689,12 @@ function getChartOptions(chartType, config) {
         },
       },
       layout: {
-        padding: 10,
+        padding: {
+          top: 10,
+          bottom: 10,
+          left: 10,
+          right: 10,
+        },
       },
     };
   }
@@ -1031,8 +1044,9 @@ function prepareTechByRoleChart(roleDataMap) {
  */
 function prepareTechRoleBubbleChart(roleDataMap) {
   const descriptionText =
-    "Tech Stack per role. Bubble size represents job count";
-  // 1. Sort Roles by highest count (X-Axis)
+    "Tech Stack Clusters: Bubble size represents job count.";
+
+  // 1. Sort Roles (X-Axis)
   const roleTotal = {};
   Object.keys(roleDataMap).forEach((role) => {
     roleTotal[role] = roleDataMap[role].reduce((sum, t) => sum + t.count, 0);
@@ -1042,6 +1056,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
   );
 
   // 2. Identify Relevant Techs (Y-Axis)
+  // We take the top 15 techs from *every* role to ensure the Y-axis has everything needed
   const relevantTechs = new Set();
   sortedRoles.forEach((role) => {
     roleDataMap[role]
@@ -1049,52 +1064,67 @@ function prepareTechRoleBubbleChart(roleDataMap) {
       .slice(0, 15)
       .forEach((t) => relevantTechs.add(t.label));
   });
-  // Convert to array and sort Alphabetically (or by Global popularity) for the Y-Axis
+  // Sort Y-Axis Alphabetically or by Popularity
   const yAxisLabels = Array.from(relevantTechs).sort();
 
   // --- CONFIGURATION ---
-  const ROW_HEIGHT = 60;
-  const MAX_RADIUS = ROW_HEIGHT / 2 - 4;
+  const ROW_HEIGHT = 50;
+  // Max radius is slightly less than half height to prevent overlap
+  const MAX_RADIUS = ROW_HEIGHT / 2 - 2;
 
-  // 3. Create Datasets with INDEX MAPPING
-  const datasets = sortedRoles.map((role, roleIndex) => {
-    // roleIndex = X position
+  // 3. FLATTEN DATA to create one giant array for all points
+  const allPoints = [];
+  const pointBackgroundColors = [];
+  const pointBorderColors = [];
+
+  sortedRoles.forEach((role, roleIndex) => {
     const colorSet = GEN_COLORS[roleIndex % GEN_COLORS.length];
 
-    const dataPoints = roleDataMap[role]
-      .filter((t) => relevantTechs.has(t.label))
-      .map((t) => {
-        // Find the specific integer index for this tech
-        const techIndex = yAxisLabels.indexOf(t.label); // techIndex = Y position
+    // Get valid techs for this role
+    const activeTechs = roleDataMap[role].filter((t) =>
+      relevantTechs.has(t.label)
+    );
 
-        // Scaling logic
-        let rawRadius = Math.sqrt(t.count) * 2;
-        const r_val = Math.min(Math.max(3, rawRadius), MAX_RADIUS);
+    activeTechs.forEach((t) => {
+      const techIndex = yAxisLabels.indexOf(t.label);
 
-        return {
-          x: roleIndex, // <--- SEND NUMBER (0, 1, 2...)
-          y: techIndex, // <--- SEND NUMBER (0, 1, 2...)
-          r: r_val,
-          _rawCount: t.count,
-          _roleName: role, // Store string for Tooltip
-          _techName: t.label, // Store string for Tooltip
-        };
+      // Scaling: Sqrt makes area proportional to count
+      let rawRadius = Math.sqrt(t.count) * 1.5;
+      // Clamp: Ensure it's at least 3px visible, and never larger than the row
+      const r_val = Math.min(Math.max(3, rawRadius), MAX_RADIUS);
+
+      // Push to the flat array
+      allPoints.push({
+        x: roleIndex, // Integer X
+        y: techIndex, // Integer Y
+        r: r_val,
+        _rawCount: t.count, // Hidden data for tooltip
+        _roleName: role, // Hidden data for tooltip
+        _techName: t.label, // Hidden data for tooltip
       });
 
-    return {
-      label: role,
-      data: dataPoints,
-      backgroundColor: colorSet.bg,
-      borderColor: getBorderColor(colorSet.bg),
-      borderWidth: 1,
-    };
+      // Assign colors specifically for this point (Bubble)
+      pointBackgroundColors.push(colorSet.bg);
+      pointBorderColors.push(getBorderColor(colorSet.bg));
+    });
   });
 
-  const requiredHeight = yAxisLabels.length * ROW_HEIGHT + 100;
+  // 4. Create Single Master Dataset
+  const datasets = [
+    {
+      label: "Tech Distribution",
+      data: allPoints,
+      backgroundColor: pointBackgroundColors,
+      borderColor: pointBorderColors,
+      borderWidth: 1,
+    },
+  ];
+
+  const requiredHeight = yAxisLabels.length * ROW_HEIGHT + 80;
 
   return {
-    labels: sortedRoles, // Needed for X-Axis text
-    yLabels: yAxisLabels, // Needed for Y-Axis text
+    labels: sortedRoles,
+    yLabels: yAxisLabels,
     datasets: datasets,
     descriptionText,
     indexAxis: "x",
