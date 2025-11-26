@@ -235,11 +235,11 @@ const REGEX_HEADER =
 
 // Regex 3: Written numbers
 const REGEX_WRITTEN =
-  /\b(?:at\s+least|minimum\s+of)?\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s+(?:experience|industry|related))/gi;
+  /\b(?:at\s+least|atleast|minimum\s+of)?\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\s+(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s+(?:experience|industry|related|as))/gi;
 
 // Regex 4: Simple "X+ years" without experience keyword
 const REGEX_SIMPLE_PLUS =
-  /\b(\d{1,2})\s*\+\s*(?:years?|yrs?|y)\b(?!\s*of\s*experience)/gi;
+  /\b\(?(\d{1,2})\)?\s*(\+|plus)\s*(?:overall?\syears?|total?\syears?|overall?|total?|year|years?|yrs?|y)\b(?!(\s*of\s*experience))/gi;
 
 // Regex 5: Match numbers in words
 const NUMBER_WORDS_RE = new RegExp(
@@ -247,10 +247,15 @@ const NUMBER_WORDS_RE = new RegExp(
   "gi"
 );
 
-const REGEX_EXP =
-  /^(Experience|Years of Experience|YoE|Years of Exp|Yrs of Exp|Overall)\s*[:-]?\s*/i;
+// Regex 6: Matches "Year of experience required" with messy separators/HTML
+const REGEX_REQ =
+  /(?:Year(?:s)?\s*of\s*)?experience\s*(?:required)?\s*[:\-—]\s*(?:&nbsp;|\s|\()*(\d{1,2})(?:\s*[-–to]\s*(\d{1,2})\)?\s*)?/gi;
 
-const REGEX_EXP_TO_PLUS = /(\d+)\s*(?:[-–to]\s*(\d+))?(\+)?/i;
+const REGEX_NUM =
+  /\b(?:at\s+least|atleast|minimum\s+of)?\s*(\d{1,2})(?:\s*|\-)?(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s*)?(?:experience|industry|related|as)/gi;
+
+const REGEX_EXP =
+  /^(Experience|Years of Experience|Year of experience|YoE|Years of Exp|Yrs of Exp|Overall)\s*[:-]?\s*/i;
 
 function wordToNumber(word) {
   return WORD_TO_NUM[word.toLowerCase()] ?? null;
@@ -265,9 +270,14 @@ function getExperience(jobTitle, jobDescription, jobId) {
   let fullText = jobTitle + " " + jobDescription;
 
   // Normalize whitespace
-  const desc = fullText.replace(/\s+/g, " ");
+  const desc = fullText
+    .replace(/&nbsp;/g, " ") // Turn &nbsp; into standard space
+    .replace(/[:\-]/g, " - ") // Standardize separators to " - "
+    .replace(/\s+/g, " "); // Collapse multiple spaces
 
   const matches = [
+    ...desc.matchAll(REGEX_REQ),
+    ...desc.matchAll(REGEX_NUM),
     ...desc.matchAll(REGEX_GENERAL),
     ...desc.matchAll(REGEX_HEADER),
     ...desc.matchAll(REGEX_SIMPLE_PLUS),
@@ -284,6 +294,7 @@ function getExperience(jobTitle, jobDescription, jobId) {
 
     // Convert written numbers to digits (three -> 3)
     cleaned = cleaned.replace(NUMBER_WORDS_RE, wordToNumber);
+    cleaned = cleaned.replace(/\(/, "").replace(/\)/, "");
 
     // Extract all numbers from the cleaned string
     const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
@@ -362,7 +373,7 @@ function normalizeExperience(experienceString) {
   // Regex to strictly capture "Num - Num" or "Num to Num" or "Num+"
   // Updated to be more robust with spacing and "to"
   const rangeRegex = /(\d+)\s*(?:[-–]|to)\s*(\d+)/i;
-  const plusRegex = /(\d+)\s*\+/;
+  const plusRegex = /(\d+)\s*(?:\+|plus)/;
   const simpleRegex = /(\d+)/;
 
   // 1. Try to match Range first
