@@ -580,9 +580,11 @@ function setupPaginationScrollListener() {
   });
 }
 
-/**
- * Destroys any existing Chart.js instance on the canvas.
- */
+// ==========================================
+// 1. STATE & UTILITIES
+// ==========================================
+
+/** Destroys existing Chart instance */
 function destroyCurrentChart() {
   if (currentChartInstance) {
     currentChartInstance.destroy();
@@ -609,6 +611,7 @@ async function loadChartData() {
   }
 }
 
+// Color Utilities
 function getBorderColor(bgColor) {
   if (bgColor.startsWith("rgba")) {
     // Replace the last number (the alpha channel) with 1
@@ -621,7 +624,6 @@ function getBorderColor(bgColor) {
 
 // Function to determine the best text color
 function getTextColor() {
-  // Check for dark mode preference
   const isDarkMode =
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -630,93 +632,17 @@ function getTextColor() {
   return isDarkMode ? "#EEEEEE" : "#333333";
 }
 
+// ==========================================
+// 2. CHART OPTION FACTORIES
+// ==========================================
+
 /**
- * Generates the specific Chart.js options based on the chart type.
- * @param {string} chartType - 'bar', 'line', 'bubble', etc.
- * @param {Object} config - Metadata needed for options (labels, yLabels, indexAxis, isStacked).
- * @returns {Object} The Chart.js options object.
+ * Generates options for standard Bar/Line charts.
  */
-function getChartOptions(chartType, config) {
-  const { labels, yLabels, indexAxis, isStacked } = config;
+function createStandardOptions(config) {
+  const { indexAxis = "x", isStacked = false, chartType = "bar" } = config;
   const commonTextColor = getTextColor();
 
-  // =========================================================
-  // OPTION SET A: BUBBLE CHART (MATRIX)
-  // =========================================================
-  if (chartType === "bubble") {
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        // Legend is less useful here since we have one dataset,
-        // but the X-Axis labels explain the data clearly.
-        legend: {
-          display: false,
-          labels: { color: commonTextColor },
-        },
-        datalabels: { display: false },
-        tooltip: {
-          displayColors: true,
-          callbacks: {
-            // Use our hidden properties for the tooltip
-            title: () => null, // Hide title to clean up look
-            label: function (context) {
-              const raw = context.raw;
-              return `${raw._roleName} — ${raw._techName}: ${raw._rawCount} Jobs`;
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          type: "category",
-          labels: labels,
-          offset: true,
-          position: "bottom", // Default bottom axis
-          ticks: {
-            color: commonTextColor,
-          },
-          grid: {
-            display: false,
-          },
-        },
-        xTop: {
-          type: "category",
-          labels: labels,
-          offset: true,
-          position: "top", // Display at top
-          ticks: {
-            color: commonTextColor,
-          },
-          grid: {
-            display: false,
-          },
-        },
-        y: {
-          type: "category",
-          labels: yLabels, // Maps Index 0 -> Java
-          offset: true, // Centers the row
-          ticks: { color: commonTextColor },
-          grid: {
-            color: "#44444422",
-            tickLength: 0,
-          },
-        },
-      },
-      layout: {
-        padding: {
-          top: 10,
-          bottom: 10,
-          left: 10,
-          right: 10,
-        },
-      },
-    };
-  }
-
-  // =========================================================
-  // OPTION SET B: STANDARD CHARTS (Bar, Line, Stacked)
-  // =========================================================
   return {
     responsive: true,
     maintainAspectRatio: false,
@@ -724,29 +650,24 @@ function getChartOptions(chartType, config) {
     plugins: {
       legend: { labels: { color: commonTextColor } },
       datalabels: {
-        color: function (context) {
+        color: (context) => {
+          // Logic for line chart points vs bar backgrounds
           const dataset = context.dataset;
-          const isLineChart = context.chart.config.type === "line";
-
-          if (isLineChart) {
-            let color =
-              dataset.pointBorderColor ||
-              dataset.pointBackgroundColor ||
-              dataset.borderColor;
-            if (Array.isArray(color)) {
-              color = color[context.dataIndex];
-            }
-            return getBorderColor(color || commonTextColor);
+          if (chartType === "line") {
+            const color = dataset.pointBorderColor || dataset.borderColor;
+            return getBorderColor(
+              Array.isArray(color)
+                ? color[context.dataIndex]
+                : color || commonTextColor
+            );
           }
-
-          const colors = dataset.borderColor || dataset.backgroundColor;
-          let color = Array.isArray(colors)
-            ? colors[context.dataIndex]
-            : colors;
+          const color = Array.isArray(dataset.backgroundColor)
+            ? dataset.backgroundColor[context.dataIndex]
+            : dataset.backgroundColor;
           return getBorderColor(color || commonTextColor);
         },
         anchor: "end",
-        align: function (context) {
+        align: (context) => {
           const cType = context.chart.config.type;
           const iAxis = context.chart.options.indexAxis;
           if (cType === "line") {
@@ -756,7 +677,7 @@ function getChartOptions(chartType, config) {
         },
         offset: 4,
         font: { weight: "bold" },
-        formatter: (value) => value.toLocaleString(),
+        formatter: (value) => (value > 0 ? value.toLocaleString() : ""),
       },
     },
     scales: {
@@ -777,12 +698,280 @@ function getChartOptions(chartType, config) {
   };
 }
 
-// --- CHART RENDERING LOGIC ---
 /**
- * Renders the chart based on the selected analysis key.
- * @param {string} key - The data key to use (e.g., 'byRoleType').
+ * Generates specific options for the Tech/Role Bubble Matrix.
  */
+function createBubbleOptions(labels, yLabels) {
+  const commonTextColor = getTextColor();
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      datalabels: { display: false },
+      tooltip: {
+        displayColors: true,
+        callbacks: {
+          title: () => null,
+          label: (context) => {
+            const raw = context.raw;
+            return `${raw._roleName} — ${raw._techName}: ${raw._rawCount} Jobs`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        type: "category",
+        labels: labels,
+        offset: true,
+        position: "bottom",
+        ticks: { color: commonTextColor },
+        grid: { display: false },
+      },
+      xTop: {
+        type: "category",
+        labels: labels,
+        offset: true,
+        position: "top",
+        ticks: { color: commonTextColor },
+        grid: { display: false },
+      },
+      y: {
+        type: "category",
+        labels: yLabels,
+        offset: true,
+        ticks: { color: commonTextColor },
+        grid: { color: "#44444422", tickLength: 0 },
+      },
+    },
+    layout: { padding: 10 },
+  };
+}
+
+// ==========================================
+// 3. DATA PREPARATION (TRANSFORMERS)
+// ==========================================
+
+function prepareSimpleHorizontalChart(key, dataSet) {
+  const labels = dataSet.map((item) => item.label);
+  const counts = dataSet.map((item) => item.count);
+
+  const descMap = {
+    byCompany: `Top ${dataSet.length} companies with the highest recent job posts.`,
+    byLocation: `Distribution of recent job posts across various locations.`,
+  };
+
+  const backgroundColors = counts.map(
+    (_, i) => GEN_COLORS[i % GEN_COLORS.length].bg
+  );
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Total Jobs",
+        data: counts,
+        backgroundColor: backgroundColors,
+        borderColor: backgroundColors.map(getBorderColor),
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  const height = dataSet.length * 40 + 100;
+
+  return {
+    type: "bar",
+    data: data,
+    options: createStandardOptions({ indexAxis: "y", isStacked: false }),
+    height: `${height}px`,
+    description: descMap[key] || "",
+  };
+}
+
+function prepareRoleTypeChart(dataSet) {
+  const labels = dataSet.map((item) => item.label);
+  const counts = dataSet.map((item) => item.count);
+
+  const backgroundColors = labels.map(
+    (label) => (ROLE_COLORS[label] || ROLE_COLORS["Default"]).bg
+  );
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Total Jobs",
+        data: counts,
+        backgroundColor: backgroundColors,
+        borderColor: backgroundColors.map(getBorderColor),
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  return {
+    type: "bar",
+    data: data,
+    options: createStandardOptions({ indexAxis: "x", isStacked: false }),
+    height: "400px",
+    description: "Distribution of recent job posts across different roles.",
+  };
+}
+
+/**
+ * Prepares data and settings for the stacked 'companyVsExperience' chart.
+ */
+function prepareStackedExperienceChart(dataSet, experienceRanges) {
+  // Safety check: Ensure ranges exist, otherwise chart will be empty
+  const ranges = experienceRanges || [];
+
+  const labels = dataSet.map((item) => item.company);
+
+  const datasets = ranges.map((rangeLabel, index) => {
+    // Safety check: Ensure GEN_COLORS exists and has length
+    const colorSet = GEN_COLORS[index % (GEN_COLORS.length || 1)];
+
+    return {
+      label: rangeLabel,
+      data: dataSet.map((c) => {
+        const dist = c.distribution || [];
+        const match = dist.find((d) => d.range === rangeLabel);
+        return match ? match.count : 0;
+      }),
+      backgroundColor: colorSet.bg,
+      borderColor: getBorderColor(colorSet.bg),
+      borderWidth: 1,
+    };
+  });
+
+  const ITEM_HEIGHT = 40;
+  const height = dataSet.length * ITEM_HEIGHT + 100;
+
+  return {
+    type: "bar",
+    data: { labels, datasets },
+    // Ensure indexAxis is 'y' for horizontal bars
+    options: createStandardOptions({ indexAxis: "y", isStacked: true }),
+    height: `${height}px`,
+    description: `Distribution of job experience requirements within the Top ${dataSet.length} companies.`,
+  };
+}
+
+function prepareDailyJobCountChart(dataSet) {
+  const labels = dataSet.map((item) =>
+    new Date(item.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })
+  );
+
+  const datasets = [
+    {
+      label: "Job Posts per day",
+      data: dataSet.map((item) => item.count),
+      backgroundColor: "rgba(54, 162, 235, 0.5)",
+      borderColor: "rgb(54, 162, 235)",
+      borderWidth: 2,
+      pointRadius: 5,
+      fill: true,
+      tension: 0.2,
+    },
+  ];
+
+  return {
+    type: "line",
+    data: { labels, datasets },
+    options: createStandardOptions({
+      indexAxis: "x",
+      isStacked: false,
+      chartType: "line",
+    }),
+    height: "400px",
+    description: "Daily trend of new job postings that were detected.",
+  };
+}
+
+function prepareTechRoleBubbleChart(roleDataMap) {
+  // 1. Sort Roles (X-Axis)
+  const roleTotal = {};
+  Object.keys(roleDataMap).forEach(
+    (r) => (roleTotal[r] = roleDataMap[r].reduce((s, t) => s + t.count, 0))
+  );
+  const sortedRoles = Object.keys(roleDataMap).sort(
+    (a, b) => roleTotal[b] - roleTotal[a]
+  );
+
+  // 2. Identify Relevant Techs (Y-Axis)
+  const relevantTechs = new Set();
+  sortedRoles.forEach((role) => {
+    roleDataMap[role]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 15)
+      .forEach((t) => relevantTechs.add(t.label));
+  });
+  const yAxisLabels = Array.from(relevantTechs).sort();
+
+  // 3. Build Points
+  const allPoints = [];
+  const pointBg = [];
+  const pointBorder = [];
+  const ROW_HEIGHT = 50;
+  const MAX_RADIUS = ROW_HEIGHT / 2 - 2;
+
+  sortedRoles.forEach((role, rIndex) => {
+    const colorSet = GEN_COLORS[rIndex % GEN_COLORS.length];
+    const activeTechs = roleDataMap[role].filter((t) =>
+      relevantTechs.has(t.label)
+    );
+
+    activeTechs.forEach((t) => {
+      let r_val = Math.min(Math.max(3, Math.sqrt(t.count) * 1.5), MAX_RADIUS);
+
+      allPoints.push({
+        x: role,
+        y: t.label,
+        r: r_val,
+        _rawCount: t.count,
+        _roleName: role,
+        _techName: t.label,
+      });
+      pointBg.push(colorSet.bg);
+      pointBorder.push(getBorderColor(colorSet.bg));
+    });
+  });
+
+  const height = yAxisLabels.length * ROW_HEIGHT + 80;
+
+  return {
+    type: "bubble",
+    data: {
+      labels: sortedRoles,
+      datasets: [
+        {
+          label: "Tech Distribution",
+          data: allPoints,
+          backgroundColor: pointBg,
+          borderColor: pointBorder,
+          borderWidth: 1,
+        },
+      ],
+    },
+    // We pass labels here so the option generator can set scales
+    options: createBubbleOptions(sortedRoles, yAxisLabels),
+    height: `${height}px`,
+    description: "Tech Stack Clusters: Bubble size represents job count.",
+  };
+}
+
+// ==========================================
+// 4. MAIN RENDERING LOGIC
+// ==========================================
+
 function drawChart(key) {
+  // Validate Data
   if (!globalChartData || !globalChartData[key]) {
     console.error(`Error: Data for key "${key}" not found.`);
     showToast(`Error: Failed to display Chart. "${key}" data not found.`);
@@ -797,510 +986,109 @@ function drawChart(key) {
   const descriptionElement = document.getElementById("chartDescription");
   const dataSet = globalChartData[key];
 
-  let chartProps;
-  let chartType = "bar";
-  // Default type is bar, but individual functions can override it
+  let chartConfig;
 
-  // --- Delegation Logic ---
+  // Delegate to specific preparer
   switch (key) {
     case "byCompany":
     case "byLocation":
-      chartProps = prepareSimpleHorizontalChart(key, dataSet);
+      chartConfig = prepareSimpleHorizontalChart(key, dataSet);
       break;
     case "byRoleType":
-      chartProps = prepareRoleTypeChart(dataSet);
-      break;
-    case "techVsRole":
-      // chartProps = prepareTechByRoleChart(dataSet);
-      chartProps = prepareTechRoleBubbleChart(dataSet);
-      chartType = "bubble";
+      chartConfig = prepareRoleTypeChart(dataSet);
       break;
     case "companyVsExperience":
-      chartProps = prepareStackedExperienceChart(
+      chartConfig = prepareStackedExperienceChart(
         dataSet,
         globalChartData.experienceRanges
       );
       break;
     case "dailyJobCounts":
-      chartProps = prepareDailyJobCountChart(dataSet);
-      chartType = "line";
+      chartConfig = prepareDailyJobCountChart(dataSet);
+      break;
+    case "techVsRole":
+      chartConfig = prepareTechRoleBubbleChart(dataSet);
       break;
     default:
       console.error(`Unknown chart key: ${key}`);
-      destroyCurrentChart();
       return;
   }
 
-  // --- Applying Prepared Properties ---
-  const {
-    labels,
-    datasets,
-    descriptionText,
-    indexAxis,
-    isStacked,
-    dynamicHeight,
-    yLabels,
-  } = chartProps;
-
-  // Update DOM content and size
-  descriptionElement.textContent = descriptionText;
-  canvasElement.style.height = dynamicHeight;
+  // Apply Config
+  descriptionElement.textContent = chartConfig.description;
+  canvasElement.style.height = chartConfig.height;
   canvasElement.style.width = "100%";
 
-  // --- OPTIONS GENERATION ---
-  const specificOptions = getChartOptions(chartType, {
-    labels,
-    yLabels,
-    indexAxis,
-    isStacked,
-  });
-
-  // --- FINAL CHART INSTANTIATION ---
+  // Render
   currentChartInstance = new Chart(ctx, {
     plugins: [ChartDataLabels],
-    type: chartType,
-    data: {
-      labels: labels,
-      datasets: datasets,
-    },
-    options: specificOptions,
+    type: chartConfig.type,
+    data: chartConfig.data,
+    options: chartConfig.options,
   });
 }
 
-// --- HELPER FUNCTIONS FOR CHART LOGIC ---
-/**
- * Prepares data and settings for simple count charts (byCompany, byLocation).
- */
-function prepareSimpleHorizontalChart(key, dataSet) {
-  const labels = dataSet.map((item) => item.label);
-  const counts = dataSet.map((item) => item.count);
-
-  let descriptionText = "";
-  if (key === "byCompany") {
-    descriptionText = `Top ${dataSet.length} companies with the highest recent job posts.`;
-  } else if (key === "byLocation") {
-    descriptionText = `Distribution of recent job posts across various locations.`;
-  }
-
-  // Color logic (using cycling palette)
-  const backgroundColors = counts.map(
-    (_, index) => GEN_COLORS[index % GEN_COLORS.length].bg
-  );
-  const borderColors = backgroundColors.map(getBorderColor);
-
-  const datasets = [
-    {
-      label: "Total Jobs",
-      data: counts,
-      backgroundColor: backgroundColors,
-      borderColor: borderColors,
-      borderWidth: 1,
-    },
-  ];
-
-  const ITEM_HEIGHT = 40;
-  const requiredHeight = dataSet.length * ITEM_HEIGHT + 100;
-
-  return {
-    labels,
-    datasets,
-    descriptionText,
-    indexAxis: "y",
-    isStacked: false,
-    dynamicHeight: `${requiredHeight}px`,
-  };
-}
-
-/**
- * Prepares data and settings for the simple vertical 'byRoleType' chart.
- */
-function prepareRoleTypeChart(dataSet) {
-  const labels = dataSet.map((item) => item.label);
-  const counts = dataSet.map((item) => item.count);
-
-  const descriptionText = `Distribution of recent job posts across different roles.`;
-
-  // Color logic (using semantic colors)
-  const backgroundColors = labels.map(
-    (label) => (ROLE_COLORS[label] || ROLE_COLORS["Default"]).bg
-  );
-  const borderColors = backgroundColors.map(getBorderColor);
-
-  const datasets = [
-    {
-      label: "Total Jobs",
-      data: counts,
-      backgroundColor: backgroundColors,
-      borderColor: borderColors,
-      borderWidth: 1,
-    },
-  ];
-
-  return {
-    labels,
-    datasets,
-    descriptionText,
-    indexAxis: "x",
-    isStacked: false,
-    dynamicHeight: "400px", // Fixed height for vertical
-  };
-}
-
-/**
- * Prepares data for Tech vs Role by calculating the Top 10 technologies
- * @param {Object} roleDataMap - The 'techByRole' object (Role -> Array of Techs).
- */
-function prepareTechByRoleChart(roleDataMap) {
-  const descriptionText =
-    "Prevalence of the Top Technologies among different roles.";
-
-  // 1. Calculate the total technology count for each role for sorting
-  const roleTotal = {};
-  Object.keys(roleDataMap).forEach((role) => {
-    roleTotal[role] = roleDataMap[role].reduce(
-      (sum, techItem) => sum + techItem.count,
-      0
-    );
-  });
-
-  // 2. Sort the Roles based on the total count (max count first)
-  const sortedRoles = Object.keys(roleDataMap).sort(
-    (roleA, roleB) => roleTotal[roleB] - roleTotal[roleA]
-  );
-
-  if (sortedRoles.length === 0) {
-    console.warn("No valid tech stack data found.");
-    return {
-      labels: [],
-      datasets: [],
-      descriptionText: "No data available.",
-      indexAxis: "y",
-      isStacked: false,
-      dynamicHeight: "300px",
-    };
-  }
-
-  // 3. Identify ALL technologies and calculate their GLOBAL total count
-  const globalTechCount = {};
-  Object.keys(roleDataMap).forEach((role) => {
-    roleDataMap[role].forEach((techItem) => {
-      globalTechCount[techItem.label] =
-        (globalTechCount[techItem.label] || 0) + techItem.count;
-    });
-  });
-
-  // 3b. Sort the unique tech labels based on their GLOBAL total count (DESC)
-  // This order will now determine the order of the datasets (bars within a role).
-  const uniqueTopTechLabels = Object.keys(globalTechCount).sort(
-    (techA, techB) => globalTechCount[techB] - globalTechCount[techA]
-  );
-
-  // --- Prepare Datasets ---
-
-  // 4. Create Datasets (One for each unique Top Tech)
-  const datasets = uniqueTopTechLabels
-    .map((techName, index) => {
-      const colorSet = GEN_COLORS[index % GEN_COLORS.length];
-
-      // Calculate data: For every *Sorted* Role, find the count of this specific Tech
-      const dataPoints = sortedRoles.map((role) => {
-        const roleSpecificTechs = roleDataMap[role] || [];
-
-        // CRITICAL NEW PART: Pre-sort the role's tech stack and take Top 10
-        const topTechsInRole = roleSpecificTechs
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 10);
-
-        const found = topTechsInRole.find((t) => t.label === techName);
-
-        // Return the count if the tech is in the Top 10 for THIS role.
-        const count = found ? found.count : 0;
-
-        // Return the count if > 0
-        return count > 0 ? count : "";
-      });
-
-      // Only create a dataset if it has data in the Top 10 for at least one role
-      if (dataPoints.every((d) => d === "")) {
-        return null;
-      }
-
-      return {
-        label: techName,
-        data: dataPoints,
-        backgroundColor: colorSet.bg,
-        borderColor: getBorderColor(colorSet.bg),
-        borderWidth: 1,
-      };
-    })
-    .filter(Boolean);
-  // Remove null entries (techs that never made any role's Top 10)
-
-  // Calculate dynamic height using the sorted roles
-  const ITEM_HEIGHT = 250;
-  const requiredHeight = sortedRoles.length * ITEM_HEIGHT + 150;
-
-  return {
-    labels: sortedRoles,
-    datasets: datasets,
-    descriptionText,
-    indexAxis: "y",
-    // for sorting PER-ROLE, we need isStacked: true
-    isStacked: false,
-    dynamicHeight: `${requiredHeight}px`,
-  };
-}
-
-/**
- * Prepares a Bubble Chart (Matrix) to visualize Tech Clusters.
- * X-Axis: Roles
- * Y-Axis: Technologies
- * Bubble Size: Prevalence
- */
-function prepareTechRoleBubbleChart(roleDataMap) {
-  const descriptionText =
-    "Tech Stack Clusters: Bubble size represents job count.";
-
-  // 1. Sort Roles (X-Axis)
-  const roleTotal = {};
-  Object.keys(roleDataMap).forEach((role) => {
-    roleTotal[role] = roleDataMap[role].reduce((sum, t) => sum + t.count, 0);
-  });
-  const sortedRoles = Object.keys(roleDataMap).sort(
-    (a, b) => roleTotal[b] - roleTotal[a]
-  );
-
-  // 2. Identify Relevant Techs (Y-Axis)
-  // We take the top 15 techs from *every* role to ensure the Y-axis has everything needed
-  const relevantTechs = new Set();
-  sortedRoles.forEach((role) => {
-    roleDataMap[role]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, 15)
-      .forEach((t) => relevantTechs.add(t.label));
-  });
-  // Sort Y-Axis Alphabetically or by Popularity
-  const yAxisLabels = Array.from(relevantTechs).sort();
-
-  // --- CONFIGURATION ---
-  const ROW_HEIGHT = 50;
-  // Max radius is slightly less than half height to prevent overlap
-  const MAX_RADIUS = ROW_HEIGHT / 2 - 2;
-
-  // 3. FLATTEN DATA to create one giant array for all points
-  const allPoints = [];
-  const pointBackgroundColors = [];
-  const pointBorderColors = [];
-
-  sortedRoles.forEach((role, roleIndex) => {
-    const colorSet = GEN_COLORS[roleIndex % GEN_COLORS.length];
-
-    // Get valid techs for this role
-    const activeTechs = roleDataMap[role].filter((t) =>
-      relevantTechs.has(t.label)
-    );
-
-    activeTechs.forEach((t) => {
-      const techIndex = yAxisLabels.indexOf(t.label);
-
-      // Scaling: Sqrt makes area proportional to count
-      let rawRadius = Math.sqrt(t.count) * 1.5;
-      // Clamp: Ensure it's at least 3px visible, and never larger than the row
-      const r_val = Math.min(Math.max(3, rawRadius), MAX_RADIUS);
-
-      // Push to the flat array
-      allPoints.push({
-        x: role, // Integer X
-        y: t.label, // Integer Y
-        r: r_val,
-        _rawCount: t.count, // Hidden data for tooltip
-        _roleName: role, // Hidden data for tooltip
-        _techName: t.label, // Hidden data for tooltip
-      });
-
-      // Assign colors specifically for this point (Bubble)
-      pointBackgroundColors.push(colorSet.bg);
-      pointBorderColors.push(getBorderColor(colorSet.bg));
-    });
-  });
-
-  // 4. Create Single Master Dataset
-  const datasets = [
-    {
-      label: "Tech Distribution",
-      data: allPoints,
-      backgroundColor: pointBackgroundColors,
-      borderColor: pointBorderColors,
-      borderWidth: 1,
-    },
-  ];
-
-  const requiredHeight = yAxisLabels.length * ROW_HEIGHT + 80;
-
-  return {
-    labels: sortedRoles,
-    yLabels: yAxisLabels,
-    datasets: datasets,
-    descriptionText,
-    indexAxis: "x",
-    isStacked: false,
-    dynamicHeight: `${requiredHeight}px`,
-    type: "bubble",
-  };
-}
-
-/**
- * Prepares data and settings for the stacked 'companyVsExperience' chart.
- */
-function prepareStackedExperienceChart(dataSet, experienceRanges) {
-  const descriptionText = `Distribution of job experience requirements within the Top ${dataSet.length} companies.`;
-  const labels = dataSet.map((item) => item.company);
-
-  // Prepare Datasets (one dataset for each experience range)
-  const datasets = experienceRanges.map((rangeLabel, rangeIndex) => {
-    const colorSet = GEN_COLORS[rangeIndex % GEN_COLORS.length];
-    const backgroundColor = colorSet.bg;
-    const borderColor = getBorderColor(backgroundColor);
-
-    return {
-      label: rangeLabel,
-      data: dataSet.map((companyData) => {
-        const rangeItem = companyData.distribution.find(
-          (d) => d.range === rangeLabel
-        );
-        return rangeItem ? rangeItem.count : 0;
-      }),
-      backgroundColor: backgroundColor,
-      borderColor: borderColor,
-      borderWidth: 1,
-    };
-  });
-
-  const ITEM_HEIGHT = 40;
-  const requiredHeight = dataSet.length * ITEM_HEIGHT + 100;
-
-  return {
-    labels,
-    datasets,
-    descriptionText,
-    indexAxis: "y",
-    isStacked: true,
-    dynamicHeight: `${requiredHeight}px`,
-  };
-}
-
-/**
- * Prepares data and settings for the daily job counts line chart.
- * @param {Array<Object>} dataSet - The dailyJobCounts array.
- */
-function prepareDailyJobCountChart(dataSet) {
-  const descriptionText = `Daily trend of new job postings over time.`;
-
-  // Format dates: "YYYY-MM-DD" to a shorter, readable format like "Nov 19"
-  const labels = dataSet.map((item) => {
-    // Assuming item.date is a valid date string like 'YYYY-MM-DD'
-    const date = new Date(item.date);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-  });
-
-  const counts = dataSet.map((item) => item.count);
-
-  const datasets = [
-    {
-      label: "Job Posts per day",
-      data: counts,
-      backgroundColor: "rgba(54, 162, 235, 0.5)", // Light blue fill
-      borderColor: "rgb(54, 162, 235)", // Blue line
-      borderWidth: 2,
-      pointRadius: 5,
-      pointHoverRadius: 8,
-      fill: true, // Fill the area under the line
-      tension: 0.2, // Smooths the line
-    },
-  ];
-
-  return {
-    labels,
-    datasets,
-    descriptionText,
-    indexAxis: "x",
-    isStacked: false,
-    dynamicHeight: "400px",
-  };
-}
+// ==========================================
+// 5. VIEW CONTROLLER
+// ==========================================
 
 async function renderCharts() {
-  const toggleButton = document.getElementById("toggleView");
-  const tableView = document.querySelector(".table-container");
-  const tableWrap = document.getElementById("jobTable_wrapper");
-  const chartView = document.getElementById("chart-view");
-  const filters = document.getElementById("filters");
-  const chartSelector = document.getElementById("chartSelector");
-  const closeChartBtn = document.getElementById("closeChartView");
+  const elements = {
+    toggleBtn: document.getElementById("toggleView"),
+    tableView: document.querySelector(".table-container"),
+    tableWrap: document.getElementById("jobTable_wrapper"),
+    chartView: document.getElementById("chart-view"),
+    filters: document.getElementById("filters"),
+    selector: document.getElementById("chartSelector"),
+    closeBtn: document.getElementById("closeChartView"),
+  };
 
-  // Add event listener for chart selection change
-  chartSelector.addEventListener("change", (e) => {
+  // Selector Change
+  elements.selector.addEventListener("change", (e) => {
     if (chartLoadStatus === "loaded") {
       drawChart(e.target.value);
     }
   });
 
-  // Function to handle the actual view toggling
+  // Toggle Logic
   async function toggleView(switchToCharts) {
-    // Removed pushHistory argument
     if (switchToCharts) {
-      // --- Switching to Chart View ---
-      tableView.style.display = "none";
-      tableWrap.style.display = "none";
-      filters.style.display = "none";
-      chartView.style.display = "block";
-      toggleButton.textContent = "Display Job Listings";
+      elements.tableView.style.display = "none";
+      elements.tableWrap.style.display = "none";
+      elements.filters.style.display = "none";
+      elements.chartView.style.display = "block";
+      elements.toggleBtn.textContent = "Display Job Listings";
 
       if (chartLoadStatus === "unloaded") {
         await loadChartData();
       }
-
       if (chartLoadStatus === "loaded") {
-        drawChart(chartSelector.value);
+        drawChart(elements.selector.value);
       }
     } else {
       // --- Switching back to Table View ---
-      tableView.style.display = "block";
-      tableWrap.style.display = "block";
-      filters.style.display = "flex";
-      chartView.style.display = "none";
-      toggleButton.textContent = "Display Charts";
-
+      elements.tableView.style.display = "block";
+      elements.tableWrap.style.display = "block";
+      elements.filters.style.display = "flex";
+      elements.chartView.style.display = "none";
+      elements.toggleBtn.textContent = "Display Charts";
       destroyCurrentChart();
     }
   }
 
-  // Add event listener for the toggle button
-  toggleButton.addEventListener("click", async (e) => {
+  // Event Listeners
+  elements.toggleBtn.addEventListener("click", (e) => {
     e.preventDefault();
-    const isTableViewActive =
-      tableView.style.display !== "none" || tableWrap.style.display !== "none";
-
-    // Change the URL Hash (This triggers the 'hashchange' event below)
-    if (isTableViewActive) {
-      window.location.hash = "charts";
-    } else {
-      window.location.hash = ""; // Clear hash for table view
-    }
-    // Note: The 'hashchange' listener handles toggleView.
+    const isTableActive = elements.tableView.style.display !== "none";
+    window.location.hash = isTableActive ? "charts" : "";
   });
 
-  if (closeChartBtn) {
-    closeChartBtn.addEventListener("click", (e) => {
+  if (elements.closeBtn) {
+    elements.closeBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      // Triggers hashchange listener to switch view
       window.location.hash = "";
     });
   }
-
   // Expose toggleView on the window for external use
   window.toggleView = toggleView;
 }
