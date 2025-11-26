@@ -260,9 +260,12 @@ function getExperience(jobTitle, jobDescription, jobId) {
   if (!jobDescription) {
     return null;
   }
-  jobDescription = jobTitle + " " + jobDescription;
-  // Normalize whitespace and remove newlines
-  const desc = norm(jobDescription).replace(/\s+/g, " ");
+
+  // Combine title and description
+  let fullText = jobTitle + " " + jobDescription;
+
+  // Normalize whitespace
+  const desc = fullText.replace(/\s+/g, " ");
 
   const matches = [
     ...desc.matchAll(REGEX_GENERAL),
@@ -271,53 +274,77 @@ function getExperience(jobTitle, jobDescription, jobId) {
     ...desc.matchAll(REGEX_WRITTEN),
   ];
 
-  const requirements = new Set();
   let bestMatch = null;
   let bestScore = 0;
+  let bestIsRange = false;
 
   for (const match of matches) {
     let raw = match[0];
     let cleaned = raw.replace(/\s+/g, " ").trim();
 
-    // Convert written numbers to digits
+    // Convert written numbers to digits (three -> 3)
     cleaned = cleaned.replace(NUMBER_WORDS_RE, wordToNumber);
 
+    // Extract all numbers from the cleaned string
     const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
       parseInt(m[0], 10)
     );
+
     if (numMatches.length === 0) {
       continue;
     }
 
+    // Determine if this specific match is a range
+    // We check for "to", "-", or multiple numbers which implies a range context
     const hasRange =
-      cleaned.includes("-") || cleaned.includes("–") || cleaned.includes("to");
-    const hasPlus = cleaned.includes("+");
+      (cleaned.includes("-") ||
+        cleaned.includes("–") ||
+        /\bto\b/i.test(cleaned)) &&
+      numMatches.length > 1;
 
-    let score = 0;
-    if (hasRange && numMatches.length > 1) {
-      score = numMatches[1]; // upper bound
-    } else if (hasPlus) {
-      score = numMatches[0] + 0.5; // prioritize plus slightly
+    // Calculate a score for comparison (usually the max years)
+    let currentScore = 0;
+    if (numMatches.length > 1) {
+      // For ranges (3-5), take the upper bound (5) as the score intensity
+      currentScore = Math.max(...numMatches);
     } else {
-      score = numMatches[0];
+      currentScore = numMatches[0];
     }
 
-    if (score > bestScore && score < 30) {
-      bestScore = score;
+    // Filter out unrealistic yrs of exp
+    if (currentScore >= 30) {
+      continue;
+    }
+
+    // --- SELECTION LOGIC ---
+    let shouldUpdate = false;
+
+    if (bestMatch === null) {
+      // First valid match found
+      shouldUpdate = true;
+    } else if (hasRange && !bestIsRange) {
+      // PRIORITY RULE: Always prefer a Range over a non-range
+      // (even if the non-range score is higher, e.g., "3-5" beats "5")
+      shouldUpdate = true;
+    } else if (hasRange === bestIsRange) {
+      // If both are ranges (or both are single numbers), pick the higher value
+      if (currentScore > bestScore) {
+        shouldUpdate = true;
+      }
+    }
+
+    if (shouldUpdate) {
+      bestScore = currentScore;
       bestMatch = cleaned;
+      bestIsRange = hasRange;
     }
   }
 
   if (bestMatch) {
-    console.log(`Job: ${jobId}`);
-    console.log(" Experiences found:", [...requirements]);
-    console.log(" Best Match:", bestMatch);
-    const normYOE = normalizeExperience(bestMatch);
-    console.log(" Normalized Experience:", normYOE);
-    return normYOE;
+    // console.log(`Job: ${jobId} | Match: "${bestMatch}" | IsRange: ${bestIsRange}`);
+    return normalizeExperience(bestMatch);
   }
 
-  console.log(`Job: ${jobId} - No valid experience found`);
   return null;
 }
 
@@ -326,25 +353,39 @@ function normalizeExperience(experienceString) {
     return "";
   }
 
+  // clean up prefixes like "Years of Experience:"
   let cleanedString = experienceString.replace(REGEX_EXP, "").trim();
+
+  // ensure numbers are digits
   cleanedString = cleanedString.replace(NUMBER_WORDS_RE, wordToNumber);
-  const match = cleanedString.match(REGEX_EXP_TO_PLUS);
-  if (match) {
-    const firstNum = parseInt(match[1], 10);
-    const secondNum = match[2] ? parseInt(match[2], 10) : null;
-    const plusSign = match[3];
-    if (secondNum) {
-      // Reconstruct as "X - Y"
-      return `${firstNum} - ${secondNum}`;
-    }
-    if (plusSign) {
-      // Reconstruct as "X+"
-      return `${firstNum}+`;
-    }
-    // or return just a single number
-    return `${firstNum}`;
+
+  // Regex to strictly capture "Num - Num" or "Num to Num" or "Num+"
+  // Updated to be more robust with spacing and "to"
+  const rangeRegex = /(\d+)\s*(?:[-–]|to)\s*(\d+)/i;
+  const plusRegex = /(\d+)\s*\+/;
+  const simpleRegex = /(\d+)/;
+
+  // 1. Try to match Range first
+  const rangeMatch = cleanedString.match(rangeRegex);
+  if (rangeMatch) {
+    const min = parseInt(rangeMatch[1], 10);
+    const max = parseInt(rangeMatch[2], 10);
+    // Ensure logical order (e.g., 3-5, not 5-3)
+    return min < max ? `${min} - ${max}` : `${max} - ${min}`;
   }
-  // Fallback if no expected pattern is found
+
+  // 2. Try to match Plus
+  const plusMatch = cleanedString.match(plusRegex);
+  if (plusMatch) {
+    return `${plusMatch[1]}+`;
+  }
+
+  // 3. Fallback to single number
+  const simpleMatch = cleanedString.match(simpleRegex);
+  if (simpleMatch) {
+    return `${simpleMatch[1]}`;
+  }
+
   return "";
 }
 
