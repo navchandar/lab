@@ -252,7 +252,7 @@ const REGEX_REQ =
   /(?:Year(?:s)?\s*of\s*)?experience\s*(?:required)?\s*[:\-—]\s*(?:&nbsp;|\s|\()*(\d{1,2})(?:\s*[-–to]\s*(\d{1,2})\)?\s*)?/gi;
 
 const REGEX_NUM =
-  /\b(?:at\s+least|atleast|minimum\s+of)?\s*(\d{1,2})(?:\s*|\-)?(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s*)?(?:experience|industry|related|as)/gi;
+  /\b(?:at\s+least|atleast|minimum\s+of)?\s*(\d{1,2})(?:\s*|-—)?(?:or\s+more\s+)?(?:years?|yrs?|y)\s+(?:of\s*)?(?:experience|industry|related|as)/gi;
 
 const REGEX_EXP =
   /^(Experience|Years of Experience|Year of experience|YoE|Years of Exp|Yrs of Exp|Overall)\s*[:-]?\s*/i;
@@ -272,7 +272,7 @@ function getExperience(jobTitle, jobDescription, jobId) {
   // Normalize whitespace
   const desc = fullText
     .replace(/&nbsp;/g, " ") // Turn &nbsp; into standard space
-    .replace(/[:\-]/g, " - ") // Standardize separators to " - "
+    .replace(/[:-—]/g, " - ") // Standardize separators to " - "
     .replace(/\s+/g, " "); // Collapse multiple spaces
 
   const matches = [
