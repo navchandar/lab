@@ -33,6 +33,14 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <div class="page-loader-container">
+      <div
+        class="page-loader-progress"
+        id="pageProgress"
+        style="width: 0%;"
+      ></div>
+    </div>
+
     <header>
       <h1>Job Listings</h1>
     </header>
@@ -67,11 +75,7 @@
         <div id="loadingSpinner" style="display: flex;">
           <div class="spinner"></div>
         </div>
-        <table
-          id="jobTable"
-          class="display"
-          style="width: 100%;"
-        >
+        <table id="jobTable" class="display" style="width: 100%;">
           <thead>
             <tr>
               <th>Job Title</th>

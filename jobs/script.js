@@ -83,6 +83,7 @@ function updateDownloadProgress(percentage) {
     } else {
       lastMod.textContent = `Loading Jobs Data: ${roundedPercentage}%`;
     }
+    updateProgressBar(roundedPercentage);
   }
 }
 
@@ -390,6 +391,27 @@ function hideSpinner() {
       row.style.setProperty("display", "flex", "important");
     }, 500 + baseDelay * (2 + index));
   });
+}
+
+// Function to update the progress bar width
+function updateProgressBar(percentage) {
+  const progressBar = document.getElementById("pageProgress");
+  if (progressBar) {
+    progressBar.style.width = percentage + "%";
+    if (percentage < 100) {
+      progressBar.parentElement.style.opacity = 1;
+    }
+
+    // Hide the bar when loading is complete
+    if (percentage >= 100) {
+      setTimeout(() => {
+        progressBar.parentElement.style.opacity = 0;
+        setTimeout(() => {
+          progressBar.style.width = 0;
+        }, 2000);
+      }, 3000);
+    }
+  }
 }
 
 // --- Utility: Fetch with Error Handling ---
