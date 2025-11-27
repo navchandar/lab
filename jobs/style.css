@@ -606,14 +606,14 @@ grammarly-extension,
     /* Background color for the unfilled part */
     width: 100%;
     max-width: 100% !important;
-    height: 3px;
+    height: 4px;
     /* Thin line height */
     overflow: hidden;
 }
 
 .page-loader-progress {
     animation: stripes 5s linear infinite;
-    transition: width 0.5s ease-out, opacity 2s ease-out;
+    transition: width 1s ease-out, opacity 2s ease-out;
     background: linear-gradient(90deg,
             #ff5733,
             /* Red */
@@ -626,6 +626,7 @@ grammarly-extension,
             #a833ff
             /* Purple */
         );
+    background-size: 200% 100%;
     width: 0%;
     max-width: 100% !important;
     height: 100%;
@@ -634,11 +635,11 @@ grammarly-extension,
 /*Add a subtle moving stripe overlay effect */
 @keyframes stripes {
     0% {
-        background-position: 0 0;
+        background-position: 100% 0;
     }
 
     100% {
-        background-position: 100em 0;
+        background-position: 0 0;
     }
 }
 

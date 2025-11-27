@@ -396,21 +396,27 @@ function hideSpinner() {
 // Function to update the progress bar width
 function updateProgressBar(percentage) {
   const progressBar = document.getElementById("pageProgress");
-  if (progressBar) {
+  if (!progressBar) {
+    return;
+  }
+  const currentWidth = parseFloat(progressBar.style.width) || 0;
+  if (currentWidth !== percentage) {
     progressBar.style.width = percentage + "%";
-    if (percentage < 100) {
-      progressBar.parentElement.style.opacity = 1;
-    }
+  }
 
-    // Hide the bar when loading is complete
-    if (percentage >= 100) {
+  const container = progressBar.parentElement;
+  if (percentage < 100) {
+    container.style.opacity = "1";
+  }
+
+  // Hide the bar when loading is complete
+  if (percentage >= 100) {
+    setTimeout(() => {
+      container.style.opacity = "0";
       setTimeout(() => {
-        progressBar.parentElement.style.opacity = 0;
-        setTimeout(() => {
-          progressBar.style.width = 0;
-        }, 2000);
-      }, 3000);
-    }
+        progressBar.style.width = "0%";
+      }, 2000);
+    }, 3000);
   }
 }
 
