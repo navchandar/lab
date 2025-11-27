@@ -83,7 +83,12 @@ function updateDownloadProgress(percentage) {
     } else {
       lastMod.textContent = `Loading Jobs Data: ${roundedPercentage}%`;
     }
-    updateProgressBar(roundedPercentage);
+    if (roundedPercentage >= 95) {
+      updateProgressBar(95);
+      setTimeout(() => updateProgressBar(100), 500);
+    } else {
+      updateProgressBar(roundedPercentage);
+    }
   }
 }
 
@@ -393,75 +398,30 @@ function hideSpinner() {
   });
 }
 
-let currentVisualWidth = 0; // Where the bar IS
-let targetWidth = 0; // Where the bar WANTS to be
-let animationFrameId; // To manage the animation loop
-
 // Function to update the progress bar width
 function updateProgressBar(percentage) {
   const progressBar = document.getElementById("pageProgress");
   const container = progressBar ? progressBar.parentElement : null;
-
   if (!progressBar || !container) {
     return;
   }
+  const currentWidth = parseFloat(progressBar.style.width) || 0;
+  if (currentWidth !== percentage) {
+    progressBar.style.width = percentage + "%";
+  }
 
-  // 1. Update the TARGET, not the style directly
-  targetWidth = percentage;
-
-  // 2. Ensure container is visible if loading started
-  if (targetWidth > 0 && targetWidth < 100) {
+  if (percentage > 0 && percentage < 100) {
     container.style.opacity = "1";
   }
 
-  // 3. Start the smoothing loop if it's not running
-  if (!animationFrameId) {
-    animateBar();
-  }
-
-  // Internal function to smooth the movement
-  function animateBar() {
-    // Calculate distance to target
-    let diff = targetWidth - currentVisualWidth;
-
-    // If we are close enough, just snap to the target to stop the loop
-    if (Math.abs(diff) < 0.5) {
-      currentVisualWidth = targetWidth;
-      progressBar.style.width = currentVisualWidth + "%";
-
-      // Stop the loop
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-
-      // Handle the "Finished" state inside the loop
-      checkIfComplete();
-      return;
-    }
-
-    // Move 10% of the remaining distance per frame (Ease-out effect)
-    // This makes it fast at first, then slows down as it reaches the target
-    currentVisualWidth += diff * 0.1;
-
-    // Apply width
-    progressBar.style.width = currentVisualWidth + "%";
-
-    // Keep looping
-    animationFrameId = requestAnimationFrame(animateBar);
-  }
-
-  function checkIfComplete() {
-    if (currentVisualWidth >= 99.5) {
-      // Treat ~100 as done
+  // Hide the bar when loading is complete
+  if (percentage >= 100) {
+    setTimeout(() => {
+      container.style.opacity = "0";
       setTimeout(() => {
-        container.style.opacity = "0";
-        setTimeout(() => {
-          // Reset for next time
-          progressBar.style.width = "0%";
-          currentVisualWidth = 0;
-          targetWidth = 0;
-        }, 2000); // Wait for fade out
-      }, 500); // Short delay at 100% before fading
-    }
+        progressBar.style.width = "0%";
+      }, 2000);
+    }, 3000);
   }
 }
 
@@ -519,6 +479,8 @@ async function fetchWithProgressAndDecompress(url, isGzip) {
 
   // This promise runs asynchronously to update the UI while the other stream processes the data.
   const progressPromise = (async () => {
+    let lastUpdate = 0;
+
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await progressReader.read();
@@ -532,9 +494,11 @@ async function fetchWithProgressAndDecompress(url, isGzip) {
       }
       // 'value' here is a chunk of the *compressed* data.
       loaded += value.length;
-      if (totalSize) {
+      const now = Date.now();
+      if (totalSize && now - lastUpdate > 100) {
         const percentage = Math.min((loaded / totalSize) * 100, 100);
         updateDownloadProgress(percentage);
+        lastUpdate = now;
       }
     }
   })();
