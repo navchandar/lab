@@ -250,35 +250,97 @@ function getRelativeTimeDisplay(gmtDateString) {
   }
 }
 
+// --- Toast Notification State ---
+let toastTimer = null;
+let activeInteractionHandler = null;
+
+function cleanToastListener() {
+  if (activeInteractionHandler) {
+    document.removeEventListener("click", activeInteractionHandler);
+    document.removeEventListener("keydown", activeInteractionHandler);
+    activeInteractionHandler = null;
+  }
+}
+
+function toastInteractionListener() {
+  console.log("User interaction detected. Closing toast in 10s...");
+
+  // Start the countdown
+  toastTimer = setTimeout(() => {
+    const toast = document.getElementById("ip-toast");
+    toast.classList.remove("show");
+  }, 10000); // 10 seconds
+
+  // Stop listening now that the user has interacted once
+  cleanToastListener();
+}
+
 function showToast(message_text) {
   const toast = document.getElementById("ip-toast");
   const message = document.getElementById("ip-toast-message");
   const closeBtn = document.getElementById("ip-toast-close");
+
+  // DOM elements check
+  if (!toast || !message || !closeBtn) {
+    return;
+  }
+
   try {
-    // Update message and show toast
     toast.classList.remove("show");
+    // 1. Reset: Clear existing timers and listeners
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+    }
+    cleanToastListener();
+
+    // 2. Display: Update content and show
     message.textContent = `${message_text}`;
-    console.log(message_text);
     toast.classList.add("show");
 
-    // Manual close
+    // 3. Manual Close Logic
     closeBtn.onclick = () => {
       toast.classList.remove("show");
+      cleanToastListener();
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+      }
     };
+
+    activeInteractionHandler = toastInteractionListener;
+
+    // 4. Attach Listener
+    setTimeout(() => {
+      document.addEventListener("click", activeInteractionHandler);
+      document.addEventListener("keydown", activeInteractionHandler);
+    }, 100);
   } catch (error) {
-    console.error(error);
+    console.error("Toast Error:", error);
   }
 }
 
 function closeErrorToast() {
   try {
     const toast = document.getElementById("ip-toast");
-    let toast_message = toast.querySelector("#ip-toast-message").textContent;
-    toast_message = toast_message.toLowerCase();
+    if (!toast) {
+      return;
+    }
+    let messageEl = toast.querySelector("#ip-toast-message");
+    if (!messageEl) {
+      return;
+    }
+    let toast_message = messageEl.textContent.toLowerCase();
     const errMsg =
       toast_message.includes("error") || toast_message.includes("fail");
-    if (toast && toast.classList.contains("show") && errMsg) {
+
+    // Check if it is open and is an error message
+    if (toast.classList.contains("show") && errMsg) {
       toast.classList.remove("show");
+
+      // Cleanup timer if we force close it
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+      }
+      cleanToastListener();
     }
   } catch (error) {
     console.error(error);
