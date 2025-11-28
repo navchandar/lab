@@ -994,10 +994,21 @@ function prepareDailyJobCountChart(dataSet) {
 }
 
 function prepareTechRoleBubbleChart(roleDataMap) {
+  const MIN_JOB_THRESHOLD = 100;
   // 1. Sort Roles by TOTAL JOBS (Descending)
-  const sortedRoles = Object.keys(roleDataMap).sort(
-    (a, b) => roleDataMap[b].totalJobs - roleDataMap[a].totalJobs
-  );
+  const sortedRoles = Object.keys(roleDataMap)
+    .filter((role) => roleDataMap[role].totalJobs >= MIN_JOB_THRESHOLD)
+    .sort((a, b) => roleDataMap[b].totalJobs - roleDataMap[a].totalJobs);
+
+  // Safety Check: If data is scarce, you might end up with an empty chart.
+  if (sortedRoles.length === 0) {
+    return {
+      type: "bubble",
+      data: { datasets: [] },
+      height: "0px",
+      description: "No roles met the minimum job count threshold.",
+    };
+  }
 
   const relevantTechs = new Set();
   const techWeightedScore = {};
