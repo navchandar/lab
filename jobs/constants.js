@@ -2236,8 +2236,8 @@ export const CITY_ALIAS = {
   ],
 };
 
-export // --- Tech Stack Configuration ---
-const TECH_KEYWORDS = {
+// --- Tech Stack Configuration ---
+export const TECH_KEYWORDS = {
   // --- SoftwareDEV (Languages & Core) ---
   JavaScript: [/\bjavascript\b/i, /\bjs\b/i, /\bes6\+\b/i, /\becmascript\b/i],
   TypeScript: [/\btypescript\b/i, /\bts\b/i],

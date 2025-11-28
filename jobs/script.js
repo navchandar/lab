@@ -995,12 +995,13 @@ function prepareDailyJobCountChart(dataSet) {
 
 function prepareTechRoleBubbleChart(roleDataMap) {
   const MIN_JOB_THRESHOLD = 100;
-  // 1. Sort Roles by TOTAL JOBS (Descending)
+
+  // 1) Sort roles by TOTAL JOBS (descending) and apply threshold
   const sortedRoles = Object.keys(roleDataMap)
     .filter((role) => roleDataMap[role].totalJobs >= MIN_JOB_THRESHOLD)
     .sort((a, b) => roleDataMap[b].totalJobs - roleDataMap[a].totalJobs);
 
-  // Safety Check: If data is scarce, you might end up with an empty chart.
+  // If no roles pass the threshold, return an empty chart configuration
   if (sortedRoles.length === 0) {
     return {
       type: "bubble",
@@ -1013,9 +1014,9 @@ function prepareTechRoleBubbleChart(roleDataMap) {
   const relevantTechs = new Set();
   const techWeightedScore = {};
 
-  // 2. Identify Relevant Techs (Y-Axis)
+  // 2) Identify Relevant Techs (Y-Axis) by top-% per role and global weighted score
   sortedRoles.forEach((role) => {
-    const { techs, totalJobs } = roleDataMap[role]; // Destructure
+    const { techs, totalJobs } = roleDataMap[role];
 
     techs
       .sort((a, b) => b.count / totalJobs - a.count / totalJobs)
@@ -1032,7 +1033,23 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     (a, b) => techWeightedScore[b] - techWeightedScore[a]
   );
 
-  // 3. Build Points
+  // 3) Determine max percentage across all plotted points for linear scaling
+  let maxPercentage = 0;
+  sortedRoles.forEach((role) => {
+    const { techs, totalJobs } = roleDataMap[role];
+    techs
+      .filter((t) => relevantTechs.has(t.label))
+      .forEach((t) => {
+        const pct = (t.count / totalJobs) * 100;
+        if (pct > maxPercentage) maxPercentage = pct;
+      });
+  });
+  // Guard: avoid division by zero
+  if (maxPercentage <= 0) {
+    maxPercentage = 1;
+  }
+
+  // 4) Build bubble points using LINEAR scaling
   const allPoints = [];
   const pointBg = [];
   const pointBorder = [];
@@ -1041,8 +1058,6 @@ function prepareTechRoleBubbleChart(roleDataMap) {
 
   sortedRoles.forEach((role, rIndex) => {
     const colorSet = GEN_COLORS[rIndex % GEN_COLORS.length];
-
-    // Destructure again
     const { techs, totalJobs } = roleDataMap[role];
 
     const activeTechs = techs.filter((t) => relevantTechs.has(t.label));
@@ -1051,9 +1066,11 @@ function prepareTechRoleBubbleChart(roleDataMap) {
       // Calculate Percentage
       const percentage = (t.count / totalJobs) * 100;
 
-      // Radius Logic
-      let r_val = (Math.sqrt(percentage) / 10) * MAX_RADIUS;
-      r_val = Math.max(3, Math.min(r_val, MAX_RADIUS));
+      // --- LINEAR SCALING ---
+      // Largest percentage -> MAX_RADIUS, others scale proportionally.
+      // Keep a reasonable minimum so small values remain visible.
+      let r_val = (percentage / maxPercentage) * MAX_RADIUS;
+      r_val = Math.max(3, r_val); // min visible radius
 
       allPoints.push({
         x: role,
@@ -1089,7 +1106,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     options: createBubbleOptions(sortedRoles, yAxisLabels),
     height: `${height}px`,
     description:
-      "Tech Stack Clusters: Bubble size represents adoption % within the role.",
+      "Tech Stack Clusters: Bubble size represents adoption % within the role (linear scaling).",
   };
 }
 
