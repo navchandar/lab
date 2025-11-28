@@ -6,7 +6,7 @@
     },
     {
       "label": "EY",
-      "count": 114
+      "count": 115
     },
     {
       "label": "PwC India",
@@ -29,20 +29,20 @@
       "count": 60
     },
     {
+      "label": "Accenture services Pvt Ltd",
+      "count": 58
+    },
+    {
+      "label": "Accenture in India",
+      "count": 57
+    },
+    {
       "label": "Tata Consultancy Services",
       "count": 57
     },
     {
-      "label": "Accenture services Pvt Ltd",
-      "count": 56
-    },
-    {
-      "label": "Accenture in India",
-      "count": 55
-    },
-    {
       "label": "EXL",
-      "count": 46
+      "count": 47
     },
     {
       "label": "IBM",
@@ -84,15 +84,15 @@
   "byLocation": [
     {
       "label": "Bengaluru, Karnataka, India",
-      "count": 1526
+      "count": 1528
     },
     {
       "label": "Pune, Maharashtra, India",
-      "count": 504
+      "count": 508
     },
     {
       "label": "Hyderabad, Telangana, India",
-      "count": 498
+      "count": 502
     },
     {
       "label": "Chennai, Tamil Nadu, India",
@@ -104,15 +104,15 @@
     },
     {
       "label": "India",
-      "count": 192
+      "count": 194
     },
     {
       "label": "Noida, Uttar Pradesh, India",
-      "count": 178
+      "count": 179
     },
     {
       "label": "Mumbai, Maharashtra, India",
-      "count": 176
+      "count": 178
     },
     {
       "label": "Bengaluru East, Karnataka, India",
@@ -126,27 +126,27 @@
   "byRoleType": [
     {
       "label": "SoftwareQA",
-      "count": 1347
+      "count": 1354
     },
     {
       "label": "SoftwareDEV",
-      "count": 1207
+      "count": 1212
     },
     {
       "label": "Management",
-      "count": 1005
+      "count": 1012
     },
     {
       "label": "DevOps/SRE",
-      "count": 499
+      "count": 500
     },
     {
       "label": "ML/AI",
-      "count": 438
+      "count": 439
     },
     {
       "label": "—",
-      "count": 331
+      "count": 333
     },
     {
       "label": "HardwareQA",
@@ -175,35 +175,59 @@
   ],
   "techVsRole": {
     "SoftwareQA": {
-      "totalJobs": 1347,
+      "totalJobs": 1354,
       "techs": [
         {
+          "label": "Java",
+          "count": 505
+        },
+        {
+          "label": "Git",
+          "count": 427
+        },
+        {
+          "label": "CI_CD",
+          "count": 436
+        },
+        {
           "label": "Automation_Tools",
-          "count": 815
+          "count": 820
+        },
+        {
+          "label": "APITest",
+          "count": 436
+        },
+        {
+          "label": "Agile_Scrum",
+          "count": 711
+        },
+        {
+          "label": "Python",
+          "count": 404
+        },
+        {
+          "label": "MobileTest",
+          "count": 126
         },
         {
           "label": "JavaScript",
-          "count": 299
+          "count": 300
+        },
+        {
+          "label": "Agile_Tools",
+          "count": 352
+        },
+        {
+          "label": "GenAI",
+          "count": 63
         },
         {
           "label": "TypeScript",
           "count": 164
         },
         {
-          "label": "Python",
-          "count": 402
-        },
-        {
-          "label": "Java",
-          "count": 503
-        },
-        {
           "label": "GraphQL",
           "count": 15
-        },
-        {
-          "label": "Git",
-          "count": 426
         },
         {
           "label": "BigData",
@@ -230,10 +254,6 @@
           "count": 94
         },
         {
-          "label": "GenAI",
-          "count": 62
-        },
-        {
           "label": "AWS_Cloud",
           "count": 253
         },
@@ -246,24 +266,12 @@
           "count": 167
         },
         {
-          "label": "CI_CD",
-          "count": 435
-        },
-        {
           "label": "Observability",
           "count": 66
         },
         {
-          "label": "MobileTest",
-          "count": 124
-        },
-        {
           "label": "PerfTest",
           "count": 237
-        },
-        {
-          "label": "APITest",
-          "count": 435
         },
         {
           "label": "Google_Cloud",
@@ -274,16 +282,8 @@
           "count": 377
         },
         {
-          "label": "Agile_Scrum",
-          "count": 708
-        },
-        {
           "label": "Embedded_RTOS",
           "count": 45
-        },
-        {
-          "label": "Agile_Tools",
-          "count": 351
         },
         {
           "label": "Go",
@@ -408,8 +408,16 @@
       ]
     },
     "Management": {
-      "totalJobs": 1005,
+      "totalJobs": 1012,
       "techs": [
+        {
+          "label": "Agile_Scrum",
+          "count": 193
+        },
+        {
+          "label": "Agile_Tools",
+          "count": 43
+        },
         {
           "label": "Go",
           "count": 76
@@ -417,10 +425,6 @@
         {
           "label": "MachineLearning",
           "count": 36
-        },
-        {
-          "label": "Agile_Scrum",
-          "count": 190
         },
         {
           "label": "Java",
@@ -473,10 +477,6 @@
         {
           "label": "Automation_Tools",
           "count": 6
-        },
-        {
-          "label": "Agile_Tools",
-          "count": 42
         },
         {
           "label": "Compliance",
@@ -624,12 +624,249 @@
         }
       ]
     },
-    "ML/AI": {
-      "totalJobs": 438,
+    "SoftwareDEV": {
+      "totalJobs": 1212,
       "techs": [
         {
+          "label": "Java",
+          "count": 607
+        },
+        {
+          "label": "Git",
+          "count": 417
+        },
+        {
+          "label": "IdentitySec",
+          "count": 64
+        },
+        {
+          "label": "Agile_Scrum",
+          "count": 511
+        },
+        {
+          "label": "Agile_Tools",
+          "count": 84
+        },
+        {
+          "label": "JavaScript",
+          "count": 526
+        },
+        {
+          "label": "TypeScript",
+          "count": 241
+        },
+        {
+          "label": "React",
+          "count": 431
+        },
+        {
+          "label": "NodeJS",
+          "count": 258
+        },
+        {
+          "label": "Angular",
+          "count": 203
+        },
+        {
+          "label": "Vue",
+          "count": 67
+        },
+        {
           "label": "MachineLearning",
-          "count": 402
+          "count": 144
+        },
+        {
+          "label": "RPA_Tools",
+          "count": 4
+        },
+        {
+          "label": "Spring",
+          "count": 248
+        },
+        {
+          "label": "Linux_Unix",
+          "count": 123
+        },
+        {
+          "label": "AWS_Cloud",
+          "count": 381
+        },
+        {
+          "label": "Azure_Cloud",
+          "count": 315
+        },
+        {
+          "label": "Automation_Tools",
+          "count": 179
+        },
+        {
+          "label": "DataStreaming",
+          "count": 149
+        },
+        {
+          "label": "Containerization",
+          "count": 352
+        },
+        {
+          "label": "RDBMS",
+          "count": 295
+        },
+        {
+          "label": "NoSQL_DB",
+          "count": 227
+        },
+        {
+          "label": "CI_CD",
+          "count": 182
+        },
+        {
+          "label": "Observability",
+          "count": 77
+        },
+        {
+          "label": "Go",
+          "count": 152
+        },
+        {
+          "label": "DeepLearning",
+          "count": 21
+        },
+        {
+          "label": "Python",
+          "count": 333
+        },
+        {
+          "label": "GraphQL",
+          "count": 153
+        },
+        {
+          "label": "DataWarehouse",
+          "count": 44
+        },
+        {
+          "label": "GenAI",
+          "count": 93
+        },
+        {
+          "label": "IaC",
+          "count": 52
+        },
+        {
+          "label": "Windows",
+          "count": 17
+        },
+        {
+          "label": "Google_Cloud",
+          "count": 213
+        },
+        {
+          "label": "APITest",
+          "count": 19
+        },
+        {
+          "label": "Swift",
+          "count": 28
+        },
+        {
+          "label": "Kotlin",
+          "count": 44
+        },
+        {
+          "label": "PerfTest",
+          "count": 22
+        },
+        {
+          "label": "Tailwind",
+          "count": 39
+        },
+        {
+          "label": "FastAPI",
+          "count": 45
+        },
+        {
+          "label": "Django",
+          "count": 59
+        },
+        {
+          "label": "ETL",
+          "count": 36
+        },
+        {
+          "label": "DataScience",
+          "count": 21
+        },
+        {
+          "label": "BigData",
+          "count": 63
+        },
+        {
+          "label": "DB_Mgmt",
+          "count": 18
+        },
+        {
+          "label": "Compliance",
+          "count": 14
+        },
+        {
+          "label": "Flutter",
+          "count": 13
+        },
+        {
+          "label": "SRE",
+          "count": 11
+        },
+        {
+          "label": "C#",
+          "count": 18
+        },
+        {
+          "label": "AppSec",
+          "count": 13
+        },
+        {
+          "label": "C++",
+          "count": 5
+        },
+        {
+          "label": "Rust",
+          "count": 10
+        },
+        {
+          "label": "MacOS",
+          "count": 3
+        },
+        {
+          "label": "NetworkSec",
+          "count": 7
+        },
+        {
+          "label": "MobileTest",
+          "count": 2
+        },
+        {
+          "label": "DataOrchestration",
+          "count": 16
+        },
+        {
+          "label": "ManualTest",
+          "count": 2
+        },
+        {
+          "label": "Embedded_Tools",
+          "count": 1
+        }
+      ]
+    },
+    "ML/AI": {
+      "totalJobs": 439,
+      "techs": [
+        {
+          "label": "Python",
+          "count": 343
+        },
+        {
+          "label": "MachineLearning",
+          "count": 403
         },
         {
           "label": "DeepLearning",
@@ -650,10 +887,6 @@
         {
           "label": "Google_Cloud",
           "count": 166
-        },
-        {
-          "label": "Python",
-          "count": 342
         },
         {
           "label": "Git",
@@ -833,359 +1066,17 @@
         }
       ]
     },
-    "SoftwareDEV": {
-      "totalJobs": 1207,
+    "DevOps/SRE": {
+      "totalJobs": 500,
       "techs": [
-        {
-          "label": "JavaScript",
-          "count": 523
-        },
-        {
-          "label": "React",
-          "count": 428
-        },
-        {
-          "label": "Angular",
-          "count": 203
-        },
-        {
-          "label": "Vue",
-          "count": 67
-        },
-        {
-          "label": "MachineLearning",
-          "count": 143
-        },
-        {
-          "label": "RPA_Tools",
-          "count": 4
-        },
-        {
-          "label": "Java",
-          "count": 605
-        },
-        {
-          "label": "Spring",
-          "count": 247
-        },
-        {
-          "label": "Linux_Unix",
-          "count": 123
-        },
-        {
-          "label": "Git",
-          "count": 413
-        },
-        {
-          "label": "Containerization",
-          "count": 351
-        },
-        {
-          "label": "CI_CD",
-          "count": 181
-        },
-        {
-          "label": "Observability",
-          "count": 77
-        },
-        {
-          "label": "Agile_Scrum",
-          "count": 508
-        },
-        {
-          "label": "Go",
-          "count": 152
-        },
-        {
-          "label": "DeepLearning",
-          "count": 21
-        },
-        {
-          "label": "AWS_Cloud",
-          "count": 378
-        },
-        {
-          "label": "TypeScript",
-          "count": 239
-        },
-        {
-          "label": "Azure_Cloud",
-          "count": 314
-        },
-        {
-          "label": "RDBMS",
-          "count": 293
-        },
-        {
-          "label": "NoSQL_DB",
-          "count": 226
-        },
-        {
-          "label": "NodeJS",
-          "count": 255
-        },
-        {
-          "label": "Automation_Tools",
-          "count": 178
-        },
-        {
-          "label": "IdentitySec",
-          "count": 62
-        },
-        {
-          "label": "Python",
-          "count": 333
-        },
-        {
-          "label": "GraphQL",
-          "count": 153
-        },
-        {
-          "label": "DataStreaming",
-          "count": 148
-        },
-        {
-          "label": "DataWarehouse",
-          "count": 44
-        },
-        {
-          "label": "GenAI",
-          "count": 93
-        },
-        {
-          "label": "IaC",
-          "count": 51
-        },
-        {
-          "label": "Windows",
-          "count": 17
-        },
-        {
-          "label": "Google_Cloud",
-          "count": 213
-        },
-        {
-          "label": "APITest",
-          "count": 19
-        },
-        {
-          "label": "Swift",
-          "count": 28
-        },
-        {
-          "label": "Kotlin",
-          "count": 44
-        },
-        {
-          "label": "Agile_Tools",
-          "count": 83
-        },
-        {
-          "label": "PerfTest",
-          "count": 22
-        },
-        {
-          "label": "Tailwind",
-          "count": 39
-        },
-        {
-          "label": "FastAPI",
-          "count": 45
-        },
-        {
-          "label": "Django",
-          "count": 59
-        },
-        {
-          "label": "ETL",
-          "count": 36
-        },
-        {
-          "label": "DataScience",
-          "count": 21
-        },
-        {
-          "label": "BigData",
-          "count": 63
-        },
-        {
-          "label": "DB_Mgmt",
-          "count": 18
-        },
-        {
-          "label": "Compliance",
-          "count": 14
-        },
-        {
-          "label": "Flutter",
-          "count": 13
-        },
         {
           "label": "SRE",
-          "count": 11
-        },
-        {
-          "label": "C#",
-          "count": 18
-        },
-        {
-          "label": "AppSec",
-          "count": 13
-        },
-        {
-          "label": "C++",
-          "count": 5
-        },
-        {
-          "label": "Rust",
-          "count": 10
-        },
-        {
-          "label": "MacOS",
-          "count": 3
-        },
-        {
-          "label": "NetworkSec",
-          "count": 7
-        },
-        {
-          "label": "MobileTest",
-          "count": 2
-        },
-        {
-          "label": "DataOrchestration",
-          "count": 16
-        },
-        {
-          "label": "ManualTest",
-          "count": 2
-        },
-        {
-          "label": "Embedded_Tools",
-          "count": 1
-        }
-      ]
-    },
-    "HardwareQA": {
-      "totalJobs": 263,
-      "techs": [
-        {
-          "label": "Windows",
-          "count": 3
-        },
-        {
-          "label": "HardwareTest",
-          "count": 11
-        },
-        {
-          "label": "Agile_Tools",
-          "count": 7
-        },
-        {
-          "label": "Embedded_Tools",
-          "count": 31
-        },
-        {
-          "label": "Python",
-          "count": 25
-        },
-        {
-          "label": "Go",
-          "count": 5
+          "count": 92
         },
         {
           "label": "Agile_Scrum",
-          "count": 55
+          "count": 142
         },
-        {
-          "label": "AWS_Cloud",
-          "count": 4
-        },
-        {
-          "label": "Compliance",
-          "count": 2
-        },
-        {
-          "label": "Git",
-          "count": 8
-        },
-        {
-          "label": "Azure_Cloud",
-          "count": 1
-        },
-        {
-          "label": "MachineLearning",
-          "count": 4
-        },
-        {
-          "label": "DeepLearning",
-          "count": 6
-        },
-        {
-          "label": "CI_CD",
-          "count": 2
-        },
-        {
-          "label": "Linux_Unix",
-          "count": 15
-        },
-        {
-          "label": "Embedded_RTOS",
-          "count": 15
-        },
-        {
-          "label": "NetworkSec",
-          "count": 16
-        },
-        {
-          "label": "C++",
-          "count": 2
-        },
-        {
-          "label": "Rust",
-          "count": 1
-        },
-        {
-          "label": "Automation_Tools",
-          "count": 3
-        },
-        {
-          "label": "Containerization",
-          "count": 1
-        },
-        {
-          "label": "Instrumentation",
-          "count": 1
-        },
-        {
-          "label": "Java",
-          "count": 2
-        },
-        {
-          "label": "ManualTest",
-          "count": 2
-        },
-        {
-          "label": "AppSec",
-          "count": 1
-        },
-        {
-          "label": "JavaScript",
-          "count": 1
-        },
-        {
-          "label": "NodeJS",
-          "count": 1
-        },
-        {
-          "label": "React",
-          "count": 1
-        }
-      ]
-    },
-    "DevOps/SRE": {
-      "totalJobs": 499,
-      "techs": [
         {
           "label": "Google_Cloud",
           "count": 190
@@ -1205,10 +1096,6 @@
         {
           "label": "IaC",
           "count": 203
-        },
-        {
-          "label": "SRE",
-          "count": 91
         },
         {
           "label": "Linux_Unix",
@@ -1249,10 +1136,6 @@
         {
           "label": "CI_CD",
           "count": 215
-        },
-        {
-          "label": "Agile_Scrum",
-          "count": 141
         },
         {
           "label": "Agile_Tools",
@@ -1400,6 +1283,123 @@
         },
         {
           "label": "Flutter",
+          "count": 1
+        }
+      ]
+    },
+    "HardwareQA": {
+      "totalJobs": 263,
+      "techs": [
+        {
+          "label": "Windows",
+          "count": 3
+        },
+        {
+          "label": "HardwareTest",
+          "count": 11
+        },
+        {
+          "label": "Agile_Tools",
+          "count": 7
+        },
+        {
+          "label": "Embedded_Tools",
+          "count": 31
+        },
+        {
+          "label": "Python",
+          "count": 25
+        },
+        {
+          "label": "Go",
+          "count": 5
+        },
+        {
+          "label": "Agile_Scrum",
+          "count": 55
+        },
+        {
+          "label": "AWS_Cloud",
+          "count": 4
+        },
+        {
+          "label": "Compliance",
+          "count": 2
+        },
+        {
+          "label": "Git",
+          "count": 8
+        },
+        {
+          "label": "Azure_Cloud",
+          "count": 1
+        },
+        {
+          "label": "MachineLearning",
+          "count": 4
+        },
+        {
+          "label": "DeepLearning",
+          "count": 6
+        },
+        {
+          "label": "CI_CD",
+          "count": 2
+        },
+        {
+          "label": "Linux_Unix",
+          "count": 15
+        },
+        {
+          "label": "Embedded_RTOS",
+          "count": 15
+        },
+        {
+          "label": "NetworkSec",
+          "count": 16
+        },
+        {
+          "label": "C++",
+          "count": 2
+        },
+        {
+          "label": "Rust",
+          "count": 1
+        },
+        {
+          "label": "Automation_Tools",
+          "count": 3
+        },
+        {
+          "label": "Containerization",
+          "count": 1
+        },
+        {
+          "label": "Instrumentation",
+          "count": 1
+        },
+        {
+          "label": "Java",
+          "count": 2
+        },
+        {
+          "label": "ManualTest",
+          "count": 2
+        },
+        {
+          "label": "AppSec",
+          "count": 1
+        },
+        {
+          "label": "JavaScript",
+          "count": 1
+        },
+        {
+          "label": "NodeJS",
+          "count": 1
+        },
+        {
+          "label": "React",
           "count": 1
         }
       ]
@@ -1783,7 +1783,7 @@
     },
     {
       "company": "EY",
-      "totalJobs": 114,
+      "totalJobs": 115,
       "distribution": [
         {
           "range": "0-3 Years",
@@ -1791,7 +1791,7 @@
         },
         {
           "range": "4-6 Years",
-          "count": 25
+          "count": 26
         },
         {
           "range": "7-9 Years",
@@ -1986,6 +1986,74 @@
       ]
     },
     {
+      "company": "Accenture services Pvt Ltd",
+      "totalJobs": 58,
+      "distribution": [
+        {
+          "range": "0-3 Years",
+          "count": 25
+        },
+        {
+          "range": "4-6 Years",
+          "count": 22
+        },
+        {
+          "range": "7-9 Years",
+          "count": 0
+        },
+        {
+          "range": "10-12 Years",
+          "count": 1
+        },
+        {
+          "range": "13-16 Years",
+          "count": 6
+        },
+        {
+          "range": "17-20 Years",
+          "count": 1
+        },
+        {
+          "range": "21+ Years",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "company": "Accenture in India",
+      "totalJobs": 57,
+      "distribution": [
+        {
+          "range": "0-3 Years",
+          "count": 36
+        },
+        {
+          "range": "4-6 Years",
+          "count": 16
+        },
+        {
+          "range": "7-9 Years",
+          "count": 1
+        },
+        {
+          "range": "10-12 Years",
+          "count": 0
+        },
+        {
+          "range": "13-16 Years",
+          "count": 3
+        },
+        {
+          "range": "17-20 Years",
+          "count": 0
+        },
+        {
+          "range": "21+ Years",
+          "count": 0
+        }
+      ]
+    },
+    {
       "company": "Tata Consultancy Services",
       "totalJobs": 57,
       "distribution": [
@@ -2020,76 +2088,8 @@
       ]
     },
     {
-      "company": "Accenture services Pvt Ltd",
-      "totalJobs": 56,
-      "distribution": [
-        {
-          "range": "0-3 Years",
-          "count": 24
-        },
-        {
-          "range": "4-6 Years",
-          "count": 21
-        },
-        {
-          "range": "7-9 Years",
-          "count": 0
-        },
-        {
-          "range": "10-12 Years",
-          "count": 1
-        },
-        {
-          "range": "13-16 Years",
-          "count": 6
-        },
-        {
-          "range": "17-20 Years",
-          "count": 1
-        },
-        {
-          "range": "21+ Years",
-          "count": 0
-        }
-      ]
-    },
-    {
-      "company": "Accenture in India",
-      "totalJobs": 55,
-      "distribution": [
-        {
-          "range": "0-3 Years",
-          "count": 34
-        },
-        {
-          "range": "4-6 Years",
-          "count": 16
-        },
-        {
-          "range": "7-9 Years",
-          "count": 1
-        },
-        {
-          "range": "10-12 Years",
-          "count": 0
-        },
-        {
-          "range": "13-16 Years",
-          "count": 3
-        },
-        {
-          "range": "17-20 Years",
-          "count": 0
-        },
-        {
-          "range": "21+ Years",
-          "count": 0
-        }
-      ]
-    },
-    {
       "company": "EXL",
-      "totalJobs": 46,
+      "totalJobs": 47,
       "distribution": [
         {
           "range": "0-3 Years",
@@ -2097,7 +2097,7 @@
         },
         {
           "range": "4-6 Years",
-          "count": 5
+          "count": 6
         },
         {
           "range": "7-9 Years",
@@ -2507,5 +2507,5 @@
     "17-20 Years",
     "21+ Years"
   ],
-  "totalCount": 5296
+  "totalCount": 5319
 }
