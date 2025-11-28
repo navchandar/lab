@@ -1003,15 +1003,32 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     (a, b) => roleTotal[b] - roleTotal[a]
   );
 
-  // 2. Identify Relevant Techs (Y-Axis)
+  // 2. Identify Relevant Techs (Y-Axis) & Calculate Global Counts
   const relevantTechs = new Set();
+  const techGlobalCounts = {}; // Store total count for every tech
+
+  // First pass: Identify which techs are "relevant" (top 15 per role)
   sortedRoles.forEach((role) => {
     roleDataMap[role]
       .sort((a, b) => b.count - a.count)
       .slice(0, 15)
       .forEach((t) => relevantTechs.add(t.label));
   });
-  const yAxisLabels = Array.from(relevantTechs).sort();
+
+  // Second pass: Calculate totals ONLY for the relevant techs across ALL roles
+  // This ensures that if "Java" is relevant, we count its usage even in roles where it wasn't top 15
+  Object.keys(roleDataMap).forEach((role) => {
+    roleDataMap[role].forEach((t) => {
+      if (relevantTechs.has(t.label)) {
+        techGlobalCounts[t.label] = (techGlobalCounts[t.label] || 0) + t.count;
+      }
+    });
+  });
+
+  // Sort based on the calculated global totals (Descending: Most popular first)
+  const yAxisLabels = Array.from(relevantTechs).sort(
+    (a, b) => techGlobalCounts[b] - techGlobalCounts[a]
+  );
 
   // 3. Build Points
   const allPoints = [];
