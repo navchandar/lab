@@ -155,9 +155,6 @@ document.addEventListener("DOMContentLoaded", () => {
    */
 
   async function loadAndDisplayImage(animal) {
-    // Hide the current animal name
-    animalName.style.opacity = 0;
-
     // Display spinner in 1 second
     const currentDelay = initialLoadComplete ? 1000 : 0;
     let spinnerTimer = setTimeout(() => {

@@ -92,60 +92,361 @@ body {
     width: 200px !important;
 }
 
+/* LOGIC: 
+   All shapes use exactly 10 points.
+   Order: Bottom-Left -> Bottom-Right -> Top-Right -> Top-Left.
+   This ensures smooth morphing (transitions) between any of these classes.
+*/
 
-/* Line: a thin horizontal bar using clip-path */
+/* 1. Line (A thin bar at the bottom) */
 .line {
-    clip-path: polygon(0% 100%, 10% 100%, 20% 100%, 40% 100%, 80% 100%, 100% 100%, 100% 97%, 50% 97%, 0% 97%, 0% 100%);
+    clip-path: polygon(0% 100%,
+            /* 1: BL */
+            25% 100%,
+            /* 2: Bottom */
+            50% 100%,
+            /* 3: Bottom */
+            75% 100%,
+            /* 4: Bottom */
+            100% 100%,
+            /* 5: BR */
+            100% 95%,
+            /* 6: BR Top (Thickness) */
+            75% 95%,
+            /* 7: Top Edge */
+            50% 95%,
+            /* 8: Top Edge */
+            25% 95%,
+            /* 9: Top Edge */
+            0% 95%
+            /* 10: TL Top (Thickness) */
+        );
 }
 
-/* Angle: an L-shape using clip-path */
+
+/* 2. Angle (L-Shape) */
 .angle {
-    clip-path: polygon(0% 100%, 10% 100%, 20% 100%, 40% 100%, 80% 100%, 100% 100%, 100% 95%, 8% 95%, 55% 0%, 50% 0%);
+    clip-path: polygon(0% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            100% 100%,
+            /* 3: BR (Tip of bottom leg) */
+            100% 90%,
+            /* 4: BR Upper (Thickness) */
+            60% 90%,
+            /* 5: Inner Space */
+            16% 90%,
+            /* 6: Inner Corner */
+            50% 0%,
+            /* 7: Top Right (Tip of vertical leg) */
+            40% 0%,
+            /* 8: Top Left */
+            20% 50%,
+            /* 9: Left Mid */
+            0% 100%
+            /* 10: Left Lower */
+        );
 }
 
-/* 3 to 10 sides - Polygons using clip-path */
+/* 3. Triangle (3 Vertices + 7 Distributed) */
 .triangle {
-    clip-path: polygon(0% 100%, 5% 100%, 10% 100%, 30% 100%, 50% 100%, 70% 100%, 90% 100%, 100% 100%, 50% 0%, 0% 100%);
+    clip-path: polygon(0% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            100% 100%,
+            /* 3: BR */
+            83% 66%,
+            /* 4: Right Side Low */
+            66% 33%,
+            /* 5: Right Side High */
+            50% 0%,
+            /* 6: Top Vertex */
+            33% 33%,
+            /* 7: Left Side High */
+            16% 66%,
+            /* 8: Left Side Low */
+            0% 100%,
+            /* 9: BL (Overlap for closure) */
+            0% 100%
+            /* 10: BL (Overlap) */
+        );
 }
 
+/* 4. Square (4 Vertices + 6 Distributed) */
 .square {
-    clip-path: polygon(0% 100%, 30% 100%, 50% 100%, 70% 100%, 100% 100%, 100% 50%, 100% 0%, 50% 0%, 0% 0%, 0% 100%);
+    clip-path: polygon(0% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            100% 100%,
+            /* 3: BR */
+            100% 50%,
+            /* 4: Right Mid */
+            100% 0%,
+            /* 5: TR */
+            50% 0%,
+            /* 6: Top Mid */
+            0% 0%,
+            /* 7: TL */
+            0% 25%,
+            /* 8: Left High */
+            0% 50%,
+            /* 9: Left Mid */
+            0% 75%
+            /* 10: Left Low */
+        );
 }
 
+/* 5. Rectangle (Vertical) */
 .rectangle {
-    clip-path: polygon(25% 100%, 50% 100%, 75% 100%, 75% 50%, 75% 0%, 50% 0%, 25% 0%, 25% 50%, 25% 75%, 25% 100%);
+    clip-path: polygon(25% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            75% 100%,
+            /* 3: BR */
+            75% 50%,
+            /* 4: Right Mid */
+            75% 0%,
+            /* 5: TR */
+            50% 0%,
+            /* 6: Top Mid */
+            25% 0%,
+            /* 7: TL */
+            25% 25%,
+            /* 8: Left High */
+            25% 50%,
+            /* 9: Left Mid */
+            25% 75%
+            /* 10: Left Low */
+        );
 }
 
+/* 6. Horizontal Rectangle (Landscape) */
+.rectangle-horizontal {
+    clip-path: polygon(0% 75%,
+            /* 1: BL */
+            50% 75%,
+            /* 2: Bottom Mid */
+            100% 75%,
+            /* 3: BR */
+            100% 50%,
+            /* 4: Right Mid */
+            100% 25%,
+            /* 5: TR */
+            50% 25%,
+            /* 6: Top Mid */
+            0% 25%,
+            /* 7: TL */
+            0% 40%,
+            /* 8: Left High */
+            0% 50%,
+            /* 9: Left Mid */
+            0% 60%
+            /* 10: Left Low */
+        );
+}
+
+/* 7. Diamond (4 Vertices) */
 .diamond {
-    clip-path: polygon(50% 100%, 65% 75%, 80% 50%, 65% 25%, 50% 0%, 35% 25%, 20% 50%, 35% 75%, 50% 100%, 50% 100%);
+    clip-path: polygon(50% 100%,
+            /* 1: Bottom Vertex */
+            75% 75%,
+            /* 2: Lower Right Edge */
+            100% 50%,
+            /* 3: Right Vertex */
+            75% 25%,
+            /* 4: Upper Right Edge */
+            50% 0%,
+            /* 5: Top Vertex */
+            25% 25%,
+            /* 6: Upper Left Edge */
+            0% 50%,
+            /* 7: Left Vertex */
+            25% 75%,
+            /* 8: Lower Left Edge */
+            50% 100%,
+            /* 9: Close to start */
+            50% 100%
+            /* 10: Close to start */
+        );
 }
 
+/* 8. Pentagon (5 Vertices - mapped to vertices and midpoints) */
 .pentagon {
-    clip-path: polygon(23% 90%, 50% 90%, 77% 90%, 86% 62.5%, 95% 35%, 72.5% 17.5%, 50% 0%, 27.5% 17.5%, 5% 35%, 23% 90%);
+    clip-path: polygon(20% 100%,
+            /* 1: BL Vertex */
+            50% 100%,
+            /* 2: Bottom Edge Mid */
+            80% 100%,
+            /* 3: BR Vertex */
+            90% 65%,
+            /* 4: Right Edge Mid */
+            100% 30%,
+            /* 5: Right Vertex */
+            75% 15%,
+            /* 6: Top Right Edge Mid */
+            50% 0%,
+            /* 7: Top Vertex */
+            25% 15%,
+            /* 8: Top Left Edge Mid */
+            0% 30%,
+            /* 9: Left Vertex */
+            10% 65%
+            /* 10: Left Edge Mid */
+        );
 }
 
+/* 9. Hexagon (6 Vertices) */
 .hexagon {
-    clip-path: polygon(25% 100%, 50% 100%, 75% 100%, 87.5% 75%, 100% 50%, 75% 0%, 50% 0%, 25% 0%, 0 50%, 25% 100%);
+    clip-path: polygon(25% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            75% 100%,
+            /* 3: BR */
+            100% 50%,
+            /* 4: Right Point */
+            87.5% 25%,
+            /* 5: Right Upper Edge */
+            75% 0%,
+            /* 6: TR */
+            50% 0%,
+            /* 7: Top Mid */
+            25% 0%,
+            /* 8: TL */
+            12.5% 25%,
+            /* 9: Left Upper Edge */
+            0% 50%
+            /* 10: Left Point */
+        );
 }
 
+/* 10. Heptagon (7 Vertices) */
 .heptagon {
-    clip-path: polygon(25% 100%, 75% 100%, 100% 60%, 90% 20%, 70% 10%, 50% 0%, 30% 10%, 10% 20%, 0% 60%, 25% 100%);
+    clip-path: polygon(25% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            75% 100%,
+            /* 3: BR */
+            100% 60%,
+            /* 4: Right Low */
+            90% 20%,
+            /* 5: Right High */
+            70% 10%,
+            /* 6: Top Right */
+            50% 0%,
+            /* 7: Top */
+            30% 10%,
+            /* 8: Top Left */
+            10% 20%,
+            /* 9: Left High */
+            0% 60%
+            /* 10: Left Low */
+        );
 }
 
+/* 11. Octagon (8 Vertices) */
 .octagon {
-    clip-path: polygon(30% 100%, 70% 100%, 100% 70%, 100% 30%, 70% 0%, 50% 0%, 30% 0%, 0% 30%, 0% 70%, 30% 100%);
+    clip-path: polygon(30% 100%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom Mid */
+            70% 100%,
+            /* 3: BR */
+            100% 70%,
+            /* 4: Right Low */
+            100% 30%,
+            /* 5: Right High */
+            70% 0%,
+            /* 6: TR */
+            30% 0%,
+            /* 7: TL */
+            0% 30%,
+            /* 8: Left High */
+            0% 70%,
+            /* 9: Left Low */
+            15% 85%
+            /* 10: Left Lower Edge (Extra Point) */
+        );
 }
 
+/* 12. Nonagon (9 Vertices) */
 .nonagon {
-    clip-path: polygon(30% 100%, 70% 100%, 95% 75%, 100% 40%, 80% 10%, 50% 0%, 50% 0%, 20% 10%, 0% 40%, 5% 75%);
+    clip-path: polygon(30% 100%,
+            /* 1 */
+            50% 100%,
+            /* 2: Bottom Mid (Extra) */
+            70% 100%,
+            /* 3 */
+            95% 75%,
+            /* 4 */
+            100% 40%,
+            /* 5 */
+            80% 10%,
+            /* 6 */
+            50% 0%,
+            /* 7 */
+            20% 10%,
+            /* 8 */
+            0% 40%,
+            /* 9 */
+            5% 75%
+            /* 10 */
+        );
 }
 
+/* 13. Decagon (10 Vertices - Natural fit) */
 .decagon {
-    clip-path: polygon(20% 95%, 50% 100%, 80% 95%, 100% 70%, 100% 30%, 80% 5%, 50% 0%, 20% 5%, 0% 30%, 0% 70%);
+    clip-path: polygon(20% 95%,
+            /* 1: BL */
+            50% 100%,
+            /* 2: Bottom */
+            80% 95%,
+            /* 3: BR */
+            100% 70%,
+            /* 4: Right Low */
+            100% 30%,
+            /* 5: Right High */
+            80% 5%,
+            /* 6: TR */
+            50% 0%,
+            /* 7: Top */
+            20% 5%,
+            /* 8: TL */
+            0% 30%,
+            /* 9: Left High */
+            0% 70%
+            /* 10: Left Low */
+        );
 }
 
+/* 14. Star (10 Vertices - Natural fit) */
 .star {
-    clip-path: polygon(19% 100%, 50% 70%, 83% 100%, 68% 57%, 98% 35%, 61% 35%, 50% 0%, 39% 35%, 2% 35%, 32% 57%);
+    clip-path: polygon(19% 100%,
+            /* 1: BL Outer */
+            50% 70%,
+            /* 2: Bottom Inner */
+            83% 100%,
+            /* 3: BR Outer */
+            68% 57%,
+            /* 4: Right Inner */
+            98% 35%,
+            /* 5: Right Outer */
+            61% 35%,
+            /* 6: Top Right Inner */
+            50% 0%,
+            /* 7: Top Outer */
+            39% 35%,
+            /* 8: Top Left Inner */
+            2% 35%,
+            /* 9: Left Outer */
+            32% 57%
+            /* 10: Left Inner */
+        );
 }
 
 /* Styles for mobile devices */
