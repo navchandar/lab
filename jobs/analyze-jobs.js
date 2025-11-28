@@ -235,7 +235,8 @@ function updateDailyJobCounts(currentJobs, existingHistory = []) {
  * @returns {object} Map of RoleType -> Array<{label: string, count: number}>
  */
 function aggregateTechByRole(jobs) {
-  const rawCounts = {};
+  // Will hold { "SoftwareDev": { total: 100, techs: [...] } }
+  const roleData = {};
 
   jobs.forEach((job) => {
     // 1. Get the Role Type
@@ -246,45 +247,46 @@ function aggregateTechByRole(jobs) {
       return;
     }
 
-    const textToScan = `${job.title} ${job.description}`.toLowerCase();
-
-    // 3. Ensure this role exists in our map
-    if (!rawCounts[roleType]) {
-      rawCounts[roleType] = {};
+    // Initialize if strictly new
+    if (!roleData[roleType]) {
+      roleData[roleType] = { totalJobs: 0, rawCounts: {} };
     }
 
-    // 4. Scan against the global TECH_KEYWORDS dictionary
+    // 1. Increment Total Jobs (The Denominator)
+    roleData[roleType].totalJobs += 1;
+
+    // 2. Scan Keywords
+    const textToScan = `${job.title} ${job.description}`.toLowerCase();
     Object.keys(TECH_KEYWORDS).forEach((techLabel) => {
       const patterns = TECH_KEYWORDS[techLabel];
-
       // Check if any pattern matches
-      const isPresent = patterns.some((pattern) => pattern.test(textToScan));
-
-      if (isPresent) {
-        // Increment count for this specific Role + Tech combo
-        rawCounts[roleType][techLabel] =
-          (rawCounts[roleType][techLabel] || 0) + 1;
+      if (patterns.some((pattern) => pattern.test(textToScan))) {
+        roleData[roleType].rawCounts[techLabel] =
+          (roleData[roleType].rawCounts[techLabel] || 0) + 1;
       }
     });
   });
 
-  // 5. Format the output (Sort Descending by Count)
-  const formattedResult = {};
+  // Format the output
+  const finalResult = {};
+  Object.keys(roleData).forEach((role) => {
+    const { totalJobs, rawCounts } = roleData[role];
 
-  Object.keys(rawCounts).forEach((role) => {
-    const techList = Object.entries(rawCounts[role]).map(([label, count]) => ({
+    // Convert map to array
+    const techList = Object.entries(rawCounts).map(([label, count]) => ({
       label,
       count,
     }));
-    // .sort((a, b) => b.count - a.count);
 
-    // Only add roles that actually have data
     if (techList.length > 0) {
-      formattedResult[role] = techList;
+      finalResult[role] = {
+        totalJobs: totalJobs,
+        techs: techList,
+      };
     }
   });
 
-  return formattedResult;
+  return finalResult;
 }
 
 /** Calculate the compression ratio between json file and json.gz file */

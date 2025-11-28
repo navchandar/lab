@@ -994,40 +994,31 @@ function prepareDailyJobCountChart(dataSet) {
 }
 
 function prepareTechRoleBubbleChart(roleDataMap) {
-  // 1. Sort Roles (X-Axis)
-  const roleTotal = {};
-  Object.keys(roleDataMap).forEach(
-    (r) => (roleTotal[r] = roleDataMap[r].reduce((s, t) => s + t.count, 0))
-  );
+  // 1. Sort Roles by TOTAL JOBS (Descending)
   const sortedRoles = Object.keys(roleDataMap).sort(
-    (a, b) => roleTotal[b] - roleTotal[a]
+    (a, b) => roleDataMap[b].totalJobs - roleDataMap[a].totalJobs
   );
 
-  // 2. Identify Relevant Techs (Y-Axis) & Calculate Global Counts
   const relevantTechs = new Set();
-  const techGlobalCounts = {}; // Store total count for every tech
+  const techWeightedScore = {};
 
-  // First pass: Identify which techs are "relevant" (top 15 per role)
+  // 2. Identify Relevant Techs (Y-Axis)
   sortedRoles.forEach((role) => {
-    roleDataMap[role]
-      .sort((a, b) => b.count - a.count)
+    const { techs, totalJobs } = roleDataMap[role]; // Destructure
+
+    techs
+      .sort((a, b) => b.count / totalJobs - a.count / totalJobs)
       .slice(0, 15)
-      .forEach((t) => relevantTechs.add(t.label));
+      .forEach((t) => {
+        relevantTechs.add(t.label);
+        // Add percentage to global score
+        techWeightedScore[t.label] =
+          (techWeightedScore[t.label] || 0) + (t.count / totalJobs) * 100;
+      });
   });
 
-  // Second pass: Calculate totals ONLY for the relevant techs across ALL roles
-  // This ensures that if "Java" is relevant, we count its usage even in roles where it wasn't top 15
-  Object.keys(roleDataMap).forEach((role) => {
-    roleDataMap[role].forEach((t) => {
-      if (relevantTechs.has(t.label)) {
-        techGlobalCounts[t.label] = (techGlobalCounts[t.label] || 0) + t.count;
-      }
-    });
-  });
-
-  // Sort based on the calculated global totals (Descending: Most popular first)
   const yAxisLabels = Array.from(relevantTechs).sort(
-    (a, b) => techGlobalCounts[b] - techGlobalCounts[a]
+    (a, b) => techWeightedScore[b] - techWeightedScore[a]
   );
 
   // 3. Build Points
@@ -1035,22 +1026,31 @@ function prepareTechRoleBubbleChart(roleDataMap) {
   const pointBg = [];
   const pointBorder = [];
   const ROW_HEIGHT = 50;
-  const MAX_RADIUS = ROW_HEIGHT / 2 - 2;
+  const MAX_RADIUS = ROW_HEIGHT / 2;
 
   sortedRoles.forEach((role, rIndex) => {
     const colorSet = GEN_COLORS[rIndex % GEN_COLORS.length];
-    const activeTechs = roleDataMap[role].filter((t) =>
-      relevantTechs.has(t.label)
-    );
+
+    // Destructure again
+    const { techs, totalJobs } = roleDataMap[role];
+
+    const activeTechs = techs.filter((t) => relevantTechs.has(t.label));
 
     activeTechs.forEach((t) => {
-      let r_val = Math.min(Math.max(3, Math.sqrt(t.count) * 1.5), MAX_RADIUS);
+      // Calculate Percentage
+      const percentage = (t.count / totalJobs) * 100;
+
+      // Radius Logic
+      let r_val = (Math.sqrt(percentage) / 10) * MAX_RADIUS;
+      r_val = Math.max(3, Math.min(r_val, MAX_RADIUS));
 
       allPoints.push({
         x: role,
         y: t.label,
         r: r_val,
         _rawCount: t.count,
+        _roleTotal: totalJobs,
+        _percentage: percentage.toFixed(1),
         _roleName: role,
         _techName: t.label,
       });
@@ -1067,7 +1067,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
       labels: sortedRoles,
       datasets: [
         {
-          label: "Tech Distribution",
+          label: "Tech Adoption Rate (%)",
           data: allPoints,
           backgroundColor: pointBg,
           borderColor: pointBorder,
@@ -1075,10 +1075,10 @@ function prepareTechRoleBubbleChart(roleDataMap) {
         },
       ],
     },
-    // We pass labels here so the option generator can set scales
     options: createBubbleOptions(sortedRoles, yAxisLabels),
     height: `${height}px`,
-    description: "Tech Stack Clusters: Bubble size represents job count.",
+    description:
+      "Tech Stack Clusters: Bubble size represents adoption % within the role.",
   };
 }
 
