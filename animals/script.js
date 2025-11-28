@@ -10,7 +10,6 @@ const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 
 // --- DOM ELEMENTS ---
-const container = document.getElementById("animal-container");
 const animalImage = document.getElementById("animal-image");
 const animalName = document.getElementById("animal-name");
 const settingsBtn = document.getElementById("settings-btn");
@@ -127,15 +126,24 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(`Preloading next image: ${preloadPath}`);
   }
 
+  function changeTextColor(label) {
+    animalName.classList.add("fade-out");
+    // Wait for fade-out to complete, then change text and fade in
+    setTimeout(() => {
+      animalName.textContent = label;
+      animalName.classList.remove("fade-out");
+      speaker();
+    }, 700);
+    console.log("Updated text content to: " + label);
+  }
+
   /**
    * Updates the DOM to display the animal and calls the speaker.
    */
   function updateAnimalUI(animal, path) {
     animalImage.src = path;
     animalImage.alt = animal.name;
-    animalName.textContent = animal.name;
-    animalName.style.opacity = 1;
-    setTimeout(speaker, 700);
+    changeTextColor(animal.name);
     utils.hideSettings();
     // Preload the next image
     preloadNextAnimalImage();
@@ -145,14 +153,17 @@ document.addEventListener("DOMContentLoaded", () => {
    * Attempts to load the current image index. If it fails, resets the index
    * and loads the first image (index 0).
    */
+
   async function loadAndDisplayImage(animal) {
     // Hide the current animal name
     animalName.style.opacity = 0;
+
     // Display spinner in 1 second
     const currentDelay = initialLoadComplete ? 1000 : 0;
     let spinnerTimer = setTimeout(() => {
       loadingSpinner.classList.remove("spinner-hidden");
     }, currentDelay);
+
     // Get image path of given animal
     let path = getCurrentImagePath(animal);
 
@@ -171,7 +182,7 @@ document.addEventListener("DOMContentLoaded", () => {
       animal.imageIndex++;
       updateAnimalUI(animal, successfulPath);
     } catch (failedPath) {
-      // 2. Error: The current indexed image does not exist (e.g., cat_2.jpg failed)
+      // 2. Error: Current indexed image missing
       console.warn(
         `Image not found: ${failedPath}. Resetting cycle for ${animal.name}.`
       );
@@ -194,19 +205,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Update successful state
         animal.imageIndex++;
-        animal.maxIndexFound = Math.max(animal.maxIndexFound, 0); // Max index found is at least 0
+        // Max index found is at least 0
+        animal.maxIndexFound = Math.max(animal.maxIndexFound, 0);
         updateAnimalUI(animal, firstPath);
       } catch (err) {
         clearTimeout(spinnerTimer);
         loadingSpinner.classList.add("spinner-hidden");
-        // FATAL Error: Even the first image is missing
-        console.error(
-          `FATAL: Could not load first image for ${animal.name}: ${path}`,
-          err
-        );
-        animalName.textContent = `${animal.name} (Image Missing)`;
-        animalName.style.opacity = 1;
+
+        // FATAL: Even the first image is missing → Skip to next animal
+        console.error(`Skipping ${animal.name}: No images found.`);
+
         utils.hideSettings();
+        // Call your "next animal"
+        showNextAnimal();
       }
     }
   }

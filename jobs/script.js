@@ -269,7 +269,7 @@ function toastInteractionListener() {
   toastTimer = setTimeout(() => {
     const toast = document.getElementById("ip-toast");
     toast.classList.remove("show");
-  }, 10000); // 10 seconds
+  }, 5000); // 5 seconds
 
   // Stop listening now that the user has interacted once
   cleanToastListener();
@@ -500,21 +500,6 @@ async function get(url, options = {}) {
     console.error("Request Failed to", url, error);
     throw error;
   }
-}
-
-// -- Get jobs.json.gz compressed file and decompress --
-async function fetchAndDecompressGzip(url) {
-  // 1. Fetch the compressed file as a binary response
-  const response = await get(url, { cache: "no-store" });
-  // 2. Treat response as a binary stream (Blob is the easiest way)
-  const blob = await response.blob();
-  // 3. Decompress the stream
-  const ds = new DecompressionStream("gzip");
-  // Pipe the blob's stream through the decompressor
-  const decompressedStream = blob.stream().pipeThrough(ds);
-  // 4. Read the decompressed text and parse JSON
-  const decompressedText = await new Response(decompressedStream).text();
-  return JSON.parse(decompressedText);
 }
 
 /**
@@ -1041,7 +1026,9 @@ function prepareTechRoleBubbleChart(roleDataMap) {
       .filter((t) => relevantTechs.has(t.label))
       .forEach((t) => {
         const pct = (t.count / totalJobs) * 100;
-        if (pct > maxPercentage) maxPercentage = pct;
+        if (pct > maxPercentage) {
+          maxPercentage = pct;
+        }
       });
   });
   // Guard: avoid division by zero

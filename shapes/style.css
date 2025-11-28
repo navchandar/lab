@@ -79,13 +79,6 @@ body {
     text-shadow: rgba(255, 255, 255, 0.4) 5px 5px 5px, rgba(0, 0, 0, 0.4) -2px -2px 5px;
 }
 
-.fade-out {
-    opacity: 0 !important;
-    transition: all 1s ease-in-out;
-    color: transparent !important;
-    text-shadow: none !important;
-}
-
 
 .circle {
     transition: background-color 1s ease-in-out, border-radius 1s ease-in-out !important;
@@ -204,7 +197,7 @@ body {
         scroll-behavior: auto !important;
     }
 
-    #shape, .fade-out {
+    #shape {
         transition: none !important;
     }
 }

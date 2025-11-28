@@ -33,13 +33,6 @@ body {
     transform: scale(1.05);
 }
 
-.fade-out {
-    opacity: 0 !important;
-    transition: opacity 1s ease-in-out;
-    color: transparent !important;
-    text-shadow: none !important;
-}
-
 /* Styles for mobile devices */
 @media (max-width: 767px) {
     #color-name {
@@ -82,7 +75,7 @@ body {
         scroll-behavior: auto !important;
     }
 
-    #color-name, .fade-out {
+    #color-name {
         transition: none !important;
     }
 }
