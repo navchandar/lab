@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import zlib from "zlib";
 import fsPromises from "fs/promises";
 import { promisify } from "util";
+import { TECH_KEYWORDS } from "./constants.js";
 
 // --- Configuration ---
 const __filename = fileURLToPath(import.meta.url);
@@ -26,88 +27,6 @@ const EXPERIENCE_RANGES = [
   { label: "17-20 Years", min: 17, max: 20 },
   { label: "21+ Years", min: 21, max: Infinity }, // The catch-all for high experience
 ];
-
-// --- Tech Stack Configuration ---
-const TECH_KEYWORDS = {
-  // Languages
-  JavaScript: [/javascript/i, /\bjs\b/i, /\bes6\b/i],
-  TypeScript: [/typescript/i, /\bts\b/i],
-  Python: [/python/i, /\bpy\b/i, /\bpytest\b/i],
-  Java: [/\bjava\b/i, /\bjee\b/i],
-  "C#": [/c#/i, /\.net/i, /\bdotnet\b/i],
-  "C++": [/c\+\+/i],
-  Go: [/\bgolang\b/i, /\bgo\b/i],
-  Rust: [/\brust\b/i],
-  PHP: [/\bphp\b/i],
-  Ruby: [/\bruby\b/i],
-  Swift: [/\bswift\b/i],
-  Kotlin: [/\bkotlin\b/i],
-
-  // Frontend Frameworks
-  React: [/react/i, /react\.js/i, /reactjs/i],
-  Angular: [/angular/i, /angularjs/i],
-  Vue: [/vue/i, /vue\.js/i],
-  NextJS: [/next\.js/i, /nextjs/i],
-  Tailwind: [/tailwind/i, /tailwindcss/i, /tailwind css/i],
-
-  // Backend & Runtime
-  NodeJS: [/node\.js/i, /nodejs/i, /node js/i, /\bnode\b/i],
-  Django: [/django/i],
-  SpringBoot: [/spring boot/i, /spring framework/i],
-  Express: [/express\.js/i, /\bexpress\b/i, /\bexpressjs\b/i],
-
-  // Databases
-  SQL: [/\bsql\b/i, /mysql/i, /postgres/i, /postgresql/i, /sql server/i],
-  NoSQL: [/nosql/i, /mongodb/i, /mongo/i, /cassandra/i, /dynamodb/i],
-  Redis: [/redis/i],
-
-  // Cloud & DevOps
-  AWS: [
-    /\baws\b/i,
-    /amazon web services/i,
-    /amazonwebservices/i,
-    /ec2/i,
-    /lambda/i,
-  ],
-  Azure: [/\bazure\b/i, /\bazuredevops\b/i, /azure devops/i],
-  GCP: [/\bgcp\b/i, /google cloud/i, /googlecloud/i],
-  Docker: [/docker/i, /dockerfile/i, /dockercompose/i, /docker compose/i],
-  Kubernetes: [/kubernetes/i, /\bk8s\b/i],
-  Terraform: [/terraform/i],
-  Jenkins: [/jenkins/i],
-  Git: [/\bgit\b/i, /github/i, /gitlab/i, /bitbucket/i],
-
-  // AI/ML
-  ML: [
-    /machine learning/i,
-    /\bml\b/i,
-    /\bai\/ml\b/i,
-    /\bmlops\b/i,
-    /pytorch/i,
-    /tensorflow/i,
-  ],
-  GenAI: [/genai/i, /generative ai/i, /\bllm\b/i, /large language model/i],
-
-  // QA & Testing
-  Selenium: [/selenium/i, /seleniumbase/i],
-  Cypress: [/cypress/i],
-  Playwright: [/playwright/i],
-  Appium: [/appium/i],
-  RestAssured: [/rest assured/i, /restassured/i],
-  Postman: [/\bpostman\b/i, /\bnewman\b/i],
-  JMeter: [/jmeter/i, /blazemeter/i],
-  Cucumber: [/cucumber/i, /\bbdd\b/i],
-  JUnit: [/junit/i],
-  TestNG: [/testng/i, /test ng/i],
-
-  // Management & Methodologies
-  Agile: [/\bagile\b/i, /\bsafe\b/i],
-  Scrum: [/\bscrum\b/i],
-  Kanban: [/kanban/i],
-  Jira: [/jira/i],
-  Confluence: [/confluence/i],
-  PMP: [/\bpmp\b/i, /project management professional/i],
-};
 
 /**
  * Parses the experienceRequired string (e.g., "3 - 5", "21", "8+", "—")
@@ -353,9 +272,11 @@ function aggregateTechByRole(jobs) {
   const formattedResult = {};
 
   Object.keys(rawCounts).forEach((role) => {
-    const techList = Object.entries(rawCounts[role])
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => b.count - a.count);
+    const techList = Object.entries(rawCounts[role]).map(([label, count]) => ({
+      label,
+      count,
+    }));
+    // .sort((a, b) => b.count - a.count);
 
     // Only add roles that actually have data
     if (techList.length > 0) {

@@ -2236,6 +2236,350 @@ export const CITY_ALIAS = {
   ],
 };
 
+export // --- Tech Stack Configuration ---
+const TECH_KEYWORDS = {
+  // --- SoftwareDEV (Languages & Core) ---
+  JavaScript: [/\bjavascript\b/i, /\bjs\b/i, /\bes6\+\b/i, /\becmascript\b/i],
+  TypeScript: [/\btypescript\b/i, /\bts\b/i],
+  Python: [/\bpython\b/i, /\bcpython\b/i, /\bpy\b/i, /\bpypi\b/i, /\bpep8\b/i],
+  Java: [/\bjava\b/i, /\bjdk\b/i, /\bjvm\b/i, /\bjee\b/i],
+  "C#": [/\bc#\b/i, /\.net\b/i, /\bdotnet\b/i, /\basp\.net\b/i],
+  "C++": [/\bc\+\+\b/i, /\bcpp\b/i, /\bstl\b/i],
+  Go: [/\bgolang\b/i, /\bgo\b/i], // \b is crucial here
+  Rust: [/\brust\b/i, /\brustlang\b/i],
+  Swift: [/\bswift\b/i, /\bswiftui\b/i],
+  Kotlin: [/\bkotlin\b/i, /\bjetpack ?compose\b/i],
+
+  // --- SoftwareDEV (Frontend & Mobile) ---
+  React: [/\breact\b/i, /\breact\.js\b/i, /\breactjs\b/i, /\breact native\b/i],
+  Angular: [/\bangular\b/i, /\bangularjs\b/i, /\bngx\b/i],
+  Vue: [/\bvue\b/i, /\bvue\.js\b/i, /\bvuejs\b/i, /\bnuxt\b/i],
+  Flutter: [/\bflutter\b/i, /\bdart\b/i],
+  Tailwind: [/\btailwind\b/i, /\btailwindcss\b/i],
+
+  // --- SoftwareDEV (Backend) ---
+  NodeJS: [/\bnode\.js\b/i, /\bnodejs\b/i, /\bnode\b/i, /\bnpm\b/i],
+  Spring: [/\bspring ?boot\b/i, /\bspring ?framework\b/i, /\bspring mvc\b/i],
+  Django: [/\bdjango\b/i, /\bdrf\b/i, /django rest framework/i],
+  FastAPI: [/\bfastapi\b/i, /fast api/i],
+  GraphQL: [/\bgraphql\b/i, /\bapollo\b/i],
+
+  Git: [/\bgit\b/i, /\bgit ?hub\b/i, /\bgit ?lab\b/i, /\bbit ?bucket\b/i],
+
+  // --- DataEngg (Data Engineering) ---
+  BigData: [
+    /\bhadoop\b/i,
+    /\bspark\b/i,
+    /\bpyspark\b/i,
+    /\bhive\b/i,
+    /\bmapreduce\b/i,
+  ],
+  DataStreaming: [
+    /\bkafka\b/i,
+    /\brabbitmq\b/i,
+    /\bactivemq\b/i,
+    /\bpulsar\b/i,
+  ],
+  DataOrchestration: [
+    /\bairflow\b/i,
+    /\bdagster\b/i,
+    /\bprefect\b/i,
+    /\bluigi\b/i,
+  ],
+  DataWarehouse: [
+    /\bsnowflake\b/i,
+    /\bredshift\b/i,
+    /\bbigquery\b/i,
+    /\bdatabricks\b/i,
+    /\bteradata\b/i,
+  ],
+  ETL: [
+    /\betl\b/i,
+    /\btalend\b/i,
+    /\binformatica\b/i,
+    /\bmatillion\b/i,
+    /\bglue\b/i,
+  ],
+
+  // --- ML/AI ---
+  DataScience: [
+    /\bpandas\b/i,
+    /\bnumpy\b/i,
+    /\bmatplotlib\b/i,
+    /\bseaborn\b/i,
+    /\bjupyter\b/i,
+  ],
+  MachineLearning: [
+    /\bmachine learning\b/i,
+    /\bml\b/i,
+    /\bscikit-learn\b/i,
+    /\bsklearn\b/i,
+  ],
+  DeepLearning: [
+    /\btensorflow\b/i,
+    /\bpytorch\b/i,
+    /\bkeras\b/i,
+    /\bopencv\b/i,
+    /\bcomputer ?vision\b/i,
+  ],
+  GenAI: [
+    /\bgenai\b/i,
+    /\bgenerative ai\b/i,
+    /\bllm\b/i,
+    /\bgpt\b/i,
+    /\bchatgpt\b/i,
+    /\bhugging ?face\b/i,
+    /\blangchain\b/i,
+    /\bllama\b/i,
+    /\bollama\b/i,
+  ],
+
+  // --- DevOps/SRE ---
+  AWS_Cloud: [
+    /\baws\b/i,
+    /\bec2\b/i,
+    /\blambda\b/i,
+    /\bs3\b/i,
+    /\bcloudformation\b/i,
+    /\bamazon web services\b/i,
+  ],
+  Azure_Cloud: [
+    /\bazure\b/i,
+    /\bazure ?devops\b/i,
+    /\baks\b/i,
+    /\bblob storage\b/i,
+  ],
+  Google_Cloud: [/\bgcp\b/i, /\bgoogle ?cloud\b/i, /\bgke\b/i, /\bbigtable\b/i],
+  Containerization: [
+    /\bdocker\b/i,
+    /\bdockercompose\b/i,
+    /\bk8s\b/i,
+    /\bkubernetes\b/i,
+    /\bhelm\b/i,
+    /\bopenshift\b/i,
+  ],
+  IaC: [
+    /\bterraform\b/i,
+    /\bansible\b/i,
+    /\bpulumi\b/i,
+    /\bchef\b/i,
+    /\bpuppet\b/i,
+    /\bcloudformation\b/i,
+  ],
+  CI_CD: [
+    /\bjenkins\b/i,
+    /\bgitlab ci\b/i,
+    /\bgithub actions\b/i,
+    /\bazure devops\b/i,
+    /\bcircleci\b/i,
+    /\bargo\b/i,
+  ],
+  Observability: [
+    /\bprometheus\b/i,
+    /\bgrafana\b/i,
+    /\bdatadog\b/i,
+    /\bsplunk\b/i,
+    /\belk ?stack\b/i,
+    /\bnew ?relic\b/i,
+    /\bopentelemetry\b/i,
+  ],
+  SRE: [
+    /\bsre\b/i,
+    /\bsite ?reliability\b/i,
+    /\bslo\b/i,
+    /\bsli\b/i,
+    /\berror budget\b/i,
+  ],
+
+  // --- SoftwareQA ---
+  Automation_Tools: [
+    /\bselenium\b/i,
+    /\bseleniumbase\b/i,
+    /\bplaywright\b/i,
+    /\bprotractor\b/i,
+    /\bcypress\b/i,
+    /\bpuppeteer\b/i,
+    /\bweb ?driver\b/i,
+    /\bwebdriverio\b/i,
+    /\bnightwatch\b/i,
+    /\bcucumber\b/i,
+    /\bgherkin\b/i,
+    /\bpytest\b/i,
+    /\btest ?ng\b/i,
+  ],
+  ManualTest: [
+    /\bmanual testing\b/i,
+    /manual tester/i,
+    /manual test/i,
+    /\bmanualtesting\b/i,
+    /\bmanual and automation\b/i,
+    /\bmanual\s?\+\s?automation\b/i,
+    /\bmanual and automated\b/i,
+  ],
+  MobileTest: [/\bappium\b/i, /\bxcuitest\b/i, /\bespresso\b/i],
+  APITest: [
+    /\brest ?assured\b/i,
+    /\bpost ?man\b/i,
+    /\bnewman\b/i,
+    /\bsoap ?ui\b/i,
+    /\bkarate\b/i,
+  ],
+  PerfTest: [/\bjmeter\b/i, /\bload ?runner\b/i, /\bgatling\b/i, /\bk6\b/i],
+
+  // --- Security ---
+  AppSec: [
+    /\bowasp\b/i,
+    /\bburp suite\b/i,
+    /\bmetasploit\b/i,
+    /\bzap\b/i,
+    /\bsast\b/i,
+    /\bdast\b/i,
+  ],
+  NetworkSec: [
+    /\bwireshark\b/i,
+    /\bnmap\b/i,
+    /\bfirewall\b/i,
+    /\bids\b/i,
+    /\bips\b/i,
+    /\bsiem\b/i,
+  ],
+  IdentitySec: [
+    /\bkeycloak\b/i,
+    /\biam\b/i,
+    /\boauth\b/i,
+    /\bsaml\b/i,
+    /\bokta\b/i,
+    /\bactive directory\b/i,
+  ],
+  Compliance: [
+    /\bcissp\b/i,
+    /\bceh\b/i,
+    /\biso 27001\b/i,
+    /\bgdpr\b/i,
+    /\bsoc2\b/i,
+  ],
+
+  // --- HardwareQA ---
+  Instrumentation: [
+    /\boscilloscope\b/i,
+    /\bmultimeter\b/i,
+    /\bspectrum analyzer\b/i,
+    /\blogic analyzer\b/i,
+  ],
+  Embedded_Tools: [
+    /\bfpga\b/i,
+    /\bverilog\b/i,
+    /\bvhdl\b/i,
+    /\bmicrocontroller\b/i,
+    /\bartos\b/i,
+    /\bfirmware\b/i,
+  ],
+  HardwareTest: [
+    /\bpcb\b/i,
+    /\bsoldering\b/i,
+    /\baltium\b/i,
+    /\blabview\b/i,
+    /\bmatlab\b/i,
+  ],
+  // --- Operating Systems ---
+  Linux_Unix: [
+    /\blinux\b/i,
+    /\bunix\b/i,
+    /\bred ?hat\b/i,
+    /\brhel\b/i,
+    /\bubuntu\b/i,
+    /\bdebian\b/i,
+    /\bcentos\b/i,
+    /\bfedora\b/i,
+    /\bsuse\b/i,
+    /\balpine\b/i,
+    /\barch linux\b/i,
+    /\bsolaris\b/i,
+    /\baix\b/i,
+    /\bhp-ux\b/i,
+  ],
+  Windows: [
+    /\bwindows\b/i,
+    /\bwindows server\b/i,
+    /\bwin ?server\b/i,
+    /\bwsl\b/i,
+  ],
+  MacOS: [/\bmac ?os\b/i, /\bos ?x\b/i],
+
+  // Critical for HardwareQA / Embedded / Robotics roles
+  Embedded_RTOS: [
+    /\brtos\b/i,
+    /\bvxworks\b/i,
+    /\bqnx\b/i,
+    /\bfreertos\b/i,
+    /\bzephyr\b/i,
+    /\bthreadx\b/i,
+    /\bmicrium\b/i,
+    /\bembedded linux\b/i,
+  ],
+
+  // --- RPA (Robotic Process Automation) ---
+  RPA_Tools: [
+    /\buipath\b/i,
+    /\bautomation anywhere\b/i,
+    /\bblue prism\b/i,
+    /\bpower automate\b/i,
+    /\bopenrpa\b/i,
+  ],
+
+  // --- DBA (Database Admin) ---
+  RDBMS: [
+    /\bpostgresql\b/i,
+    /\bpostgres\b/i,
+    /\bmysql\b/i,
+    /\boracle db\b/i,
+    /\bduckdb\b/i,
+    /\bmssql\b/i,
+    /\bsql server\b/i,
+    /\bpl\/sql\b/i,
+    /\bt-sql\b/i,
+    /\bsqlite\b/i,
+  ],
+  NoSQL_DB: [
+    /\bmongodb\b/i,
+    /\bmongo\b/i,
+    /\bcassandra\b/i,
+    /\bdynamodb\b/i,
+    /\bredis\b/i,
+    /\belasticsearch\b/i,
+    /\blmdb\b/i,
+    /\bleveldb\b/i,
+    /\brocksdb\b/i,
+    /\bberkeleydb\b/i,
+  ],
+  DB_Mgmt: [
+    /\bstored procedures\b/i,
+    /\bsharding\b/i,
+    /\breplication\b/i,
+    /\bdatabase tuning\b/i,
+  ],
+
+  // --- Management ---
+  Agile_Scrum: [
+    /\bagile\b/i,
+    /\bscrum\b/i,
+    /\bkanban\b/i,
+    /\bsafe\b/i,
+    /\bsprint planning\b/i,
+    /\bpmp\b/i,
+    /\bprince2\b/i,
+    /\bcsm\b/i,
+    /\bpsm\b/i,
+  ],
+  Agile_Tools: [
+    /\bjira\b/i,
+    /\bconfluence\b/i,
+    /\bazure boards\b/i,
+    /\blinear\b/i,
+    /\bclickup\b/i,
+  ],
+};
+
 const BASE_REMOVE_TITLES = [
   "| India",
   "|| Pan India",
