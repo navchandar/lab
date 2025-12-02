@@ -52,7 +52,7 @@ jobs:
         run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
 
       - name: Validate Spelling
-        uses: rojopolis/spellcheck-github-actions@0.54.0
+        uses: rojopolis/spellcheck-github-actions@0.55.0
         with:
           config_path: config/.spellcheck.yml
           task_name: HTML
