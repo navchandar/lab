@@ -1000,20 +1000,19 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     };
   }
 
+  // 2) Identify Relevant Techs (Y-Axis)
+  // We still need a global list of techs to determine the Y-Axis rows
   const relevantTechs = new Set();
   const techWeightedScore = {};
 
-  // 2) Identify Relevant Techs (Y-Axis)
   sortedRoles.forEach((role) => {
     const { techs, totalJobs } = roleDataMap[role];
-
-    // Get top 20 techs for this specific role
+    // Take top 20 from each role to ensure coverage
     techs
       .sort((a, b) => b.count / totalJobs - a.count / totalJobs)
       .slice(0, 20)
       .forEach((t) => {
         relevantTechs.add(t.label);
-        // Add percentage to global score
         techWeightedScore[t.label] =
           (techWeightedScore[t.label] || 0) + (t.count / totalJobs) * 100;
       });
@@ -1023,7 +1022,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     (a, b) => techWeightedScore[b] - techWeightedScore[a]
   );
 
-  // 3) Build bubble points
+  // 3) Build Bubble Points with LOCAL SCALING
   const allPoints = [];
   const pointBg = [];
   const pointBorder = [];
@@ -1035,28 +1034,44 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     // Get the specific data for THIS role
     const { techs, totalJobs } = roleDataMap[role];
 
+    // Filter only techs that are on our Y-Axis
     const activeTechs = techs.filter((t) => relevantTechs.has(t.label));
 
+    // --- STEP 3a: Find Local Maximum for THIS specific Role ---
+    let localMaxPercentage = 0;
     activeTechs.forEach((t) => {
-      // Calculate Percentage strictly for this role
+      const pct = (t.count / totalJobs) * 100;
+      if (pct > localMaxPercentage) {
+        localMaxPercentage = pct;
+      }
+    });
+
+    // Guard against divide by zero if a role has no matching techs
+    if (localMaxPercentage === 0) {
+      localMaxPercentage = 1;
+    }
+
+    // --- STEP 3b: Calculate Radius relative to Local Max ---
+    activeTechs.forEach((t) => {
       const percentage = (t.count / totalJobs) * 100;
 
-      // --- ABSOLUTE SCALING ---
-      // We map 0% -> 100% directly to 0 -> MAX_RADIUS.
-      // This ensures bubble size depends ONLY on this job role's data.
-      let r_val = (percentage / 100) * MAX_RADIUS;
+      // SCALING LOGIC:
+      // If Selenium is 40% (the max for QA), it gets scaled to 100% of MAX_RADIUS.
+      // If React is 90% (the max for Dev), it ALSO gets scaled to 100% of MAX_RADIUS.
+      let r_val = (percentage / localMaxPercentage) * MAX_RADIUS;
 
-      // Visual tweak: Anything below 5% is very small, but keep a tiny min visibility
-      r_val = Math.max(2, r_val);
+      // Minimum visibility floor (e.g., 3px)
+      r_val = Math.max(3, r_val);
 
       allPoints.push({
         x: role,
         y: t.label,
         r: r_val,
-        // Meta data for tooltips
+        // Metadata for tooltips
         _rawCount: t.count,
         _roleTotal: totalJobs,
         _percentage: percentage.toFixed(1),
+        _localMax: localMaxPercentage.toFixed(1),
         _roleName: role,
         _techName: t.label,
       });
@@ -1073,7 +1088,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
       labels: sortedRoles,
       datasets: [
         {
-          label: "Tech Adoption Rate (%)",
+          label: "Relative Tech Dominance", // Changed label to reflect logic
           data: allPoints,
           backgroundColor: pointBg,
           borderColor: pointBorder,
@@ -1084,7 +1099,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
     options: createBubbleOptions(sortedRoles, yAxisLabels),
     height: `${height}px`,
     description:
-      "Tech Stack Clusters: Bubble size represents adoption among job posts within each role type.",
+      "Tech Stack Clusters: Bubble size is normalized per role (largest bubble in each column represents the most popular tech for that role).",
   };
 }
 
