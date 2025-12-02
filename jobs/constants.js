@@ -2578,6 +2578,151 @@ export const TECH_KEYWORDS = {
     /\blinear\b/i,
     /\bclickup\b/i,
   ],
+
+  // --- Vendor Specific Certifications ---
+  Cert_AWS: [
+    /\baws certified\b/i,
+    /\b(aws|amazon).+architect\b/i, // Catch "AWS Solution Architect"
+    /\b(aws|amazon).+developer\b/i, // Catch "AWS Developer"
+    /\b(aws|amazon).+sysops\b/i,
+    /\b(aws|amazon).+devops\b/i,
+    /\b(aws|amazon).+specialty\b/i,
+    /\bsaa-c0[1-3]\b/i, // Specific Exam Codes
+    /\bdop-c0[1-2]\b/i,
+    /\bsap-c0[1-2]\b/i,
+  ],
+  Cert_Azure: [
+    /\bazure certified\b/i,
+    /\bmicrosoft certified.+azure\b/i,
+    /\baz-\d{3,4}\b/i, // Catch AZ-900, AZ-104, etc.
+    /\bdp-\d{3}\b/i, // Data (DP-203)
+    /\bai-\d{3}\b/i, // AI (AI-102)
+    /\bsc-\d{3}\b/i, // Security (SC-200)
+    /\bmcsd\b/i, // Legacy Microsoft
+    /\bmcsa\b/i,
+  ],
+  Cert_GCP: [
+    /\bgoogle cloud certified\b/i,
+    /\bgcp certified\b/i,
+    /\bprofessional cloud architect\b/i,
+    /\bassociate cloud engineer\b/i,
+    /\bprofessional data engineer\b/i,
+    /\bprofessional cloud security\b/i,
+  ],
+
+  // --- Specialized Data & AI Vendors ---
+  Cert_Databricks: [
+    /\bdatabricks certified\b/i,
+    /\bdatabricks.+associate\b/i,
+    /\bdatabricks.+professional\b/i,
+    /\bspark certified\b/i, // Often linked to Databricks contexts
+  ],
+  Cert_Snowflake: [
+    /\bsnowflake certified\b/i,
+    /\bsnowpro\b/i, // Their official cert name
+    /\bsnowpro core\b/i,
+  ],
+  Cert_Tableau: [
+    /\btableau certified\b/i,
+    /\btableau desktop\b/i,
+    /\btableau server\b/i,
+  ],
+
+  // --- Networking & Infrastructure Vendors ---
+  Cert_Cisco: [
+    /\bcisco certified\b/i,
+    /\bccna\b/i,
+    /\bccnp\b/i,
+    /\bccie\b/i,
+    /\bdevnet\b/i,
+  ],
+  Cert_HashiCorp: [
+    /\bhashicorp certified\b/i,
+    /\bterraform associate\b/i,
+    /\bvault (associate|operations)\b/i,
+    /\bconsul (associate|operations)\b/i,
+  ],
+  Cert_RedHat: [
+    /\bred ?hat certified\b/i,
+    /\brhce\b/i,
+    /\brhcsa\b/i,
+    /\bopenshift.+administrator\b/i,
+  ],
+  Cert_LinuxFoundation: [
+    // CNCF is under Linux Foundation
+    /\blinux foundation certified\b/i,
+    /\bcka\b/i, // Kubernetes Admin
+    /\bckad\b/i, // Kubernetes App Dev
+    /\bcks\b/i, // Kubernetes Security
+    /\bkcna\b/i,
+  ],
+
+  // --- Quality Assurance & Methodology Vendors ---
+  Cert_ISTQB: [
+    /\bistqb\b/i,
+    /\biseb\b/i, // Older/Regional variant often paired
+    /\badvanced level (test|tester)\b/i, // Contextual, use carefully
+    /\bcertified tester\b/i,
+  ],
+  Cert_ScrumOrg: [
+    // Vendor: Scrum.org (The "Professional" series)
+    /\bpsm\s?[i|1|2|ii]?\b/i, // Professional Scrum Master
+    /\bpspo\b/i, // Professional Scrum Product Owner
+    /\bprofessional scrum\b/i,
+  ],
+  Cert_ScrumAlliance: [
+    // Vendor: Scrum Alliance (The "Certified" series)
+    /\bcsm\b/i, // Certified Scrum Master
+    /\bcspo\b/i, // Certified Scrum Product Owner
+    /\bcsp\b/i, // Certified Scrum Professional
+  ],
+  Cert_PMI: [
+    // Vendor: Project Management Institute
+    /\bpmp\b/i,
+    /\bcapm\b/i,
+    /\bpmi-acp\b/i,
+    /\bpgmp\b/i,
+  ],
+
+  // --- Security Vendors ---
+  Cert_CompTIA: [
+    /\bcomptia\b/i,
+    /\bsec\+\b/i, // Short for Security+
+    /\bsecurity\+\b/i,
+    /\bnet\+\b/i, // Network+
+    /\bnetwork\+\b/i,
+    /\bcysa\+\b/i,
+    /\bcasp\+\b/i,
+  ],
+  Cert_ISC2: [
+    /\bisc2\b/i,
+    /\bcissp\b/i,
+    /\bccsp\b/i, // Cloud Security
+    /\bsscp\b/i,
+  ],
+  Cert_OffSec: [
+    // Offensive Security (Kali creators)
+    /\boffensive security\b/i,
+    /\boscp\b/i,
+    /\bosce\b/i,
+    /\boswp\b/i,
+  ],
+  Cert_ISACA: [/\bisaca\b/i, /\bcism\b/i, /\bcisa\b/i, /\bcrisc\b/i],
+
+  // --- Enterprise Software Vendors ---
+  Cert_Salesforce: [
+    /\bsalesforce certified\b/i,
+    /\bsalesforce administrator\b/i,
+    /\bsalesforce developer\b/i,
+    /\bplatform app builder\b/i,
+  ],
+  Cert_Oracle: [
+    /\boracle certified\b/i,
+    /\bocjp\b/i, // Java Programmer
+    /\bocp\b/i,
+    /\boca\b/i,
+    /\bocm\b/i,
+  ],
 };
 
 const BASE_REMOVE_TITLES = [
