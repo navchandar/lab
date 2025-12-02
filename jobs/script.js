@@ -1007,10 +1007,10 @@ function prepareTechRoleBubbleChart(roleDataMap) {
 
   sortedRoles.forEach((role) => {
     const { techs, totalJobs } = roleDataMap[role];
-    // Take top 20 from each role to ensure coverage
+    // Take top 30 from each role to ensure coverage
     techs
       .sort((a, b) => b.count / totalJobs - a.count / totalJobs)
-      .slice(0, 20)
+      .slice(0, 30)
       .forEach((t) => {
         relevantTechs.add(t.label);
         techWeightedScore[t.label] =
