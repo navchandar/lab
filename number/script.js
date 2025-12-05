@@ -16,6 +16,7 @@ let previousColor = null;
 
 let intervalID = null;
 let Locale = null;
+let locked = false;
 
 // --- Speaker Initiation --
 const ttsInstance = TTS();
@@ -38,9 +39,15 @@ function speaker() {
 }
 
 function incrementNumber() {
+  // If locked, stop immediately
+  if (locked) {
+    return;
+  }
+
   // Determine which mode to use (random or sequential)
   const isRandomEnabled = utils.getIsRandomEnabled();
   previousColor = currentColor;
+  locked = true;
 
   setTimeout(() => {
     if (isRandomEnabled) {
@@ -54,7 +61,12 @@ function incrementNumber() {
       currentColor = utils.getNextColor(previousColor, currentColor);
     }
     numberElement.style.color = currentColor;
-    setTimeout(speaker, 700);
+
+    // Unlock after the speech delay
+    setTimeout(() => {
+      speaker();
+      locked = false;
+    }, 700);
   }, 200);
 
   utils.hideSettings();

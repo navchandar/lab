@@ -86,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- STATE VARIABLES ---
   let currentIndex = -1;
   let autoplayInterval = null;
+  let locked = false;
 
   // --- CORE FUNCTIONS ---
 
@@ -144,29 +145,35 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log(`Preloading next image: ${preloadPath}`);
   }
 
-  function changeTextColor(label) {
-    animalName.classList.add("fade-out");
-    // Wait for fade-out to complete, then change text and fade in
-    setTimeout(() => {
-      animalName.textContent = label;
-      animalName.classList.remove("fade-out");
-      speaker();
-    }, 700);
-    console.log("Updated text content to: " + label);
-  }
-
   /**
    * Updates the DOM to display the animal and calls the speaker.
    */
   function updateAnimalUI(animal, path) {
-    animalImage.src = path;
-    animalImage.alt = animal.name;
-    changeTextColor(animal.name);
+    // Add fade-out class to start the transition
+    animalImage.classList.add("fade-out");
+    animalName.classList.add("fade-out");
+    // Wait for the fade-out to complete
+    setTimeout(() => {
+      animalImage.src = path;
+      animalImage.alt = animal.name;
+      // Fade back in the image
+      animalImage.classList.remove("fade-out");
+      setTimeout(() => {
+        // Trigger text change
+        animalName.textContent = animal.name;
+        animalName.classList.remove("fade-out");
+        speaker();
+        console.log("Updated text content to: " + animal.name);
+
+        // Unlock the interface
+        locked = false;
+      }, 500);
+    }, 700);
+
     utils.hideSettings();
     // Preload the next image
     preloadNextAnimalImage();
   }
-
   /**
    * Attempts to load the current image index. If it fails, resets the index
    * and loads the first image (index 0).
@@ -230,6 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // FATAL: Even the first image is missing → Skip to next animal
         console.error(`Skipping ${animal.name}: No images found.`);
 
+        locked = false;
         utils.hideSettings();
         // Call your "next animal"
         showNextAnimal();
@@ -241,6 +249,11 @@ document.addEventListener("DOMContentLoaded", () => {
    * Displays the next animal and plays its name.
    */
   function showNextAnimal() {
+    // If UI is locked, Do nothing
+    if (locked) {
+      return;
+    }
+    locked = true;
     const isRandomEnabled = utils.getIsRandomEnabled();
     let nextIndex = currentIndex;
 

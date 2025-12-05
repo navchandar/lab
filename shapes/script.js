@@ -36,6 +36,7 @@ let currentShapeIndex = 0;
 let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
+let locked = false;
 
 /**
  * Speaks the given text displayed on the screen.
@@ -46,27 +47,17 @@ function speaker() {
   }
 }
 
-function changeTextColor(color, label) {
-  shapeNameElement.classList.add("fade-out");
-  // Wait for fade-out to complete, then change text and fade in
-  setTimeout(() => {
-    shapeNameElement.textContent = label;
-    shapeNameElement.classList.remove("fade-out");
-    // Speak the shape name
-    speaker();
-  }, 700);
-  console.log("Updated text content to: " + label);
-}
-
 function updateShape() {
-  // Remove current shape class
-  shapeElement.className = "";
-  shapeElement.classList.add("shape");
-  let newShape = null;
+  // If locked, stop immediately
+  if (locked) {
+    return;
+  }
 
-  // Determine which mode to use (random or sequential)
+  // --- LOGIC: Determine next shape & color ---
   const isRandomEnabled = utils.getIsRandomEnabled();
   previousColor = currentColor;
+  let newShape = null;
+  locked = true;
 
   if (isRandomEnabled) {
     let randomIndex;
@@ -91,13 +82,31 @@ function updateShape() {
     currentColor = utils.getNextColor(previousColor, currentColor);
   }
 
-  // Add new shape class
   newShape = shapes[currentShapeIndex];
-  shapeElement.classList.add(newShape);
-  // Apply background color to the shape
-  shapeElement.style.backgroundColor = currentColor;
-  changeTextColor(currentColor, newShape);
-  utils.hideSettings();
+
+  // Add fade-out class to the text
+  shapeNameElement.classList.add("fade-out");
+
+  // Wait for fade-out (700ms)
+  setTimeout(() => {
+    // Update Shape Visuals
+    // Reset class list to base "shape" plus the new shape name
+    shapeElement.className = "shape " + newShape;
+    shapeElement.style.backgroundColor = currentColor;
+
+    // Update Text of shape
+    shapeNameElement.textContent = newShape;
+
+    // Fade In (Remove fade-out class)
+    shapeNameElement.classList.remove("fade-out");
+
+    utils.hideSettings();
+    speaker();
+    console.log("Updated text content to: " + newShape);
+
+    // Unlock after speaker
+    locked = false;
+  }, 700);
 }
 
 function autoplay() {

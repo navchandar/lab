@@ -23,6 +23,7 @@ let currentColor = null;
 let previousColor = null;
 let currentIndex = 0;
 let history = []; // Used to prevent immediate repeats in random mode
+let locked = false;
 
 // --- Speaker Initiation --
 const ttsInstance = TTS();
@@ -106,13 +107,24 @@ function updateCharacter() {
   numberElement.style.color = currentColor;
 
   // Speak the new character
-  setTimeout(speaker, 700);
+  setTimeout(() => {
+    speaker();
+    locked = false;
+  }, 700);
 }
 
 /**
  * A wrapper for updateCharacter with a slight delay and closes the settings menu.
  */
 function incrementAlphabet() {
+  // If locked, stop immediately
+  if (locked) {
+    return;
+  }
+
+  // Lock the interface
+  locked = true;
+
   // Delay the execution slightly for visual/auditory pacing
   setTimeout(updateCharacter, 100);
   utils.hideSettings();

@@ -11,6 +11,7 @@ const settingsIcon = document.getElementById("settings-icon");
 let Locale = null;
 let currentIndex = 0;
 let intervalID = null;
+let locked = false;
 
 // --- Speaker Initiation --
 const ttsInstance = TTS();
@@ -62,30 +63,33 @@ function getTextStyleForBrightness(color) {
 }
 
 function changeBodyColor(color) {
-  // update color with importance to work on devices with Dark viewer
-  document.body.style.setProperty("background-color", color, "important");
   // Update theme color on supported mobile devices
   const metaTag = document.getElementById("theme-color");
   if (metaTag) {
     metaTag.setAttribute("content", color);
   }
+  // update color with importance to work on devices with Dark viewer
+  document.body.style.setProperty("background-color", color, "important");
   console.log("Updated background color to: " + color);
 }
 
-function changeTextColor(color, label) {
+function changeColor(color, label) {
   const { textColor, textShadow } = getTextStyleForBrightness(color);
-
   colorNameEl.classList.add("fade-out");
   // Wait for fade-out to complete, then change text and fade in
   setTimeout(() => {
-    colorNameEl.style.color = textColor;
-    colorNameEl.style.textShadow = textShadow;
-    colorNameEl.textContent = label;
-    colorNameEl.classList.remove("fade-out");
-    speaker();
-  }, 700);
-  console.log("Updated text content to: " + label);
-  console.log("Updated text color to: " + textColor);
+    changeBodyColor(color);
+    setTimeout(() => {
+      colorNameEl.style.color = textColor;
+      colorNameEl.style.textShadow = textShadow;
+      colorNameEl.textContent = label;
+      colorNameEl.classList.remove("fade-out");
+      speaker();
+      locked = false;
+      console.log("Updated text content to: " + label);
+      console.log("Updated text color to: " + textColor);
+    }, 700);
+  }, 500);
 }
 
 const lastColors = [];
@@ -103,6 +107,11 @@ function getRandomColorExcludingLast(colorsArray) {
 }
 
 function updateColor() {
+  // If locked, stop immediately
+  if (locked) {
+    return;
+  }
+
   // Get color data and label values
   const colorData =
     window.colors && window.colors[currentLang]
@@ -110,6 +119,7 @@ function updateColor() {
       : (console.error(`Color data for "${currentLang}" not found`), {});
 
   if (colorData) {
+    locked = true;
     Locale = colorData.locale;
     // Determine which mode to use (random or sequential)
     const isRandomEnabled = utils.getIsRandomEnabled();
@@ -123,8 +133,7 @@ function updateColor() {
     const color = selectedColorData.color;
     const label = selectedColorData.label;
 
-    changeBodyColor(color);
-    changeTextColor(color, label);
+    changeColor(color, label);
 
     // Update lastColors history
     if (isRandomEnabled) {
