@@ -93,19 +93,20 @@ function updateShape() {
     // Reset class list to base "shape" plus the new shape name
     shapeElement.className = "shape " + newShape;
     shapeElement.style.backgroundColor = currentColor;
-
-    // Update Text of shape
-    shapeNameElement.textContent = newShape;
-
-    // Fade In (Remove fade-out class)
-    shapeNameElement.classList.remove("fade-out");
-
     utils.hideSettings();
-    speaker();
-    console.log("Updated text content to: " + newShape);
 
-    // Unlock after speaker
-    locked = false;
+    setTimeout(() => {
+      // Update Text of shape
+      shapeNameElement.textContent = newShape;
+      // Fade In (Remove fade-out class)
+      shapeNameElement.classList.remove("fade-out");
+      console.log("Updated text content to: " + newShape);
+      // Unlock after speaker
+      setTimeout(() => {
+        speaker();
+        locked = false;
+      }, 500);
+    }, 500);
   }, 700);
 }
 
