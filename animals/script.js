@@ -75,12 +75,13 @@ document.addEventListener("DOMContentLoaded", () => {
   /**
    * Data Structure: array of animal objects including state.
    * imageIndex tracks the current image (0 for cat_1.jpg, 1 for cat_2.jpg, etc.)
+   * maxIndexFound tracks the highest valid index known (initially -1 for unknown)
    */
   const animals = animalNames.map((name) => ({
     name: name,
     file: name.toLowerCase().replace(/ /g, "-"),
     imageIndex: 0,
-    maxIndexFound: 0,
+    maxIndexFound: -1,
   }));
 
   // --- STATE VARIABLES ---
@@ -107,7 +108,22 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /**
-   * Helper function to test image loading using a Promise.
+   * Helper: Uses a HEAD request to check if an image exists without downloading the body.
+   * Returns true if exists (200 OK), false otherwise.
+   */
+  async function checkImageExists(url) {
+    try {
+      const response = await fetch(url, { method: "HEAD" });
+      return response.ok;
+    } catch (error) {
+      // Image doesnt exist or Network error
+      return false;
+    }
+  }
+
+  /**
+   * Helper function to fully load an image for display using a Promise.
+   * This actually downloads the image data.
    */
   function loadImage(path) {
     return new Promise((resolve, reject) => {
@@ -120,29 +136,54 @@ document.addEventListener("DOMContentLoaded", () => {
 
   /**
    * Calculates the next animal and image index, then preloads the image.
-   * This runs in the background to ensure the next image is ready when needed.
+   * Uses HEAD requests to verify existence and updates maxIndexFound accordingly.
    */
-  function preloadNextAnimalImage() {
-    // 1. Calculate the next animal index (Sequential mode for prediction)
-    const nextAnimalIndex = (currentIndex + 1) % animals.length;
+  async function preloadNextAnimalImage() {
+    let nextAnimalIndex;
+
+    // 1. Determine next animal based on mode
+    if (utils.getIsRandomEnabled()) {
+      // Pick a random animal (different from current if possible)
+      do {
+        nextAnimalIndex = Math.floor(Math.random() * animals.length);
+      } while (nextAnimalIndex === currentIndex && animals.length > 1);
+    } else {
+      // Sequential neighbor
+      nextAnimalIndex = (currentIndex + 1) % animals.length;
+    }
+
     const nextAnimal = animals[nextAnimalIndex];
 
-    // 2. Determine the path for the next image
+    // 2. Determine the target index
     let nextImageIndex = nextAnimal.imageIndex;
-    // 3. Check if the index we are about to try is greater than the max successful index.
-    // If it is, we wrap the preloading index back to 0.
+
+    // Check against known limits immediately
     if (
-      nextImageIndex > nextAnimal.maxIndexFound &&
-      nextAnimal.maxIndexFound >= 0
+      nextAnimal.maxIndexFound > -1 &&
+      nextImageIndex > nextAnimal.maxIndexFound
     ) {
       nextImageIndex = 0;
     }
-    const preloadPath = generateImagePath(nextAnimal, nextImageIndex);
 
-    // 4. Trigger the image load in the background
-    const preloader = new Image();
-    preloader.src = preloadPath;
-    console.log(`Preloading next image: ${preloadPath}`);
+    const preloadPath = generateImagePath(nextAnimal, nextImageIndex);
+    console.log(
+      `Checking existence for preload (${nextAnimal.name}): ${preloadPath}`
+    );
+
+    const exists = await checkImageExists(preloadPath);
+    if (exists) {
+      // Now actually trigger a background download so it's in the browser cache
+      const preloader = new Image();
+      preloader.src = preloadPath;
+      console.log(`Preloading confirmed image: ${preloadPath}`);
+    } else {
+      // Image does not exist (404). Update the maxIndexFound value.
+      console.warn(
+        `Limit detected for ${nextAnimal.name} at index ${nextImageIndex}`
+      );
+      // The valid limit is the previous index
+      nextAnimal.maxIndexFound = Math.max(0, nextImageIndex - 1);
+    }
   }
 
   /**
@@ -171,14 +212,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 700);
 
     utils.hideSettings();
-    // Preload the next image
+    // Start preloading the NEXT one now
     preloadNextAnimalImage();
   }
+
   /**
    * Attempts to load the current image index. If it fails, resets the index
    * and loads the first image (index 0).
    */
-
   async function loadAndDisplayImage(animal) {
     // Display spinner in 1 second
     const currentDelay = initialLoadComplete ? 1000 : 0;
@@ -190,7 +231,8 @@ document.addEventListener("DOMContentLoaded", () => {
     let path = getCurrentImagePath(animal);
 
     try {
-      // 1. Try to load the current indexed image (e.g., cat_2.jpg)
+      // Try to load the current indexed image
+      // Note: If preloadNextAnimalImage ran successfully, this should load from cache instantly.
       const successfulPath = await loadImage(path);
 
       clearTimeout(spinnerTimer);
@@ -199,25 +241,33 @@ document.addEventListener("DOMContentLoaded", () => {
         initialLoadComplete = true;
       }
 
-      // Update successful state
-      animal.maxIndexFound = Math.max(animal.maxIndexFound, animal.imageIndex);
+      // Success! Prepare index for NEXT time.
       animal.imageIndex++;
+
+      // Check if we just exceeded a KNOWN limit
+      if (
+        animal.maxIndexFound > -1 &&
+        animal.imageIndex > animal.maxIndexFound
+      ) {
+        animal.imageIndex = 0;
+      }
+
       updateAnimalUI(animal, successfulPath);
     } catch (failedPath) {
-      // 2. Error: Current indexed image missing
+      // Error: Current indexed image missing (404)
       console.warn(
-        `Image not found: ${failedPath}. Resetting cycle for ${animal.name}.`
+        `Image not found during display: ${failedPath}. Resetting cycle for ${animal.name}.`
       );
 
-      // The image at animal.imageIndex failed. Mark this as the maximum index found.
+      // CRITICAL: Update the limit so we don't try this again.
       animal.maxIndexFound = Math.max(0, animal.imageIndex - 1);
-      // Reset the index to 0 (for the next image attempt)
+
+      // Reset to 0
       animal.imageIndex = 0;
-      // Get the path for the first image (e.g., cat_1.jpg)
       path = getCurrentImagePath(animal);
 
       try {
-        // 3. Try to load the first image (e.g., cat_1.jpg)
+        // Fallback: Load the first image
         const firstPath = await loadImage(path);
         clearTimeout(spinnerTimer);
         loadingSpinner.classList.add("spinner-hidden");
@@ -225,18 +275,15 @@ document.addEventListener("DOMContentLoaded", () => {
           initialLoadComplete = true;
         }
 
-        // Update successful state
-        animal.imageIndex++;
-        // Max index found is at least 0
-        animal.maxIndexFound = Math.max(animal.maxIndexFound, 0);
+        // Prepare for next time (0 is done, next is 1)
+        animal.imageIndex = 1;
         updateAnimalUI(animal, firstPath);
       } catch (err) {
         clearTimeout(spinnerTimer);
         loadingSpinner.classList.add("spinner-hidden");
 
-        // FATAL: Even the first image is missing → Skip to next animal
+        // FATAL: Even the first image is missing
         console.error(`Skipping ${animal.name}: No images found.`);
-
         locked = false;
         utils.hideSettings();
         // Call your "next animal"
