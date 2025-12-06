@@ -24,6 +24,11 @@ body {
     max-height: 90vh;
 }
 
+img:not([src]),
+img[src=""] {
+    /* Hides the broken icon */
+    visibility: hidden;
+}
 
 .image-container {
     display: inline-block;

@@ -45,11 +45,21 @@
 
   <body>
     <div id="animal-container">
-      <div id="loadingSpinner" class="spinner-hidden"></div>
+      <div
+        id="loadingSpinner"
+        role="status"
+        aria-label="Loading new animal"
+        class="spinner-hidden"
+      ></div>
       <div class="image-container">
-        <img id="animal-image" alt="Loading image..." />
+        <img
+          id="animal-image"
+          alt="Waiting for animal..."
+          fetchpriority="high"
+          src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+        />
       </div>
-      <h1 id="animal-name"></h1>
+      <h1 id="animal-name" aria-live="polite"></h1>
     </div>
 
     <button
@@ -87,7 +97,15 @@
     </button>
 
     <!-- Overlay Menu -->
-    <div id="settings-menu">
+    <div
+      id="settings-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-label"
+    >
+      <span id="settings-label" class="sr-only" style="display:none;"
+        >Settings Menu
+      </span>
       <div class="randomize-checkbox">
         <label for="randomize" id="randomize-label">Randomize Animals:</label>
         <input type="checkbox" id="randomize" />

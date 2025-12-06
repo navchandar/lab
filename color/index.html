@@ -93,7 +93,15 @@
     </button>
 
     <!-- Overlay Menu -->
-    <div id="settings-menu">
+    <div
+      id="settings-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-label"
+    >
+      <span id="settings-label" class="sr-only" style="display:none;"
+        >Settings Menu
+      </span>
       <label for="language-select" id="language-label">Choose Language:</label>
       <select id="language-select">
         <!-- Options to be populated by JS -->

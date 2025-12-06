@@ -88,6 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentIndex = -1;
   let autoplayInterval = null;
   let locked = false;
+  const preloadedUrls = new Set();
 
   // --- CORE FUNCTIONS ---
 
@@ -129,7 +130,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return new Promise((resolve, reject) => {
       const img = new Image();
       img.onerror = () => reject(path);
-      img.onload = () => resolve(path);
+      img.onload = () => {
+        // If loaded successfully, add to our preload cache set too
+        preloadedUrls.add(path);
+        resolve(path);
+      };
       img.src = path;
     });
   }
@@ -166,6 +171,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const preloadPath = generateImagePath(nextAnimal, nextImageIndex);
+
+    // Check if we have already preloaded this specific URL
+    if (preloadedUrls.has(preloadPath)) {
+      console.log(`Skipping: ${preloadPath} is already cached.`);
+      return;
+    }
+
     console.log(
       `Checking existence for preload (${nextAnimal.name}): ${preloadPath}`
     );
@@ -175,6 +187,10 @@ document.addEventListener("DOMContentLoaded", () => {
       // Now actually trigger a background download so it's in the browser cache
       const preloader = new Image();
       preloader.src = preloadPath;
+
+      // Mark as cached so we don't check again
+      preloadedUrls.add(preloadPath);
+
       console.log(`Preloading confirmed image: ${preloadPath}`);
     } else {
       // Image does not exist (404). Update the maxIndexFound value.
@@ -199,16 +215,15 @@ document.addEventListener("DOMContentLoaded", () => {
       animalImage.alt = animal.name;
       // Fade back in the image
       animalImage.classList.remove("fade-out");
+      // Trigger text change
+      animalName.textContent = animal.name;
+      animalName.classList.remove("fade-out");
+      speaker();
+      console.log("Updated text content to: " + animal.name);
+      // Unlock the interface
       setTimeout(() => {
-        // Trigger text change
-        animalName.textContent = animal.name;
-        animalName.classList.remove("fade-out");
-        speaker();
-        console.log("Updated text content to: " + animal.name);
-
-        // Unlock the interface
         locked = false;
-      }, 500);
+      }, 1000);
     }, 700);
 
     utils.hideSettings();

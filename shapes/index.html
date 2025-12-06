@@ -95,7 +95,15 @@
     </button>
 
     <!-- Overlay Menu -->
-    <div id="settings-menu">
+    <div
+      id="settings-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-label"
+    >
+      <span id="settings-label" class="sr-only" style="display:none;"
+        >Settings Menu
+      </span>
       <div class="randomize-checkbox">
         <label for="randomize" id="randomize-label">Randomize Shapes:</label>
         <input type="checkbox" id="randomize" />
