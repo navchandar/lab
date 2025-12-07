@@ -1,0 +1,43 @@
+name: Generate Maps
+
+on:
+  push:
+    paths:
+      - "serviceability/data/**" # Trigger when data changes
+      - "serviceability/scripts/render_map.py"
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./serviceability
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+
+      - name: Render Maps
+        run: python scripts/render_map.py
+
+      - name: Commit and push if changed
+        if: github.event_name == 'push'
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "build: Auto-generate Map files"
+          file_pattern: "maps/*"
