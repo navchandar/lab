@@ -35,9 +35,7 @@ class MapConfig:
     # Visual Styles
     DOT_SIZE: int = 5  # Adjust depending on map view
     DOT_ALPHA: float = 0.7
-    BOUNDARY_COLOR: str = "#333333"
     BOUNDARY_WIDTH: float = 0.3
-    BOUNDARY_ALPHA: float = 0.5
 
     # Brand Identity Colors (Hex Codes)
     DEFAULT_COLOR: str = "#2ecc71"  # Fallback Green
@@ -176,7 +174,7 @@ class MapRenderer:
         logger.info(f"Found file: {path} ({file_size} bytes)")
         return True
 
-    def render_service(self, service: str):
+    def render_service(self, service: str) -> None:
         """Generates and saves the PNG for a single service."""
         output_path = self.cfg.MAPS_DIR / f"{service}.png"
         lats, lngs = self._get_active_coordinates(service)
@@ -195,7 +193,6 @@ class MapRenderer:
         # This ensures 1 pixel in image = constant degrees in lat/lng
         fig_width = 10
         fig_height = fig_width * aspect_ratio
-
         fig = plt.figure(figsize=(fig_width, fig_height), dpi=self.cfg.DPI)
 
         # 3. Create Axes that fills the figure 100% (No margins)
@@ -207,13 +204,33 @@ class MapRenderer:
         ax.set_xlim(minx, maxx)
         ax.set_ylim(miny, maxy)
 
-        # Draw District Outline
-        self.data.districts.plot(
+        # --- OPTIMIZED BORDER RENDERING ---
+        # Step A: Convert Polygons to Lines (Boundaries)
+        lines = self.data.districts.boundary
+
+        # Step B: Merge overlapping lines into a single MultiLineString
+        # This removes "Alpha Stacking" so all lines are uniform opacity
+        merged_borders = lines.union_all()
+
+        # We wrap it in a GeoSeries to plot it easily
+        border_layer = gpd.GeoSeries([merged_borders])
+
+        # Layer 1: The "Halo" (White, Thicker)
+        border_layer.plot(
             ax=ax,
-            color="none",
-            edgecolor=self.cfg.BOUNDARY_COLOR,
+            color="#FFFFFF",  # For lines, 'color' controls the stroke
+            linewidth=self.cfg.BOUNDARY_WIDTH * 3.0,
+            alpha=0.4,
+            zorder=1,  # Draw at bottom
+        )
+
+        # Layer 2: The "Core" (Dark Grey, Thinner)
+        border_layer.plot(
+            ax=ax,
+            color="#333333",
             linewidth=self.cfg.BOUNDARY_WIDTH,
-            alpha=self.cfg.BOUNDARY_ALPHA,
+            alpha=0.6,
+            zorder=2,  # Draw on top
         )
 
         # Draw Serviceable Dots with BRAND COLOR
@@ -225,8 +242,8 @@ class MapRenderer:
                 s=self.cfg.DOT_SIZE,
                 alpha=self.cfg.DOT_ALPHA,
                 edgecolors="none",
+                zorder=3,  # Draw dots on top of borders
             )
-
         try:
             plt.savefig(output_path, transparent=True, pad_inches=0)
         except Exception as e:
