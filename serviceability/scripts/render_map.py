@@ -33,7 +33,7 @@ class MapConfig:
     BOUNDS_FILE: str = "bounds.json"
 
     # Visual Styles
-    DOT_SIZE: int = 8  # Adjust depending on map view
+    DOT_SIZE: int = 5  # Adjust depending on map view
     DOT_ALPHA: float = 0.7
     BOUNDARY_COLOR: str = "#333333"
     BOUNDARY_WIDTH: float = 0.3
