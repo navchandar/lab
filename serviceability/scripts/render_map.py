@@ -1,9 +1,13 @@
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple
 
+import matplotlib
+
+# Force non-interactive backend (Must be done before importing pyplot)
+matplotlib.use("Agg")
 import geopandas as gpd
 import matplotlib.pyplot as plt
 
@@ -11,54 +15,79 @@ import matplotlib.pyplot as plt
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+
 # --- CONFIGURATION ---
 @dataclass
 class MapConfig:
     # Input/Output Paths
     DATA_DIR: Path = Path("data")
     MAPS_DIR: Path = Path("maps")
-    
+
     # File Names
     DISTRICTS_FILE: str = "india_districts.geojson"
     AVAILABILITY_FILE: str = "availability.json"
     LOCATIONS_FILE: str = "pincodes_latlng.json"
     BOUNDS_FILE: str = "bounds.json"
-    
+
     # Visual Styles
-    DOT_COLOR: str = "#2ecc71"  # Green
-    DOT_SIZE: int = 20
-    DOT_ALPHA: float = 0.7
+    DOT_SIZE: int = 8  # Adjust depending on map view
+    DOT_ALPHA: float = 0.6
     BOUNDARY_COLOR: str = "#333333"
     BOUNDARY_WIDTH: float = 0.5
     BOUNDARY_ALPHA: float = 0.5
-    
+
+    # Brand Identity Colors (Hex Codes)
+    DEFAULT_COLOR: str = "#2ecc71"  # Fallback Green
+    BRAND_COLORS: Dict[str, str] = field(
+        default_factory=lambda: {
+            "amazon": "#FF9900",  # Amazon Orange
+            "flipkart": "#2874F0",  # Flipkart Blue
+            "bigbasket": "#84C225",  # Bigbasket Green
+            "blinkit": "#F8CB46",  # Blinkit Yellow
+            "zomato": "#E23744",  # Zomato Red
+            "swiggy": "#FC8019",  # Swiggy Orange
+            "instamart": "#FC8019",  # Swiggy Orange
+            "jiomart": "#0093D0",  # Jio Blue
+            "meesho": "#F43397",  # Meesho Pink
+            "zepto": "#6035D0",  # Zepto Violet
+        }
+    )
+
     # Image Settings
     IMG_SIZE: Tuple[int, int] = (10, 10)
     DPI: int = 150
 
     # Services to Render
     SERVICES: Tuple[str, ...] = (
-        "amazon", "flipkart", "bigbasket", "blinkit", 
-        "zomato", "swiggy", "instamart", "jiomart", 
-        "meesho", "zepto"
+        "amazon",
+        "flipkart",
+        "bigbasket",
+        "blinkit",
+        "zomato",
+        "swiggy",
+        "instamart",
+        "jiomart",
+        "meesho",
+        "zepto",
     )
+
 
 config = MapConfig()
 
 
 class DataManager:
     """Handles loading and preparing data."""
-    
-    def __init__(self, cfg: MapConfig):
+
+    def __init__(self, cfg: MapConfig) -> None:
         self.cfg = cfg
         self.districts = None
         self.availability = {}
         self.locations = []
 
-    def load_all(self):
+    def load_all(self) -> None:
         """Loads all required datasets."""
         logger.info("Loading datasets...")
-        
+
         # 1. GeoJSON
         geo_path = self.cfg.DATA_DIR / self.cfg.DISTRICTS_FILE
         if not geo_path.exists():
@@ -76,27 +105,25 @@ class DataManager:
         loc_path = self.cfg.DATA_DIR / self.cfg.LOCATIONS_FILE
         with open(loc_path, "r") as f:
             self.locations = json.load(f)
-            
+
         logger.info(f"Loaded {len(self.locations)} pincode locations.")
 
 
 class MapRenderer:
     """Handles logic for drawing and saving maps."""
 
-    def __init__(self, cfg: MapConfig, data: DataManager):
+    def __init__(self, cfg: MapConfig, data: DataManager) -> None:
         self.cfg = cfg
         self.data = data
-        self.total_bounds = self.data.districts.total_bounds # [minx, miny, maxx, maxy]
+        self.total_bounds = self.data.districts.total_bounds  # [minx, miny, maxx, maxy]
 
-    def save_bounds_json(self):
+    def save_bounds_json(self) -> None:
         """Exports bounds so Leaflet knows where to place the image."""
-        # GeoPandas Bounds: [min_x (long), min_y (lat), max_x, max_y]
-        # Leaflet Bounds:   [[lat, long], [lat, long]]
         bounds_export = {
             "southWest": [self.total_bounds[1], self.total_bounds[0]],
             "northEast": [self.total_bounds[3], self.total_bounds[2]],
         }
-        
+
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
         with open(out_path, "w") as f:
             json.dump(bounds_export, f)
@@ -105,84 +132,87 @@ class MapRenderer:
     def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
         """Filters lat/lng points for a specific service."""
         lats, lngs = [], []
-        
+
         for loc in self.data.locations:
             pin = loc["pin"]
             partners = self.data.availability.get(pin, {})
-            
-            # Check if service exists and is active (1)
+
             if partners.get(service) == 1:
                 lats.append(loc["lat"])
                 lngs.append(loc["lng"])
-                
+
         return lats, lngs
 
     def _validate_image(self, path: Path) -> bool:
-        """Checks if file exists, has content."""
-        # 1. Check File Existence
+        """Checks if file exists and has content."""
         if not path.exists():
             logger.error(f"❌ FAILED: File was not created at {path}")
             return False
-        
-        # 2. Check File Size (Empty file check)
-        if path.stat().st_size == 0:
+
+        file_size = path.stat().st_size
+        if file_size == 0:
             logger.error(f"❌ FAILED: File is empty (0 bytes) at {path}")
             return False
-
+        logger.info(f"Found file: {path} ({file_size} bytes)")
+        return True
 
     def render_service(self, service: str):
         """Generates and saves the PNG for a single service."""
+        output_path = self.cfg.MAPS_DIR / f"{service}.png"
         lats, lngs = self._get_active_coordinates(service)
-        
+        logger.info(f"Rendering map for {service} with {len(lats)} points...")
+        # Look up the brand color, fallback to green if missing
+        brand_color = self.cfg.BRAND_COLORS.get(service, self.cfg.DEFAULT_COLOR)
+
         # Setup Plot
         fig, ax = plt.subplots(figsize=self.cfg.IMG_SIZE)
-        
-        # 1. Lock Coordinates (Crucial for alignment)
+
+        # Lock Coordinates
         ax.set_xlim(self.total_bounds[0], self.total_bounds[2])
         ax.set_ylim(self.total_bounds[1], self.total_bounds[3])
 
-        # 2. Draw District Outline (The "Skeleton")
+        # Draw District Outline
         self.data.districts.plot(
-            ax=ax, 
-            color="none", 
-            edgecolor=self.cfg.BOUNDARY_COLOR, 
-            linewidth=self.cfg.BOUNDARY_WIDTH, 
-            alpha=self.cfg.BOUNDARY_ALPHA
+            ax=ax,
+            color="none",
+            edgecolor=self.cfg.BOUNDARY_COLOR,
+            linewidth=self.cfg.BOUNDARY_WIDTH,
+            alpha=self.cfg.BOUNDARY_ALPHA,
         )
 
-        # 3. Draw Serviceable Dots
-        if lngs:
+        # Draw Serviceable Dots with BRAND COLOR
+        if lats and lngs:
             ax.scatter(
-                lngs, lats, 
-                c=self.cfg.DOT_COLOR, 
-                s=self.cfg.DOT_SIZE, 
-                alpha=self.cfg.DOT_ALPHA, 
-                edgecolors="none"
+                lngs,
+                lats,
+                c=brand_color,
+                s=self.cfg.DOT_SIZE,
+                alpha=self.cfg.DOT_ALPHA,
+                edgecolors="none",
             )
 
-        # 4. Clean styling (Remove axes, whitespace)
+        # Clean styling
         ax.set_axis_off()
         plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
 
-        # 5. Save the image
-        out_path = self.cfg.MAPS_DIR / f"{service}.png"        
+        # Save the file
         try:
-            plt.savefig(out_path, transparent=True, dpi=self.cfg.DPI, pad_inches=0)
+            plt.savefig(output_path, transparent=True, dpi=self.cfg.DPI, pad_inches=0)
         except Exception as e:
             logger.error(f"❌ Matplotlib failed to save {service}: {e}")
         finally:
-            plt.close(fig) # Always close figure to free memory
+            plt.close(fig)
 
-        # 6. Validate
-        if self._validate_image(out_path):
-            logger.info(f"✅ Generated valid map for: {service} ({len(lats)} pincodes)")
-            
+        # Validate the generated file
+        if self._validate_image(output_path):
+            logger.info(f"✅ Generated valid map for: {service}")
+
 
 def main():
-    # 1. Setup Directories
+    #  Setup Directories
     config.MAPS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 2. Load Data
+    # Load Data
     data_mgr = DataManager(config)
     try:
         data_mgr.load_all()
@@ -190,13 +220,13 @@ def main():
         logger.error(f"Failed to load data: {e}")
         return
 
-    # 3. Initialize Renderer
+    # Initialize Renderer
     renderer = MapRenderer(config, data_mgr)
 
-    # 4. Save Metadata
+    # Save Metadata
     renderer.save_bounds_json()
 
-    # 5. Render Loop
+    # Render Loop
     for service in config.SERVICES:
         renderer.render_service(service)
 

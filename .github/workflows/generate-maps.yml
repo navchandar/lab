@@ -39,7 +39,7 @@ jobs:
 
       - name: Install Python Requirements
         run: |
-          pip install -r scripts/requirements.txt
+          pip install geopandas matplotlib
 
       - name: Render Maps
         run: python scripts/render_map.py
