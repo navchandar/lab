@@ -174,6 +174,18 @@ class MapRenderer:
         logger.info(f"Found file: {path} ({file_size} bytes)")
         return True
 
+    def _compress_image(self, service, output_path):
+        try:
+            img = Image.open(output_path)
+            # Quantize: Convert to a palette of max 64 colors
+            img = img.quantize(colors=128, method=2, dither=1)
+            # Save it back, overwriting the large file
+            img.save(output_path, optimize=True)
+            logger.info(f"✅ Compressed image: {output_path}")
+        except Exception as e:
+            logger.error(f"❌ Failed to save/optimize {service}: {e}")
+            return
+
     def render_service(self, service: str) -> None:
         """Generates and saves the PNG for a single service."""
         output_path = self.cfg.MAPS_DIR / f"{service}.png"
@@ -254,17 +266,8 @@ class MapRenderer:
         # Validate the generated file
         if self._validate_image(output_path):
             logger.info(f"✅ Generated valid map for: {service}")
-            try:
-                img = Image.open(output_path)
-                # Quantize: Convert to a palette of max 64 colors
-                img = img.quantize(colors=128, method=2, dither=1)
-                # Save it back, overwriting the large file
-                img.save(output_path, optimize=True)
-                logger.info(f"✅ Compressed image: {output_path}")
-            except Exception as e:
-                logger.error(f"❌ Failed to save/optimize {service}: {e}")
-                return
-
+            self._compress_image(service, output_path)
+           
 
 def main():
     #  Setup Directories
