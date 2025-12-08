@@ -43,7 +43,9 @@ async function initApp() {
 
 // 4. Function to Generate HTML
 function generateControls(data) {
-  if (!data || data.length === 0) return;
+  if (!data || data.length === 0) {
+    return;
+  }
 
   // Get partners from the first item
   const firstItem = data[0];
@@ -83,11 +85,15 @@ function generateControls(data) {
 
 // 5. Update Map Layer (Same logic as before)
 function updateMapLayer() {
-  if (!mapBounds) return;
+  if (!mapBounds) {
+    return;
+  }
 
   // Find the currently checked radio
   const selectedInput = document.querySelector('input[name="service"]:checked');
-  if (!selectedInput) return;
+  if (!selectedInput) {
+    return;
+  }
 
   const serviceName = selectedInput.value;
   const imageUrl = `maps/${serviceName}.png`; // Ensure filename matches JSON key

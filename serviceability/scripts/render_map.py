@@ -117,6 +117,19 @@ class MapRenderer:
                 
         return lats, lngs
 
+    def _validate_image(self, path: Path) -> bool:
+        """Checks if file exists, has content."""
+        # 1. Check File Existence
+        if not path.exists():
+            logger.error(f"❌ FAILED: File was not created at {path}")
+            return False
+        
+        # 2. Check File Size (Empty file check)
+        if path.stat().st_size == 0:
+            logger.error(f"❌ FAILED: File is empty (0 bytes) at {path}")
+            return False
+
+
     def render_service(self, service: str):
         """Generates and saves the PNG for a single service."""
         lats, lngs = self._get_active_coordinates(service)
@@ -151,13 +164,19 @@ class MapRenderer:
         ax.set_axis_off()
         plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
 
-        # 5. Save
-        out_path = self.cfg.MAPS_DIR / f"{service}.png"
-        plt.savefig(out_path, transparent=True, dpi=self.cfg.DPI, pad_inches=0)
-        plt.close(fig) # Free up memory
-        
-        logger.info(f"Generated map for: {service} ({len(lats)} pincodes)")
+        # 5. Save the image
+        out_path = self.cfg.MAPS_DIR / f"{service}.png"        
+        try:
+            plt.savefig(out_path, transparent=True, dpi=self.cfg.DPI, pad_inches=0)
+        except Exception as e:
+            logger.error(f"❌ Matplotlib failed to save {service}: {e}")
+        finally:
+            plt.close(fig) # Always close figure to free memory
 
+        # 6. Validate
+        if self._validate_image(out_path):
+            logger.info(f"✅ Generated valid map for: {service} ({len(lats)} pincodes)")
+            
 
 def main():
     # 1. Setup Directories
