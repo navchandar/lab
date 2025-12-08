@@ -147,6 +147,36 @@ body {
     text-align: right;
 }
 
+/* Toast Notification */
+.toast-notification {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    visibility: hidden;
+    opacity: 0;
+    z-index: 9999; /* On top of everything */
+    transition: opacity 0.3s, bottom 0.3s;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    border-radius: 8px;
+    background-color: #333; /* Dark Grey */
+    padding: 12px 24px;
+    min-width: 250px;
+    color: #fff;
+    font-size: 14px;
+    text-align: center;
+}
+
+.toast-notification.show {
+    bottom: 40px; /* Slight slide-up animation */
+    visibility: visible;
+    opacity: 1;
+}
+
+.toast-notification.error {
+    background-color: #d32f2f; /* Material Red for errors */
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 600px) {
     .controls-card {
@@ -162,7 +192,19 @@ body {
     }
 
     .header h1 {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .toast-notification {
+        top: 20px;
+        bottom: auto;
+        width: 90%;
+        min-width: auto;
+    }
+    
+    .toast-notification.show {
+        top: 30px;
+        bottom: auto;
     }
 }
 

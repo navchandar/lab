@@ -1,6 +1,7 @@
 import json
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Tuple
 
@@ -118,17 +119,21 @@ class MapRenderer:
         self.total_bounds = self.data.districts.total_bounds  # [minx, miny, maxx, maxy]
 
     def save_bounds_json(self) -> None:
-        """Exports bounds AND colors so Leaflet knows placement and branding."""
+        """Exports bounds, colors and timestamp so Leaflet knows placement and branding."""
+
+        # CAPTURE CURRENT UTC TIME
+        current_time = datetime.now(timezone.utc).isoformat()
         bounds_export = {
             "southWest": [self.total_bounds[1], self.total_bounds[0]],
             "northEast": [self.total_bounds[3], self.total_bounds[2]],
             "colors": self.cfg.BRAND_COLORS,
+            "lastUpdated": current_time,
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
         with open(out_path, "w") as f:
             json.dump(bounds_export, f, indent=2)
-        logger.info(f"Saved bounds configuration to {out_path}")
+        logger.info(f"Saved bounds to {out_path} at {current_time}")
 
     def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
         """Filters lat/lng points for a specific service."""
