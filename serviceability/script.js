@@ -1,6 +1,8 @@
+// 1. Map Setup
+const defaultLocation = [22.5937, 78.9629];
+const Zoom = { zoomControl: false };
+const map = L.map("map", Zoom).setView(defaultLocation, 5);
 
-// 1. Map Setup 
-const map = L.map("map", { zoomControl: false }).setView([22.5937, 78.9629], 5);
 L.control.zoom({ position: "bottomright" }).addTo(map);
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
   attribution: "&copy; OpenStreetMap &copy; CARTO",

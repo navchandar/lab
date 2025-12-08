@@ -28,9 +28,18 @@ jobs:
           node-version: "20"
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: "3.9"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libspatialindex-dev
+
+      - name: Install Python Requirements
+        run: |
+          pip install -r scripts/requirements.txt
 
       - name: Render Maps
         run: python scripts/render_map.py

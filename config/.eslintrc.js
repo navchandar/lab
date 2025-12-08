@@ -49,5 +49,17 @@ module.exports = {
         ChartDataLabels: "readonly",
       },
     },
+    {
+      files: ["serviceability/script.js"],
+      env: {
+        browser: true,
+        node: false,
+        es6: true,
+      },
+      globals: {
+        // Define global variables injected via HTML script tags
+        L: "readonly",
+      },
+    },
   ],
 };
