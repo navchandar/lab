@@ -155,11 +155,11 @@ body {
     transform: translateX(-50%);
     visibility: hidden;
     opacity: 0;
-    z-index: 9999; /* On top of everything */
+    z-index: 9999;
     transition: opacity 0.3s, bottom 0.3s;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     border-radius: 8px;
-    background-color: #333; /* Dark Grey */
+    background-color: #333;
     padding: 12px 24px;
     min-width: 250px;
     color: #fff;
@@ -168,13 +168,15 @@ body {
 }
 
 .toast-notification.show {
-    bottom: 40px; /* Slight slide-up animation */
+    bottom: 40px;
+    /* Slight slide-up animation */
     visibility: visible;
     opacity: 1;
 }
 
 .toast-notification.error {
-    background-color: #d32f2f; /* Material Red for errors */
+    background-color: #d32f2f;
+    /* Material Red for errors */
 }
 
 /* Mobile Responsiveness */
@@ -201,7 +203,7 @@ body {
         width: 90%;
         min-width: auto;
     }
-    
+
     .toast-notification.show {
         top: 30px;
         bottom: auto;
