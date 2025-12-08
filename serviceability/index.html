@@ -6,7 +6,59 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Serviceability - Indian Delivery Coverage</title>
+
+    <title>Serviceability Map - India</title>
+
+    <meta
+      name="description"
+      content="Interactive map to check e-commerce delivery availability across India. Visualize serviceable pincodes and ODA (Out of Delivery Areas) for Amazon, Flipkart, Blinkit, and more."
+    />
+    <meta
+      name="keywords"
+      content="pincode checker, delivery map, availability, coverage, india logistics map, serviceability checker, ODA list, e-commerce delivery zones, indian pincodes"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+
+    <link
+      rel="canonical"
+      href="https://navchandar.github.io/lab/serviceability/"
+    />
+
+    <link
+      rel="shortcut icon"
+      href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAE0AAABNCAMAAADU1xmCAAABxVBMVEUAAAD0zR72uiT2qyf0zR70zR72qyf0zR70zR70zR72qyf0zR70zR72tiT1zR70zR71zR70zR71wCH2tyT2qyf0zR72qyf0zR70zR70zR70zR70zR70zR70zR70zR70zR72qyf0zR72qyf3qyf0zR70zR70zR70zR70zR71zR70zR72qyf2qyf0zR72qyf0zR72qyf0zR72qyf0zR72qyf2qyf0zR70zR72qyf2qyf0zR72qyf2qyf2qyf2qyf2qyf0zR70zR72syb0zR72tST2tST2tST1tST0zR72qyf0zB71tSTtY0zWlWTtYUz1qynwxSr0yh/rvDbzqS/XlmPuaErptz3anVztZUvxnzXbmFzua0rxpjHxxyfVlGfZlmHub0ntwDH0qizemljxlzffm1XquTrxljnyySTzyyHYmWDtYUrcn1reolXlnkvnoUbspDzuwi7jnU/krkjupTnvpzfsvjTxpzPyrS7zwiTzzB/hnVLhqk3qo0HspT/yqy7zsSzysyvmskPviD7spDvxoTPzuSjzvCbw6urukYTugHDgplHvdkXwij7wjDzwjzvgnFTgnFPtZ1HvfULv4d/uinzuhnaXEHqgAAAASHRSTlMA/AWu9+3788KabUtAFhIOCTAmDO3n4N/MsJCGfXNsYUQ5MiMY1s+poyIf9vXj4dzT09LGwsG8uJqYjYSCZFlXV1Q2LO/u6OdkeCuuAAAEwUlEQVRYw83Yd1caQRAAcIwaMBLENI0lvffee71cstwdd4AgJYBKMRRFMGLFXqKmf97sHSRr2FnCvZD3Mv/eu9+b2Zm9fbcGg/X0TkP1sW3X/fqXlzvNLfDj1pNt7R3Nx6qidh/ZUb9v+6vXPNdo6jJbDHSYOBwNx5send5Wmdp56N71Pa9wqBoOY/sdOok6rhh1bScPPrWy6jv68PaVcxgiWimJx2cMW4PbEnv3H2jdzaqvGEQrJXHx1MFd20ANR+ONrsMtUH2URsDzOAkrqOEwXu00W6j6QI1UdbNbS4KDouFER/MTUh+slVdl6raoGgw+pxlYIyU3MTX+tW6NM9ZU4/6dxvM106SZyNxcX0GqRuP+pC3NOWw4HBtjFTVBzqYnp5wDwWglbemD7Y0Wti9jFbT5T56AgnDEXRP2PEuT5jBW4jYlphYK+7GkKBj0o7idpc04VGhwUNV6F2FNTstC0tOfnExn7c5MIsDW+tTUPq+sfFa5BVCT+9GwIMhCqQvRYC4fs+fygMZvYG1wZXn5+yDWIpAmjCOs/T4h9kB8ANLWVe3b8tdVpjapoLBcNm/BOHINAZVGtCasrmptcENaCgWy5dPLzyI0EaM175tSF3D0zECanErTeyGa8MdFWlt6Sybkw1j1OyuYyAC5SetEi+jZp7E8tBcKDlsJe7sIaPJwMqRj10ubNpIarU0hNK9DUzcq2aZEIx0dgTVe9AEaN91rU+sscJA2jAKjsJZzJXyAxrt78AfJy4Fa0u9hrJsTKTlA46S+HscCD2tyChcKagMIDQAa5txeXveX3I6QU/cpI7A00eUK6tWm+qdgDXMip1MT+v39gt4TUPSxtDAKszQfI7ch1zuRrTEmRHznGgI1J0J2hjbu/yjo7CkeRFDDMZoaZU2IUkGr3bwFoXWD5429buyekphkz5tP97yFwvrnjRdFluZBTA2/pHPdZA8aZ1Q6RPYpNG9wpSipo6fkUwV3ITsp09rYwgzP5RT1pYJ7rFyzgxp73ty2Xi8XzUz4uPdvbRGikdFhaAKkTTtUjuNVrGeBmhAfa97mwymB1iS3xmlYn1T1vAkf8SEDdIHXuOkiRmmxIDwh8s9xIxrhHL0aRmtOJeGDtBEFpcrXjXAaBmizSLGDWiAwQmnkTO/xcpCWC6AMuG7peQHUcAMwhtcO0qIJ/7to9fNW7Gak1Fm6p874RIzSQtkQrJVGo9hZQMuLUarS0LAyLIBaQcNKgzINzlswE/xNE5IIfYK1SBErcpuQFlvzx2ejW7S0gjxZuNLFdXdpNCTvxiKY26yC0EQed8Q3I4/K+LTyeEZYXeD/+O8cc7rQWowbSrg8nkAYc7L8V3/i4oCofjnVv73AaG3+632ZtfHxZFrQr8Eh/V93DjXQjDXVmup0a88amJql29SoQ9t+oX7Hk+aOE0ZYMxhaDnff3FuVdvbSrQdHtYtAi7nzaiOo4bA+PbD/fF1lbc+1u4fIXa6aRNeNcnDLRe7BUxfrKI3Ud4S+0bS2Hti/F9CKceZx0+UGolH1UVFMou3XvWz502PNd9qNRKPqg+LMo6bjWhIm4KHF3GVqVLXt+0h9jCBJdLS3nWyFH7aYO0+8qL+PL3Krj52nrYYfwSkXNsPPlaYAAAAASUVORK5CYII="
+    />
+
+    <meta
+      property="og:title"
+      content="Serviceability Map - India Delivery Coverage"
+    />
+    <meta
+      property="og:description"
+      content="Visualize which parts of India are covered by major e-commerce players. Check your pincode status instantly."
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://navchandar.github.io/lab/serviceability/"
+    />
+
+    <meta
+      property="og:image"
+      content="https://navchandar.github.io/lab/serviceability/preview.jpg"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Serviceability Map - India" />
+    <meta
+      name="twitter:description"
+      content="Check e-commerce delivery availability across 19,000+ Indian pincodes."
+    />
+    <meta
+      name="twitter:image"
+      content="https://navchandar.github.io/lab/serviceability/preview.jpg"
+    />
 
     <link
       rel="stylesheet"
@@ -17,6 +69,7 @@
 
     <link rel="stylesheet" href="style.css" />
   </head>
+
   <body>
     <div id="map"></div>
 

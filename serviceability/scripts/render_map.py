@@ -1,7 +1,8 @@
-import geopandas as gpd
-import matplotlib.pyplot as plt
 import json
 import os
+
+import geopandas as gpd
+import matplotlib.pyplot as plt
 
 # 1. CONFIGURATION
 SERVICES = [
