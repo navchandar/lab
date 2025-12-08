@@ -231,7 +231,7 @@ class MapRenderer:
         border_layer.plot(
             ax=ax,
             color="#FFFFFF",  # For lines, 'color' controls the stroke
-            linewidth=self.cfg.BOUNDARY_WIDTH * 3.0,
+            linewidth=self.cfg.BOUNDARY_WIDTH * 2.0,
             alpha=0.4,
             zorder=1,  # Draw at bottom
         )
