@@ -2,6 +2,7 @@
 const defaultLocation = [22.5937, 78.9629];
 const Zoom = { zoomControl: false };
 const map = L.map("map", Zoom).setView(defaultLocation, 5);
+let globalTimestamp = new Date().getTime();
 
 L.control.zoom({ position: "bottomright" }).addTo(map);
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
@@ -85,6 +86,7 @@ async function initApp() {
 
     const availabilityData = await availResponse.json();
     const boundsData = await boundsResponse.json();
+    globalTimestamp = new Date(boundsData.lastUpdated).getTime();
 
     // Store global data
     mapBounds = [boundsData.southWest, boundsData.northEast];
@@ -156,8 +158,7 @@ function updateMapLayer() {
   }
 
   const serviceName = selectedInput.value;
-  const timestamp = new Date().getTime();
-  const imageUrl = `maps/${serviceName}.png?t=${timestamp}`;
+  const imageUrl = `maps/${serviceName}.png?t=${globalTimestamp}`;
 
   // Get Color for UI updates
   const activeColor = brandColors[serviceName] || "#2ecc71";

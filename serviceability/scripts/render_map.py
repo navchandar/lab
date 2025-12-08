@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 import matplotlib
+from PIL import Image
+from pyproj import Transformer
 
 # Force non-interactive backend (Must be done before importing pyplot)
 matplotlib.use("Agg")
@@ -56,7 +58,7 @@ class MapConfig:
 
     # Image Settings
     IMG_SIZE: Tuple[int, int] = (10, 10)
-    DPI: int = 150
+    DPI: int = 300
 
     # Services to Render
     SERVICES: Tuple[str, ...] = (
@@ -93,7 +95,7 @@ class DataManager:
         geo_path = self.cfg.DATA_DIR / self.cfg.DISTRICTS_FILE
         if not geo_path.exists():
             raise FileNotFoundError(f"GeoJSON not found at {geo_path}")
-        self.districts = gpd.read_file(geo_path)
+        self.districts = gpd.read_file(geo_path).to_crs(epsg=3857)
 
         # 2. Availability Data
         avail_path = self.cfg.DATA_DIR / self.cfg.AVAILABILITY_FILE
@@ -123,27 +125,42 @@ class MapRenderer:
 
         # CAPTURE CURRENT UTC TIME
         current_time = datetime.now(timezone.utc).isoformat()
-        bounds_export = {
-            "southWest": [self.total_bounds[1], self.total_bounds[0]],
-            "northEast": [self.total_bounds[3], self.total_bounds[2]],
+        # Get the bounds in Meters (EPSG:3857) from the dataframe
+        min_x, min_y, max_x, max_y = self.total_bounds
+        to_latlng = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
+        # Transform (x, y) -> (lon, lat)
+        sw_lon, sw_lat = to_latlng.transform(min_x, min_y)
+        ne_lon, ne_lat = to_latlng.transform(max_x, max_y)
+        data = {
+            # Leaflet wants [Lat, Lng]
+            "southWest": [sw_lat, sw_lon],
+            "northEast": [ne_lat, ne_lon],
             "colors": self.cfg.BRAND_COLORS,
             "lastUpdated": current_time,
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
         with open(out_path, "w") as f:
-            json.dump(bounds_export, f, indent=2)
+            json.dump(data, f, indent=2)
         logger.info(f"Saved bounds to {out_path} at {current_time}")
 
     def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
         """Filters lat/lng points for a specific service."""
         lats, lngs = [], []
+        # input: Lat/Lng, output: Web Mercator X/Y
+        to_mercator = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
         for loc in self.data.locations:
             pin = loc["pin"]
             partners = self.data.availability.get(pin, {})
             if partners.get(service) == 1:
-                lats.append(loc["lat"])
-                lngs.append(loc["lng"])
+                lat = loc["lat"]
+                lng = loc["lng"]
+                # --- Project the points ---
+                x, y = to_mercator.transform(lng, lat)
+                lats.append(y)  # Append projected X
+                lngs.append(x)  # Append projected Y
+
+        # Return projected X (Longitude-ish) and Y (Latitude-ish)
         return lats, lngs
 
     def _validate_image(self, path: Path) -> bool:
@@ -220,6 +237,16 @@ class MapRenderer:
         # Validate the generated file
         if self._validate_image(output_path):
             logger.info(f"✅ Generated valid map for: {service}")
+            try:
+                img = Image.open(output_path)
+                # Quantize: Convert to a palette of max 64 colors
+                img = img.quantize(colors=128, method=2, dither=1)
+                # Save it back, overwriting the large file
+                img.save(output_path, optimize=True)
+                logger.info(f"✅ Compressed image: {output_path}")
+            except Exception as e:
+                logger.error(f"❌ Failed to save/optimize {service}: {e}")
+                return
 
 
 def main():
