@@ -31,9 +31,9 @@ class MapConfig:
 
     # Visual Styles
     DOT_SIZE: int = 8  # Adjust depending on map view
-    DOT_ALPHA: float = 0.6
+    DOT_ALPHA: float = 0.7
     BOUNDARY_COLOR: str = "#333333"
-    BOUNDARY_WIDTH: float = 0.5
+    BOUNDARY_WIDTH: float = 0.3
     BOUNDARY_ALPHA: float = 0.5
 
     # Brand Identity Colors (Hex Codes)
@@ -118,29 +118,27 @@ class MapRenderer:
         self.total_bounds = self.data.districts.total_bounds  # [minx, miny, maxx, maxy]
 
     def save_bounds_json(self) -> None:
-        """Exports bounds so Leaflet knows where to place the image."""
+        """Exports bounds AND colors so Leaflet knows placement and branding."""
         bounds_export = {
             "southWest": [self.total_bounds[1], self.total_bounds[0]],
             "northEast": [self.total_bounds[3], self.total_bounds[2]],
+            "colors": self.cfg.BRAND_COLORS,
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
         with open(out_path, "w") as f:
-            json.dump(bounds_export, f)
+            json.dump(bounds_export, f, indent=2)
         logger.info(f"Saved bounds configuration to {out_path}")
 
     def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
         """Filters lat/lng points for a specific service."""
         lats, lngs = [], []
-
         for loc in self.data.locations:
             pin = loc["pin"]
             partners = self.data.availability.get(pin, {})
-
             if partners.get(service) == 1:
                 lats.append(loc["lat"])
                 lngs.append(loc["lng"])
-
         return lats, lngs
 
     def _validate_image(self, path: Path) -> bool:
@@ -164,12 +162,28 @@ class MapRenderer:
         # Look up the brand color, fallback to green if missing
         brand_color = self.cfg.BRAND_COLORS.get(service, self.cfg.DEFAULT_COLOR)
 
-        # Setup Plot
-        fig, ax = plt.subplots(figsize=self.cfg.IMG_SIZE)
+        # --- MAP ALIGNMENT FIX ---
+        # 1. Calculate Geographic Aspect Ratio
+        minx, miny, maxx, maxy = self.total_bounds
+        geo_width = maxx - minx
+        geo_height = maxy - miny
+        aspect_ratio = geo_height / geo_width
+
+        # 2. Set Figure Size based on Ratio (Fixed width 10, variable height)
+        # This ensures 1 pixel in image = constant degrees in lat/lng
+        fig_width = 10
+        fig_height = fig_width * aspect_ratio
+
+        fig = plt.figure(figsize=(fig_width, fig_height), dpi=self.cfg.DPI)
+
+        # 3. Create Axes that fills the figure 100% (No margins)
+        ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
+        ax.set_axis_off()
+        fig.add_axes(ax)
 
         # Lock Coordinates
-        ax.set_xlim(self.total_bounds[0], self.total_bounds[2])
-        ax.set_ylim(self.total_bounds[1], self.total_bounds[3])
+        ax.set_xlim(minx, maxx)
+        ax.set_ylim(miny, maxy)
 
         # Draw District Outline
         self.data.districts.plot(
@@ -191,13 +205,8 @@ class MapRenderer:
                 edgecolors="none",
             )
 
-        # Clean styling
-        ax.set_axis_off()
-        plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
-
-        # Save the file
         try:
-            plt.savefig(output_path, transparent=True, dpi=self.cfg.DPI, pad_inches=0)
+            plt.savefig(output_path, transparent=True, pad_inches=0)
         except Exception as e:
             logger.error(f"❌ Matplotlib failed to save {service}: {e}")
         finally:
