@@ -70,6 +70,35 @@ function updateFooterTime(isoString) {
   }
 }
 
+// --- BOTTOM SHEET LOGIC for mobile ---
+function initBottomSheet() {
+  const card = document.getElementById("bottom-sheet");
+  const header = document.getElementById("card-header");
+
+  // Toggle function
+  const toggleSheet = () => {
+    card.classList.toggle("collapsed");
+  };
+
+  // Click Header to Toggle
+  header.addEventListener("click", toggleSheet);
+
+  // Click Drag Handle to Toggle
+  const handle = document.querySelector(".drag-handle");
+  if (handle) {
+    handle.addEventListener("click", toggleSheet);
+  }
+
+  // Auto-Collapse logic after initial load
+  // We wait 2 seconds so the user sees the options, then we slide it down
+  setTimeout(() => {
+    // Only collapse if we are on mobile (screen width < 600px)
+    if (window.innerWidth <= 600) {
+      card.classList.add("collapsed");
+    }
+  }, 2000);
+}
+
 // MAIN INITIALIZATION
 async function initApp() {
   try {
@@ -96,8 +125,23 @@ async function initApp() {
     // Generate Radio Buttons
     generateControls(availabilityData);
 
-    // Load the initial map layer (Defaults to the first one found)
+    // Load the initial map layer (Defaults to the first service)
     updateMapLayer();
+
+    initBottomSheet();
+
+    // Preload others after a short delay
+    if ("requestIdleCallback" in window) {
+      // Run when the browser is idle
+      requestIdleCallback(() => {
+        preloadRemainingLayers(availabilityData);
+      });
+    } else {
+      // Fallback for older browsers
+      setTimeout(() => {
+        preloadRemainingLayers(availabilityData);
+      }, 3000);
+    }
   } catch (error) {
     console.error("Initialization failed:", error);
     showToast("Error loading map data. Please try refreshing.", true);
@@ -140,7 +184,15 @@ function generateControls(data) {
 
     // Add Event Listener directly to the input
     const input = label.querySelector("input");
-    input.addEventListener("change", updateMapLayer);
+    input.addEventListener("change", () => {
+      updateMapLayer();
+      // collapse the card after selection on mobile
+      if (window.innerWidth <= 600) {
+        const card = document.getElementById("bottom-sheet");
+        card.classList.add("collapsed");
+      }
+    });
+
     container.appendChild(label);
   });
 }
@@ -175,6 +227,9 @@ function updateMapLayer() {
   tempImg.src = imageUrl;
 
   tempImg.onload = function () {
+    // Update Legend & UI only on success
+    updateUIColors(activeColor, selectedInput);
+
     // Image loaded successfully, add to map - Safety check
     if (currentOverlay) {
       map.removeLayer(currentOverlay);
@@ -184,9 +239,6 @@ function updateMapLayer() {
       opacity: 0.75,
       interactive: false,
     }).addTo(map);
-
-    // Update Legend & UI only on success
-    updateUIColors(activeColor, selectedInput);
   };
 
   tempImg.onerror = function () {
@@ -196,6 +248,31 @@ function updateMapLayer() {
     // Reset UI or visual indication that it failed
     updateUIColors("#ccc", selectedInput); // Turn grey to indicate failure
   };
+}
+
+// --- Preload Background Images ---
+function preloadRemainingLayers(data) {
+  if (!data || data.length === 0) {
+    return;
+  }
+
+  const partners = Object.keys(data[0].partners);
+
+  // Identify the currently active service so we don't download it twice
+  const activeInput = document.querySelector('input[name="service"]:checked');
+  const activeService = activeInput ? activeInput.value : null;
+
+  console.log("Preloading other layers in the background...");
+
+  partners.forEach((serviceName) => {
+    // Skip the current one (it's already loading/loaded)
+    if (serviceName === activeService) {
+      return;
+    }
+    // Create an image object to download into the browser cache
+    const img = new Image();
+    img.src = `maps/${serviceName}.png?t=${globalTimestamp}`;
+  });
 }
 
 // Helper to update Legend and Card colors (Refactored for cleanliness)

@@ -29,7 +29,12 @@ body {
     border-radius: 8px;
     background: #ffffff;
     padding: 16px 24px;
-    width: 320px;
+    width: 220px;
+}
+
+.drag-handle {
+    display: none;
+    /* Hidden on desktop */
 }
 
 .header h1 {
@@ -41,7 +46,7 @@ body {
 }
 
 .header p {
-    margin: 4px 0 24px 0;
+    margin: 4px 0 20px 0;
     color: #5f6368;
     font-size: 14px;
     letter-spacing: 0.25px;
@@ -144,7 +149,7 @@ body {
     color: #9aa0a6;
     font-size: 11px;
     letter-spacing: 0.3px;
-    text-align: right;
+    text-align: center;
 }
 
 /* Toast Notification */
@@ -186,10 +191,9 @@ body {
         bottom: 0;
         left: 0;
         transform: translateY(0);
-        box-sizing: border-box;
-        box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
-        border-radius: 16px 16px 0 0;
-        padding: 24px;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        border-radius: 20px 20px 0 0;
+        padding: 10px 24px 24px 24px;
         width: 100%;
     }
 
@@ -208,6 +212,26 @@ body {
         top: 30px;
         bottom: auto;
     }
+
+    .controls-card.collapsed {
+        transform: translateY(calc(100% - 85px));
+    }
+
+    /* Style the Drag Handle */
+    .drag-handle {
+        display: block;
+        margin: 8px auto 15px auto;
+        border-radius: 10px;
+        background-color: #e0e0e0;
+        width: 40px;
+        height: 5px;
+    }
+
+    /* Make the header clickable */
+    .header, .drag-handle {
+        cursor: pointer;
+    }
+
 }
 
 /* Dark mode */
@@ -239,12 +263,12 @@ body {
     }
 
     .card-content {
-        border-color: #5f6368 !important;
+        border-color: #5f6368;
         background: #35363a !important;
     }
 
     .radio-card:hover .card-content {
-        border-color: #5f6368 !important;
+        border-color: #5f6368;
         background-color: #3c4043 !important;
     }
 
@@ -258,7 +282,11 @@ body {
     }
 
     .dot.empty {
-        border-color: #5f6368;
+        border-color: #aaabac;
+    }
+
+    .drag-handle {
+        background-color: #5f6368 !important;
     }
 
     /* Invert the Light Map to Dark Map */
