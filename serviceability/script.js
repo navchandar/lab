@@ -74,10 +74,15 @@ function updateFooterTime(isoString) {
 function initBottomSheet() {
   const card = document.getElementById("bottom-sheet");
   const header = document.getElementById("card-header");
+  const mapEl = document.getElementById("map");
 
   // Toggle function
   const toggleSheet = () => {
     card.classList.toggle("collapsed");
+  };
+
+  const collapseSheet = () => {
+    card.classList.add("collapsed");
   };
 
   // Click Header to Toggle
@@ -89,14 +94,28 @@ function initBottomSheet() {
     handle.addEventListener("click", toggleSheet);
   }
 
-  // Auto-Collapse logic after initial load
-  // We wait 2 seconds so the user sees the options, then we slide it down
+  // Collapse on clicking on map
+  if (window.innerWidth <= 600) {
+    if (mapEl) {
+      mapEl.addEventListener("click", (e) => {
+        e.stopPropagation();
+        collapseSheet();
+      });
+      mapEl.addEventListener("touchstart", (e) => {
+        e.stopPropagation();
+        collapseSheet();
+      });
+    }
+  }
+
+  // Auto-Collapse logic after initial load after 1.5 seconds
+  // so the user sees the options, then we slide it down
   setTimeout(() => {
     // Only collapse if we are on mobile (screen width < 600px)
     if (window.innerWidth <= 600) {
       card.classList.add("collapsed");
     }
-  }, 2000);
+  }, 1500);
 }
 
 // MAIN INITIALIZATION
