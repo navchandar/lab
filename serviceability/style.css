@@ -375,8 +375,16 @@ body {
     }
 
     .legend {
+        margin-top: 15px;
         padding: 10px 50px;
     }
+
+    .options {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
 
     .last-refresh {
         padding-bottom: 10px;
@@ -384,6 +392,30 @@ body {
 
     .header h1 {
         font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 10px;
+        padding-bottom: 0px;
+        font-size: 12px;
+        line-height: 1.2;
+    }
+
+    .modal-body p {
+        margin-top: 0;
+        margin-bottom: 10px;
+    }
+
+    .modal-body ul {
+        padding-left: 15px;
+    }
+
+    .modal-footer {
+        padding: 0px 24px 10px;
+    }
+
+    .card-content {
+        padding: 7px 16px;
     }
 
     .toast-notification {
@@ -412,13 +444,24 @@ body {
         height: 5px;
     }
 
+    .drag-handle::before {
+        position: absolute;
+        top: -5px;
+        right: -30px;
+        left: -30px;
+        /* Make the pseudo-element invisible, but it still registers clicks */
+        background-color: transparent;
+        padding-bottom: 100px;
+        content: '';
+    }
+
     /* Make the header clickable */
     .header, .drag-handle {
         cursor: pointer;
     }
 
     .leaflet-bottom .leaflet-control {
-        margin-bottom: 80px !important;
+        margin-bottom: 60px !important;
     }
 
 }
@@ -454,6 +497,10 @@ body {
     .card-content {
         border-color: #5f6368;
         background: #35363a !important;
+    }
+
+    .radio-card:hover .service-name {
+        color: #efefef;
     }
 
     .radio-card:hover .card-content {
@@ -516,7 +563,15 @@ body {
         color: #9aa0a6;
     }
 
+    .footer a, .modal a {
+        color: #c6c6c6;
+    }
+
+    .footer a:hover, .modal a:hover {
+        color: #efefef;
+    }
+
     .footer a:hover {
-        color: #e8eaed;
+        color: #efefef;
     }
 }
