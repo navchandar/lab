@@ -1,26 +1,5 @@
-// 1. Map Setup
-const defaultLocation = [22.5937, 78.9629];
-const Zoom = { zoomControl: false };
-const map = L.map("map", Zoom).setView(defaultLocation, 5);
-let globalTimestamp = new Date().getTime();
-
-L.control.zoom({ position: "bottomright" }).addTo(map);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap &copy; CARTO",
-  subdomains: "abcd",
-  maxZoom: 19,
-}).addTo(map);
-
-let currentOverlay = null;
-let mapBounds = null;
-let brandColors = {};
-
-// Helper: Capitalize first letter
-const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-// Display TOAST NOTIFICATION ---
+// Display TOAST NOTIFICATION
 function showToast(message, isError = false) {
-  // Check if toast element exists, if not create it
   let toast = document.getElementById("toast");
   if (!toast) {
     toast = document.createElement("div");
@@ -29,7 +8,6 @@ function showToast(message, isError = false) {
     document.body.appendChild(toast);
   }
 
-  // Set content and style
   toast.textContent = message;
   if (isError) {
     toast.classList.add("error");
@@ -37,12 +15,65 @@ function showToast(message, isError = false) {
     toast.classList.remove("error");
   }
 
-  // Display and Hide after 3 seconds
   toast.classList.add("show");
-  setTimeout(() => {
+  // Reset timer if toast is triggered rapidly
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => {
     toast.classList.remove("show");
   }, 3500);
 }
+
+function hideToast() {
+  const toast = document.getElementById("toast");
+  if (toast && toast.classList.contains("show")) {
+    toast.classList.remove("show");
+  }
+}
+
+// CRITICAL DEPENDENCY CHECK: Is Leaflet Loaded?
+if (typeof L === "undefined") {
+  // If Leaflet didn't load, we can't render anything.
+  document.body.innerHTML = `
+        <div class="no-leaflet-error">
+            <h2>Map Library Failed to Load</h2>
+            <p>Please check your internet connection and refresh the page.</p>
+            <button onclick="location.reload()" class="refresh-button">Refresh</button>
+        </div>
+    `;
+  throw new Error("Leaflet JS is not loaded. Script aborted.");
+}
+
+// NETWORK STATUS CHECK
+window.addEventListener("offline", () => {
+  showToast("You seem to offline. Map may not load.", true);
+});
+window.addEventListener("online", () => {
+  setTimeout(() => {
+    hideToast();
+  }, 2000);
+});
+
+let currentOverlay = null;
+let mapBounds = null;
+let brandColors = {};
+
+// MAP SETUP
+const defaultLocation = [22.5937, 78.9629];
+const Zoom = { zoomControl: false };
+const map = L.map("map", Zoom).setView(defaultLocation, 5);
+let globalTimestamp = new Date().getTime();
+
+L.control.zoom({ position: "bottomright" }).addTo(map);
+
+// TILE LAYER SETUP
+L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+  attribution: "&copy; OpenStreetMap &copy; CARTO",
+  subdomains: "abcd",
+  maxZoom: 19,
+}).addTo(map);
+
+// Helper: Capitalize first letter
+const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // --- Format and Display Time ---
 function updateFooterTime(isoString) {

@@ -8,6 +8,28 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
+
+.no-leaflet-error {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    color: #555;
+    font-family: sans-serif;
+    text-align: center;
+}
+
+.refresh-button {
+    cursor: pointer;
+    margin-top: 20px;
+    border: none;
+    border-radius: 4px;
+    background: #333;
+    padding: 10px 20px;
+    color: #fff;
+}
+
 /* Full Screen Map */
 #map {
     z-index: 1;

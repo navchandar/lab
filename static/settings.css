@@ -181,6 +181,48 @@ input[type="checkbox"] {
     text-shadow: none !important;
 }
 
+/* --- NOSCRIPT OVERLAY --- */
+.noscript-overlay {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    justify-content: center;
+    align-items: center;
+    z-index: 99999;
+    background-color: #f8f9fa;
+    width: 100%;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+}
+
+.noscript-content {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    background: white;
+    padding: 40px;
+    max-width: 400px;
+}
+
+.noscript-content h2 {
+    margin-top: 0;
+    color: #d32f2f;
+}
+
+.noscript-content p {
+    color: #5f6368;
+    line-height: 1.5;
+}
+
+.noscript-content a {
+    display: inline-block;
+    margin-top: 15px;
+    color: #1a73e8;
+    font-weight: 500;
+    text-decoration: none;
+}
+
 
 /* Styles for mobile devices */
 @media (max-width: 767px) {
@@ -250,5 +292,29 @@ input[type="checkbox"] {
 
     .fade-out {
         transition: none !important;
+    }
+}
+
+/* Dark Mode Support for NoScript */
+@media (prefers-color-scheme: dark) {
+    .noscript-overlay {
+        background-color: #202124;
+    }
+
+    .noscript-content {
+        background-color: #292a2d;
+        color: #e8eaed;
+    }
+
+    .noscript-content h2 {
+        color: #e8eaed;
+    }
+
+    .noscript-content p {
+        color: #9aa0a6;
+    }
+
+    .noscript-content a {
+        color: #8ab4f8;
     }
 }
