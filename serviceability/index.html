@@ -92,8 +92,37 @@
       </div>
 
       <div class="footer">
-        <div id="last-refresh" class="last-refresh">
-          Last refreshed: just now
+        <span id="last-refresh" class="last-refresh"
+          >Last refreshed: just now
+        </span>
+        <span class="separator">•</span>
+        <a href="#" id="openDisclaimerModal">Disclaimer</a>
+      </div>
+    </div>
+
+    <div id="disclaimerModal" class="modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Disclaimer</h2>
+          <span class="modal-close-btn">&times;</span>
+        </div>
+        <div class="modal-body">
+          <p>
+            The serviceability maps displayed on this application are generated
+            based on periodically collected third-party data and may not reflect
+            real-time coverage accuracy.
+          </p>
+          <p>
+            <strong>Please Note:</strong> We do not guarantee the completeness
+            or correctness of this map data. We strongly recommend verifying
+            specific pin-code serviceability directly with the respective
+            service partner or company before making critical business
+            decisions.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-close-modal">Understood</button>
         </div>
       </div>
     </div>

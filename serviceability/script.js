@@ -300,5 +300,39 @@ function updateUIColors(color, selectedInput) {
   }
 }
 
+// --- MODAL LOGIC ---
+function initModal() {
+  const modal = document.getElementById("disclaimerModal");
+  const openBtn = document.getElementById("openDisclaimerModal");
+  const closeSpan = document.querySelector(".modal-close-btn");
+  const closeBtn = document.querySelector(".btn-close-modal");
+  const backdrop = document.querySelector(".modal-backdrop");
+
+  if (!modal || !openBtn) {
+    return;
+  }
+
+  // Open Modal
+  openBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    modal.classList.add("show");
+  });
+
+  // Close Actions
+  const closeModal = () => modal.classList.remove("show");
+
+  closeSpan.addEventListener("click", closeModal);
+  closeBtn.addEventListener("click", closeModal);
+  backdrop.addEventListener("click", closeModal);
+
+  // Close on ESC key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && modal.classList.contains("show")) {
+      closeModal();
+    }
+  });
+}
+
 // Start the App
 initApp();
+initModal();
