@@ -67,7 +67,7 @@ def main():
     # 5. Save
     try:
         with open(FINAL_OUTPUT, "w", encoding="utf-8") as f:
-            json.dump(final_list, f, indent=2)
+            json.dump(final_list, f, indent=1)
 
         print(
             f"\n✅ Successfully merged {len(final_list)} locations into {OUTPUT_FILENAME}"

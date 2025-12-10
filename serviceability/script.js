@@ -1,3 +1,11 @@
+// GLOBAL VARIABLES
+let currentOverlay = null;
+let mapBounds = null;
+let brandColors = {};
+// Tracks the currently active service name to prevent image swapping race conditions
+let activeServiceRequest = null;
+let globalTimestamp = new Date().getTime();
+
 // Display TOAST NOTIFICATION
 function showToast(message, isError = false) {
   let toast = document.getElementById("toast");
@@ -53,16 +61,10 @@ window.addEventListener("online", () => {
   }, 2000);
 });
 
-let currentOverlay = null;
-let mapBounds = null;
-let brandColors = {};
-
 // MAP SETUP
 const defaultLocation = [22.5937, 78.9629];
 const Zoom = { zoomControl: false };
 const map = L.map("map", Zoom).setView(defaultLocation, 5);
-let globalTimestamp = new Date().getTime();
-
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
 // TILE LAYER SETUP
@@ -247,7 +249,7 @@ function generateControls(data) {
   });
 }
 
-// Update Map Layer
+// --- UPDATE MAP LAYER ---
 function updateMapLayer() {
   if (!mapBounds) {
     return;
@@ -260,47 +262,89 @@ function updateMapLayer() {
   }
 
   const serviceName = selectedInput.value;
-  const imageUrl = `maps/${serviceName}.png?t=${globalTimestamp}`;
-
   // Get Color for UI updates
   const activeColor = brandColors[serviceName] || "#2ecc71";
 
-  // Remove existing layer
-  if (currentOverlay) {
-    map.removeLayer(currentOverlay);
-    currentOverlay = null;
-  }
+  // LOCK: Update the active request. If this variable changes later,
+  // pending callbacks will know they are obsolete.
+  activeServiceRequest = serviceName;
 
-  // --- VALIDATE IMAGE ---
-  // Leaflet's 'error' event can be flaky, so we use a native Image object to test loading first
-  const tempImg = new Image();
-  tempImg.src = imageUrl;
+  // URLS
+  const pngUrl = `maps/${serviceName}.png?t=${globalTimestamp}`;
+  const webpUrl = `maps/${serviceName}.webp?t=${globalTimestamp}`;
 
-  tempImg.onload = function () {
-    // Update Legend & UI only on success
-    updateUIColors(activeColor, selectedInput);
+  // Helper to place overlay on map
+  const setOverlay = (url) => {
+    // Only proceed if the user hasn't switched to a different service
+    if (activeServiceRequest !== serviceName) {
+      return;
+    }
 
-    // Image loaded successfully, add to map - Safety check
     if (currentOverlay) {
       map.removeLayer(currentOverlay);
     }
-
-    currentOverlay = L.imageOverlay(imageUrl, mapBounds, {
+    currentOverlay = L.imageOverlay(url, mapBounds, {
       opacity: 0.75,
       interactive: false,
     }).addTo(map);
+
+    // Update UI Colors only when a layer is successfully added
+    updateUIColors(activeColor, selectedInput);
   };
 
-  tempImg.onerror = function () {
-    console.error(`Failed to load overlay: ${imageUrl}`);
-    showToast(`Coverage for ${capitalize(serviceName)} is unavailable.`, true);
+  // --- PROGRESSIVE STRATEGY ---
 
-    // Reset UI or visual indication that it failed
-    updateUIColors("#ccc", selectedInput); // Turn grey to indicate failure
-  };
+  // 1. Create a "Ghost" image for WebP to check loading status
+  const webpImg = new Image();
+  webpImg.src = webpUrl;
+
+  if (webpImg.complete) {
+    // A. CACHE HIT: WebP is already loaded/cached. Show immediately.
+    setOverlay(webpUrl);
+    console.log(`Loaded cached WebP for ${serviceName}`);
+  } else {
+    // B. CACHE MISS: Load PNG first (Placeholder), then swap to WebP
+
+    // 1. Show PNG immediately (low res / small size)
+    // We create a temp image to verify PNG exists before showing
+    const pngImg = new Image();
+    pngImg.src = pngUrl;
+
+    pngImg.onload = () => {
+      // Only show PNG if WebP hasn't finished yet
+      if (!webpImg.complete) {
+        setOverlay(pngUrl);
+      }
+    };
+
+    pngImg.onerror = () => {
+      // If PNG fails, we just wait for WebP or show error
+      console.warn(`PNG placeholder missing for ${serviceName}`);
+      updateUIColors("#ccc", selectedInput); // Grey out to indicate issue
+    };
+
+    // 2. Wait for WebP to finish downloading
+    webpImg.onload = () => {
+      // Once WebP is ready, replace the PNG layer
+      setOverlay(webpUrl);
+      console.log(`Swapped to WebP for ${serviceName}`);
+    };
+
+    webpImg.onerror = () => {
+      console.error(`Failed to load WebP: ${webpUrl}`);
+      // If PNG loaded, we stay with PNG. If both failed:
+      if (!currentOverlay) {
+        showToast(
+          `Coverage for ${capitalize(serviceName)} is unavailable.`,
+          true
+        );
+        updateUIColors("#ccc", selectedInput);
+      }
+    };
+  }
 }
 
-// --- Preload Background Images ---
+// --- Preload Background Images (WEBP ONLY) ---
 function preloadRemainingLayers(data) {
   if (!data || data.length === 0) {
     return;
@@ -312,20 +356,22 @@ function preloadRemainingLayers(data) {
   const activeInput = document.querySelector('input[name="service"]:checked');
   const activeService = activeInput ? activeInput.value : null;
 
-  console.log("Preloading other layers in the background...");
+  console.log("Preloading High-Res WebP maps in background...");
 
   partners.forEach((serviceName) => {
-    // Skip the current one (it's already loading/loaded)
     if (serviceName === activeService) {
       return;
     }
-    // Create an image object to download into the browser cache
+
+    // We only preload WebP.
+    // If the user clicks this service later, the WebP will likely be in cache (Scenario A).
+    // If not, the PNG logic (Scenario B) handles the wait.
     const img = new Image();
-    img.src = `maps/${serviceName}.png?t=${globalTimestamp}`;
+    img.src = `maps/${serviceName}.webp?t=${globalTimestamp}`;
   });
 }
 
-// Helper to update Legend and Card colors (Refactored for cleanliness)
+// Helper to update Legend and Card colors
 function updateUIColors(color, selectedInput) {
   // Update Legend "Serviceable" Dot
   const legendDot = document.querySelector(

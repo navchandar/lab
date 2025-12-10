@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 from dataclasses import dataclass, field
@@ -60,8 +61,11 @@ class MapConfig:
     # Width 20 inches * 300 DPI = 6000 pixels wide (High Quality)
     IMG_WIDTH_INCHES: float = 20
     DPI: int = 300
-    IMAGE_FORMAT: str = "WEBP"
-    IMAGE_QUALITY: int = 90
+
+    # WebP Settings (High Quality)
+    WEBP_QUALITY: int = 90
+    # PNG Settings - 0.5 means the PNG will be 50% of the size of the WebP
+    PNG_SCALE_FACTOR: float = 0.5
 
     # Services to Render
     SERVICES: Tuple[str, ...] = (
@@ -141,6 +145,7 @@ class MapRenderer:
             "northEast": [ne_lat, ne_lon],
             "colors": self.cfg.BRAND_COLORS,
             "lastUpdated": current_time,
+            "formats": ["webp", "png"],
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
@@ -177,46 +182,87 @@ class MapRenderer:
         if file_size == 0:
             logger.error(f"❌ FAILED: File is empty (0 bytes) at {path}")
             return False
-        logger.info(f"Found file: {path} ({file_size} bytes)")
+        logger.info(f"✅ Found file: {path} ({file_size} bytes)")
         return True
 
-    def _save_and_compress_image(self, service, output_path):
+    def _save_images(self, service):
         """
-        Saves image layers using pillow with given format settings.
+        Saves the current Plot to memory, then:
+        1. Saves High-Res WebP (Atomic write)
+        2. Saves Low-Res PNG (Atomic write, Optimized)
         """
-        # Matplotlib saves the raw data here temporarily
-        temp_path = output_path.with_suffix(".tmp.png")
+        # Create Paths
+        webp_path = self.cfg.MAPS_DIR / f"{service}.webp"
+        png_path = self.cfg.MAPS_DIR / f"{service}.png"
+
         try:
-            plt.savefig(temp_path, transparent=True, pad_inches=0, dpi=self.cfg.DPI)
-            plt.close()
-
-            # Open with PIL to convert and optimize
-            img = Image.open(temp_path)
-
-            # Save based on configured format
-            if self.cfg.IMAGE_FORMAT.upper() == "WEBP":
-                img.save(output_path, "WEBP", quality=self.cfg.IMAGE_QUALITY, method=6)
-            else:
-                # Fallback to PNG if changed in config
-                img.save(output_path, "PNG", optimize=True)
-
-            # Log results
-            final_size_mb = output_path.stat().st_size / (1024 * 1024)
-            logger.info(
-                f"✅ Saved {service}.{self.cfg.IMAGE_FORMAT.lower()}: {final_size_mb:.2f} MB"
+            logger.info(f"Rendering Temp image for service '{service}'")
+            # Render to RAM (BytesIO) instead of Disk
+            buf = io.BytesIO()
+            plt.savefig(
+                buf, format="png", transparent=True, pad_inches=0, dpi=self.cfg.DPI
             )
+            plt.close()
+            buf.seek(0)
+
+            # Load into PIL
+            with Image.open(buf) as img:
+                logger.info(f"Rendering Webp image")
+                # Ensure RGBA mode for transparency consistency
+                img = img.convert("RGBA")
+
+                # --- SAVE HIGH-RES WEBP ---
+                # Write to a temp file first (Atomic Write)
+                tmp_webp = webp_path.with_suffix(".webp.tmp")
+                img.save(
+                    tmp_webp,
+                    format="WEBP",
+                    quality=self.cfg.WEBP_QUALITY,
+                    method=6,  # Best compression (slower, but worth it for maps)
+                    lossless=False,
+                    exact=True,  # Critical: Preserves transparent pixel values
+                )
+
+                # Atomic rename: This is instant and safe
+                tmp_webp.replace(webp_path)
+                webp_size = webp_path.stat().st_size / (1024 * 1024)
+
+                # --- SAVE LOW-RES PNG ---
+                # Calculate dimensions
+                logger.info(f"Rendering Png image")
+                w = max(1, int(img.width * self.cfg.PNG_SCALE_FACTOR))
+                h = max(1, int(img.height * self.cfg.PNG_SCALE_FACTOR))
+
+                # resize the image
+                img_small = img.resize((w, h), resample=Image.Resampling.LANCZOS)
+                final_png = img_small.quantize(colors=128, method=2, dither=1)
+
+                # Atomic write for PNG
+                tmp_png = png_path.with_suffix(".png.tmp")
+                # optimize=True is very effective for PNGs with reduced colors
+                final_png.save(tmp_png, format="PNG", optimize=True)
+                tmp_png.replace(png_path)
+                png_size = png_path.stat().st_size / (1024 * 1024)
+                logger.info(
+                    f"Generated {service}: WebP ({webp_size:.2f}MB) | PNG ({png_size:.2f}MB)"
+                )
 
         except Exception as e:
             logger.error(f"❌ Failed to save {service}: {e}")
+            # Cleanup temp files if they got stuck
+            for p in [
+                webp_path.with_suffix(".webp.tmp"),
+                png_path.with_suffix(".png.tmp"),
+            ]:
+                if p.exists():
+                    p.unlink()
         finally:
-            # Cleanup temp file
-            if temp_path.exists():
-                temp_path.unlink()
+            # Validate final files
+            self._validate_image(webp_path)
+            self._validate_image(png_path)
 
     def render_service(self, service: str) -> None:
-        """Generates and saves the PNG or WEBP for a single service."""
-        ext = self.cfg.IMAGE_FORMAT.lower()
-        output_path = self.cfg.MAPS_DIR / f"{service}.{ext}"
+        """Generates and saves map in PNG and WEBP for a single service."""
         lats, lngs = self._get_active_coordinates(service)
         logger.info(f"Rendering map for {service} with {len(lats)} points...")
         # Look up the brand color, fallback to green if missing
@@ -288,22 +334,18 @@ class MapRenderer:
             )
 
         try:
-            self._save_and_compress_image(service, output_path)
+            self._save_images(service)
         except Exception as e:
-            logger.error(f"❌ Matplotlib failed to save {service}: {e}")
+            logger.error(f"❌ Matplotlib failed to render {service}: {e}")
         finally:
             plt.close(fig)
-
-        # Validate the generated file
-        if self._validate_image(output_path):
-            logger.info(f"✅ Generated valid map for: {service}")
 
 
 def main():
     #  Setup Directories
     config.MAPS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Load Data
+    # Load Dataio 
     data_mgr = DataManager(config)
 
     try:
