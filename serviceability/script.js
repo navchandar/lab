@@ -182,6 +182,8 @@ async function initApp() {
 
     initBottomSheet();
 
+    initSearch();
+
     // Preload others after a short delay
     if ("requestIdleCallback" in window) {
       // Run when the browser is idle
@@ -431,6 +433,64 @@ function initModal() {
       closeModal();
     }
   });
+}
+
+// --- SEARCH LOGIC ---
+function initSearch() {
+    const input = document.getElementById("location-search");
+    const btn = document.getElementById("search-btn");
+
+    if (!input || !btn) return;
+
+    // Function to perform search
+    const performSearch = async () => {
+        const query = input.value.trim();
+        if (!query) return;
+
+        // Visual feedback: Change icon opacity or show loading cursor
+        btn.style.opacity = "0.5";
+        
+        try {
+            // Using OpenStreetMap Nominatim API (Free, no key required)
+            // 'countrycodes=in' restricts results to India (Remove if you want global)
+            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=1`;
+            
+            const response = await fetch(url);
+            const results = await response.json();
+
+            if (results && results.length > 0) {
+                const location = results[0];
+                const lat = parseFloat(location.lat);
+                const lon = parseFloat(location.lon);
+
+                // Zoom to location (Level 12 is a good city/area view)
+                map.setView([lat, lon], 12);
+                
+                // Optional: Show toast confirmation
+                // showToast(`Moved to ${location.name.split(',')[0]}`);
+                
+                // Hide keyboard on mobile
+                input.blur();
+            } else {
+                showToast("Location not found. Try a City or Pincode.", true);
+            }
+        } catch (error) {
+            console.error("Search failed:", error);
+            showToast("Search failed due to network error.", true);
+        } finally {
+            btn.style.opacity = "1";
+        }
+    };
+
+    // Event Listener: 'Enter' key
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+            performSearch();
+        }
+    });
+
+    // Event Listener: Click Search Icon
+    btn.addEventListener("click", performSearch);
 }
 
 // Start the App
