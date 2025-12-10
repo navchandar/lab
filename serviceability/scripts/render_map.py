@@ -32,9 +32,11 @@ class MapConfig:
     LOCATIONS_FILE: str = "pincodes_latlng.json"
     BOUNDS_FILE: str = "bounds.json"
 
-    # Visual Styles
-    DOT_SIZE: int = 6  # Adjust depending on map view
-    DOT_ALPHA: float = 0.7
+    # --- VISUAL IMPROVEMENTS ---
+    DOT_SIZE: int = 10  # Adjust depending on map view
+    # Single dot = faint. Stacked dots = solid.
+    DOT_ALPHA: float = 0.5
+
     BOUNDARY_WIDTH: float = 0.3
 
     # Brand Identity Colors (Hex Codes)
@@ -54,9 +56,12 @@ class MapConfig:
         }
     )
 
-    # Image Settings
-    IMG_SIZE: Tuple[int, int] = (10, 10)
+    # --- IMAGE QUALITY SETTINGS ---
+    # Width 20 inches * 300 DPI = 6000 pixels wide (High Quality)
+    IMG_WIDTH_INCHES: float = 20
     DPI: int = 300
+    IMAGE_FORMAT: str = "WEBP"
+    IMAGE_QUALITY: int = 90
 
     # Services to Render
     SERVICES: Tuple[str, ...] = (
@@ -89,20 +94,20 @@ class DataManager:
         """Loads all required datasets."""
         logger.info("Loading datasets...")
 
-        # 1. GeoJSON
+        # Read GeoJSON
         geo_path = self.cfg.DATA_DIR / self.cfg.DISTRICTS_FILE
         if not geo_path.exists():
             raise FileNotFoundError(f"GeoJSON not found at {geo_path}")
         self.districts = gpd.read_file(geo_path).to_crs(epsg=3857)
 
-        # 2. Availability Data
+        # Read Availability Data
         avail_path = self.cfg.DATA_DIR / self.cfg.AVAILABILITY_FILE
         with open(avail_path, "r") as f:
             raw_data = json.load(f)
             # Convert list to dict for O(1) lookups
             self.availability = {item["pin"]: item["partners"] for item in raw_data}
 
-        # 3. Locations Data
+        # Load existing Locations Data
         loc_path = self.cfg.DATA_DIR / self.cfg.LOCATIONS_FILE
         with open(loc_path, "r") as f:
             self.locations = json.load(f)
@@ -129,6 +134,7 @@ class MapRenderer:
         # Transform (x, y) -> (lon, lat)
         sw_lon, sw_lat = to_latlng.transform(min_x, min_y)
         ne_lon, ne_lat = to_latlng.transform(max_x, max_y)
+
         data = {
             # Leaflet wants [Lat, Lng]
             "southWest": [sw_lat, sw_lon],
@@ -174,21 +180,43 @@ class MapRenderer:
         logger.info(f"Found file: {path} ({file_size} bytes)")
         return True
 
-    def _compress_image(self, service, output_path):
+    def _save_and_compress_image(self, service, output_path):
+        """
+        Saves image layers using pillow with given format settings.
+        """
+        # Matplotlib saves the raw data here temporarily
+        temp_path = output_path.with_suffix(".tmp.png")
         try:
-            img = Image.open(output_path)
-            # Quantize: Convert to a palette of max 64 colors
-            img = img.quantize(colors=128, method=2, dither=1)
-            # Save it back, overwriting the large file
-            img.save(output_path, optimize=True)
-            logger.info(f"✅ Compressed image: {output_path}")
+            plt.savefig(temp_path, transparent=True, pad_inches=0, dpi=self.cfg.DPI)
+            plt.close()
+
+            # Open with PIL to convert and optimize
+            img = Image.open(temp_path)
+
+            # Save based on configured format
+            if self.cfg.IMAGE_FORMAT.upper() == "WEBP":
+                img.save(output_path, "WEBP", quality=self.cfg.IMAGE_QUALITY, method=6)
+            else:
+                # Fallback to PNG if changed in config
+                img.save(output_path, "PNG", optimize=True)
+
+            # Log results
+            final_size_mb = output_path.stat().st_size / (1024 * 1024)
+            logger.info(
+                f"✅ Saved {service}.{self.cfg.IMAGE_FORMAT.lower()}: {final_size_mb:.2f} MB"
+            )
+
         except Exception as e:
-            logger.error(f"❌ Failed to save/optimize {service}: {e}")
-            return
+            logger.error(f"❌ Failed to save {service}: {e}")
+        finally:
+            # Cleanup temp file
+            if temp_path.exists():
+                temp_path.unlink()
 
     def render_service(self, service: str) -> None:
-        """Generates and saves the PNG for a single service."""
-        output_path = self.cfg.MAPS_DIR / f"{service}.png"
+        """Generates and saves the PNG or WEBP for a single service."""
+        ext = self.cfg.IMAGE_FORMAT.lower()
+        output_path = self.cfg.MAPS_DIR / f"{service}.{ext}"
         lats, lngs = self._get_active_coordinates(service)
         logger.info(f"Rendering map for {service} with {len(lats)} points...")
         # Look up the brand color, fallback to green if missing
@@ -201,10 +229,11 @@ class MapRenderer:
         geo_height = maxy - miny
         aspect_ratio = geo_height / geo_width
 
-        # 2. Set Figure Size based on Ratio (Fixed width 10, variable height)
-        # This ensures 1 pixel in image = constant degrees in lat/lng
-        fig_width = 10
+        # Increase resolution based on Config
+        fig_width = self.cfg.IMG_WIDTH_INCHES
         fig_height = fig_width * aspect_ratio
+
+        # Create High-DPI figure
         fig = plt.figure(figsize=(fig_width, fig_height), dpi=self.cfg.DPI)
 
         # 3. Create Axes that fills the figure 100% (No margins)
@@ -216,23 +245,22 @@ class MapRenderer:
         ax.set_xlim(minx, maxx)
         ax.set_ylim(miny, maxy)
 
-        # --- OPTIMIZED BORDER RENDERING ---
-        # Step A: Convert Polygons to Lines (Boundaries)
+        # Draw Boundaries
         lines = self.data.districts.boundary
 
-        # Step B: Merge overlapping lines into a single MultiLineString
+        # Merge overlapping lines into a single MultiLineString
         # This removes "Alpha Stacking" so all lines are uniform opacity
         merged_borders = lines.union_all()
 
-        # We wrap it in a GeoSeries to plot it easily
+        # Wrap it in a GeoSeries to plot it easily
         border_layer = gpd.GeoSeries([merged_borders])
 
         # Layer 1: The "Halo" (White, Thicker)
         border_layer.plot(
             ax=ax,
             color="#FFFFFF",  # For lines, 'color' controls the stroke
-            linewidth=self.cfg.BOUNDARY_WIDTH * 2.0,
-            alpha=0.4,
+            linewidth=self.cfg.BOUNDARY_WIDTH * 3.0,
+            alpha=0.5,
             zorder=1,  # Draw at bottom
         )
 
@@ -241,7 +269,7 @@ class MapRenderer:
             ax=ax,
             color="#333333",
             linewidth=self.cfg.BOUNDARY_WIDTH,
-            alpha=0.6,
+            alpha=0.7,
             zorder=2,  # Draw on top
         )
 
@@ -253,11 +281,14 @@ class MapRenderer:
                 c=brand_color,
                 s=self.cfg.DOT_SIZE,
                 alpha=self.cfg.DOT_ALPHA,
-                edgecolors="none",
+                edgecolors="none",  # No edges makes blending smoother
+                linewidths=0,
+                antialiased=True,
                 zorder=3,  # Draw dots on top of borders
             )
+
         try:
-            plt.savefig(output_path, transparent=True, pad_inches=0)
+            self._save_and_compress_image(service, output_path)
         except Exception as e:
             logger.error(f"❌ Matplotlib failed to save {service}: {e}")
         finally:
@@ -266,8 +297,7 @@ class MapRenderer:
         # Validate the generated file
         if self._validate_image(output_path):
             logger.info(f"✅ Generated valid map for: {service}")
-            self._compress_image(service, output_path)
-           
+
 
 def main():
     #  Setup Directories
@@ -275,6 +305,7 @@ def main():
 
     # Load Data
     data_mgr = DataManager(config)
+
     try:
         data_mgr.load_all()
     except Exception as e:
