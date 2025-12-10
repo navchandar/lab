@@ -40,7 +40,7 @@ jobs:
 
       - name: Install Python Requirements
         run: |
-          pip install geopandas matplotlib Pillow
+          pip install geopandas matplotlib Pillow numpy
 
       - name: Render Maps
         run: python scripts/render_map.py

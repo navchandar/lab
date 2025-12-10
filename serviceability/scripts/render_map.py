@@ -14,6 +14,9 @@ from pyproj import Transformer
 matplotlib.use("Agg")
 import geopandas as gpd
 import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import PathPatch
+from matplotlib.path import Path as MplPath
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
@@ -37,7 +40,6 @@ class MapConfig:
     DOT_SIZE: int = 15  # Adjust depending on map view
     # Single dot = faint. Stacked dots = solid.
     DOT_ALPHA: float = 0.5
-
     BOUNDARY_WIDTH: float = 0.3
 
     # Brand Identity Colors (Hex Codes)
@@ -261,6 +263,40 @@ class MapRenderer:
             self._validate_image(webp_path)
             self._validate_image(png_path)
 
+    def _create_clip_patch(self, geom, ax):
+        """
+        Converts Shapely geometry to Matplotlib PathPatch.
+        This allows us to 'clip' scatter points so they don't bleed outside the borders.
+        """
+        vertices = []
+        codes = []
+
+        # Helper to process a single polygon's exterior ring
+        def process_poly(poly):
+            coords = np.array(poly.exterior.coords)
+            # Add vertices
+            vertices.extend(coords)
+            # Add codes (MOVETO for start, LINETO for edges, CLOSEPOLY for end)
+            codes.extend(
+                [MplPath.MOVETO]
+                + [MplPath.LINETO] * (len(coords) - 2)
+                + [MplPath.CLOSEPOLY]
+            )
+
+        # Handle both Polygon and MultiPolygon types
+        if geom.geom_type == "Polygon":
+            process_poly(geom)
+        elif geom.geom_type == "MultiPolygon":
+            for poly in geom.geoms:
+                process_poly(poly)
+
+        path = MplPath(vertices, codes)
+        # Create a Patch using the map's coordinate transform
+        patch = PathPatch(
+            path, transform=ax.transData, facecolor="none", edgecolor="none"
+        )
+        return patch
+
     def render_service(self, service: str) -> None:
         """Generates and saves map in PNG and WEBP for a single service."""
         lats, lngs = self._get_active_coordinates(service)
@@ -319,9 +355,17 @@ class MapRenderer:
             zorder=2,  # Draw on top
         )
 
+        # --- CLIPPING LOGIC ---
+        # Get the filled shape of the country/districts
+        country_geom = self.data.districts.union_all()
+
+        # Convert it to a Matplotlib Patch and add to axis
+        clip_patch = self._create_clip_patch(country_geom, ax)
+        ax.add_patch(clip_patch)
+
         # Draw Serviceable Dots with BRAND COLOR
         if lats and lngs:
-            ax.scatter(
+            sc = ax.scatter(
                 lngs,
                 lats,
                 c=brand_color,
@@ -332,6 +376,9 @@ class MapRenderer:
                 antialiased=True,
                 zorder=3,  # Draw dots on top of borders
             )
+            # Apply the clip path to the scatter collection
+            # This slices any part of the dot that falls outside the patch
+            sc.set_clip_path(clip_patch)
 
         try:
             self._save_images(service)
@@ -345,7 +392,7 @@ def main():
     #  Setup Directories
     config.MAPS_DIR.mkdir(parents=True, exist_ok=True)
 
-    # Load Dataio 
+    # Load Dataio
     data_mgr = DataManager(config)
 
     try:
