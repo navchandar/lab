@@ -30,7 +30,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🌐 <a href="https://navchandar.github.io/lab/ip/" target="_blank">**IP Finder**</a> | Display your public IP address in a simple web page and notify on change. | 🟩🟩🟩🟩🟩 100% |
 | 🔍 <a href="https://navchandar.github.io/lab/smart-dom-inspector/" target="_blank">**Smart DOM Inspector**</a> | Render HTML, inspect DOM elements, and generate CSS, XPath locators | 🟩🟩🟩🟩🟩 100% |
 | 💼 <a href="https://navchandar.github.io/lab/jobs/" target="_blank">**Job Listings**</a> | Identify latest job posts and classify them to be sortable and searchable | 🟩🟩🟩🟩🟩 100% |
-| 🗺️ <a href="https://navchandar.github.io/lab/serviceability/" target="_blank">**Serviceability Map**</a> | Identify and visualize the delivery coverage for major platforms using an interactive Map | 🟩🟩⬜⬜⬜ 40% |
+| 🗺️ <a href="https://navchandar.github.io/lab/serviceability/" target="_blank">**Serviceability Map**</a> | Identify and visualize the delivery coverage for major platforms using an interactive Map | 🟩🟩🟩🟩⬜ 80% |
 
 
 ### Status 

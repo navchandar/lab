@@ -60,14 +60,14 @@ class MapConfig:
     )
 
     # --- IMAGE QUALITY SETTINGS ---
-    # Width 20 inches * 300 DPI = 6000 pixels wide (High Quality)
-    IMG_WIDTH_INCHES: float = 20
+    # Width 30 inches * 300 DPI = 9000 pixels wide (High Quality)
+    IMG_WIDTH_INCHES: float = 30
     DPI: int = 300
 
     # WebP Settings (High Quality)
-    WEBP_QUALITY: int = 90
-    # PNG Settings - 0.5 means the PNG will be 50% of the size of the WebP
-    PNG_SCALE_FACTOR: float = 0.5
+    WEBP_QUALITY: int = 100
+    # PNG Settings - 0.2 means the PNG will be 20% of the size of the WebP
+    PNG_SCALE_FACTOR: float = 0.2
 
     # Services to Render
     SERVICES: Tuple[str, ...] = (
@@ -129,6 +129,22 @@ class MapRenderer:
         self.data = data
         self.total_bounds = self.data.districts.total_bounds  # [minx, miny, maxx, maxy]
 
+        # Precompute expensive geometry once
+
+        # Merge overlapping lines into a single MultiLineString
+        # This removes "Alpha Stacking" so all lines are uniform opacity
+        self._merged_borders = self.data.districts.boundary.union_all()
+        self._country_geom = self.data.districts.union_all()
+
+        # Precompute aspect ratio & figure dims once
+        # Calculate Geographic Aspect Ratio to match the map
+        min_x, min_y, max_x, max_y = self.total_bounds
+        geo_width = max_x - min_x
+        geo_height = max_y - min_y
+        self._aspect_ratio = geo_height / max(geo_width, 1e-9)  # avoid div by zero
+        self._fig_width = self.cfg.IMG_WIDTH_INCHES
+        self._fig_height = self._fig_width * self._aspect_ratio
+
     def save_bounds_json(self) -> None:
         """Exports bounds, colors and timestamp so Leaflet knows placement and branding."""
 
@@ -187,7 +203,15 @@ class MapRenderer:
         logger.info(f"✅ Found file: {path} ({file_size} bytes)")
         return True
 
-    def _save_images(self, service):
+    def _clean_tmp_files(self, webp_path, png_path):
+        for img in [
+            webp_path.with_suffix(".webp.tmp"),
+            png_path.with_suffix(".png.tmp"),
+        ]:
+            if img.exists():
+                img.unlink()
+
+    def _save_images(self, service: str, fig: plt.Figure) -> None:
         """
         Saves the current Plot to memory, then:
         1. Saves High-Res WebP (Atomic write)
@@ -201,10 +225,9 @@ class MapRenderer:
             logger.info(f"Rendering Temp image for service '{service}'")
             # Render to RAM (BytesIO) instead of Disk
             buf = io.BytesIO()
-            plt.savefig(
+            fig.savefig(
                 buf, format="png", transparent=True, pad_inches=0, dpi=self.cfg.DPI
             )
-            plt.close()
             buf.seek(0)
 
             # Load into PIL
@@ -220,8 +243,8 @@ class MapRenderer:
                     tmp_webp,
                     format="WEBP",
                     quality=self.cfg.WEBP_QUALITY,
-                    method=6,  # Best compression (slower, but worth it for maps)
-                    lossless=False,
+                    method=5, # Best compression method
+                    lossless=True,
                     exact=True,  # Critical: Preserves transparent pixel values
                 )
 
@@ -245,19 +268,14 @@ class MapRenderer:
                 final_png.save(tmp_png, format="PNG", optimize=True)
                 tmp_png.replace(png_path)
                 png_size = png_path.stat().st_size / (1024 * 1024)
-                logger.info(
-                    f"Generated {service}: WebP ({webp_size:.2f}MB) | PNG ({png_size:.2f}MB)"
-                )
+                png_size = f"{png_size:.2f}MB"
+                webp_size = f"{webp_size:.2f}MB"
+                logger.info(f"{service} Done: WebP ({webp_size}) | PNG ({png_size})")
 
         except Exception as e:
             logger.error(f"❌ Failed to save {service}: {e}")
             # Cleanup temp files if they got stuck
-            for p in [
-                webp_path.with_suffix(".webp.tmp"),
-                png_path.with_suffix(".png.tmp"),
-            ]:
-                if p.exists():
-                    p.unlink()
+            self._clean_tmp_files(webp_path, png_path)
         finally:
             # Validate final files
             self._validate_image(webp_path)
@@ -305,18 +323,8 @@ class MapRenderer:
         brand_color = self.cfg.BRAND_COLORS.get(service, self.cfg.DEFAULT_COLOR)
 
         # --- MAP ALIGNMENT FIX ---
-        # 1. Calculate Geographic Aspect Ratio
-        minx, miny, maxx, maxy = self.total_bounds
-        geo_width = maxx - minx
-        geo_height = maxy - miny
-        aspect_ratio = geo_height / geo_width
-
-        # Increase resolution based on Config
-        fig_width = self.cfg.IMG_WIDTH_INCHES
-        fig_height = fig_width * aspect_ratio
-
         # Create High-DPI figure
-        fig = plt.figure(figsize=(fig_width, fig_height), dpi=self.cfg.DPI)
+        fig = plt.figure(figsize=(self._fig_width, self._fig_height), dpi=self.cfg.DPI)
 
         # 3. Create Axes that fills the figure 100% (No margins)
         ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
@@ -324,18 +332,12 @@ class MapRenderer:
         fig.add_axes(ax)
 
         # Lock Coordinates
-        ax.set_xlim(minx, maxx)
-        ax.set_ylim(miny, maxy)
-
-        # Draw Boundaries
-        lines = self.data.districts.boundary
-
-        # Merge overlapping lines into a single MultiLineString
-        # This removes "Alpha Stacking" so all lines are uniform opacity
-        merged_borders = lines.union_all()
+        min_x, min_y, max_x, max_y = self.total_bounds
+        ax.set_xlim(min_x, max_x)
+        ax.set_ylim(min_y, max_y)
 
         # Wrap it in a GeoSeries to plot it easily
-        border_layer = gpd.GeoSeries([merged_borders])
+        border_layer = gpd.GeoSeries([self._merged_borders])
 
         # Layer 1: The "Halo" (White, Thicker)
         border_layer.plot(
@@ -351,13 +353,13 @@ class MapRenderer:
             ax=ax,
             color="#333333",
             linewidth=self.cfg.BOUNDARY_WIDTH,
-            alpha=0.7,
+            alpha=0.8,
             zorder=2,  # Draw on top
         )
 
         # --- CLIPPING LOGIC ---
         # Get the filled shape of the country/districts
-        country_geom = self.data.districts.union_all()
+        country_geom = self._country_geom
 
         # Convert it to a Matplotlib Patch and add to axis
         clip_patch = self._create_clip_patch(country_geom, ax)
@@ -381,7 +383,7 @@ class MapRenderer:
             sc.set_clip_path(clip_patch)
 
         try:
-            self._save_images(service)
+            self._save_images(service, fig)
         except Exception as e:
             logger.error(f"❌ Matplotlib failed to render {service}: {e}")
         finally:
