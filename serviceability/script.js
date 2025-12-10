@@ -107,6 +107,7 @@ function updateFooterTime(isoString) {
 function initBottomSheet() {
   const card = document.getElementById("bottom-sheet");
   const header = document.getElementById("card-header");
+  const btn = document.getElementById("search-btn");
   const mapEl = document.getElementById("map");
 
   // Toggle function
@@ -129,6 +130,10 @@ function initBottomSheet() {
 
   // Collapse on clicking on map
   if (window.innerWidth <= 600) {
+    if (btn) {
+      btn.addEventListener("click", collapseSheet);
+    }
+
     if (mapEl) {
       mapEl.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -437,60 +442,66 @@ function initModal() {
 
 // --- SEARCH LOGIC ---
 function initSearch() {
-    const input = document.getElementById("location-search");
-    const btn = document.getElementById("search-btn");
+  const input = document.getElementById("location-search");
+  const btn = document.getElementById("search-btn");
 
-    if (!input || !btn) return;
+  if (!input || !btn) {
+    return;
+  }
 
-    // Function to perform search
-    const performSearch = async () => {
-        const query = input.value.trim();
-        if (!query) return;
+  // Function to perform search
+  const performSearch = async () => {
+    const query = input.value.trim();
+    if (!query) {
+      return;
+    }
 
-        // Visual feedback: Change icon opacity or show loading cursor
-        btn.style.opacity = "0.5";
-        
-        try {
-            // Using OpenStreetMap Nominatim API (Free, no key required)
-            // 'countrycodes=in' restricts results to India (Remove if you want global)
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&limit=1`;
-            
-            const response = await fetch(url);
-            const results = await response.json();
+    // Visual feedback: Change icon opacity or show loading cursor
+    btn.style.opacity = "0.5";
 
-            if (results && results.length > 0) {
-                const location = results[0];
-                const lat = parseFloat(location.lat);
-                const lon = parseFloat(location.lon);
+    try {
+      const q = encodeURIComponent(query);
+      // Using OpenStreetMap Nominatim API (Free) with 'countrycodes=in'
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=in&limit=1`;
 
-                // Zoom to location (Level 12 is a good city/area view)
-                map.setView([lat, lon], 12);
-                
-                // Optional: Show toast confirmation
-                // showToast(`Moved to ${location.name.split(',')[0]}`);
-                
-                // Hide keyboard on mobile
-                input.blur();
-            } else {
-                showToast("Location not found. Try a City or Pincode.", true);
-            }
-        } catch (error) {
-            console.error("Search failed:", error);
-            showToast("Search failed due to network error.", true);
-        } finally {
-            btn.style.opacity = "1";
-        }
-    };
+      const response = await fetch(url);
+      const results = await response.json();
 
-    // Event Listener: 'Enter' key
-    input.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-            performSearch();
-        }
-    });
+      if (results && results.length > 0) {
+        const location = results[0];
+        const lat = parseFloat(location.lat);
+        const lon = parseFloat(location.lon);
 
-    // Event Listener: Click Search Icon
-    btn.addEventListener("click", performSearch);
+        // --- Zoom to location: Use flyTo for smooth animation ---
+        // 11 is the zoom level, 1.5 is the duration in seconds
+        map.flyTo([lat, lon], 11, {
+          duration: 1.5,
+          easeLinearity: 0.25,
+        });
+        console.log(`Moved to ${location.name}`);
+
+        // Hide keyboard on mobile
+        input.blur();
+      } else {
+        showToast("Location not found. Try a City or Pincode.", true);
+      }
+    } catch (error) {
+      console.error("Search failed:", error);
+      showToast("Search failed due to network error.", true);
+    } finally {
+      btn.style.opacity = "1";
+    }
+  };
+
+  // Event Listener: 'Enter' key
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      performSearch();
+    }
+  });
+
+  // Event Listener: Click Search Icon
+  btn.addEventListener("click", performSearch);
 }
 
 // Start the App
