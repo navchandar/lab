@@ -135,6 +135,70 @@ def check_pincode(session, lat, lng, pin):
         return None
 
 
+def get_pin_places(session, pin):
+    api_key = os.environ.get("GMAPS_API_KEY")
+    if not api_key:
+        logger.error("GMAPS_API_KEY not found in environment variables.")
+        return None
+
+    # Get Place ID from BigBasket's Autocomplete API
+    bb_url = f"https://www.bigbasket.com/places/v1/places/autocomplete/?inputText={pin}"
+
+    try:
+        response = session.get(bb_url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            preds = data.get("predictions", [])
+            if preds:
+                # loop through predictions to find a valid one
+                for location in preds:
+                    place_id = location.get("placeId")
+
+                    if place_id:
+                        # Get Lat/Lng from Google Maps Place Details API
+                        gmaps_url = (
+                            "https://maps.googleapis.com/maps/api/place/details/json"
+                        )
+                        params = {
+                            "place_id": place_id,
+                            "fields": "geometry",
+                            "key": api_key,
+                        }
+
+                        try:
+                            gmaps_resp = requests.get(
+                                gmaps_url, params=params, timeout=10
+                            )
+                            gmaps_data = gmaps_resp.json()
+                            if gmaps_data.get("status") == "OK":
+                                geo = (
+                                    gmaps_data.get("result", {})
+                                    .get("geometry", {})
+                                    .get("location", {})
+                                )
+                                lat = geo.get("lat")
+                                lng = geo.get("lng")
+                                if lat and lng:
+                                    logger.info(
+                                        f"Resolved Place ID {place_id} -> {lat}, {lng}"
+                                    )
+                                    # Check Serviceability using the resolved coordinates
+                                    status = check_pincode(session, lat, lng, pin)
+                                    if status is not None:
+                                        return status
+                        except Exception as e:
+                            logger.error(
+                                f"Google Maps lookup failed for {place_id}: {e}"
+                            )
+                            continue  # Try the next prediction
+
+        return None
+
+    except Exception as e:
+        logger.error(f"Address Request failed for PIN {pin}: {e}")
+        return None
+
+
 def main():
     logger.info("--- Starting BigBasket Checker ---")
     logger.info(f"Reading from: {INPUT_FILE}")
@@ -186,6 +250,9 @@ def main():
 
         # Perform the check
         status = check_pincode(session, lat, lng, pin)
+
+        if status is None:
+            status = get_pin_places(session, pin)
 
         if status is not None:
             # Check if we need to update existing or create new
