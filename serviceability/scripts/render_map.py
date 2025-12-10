@@ -34,7 +34,7 @@ class MapConfig:
     BOUNDS_FILE: str = "bounds.json"
 
     # --- VISUAL IMPROVEMENTS ---
-    DOT_SIZE: int = 10  # Adjust depending on map view
+    DOT_SIZE: int = 15  # Adjust depending on map view
     # Single dot = faint. Stacked dots = solid.
     DOT_ALPHA: float = 0.5
 

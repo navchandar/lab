@@ -255,18 +255,15 @@ function updateMapLayer() {
     return;
   }
 
-  // Find the currently checked radio
   const selectedInput = document.querySelector('input[name="service"]:checked');
   if (!selectedInput) {
     return;
   }
 
   const serviceName = selectedInput.value;
-  // Get Color for UI updates
   const activeColor = brandColors[serviceName] || "#2ecc71";
 
-  // LOCK: Update the active request. If this variable changes later,
-  // pending callbacks will know they are obsolete.
+  // LOCK: Update the active request
   activeServiceRequest = serviceName;
 
   // URLS
@@ -288,60 +285,67 @@ function updateMapLayer() {
       interactive: false,
     }).addTo(map);
 
-    // Update UI Colors only when a layer is successfully added
     updateUIColors(activeColor, selectedInput);
   };
 
   // --- PROGRESSIVE STRATEGY ---
 
-  // 1. Create a "Ghost" image for WebP to check loading status
   const webpImg = new Image();
+  // Set onload BEFORE setting src to ensure we catch cached events
+  let webpLoaded = false;
+
+  webpImg.onload = () => {
+    webpLoaded = true;
+    // Always prioritize WebP. If PNG is currently showing, this will overwrite it.
+    setOverlay(webpUrl);
+    console.log(`Using WebP for ${serviceName}`);
+  };
+
+  webpImg.onerror = () => {
+    console.error(`Failed to load WebP: ${webpUrl}`);
+    // If WebP fails, ensure PNG is visible (if it wasn't already)
+    if (!currentOverlay) {
+      showToast(
+        `Coverage for ${capitalize(serviceName)} is unavailable.`,
+        true
+      );
+      updateUIColors("#ccc", selectedInput);
+    }
+  };
+
   webpImg.src = webpUrl;
 
+  // CHECK CACHE IMMEDIATELY
   if (webpImg.complete) {
-    // A. CACHE HIT: WebP is already loaded/cached. Show immediately.
+    // If it's already cached, run the logic immediately
+    // and skip the PNG logic entirely.
+    webpLoaded = true;
     setOverlay(webpUrl);
-    console.log(`Loaded cached WebP for ${serviceName}`);
-  } else {
-    // B. CACHE MISS: Load PNG first (Placeholder), then swap to WebP
+    return;
+  }
 
-    // 1. Show PNG immediately (low res / small size)
-    // We create a temp image to verify PNG exists before showing
+  // If we are here, WebP is NOT instantly ready.
+  // Start loading PNG as a fallback, but with a small safety delay
+  // to give the browser a moment to resolve disk cache for WebP.
+  setTimeout(() => {
+    if (activeServiceRequest !== serviceName) {
+      return;
+    } // User switched services
+    if (webpLoaded) {
+      return;
+    } // WebP finished instantly, don't load PNG
+
     const pngImg = new Image();
     pngImg.src = pngUrl;
 
     pngImg.onload = () => {
-      // Only show PNG if WebP hasn't finished yet
-      if (!webpImg.complete) {
+      // CRITICAL CHECK: Only show PNG if WebP is STILL not ready
+      if (!webpLoaded && activeServiceRequest === serviceName) {
+        console.log(`Showing PNG placeholder for ${serviceName}`);
         setOverlay(pngUrl);
       }
     };
-
-    pngImg.onerror = () => {
-      // If PNG fails, we just wait for WebP or show error
-      console.warn(`PNG placeholder missing for ${serviceName}`);
-      updateUIColors("#ccc", selectedInput); // Grey out to indicate issue
-    };
-
-    // 2. Wait for WebP to finish downloading
-    webpImg.onload = () => {
-      // Once WebP is ready, replace the PNG layer
-      setOverlay(webpUrl);
-      console.log(`Swapped to WebP for ${serviceName}`);
-    };
-
-    webpImg.onerror = () => {
-      console.error(`Failed to load WebP: ${webpUrl}`);
-      // If PNG loaded, we stay with PNG. If both failed:
-      if (!currentOverlay) {
-        showToast(
-          `Coverage for ${capitalize(serviceName)} is unavailable.`,
-          true
-        );
-        updateUIColors("#ccc", selectedInput);
-      }
-    };
-  }
+  }, 50); // 50ms buffer prevents flickering
 }
 
 // --- Preload Background Images (WEBP ONLY) ---
