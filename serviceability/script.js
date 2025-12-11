@@ -7,6 +7,24 @@ let activeServiceRequest = null;
 let globalTimestamp = new Date().getTime();
 const loadedWebpImages = new Set();
 
+// --- URL STATE MANAGEMENT ---
+const UrlState = {
+  get: (key) => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get(key);
+  },
+  set: (key, value) => {
+    const url = new URL(window.location);
+    if (value) {
+      url.searchParams.set(key, value);
+    } else {
+      url.searchParams.delete(key);
+    }
+    // Update URL without reloading the page
+    window.history.replaceState({}, "", url);
+  },
+};
+
 // Display TOAST NOTIFICATION
 function showToast(message, isError = false) {
   let toast = document.getElementById("toast");
@@ -112,13 +130,8 @@ function initBottomSheet() {
   const mapEl = document.getElementById("map");
 
   // Toggle function
-  const toggleSheet = () => {
-    card.classList.toggle("collapsed");
-  };
-
-  const collapseSheet = () => {
-    card.classList.add("collapsed");
-  };
+  const toggleSheet = () => card.classList.toggle("collapsed");
+  const collapseSheet = () => card.classList.add("collapsed");
 
   // Click Header to Toggle
   header.addEventListener("click", toggleSheet);
@@ -183,12 +196,35 @@ async function initApp() {
     // Generate Radio Buttons
     generateControls(availabilityData);
 
-    // Load the initial map layer (Defaults to the first service)
+    // Initialize Search Logic
+    const searchFn = initSearch();
+
+    // --- RESTORE STATE FROM URL ---
+    // 1. Check for 'service' param
+    const savedService = UrlState.get("service");
+    if (savedService) {
+      // Try to select the radio button
+      const input = document.querySelector(`input[value="${savedService}"]`);
+      if (input) {
+        input.checked = true;
+      }
+    }
+
+    // 2. Check for 'q' (query/location) param
+    const savedQuery = UrlState.get("q");
+    if (savedQuery && searchFn) {
+      const input = document.getElementById("location-search");
+      if (input) {
+        input.value = savedQuery;
+        // Execute search immediately
+        searchFn(savedQuery);
+      }
+    }
+
+    // Load map layer (will use the checked input, whether default or restored)
     updateMapLayer();
 
     initBottomSheet();
-
-    initSearch();
 
     // Preload others after a short delay
     if ("requestIdleCallback" in window) {
@@ -224,6 +260,7 @@ function generateControls(data) {
     // Create the label element
     const label = document.createElement("label");
     label.className = "radio-card";
+    // Default to first item checked, UNLESS URL overrides it later in initApp
     const isChecked = index === 0 ? "checked" : "";
 
     // Get color for this partner (Default green if missing)
@@ -245,6 +282,9 @@ function generateControls(data) {
     // Add Event Listener directly to the input
     const input = label.querySelector("input");
     input.addEventListener("change", () => {
+      // Update URL when user clicks
+      UrlState.set("service", partner);
+
       updateMapLayer();
       // collapse the card after selection on mobile
       if (window.innerWidth <= 600) {
@@ -456,14 +496,21 @@ function initSearch() {
   const btn = document.getElementById("search-btn");
 
   if (!input || !btn) {
-    return;
+    return null;
   }
 
-  // Function to perform search
-  const performSearch = async () => {
-    const query = input.value.trim();
+  // Reusable search function
+  const performSearch = async (queryOverride = null) => {
+    // If override is provided (from URL), use it. Otherwise read input.
+    const query = queryOverride || input.value.trim();
+
     if (!query) {
       return;
+    }
+
+    // Update URL if this is a fresh user search
+    if (!queryOverride) {
+      UrlState.set("q", query);
     }
 
     // Visual feedback: Change icon opacity or show loading cursor
@@ -507,6 +554,9 @@ function initSearch() {
   input.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       performSearch();
+      if (window.innerWidth <= 600) {
+        collapseSheet();
+      }
     }
   });
 
