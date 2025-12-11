@@ -121,6 +121,15 @@ function updateFooterTime(isoString) {
     console.warn("Could not parse date:", e);
   }
 }
+// Toggle function
+const toggleSheet = () => () => {
+  const card = document.getElementById("bottom-sheet");
+  card.classList.toggle("collapsed");
+};
+const collapseSheet = () => {
+  const card = document.getElementById("bottom-sheet");
+  card.classList.add("collapsed");
+};
 
 // --- BOTTOM SHEET LOGIC for mobile ---
 function initBottomSheet() {
@@ -128,10 +137,6 @@ function initBottomSheet() {
   const header = document.getElementById("card-header");
   const btn = document.getElementById("search-btn");
   const mapEl = document.getElementById("map");
-
-  // Toggle function
-  const toggleSheet = () => card.classList.toggle("collapsed");
-  const collapseSheet = () => card.classList.add("collapsed");
 
   // Click Header to Toggle
   header.addEventListener("click", toggleSheet);
@@ -508,6 +513,11 @@ function initSearch() {
       return;
     }
 
+    // collapse bottom sheet in mobile
+    if (window.innerWidth <= 600) {
+      collapseSheet();
+    }
+
     // Update URL if this is a fresh user search
     if (!queryOverride) {
       UrlState.set("q", query);
@@ -545,6 +555,10 @@ function initSearch() {
     } catch (error) {
       console.error("Search failed:", error);
       showToast("Search failed due to network error.", true);
+      // uncollapse bottom sheet in mobile
+      if (window.innerWidth <= 600) {
+        toggleSheet();
+      }
     } finally {
       btn.style.opacity = "1";
     }
@@ -554,14 +568,12 @@ function initSearch() {
   input.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
       performSearch();
-      if (window.innerWidth <= 600) {
-        collapseSheet();
-      }
     }
   });
 
   // Event Listener: Click Search Icon
   btn.addEventListener("click", performSearch);
+  return performSearch;
 }
 
 // Start the App
