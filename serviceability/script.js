@@ -5,6 +5,7 @@ let brandColors = {};
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
 let globalTimestamp = new Date().getTime();
+const loadedWebpImages = new Set();
 
 // Display TOAST NOTIFICATION
 function showToast(message, isError = false) {
@@ -296,63 +297,68 @@ function updateMapLayer() {
   };
 
   // --- PROGRESSIVE STRATEGY ---
+  // 1. Check if we KNOW it's already preloaded in this session
+  const isPreloaded = loadedWebpImages.has(serviceName);
 
   const webpImg = new Image();
-  // Set onload BEFORE setting src to ensure we catch cached events
-  let webpLoaded = false;
+  let webpReady = false;
 
   webpImg.onload = () => {
-    webpLoaded = true;
-    // Always prioritize WebP. If PNG is currently showing, this will overwrite it.
+    webpReady = true;
+    // Mark as loaded for future reference
+    loadedWebpImages.add(serviceName);
+    // WebP is ready, show it (replaces PNG if it was showing)
     setOverlay(webpUrl);
-    console.log(`Using WebP for ${serviceName}`);
+    console.log(`Loaded WebP for ${serviceName}`);
   };
 
   webpImg.onerror = () => {
     console.error(`Failed to load WebP: ${webpUrl}`);
-    // If WebP fails, ensure PNG is visible (if it wasn't already)
+    // Only fallback if WebP dies completely
     if (!currentOverlay) {
-      showToast(
-        `Coverage for ${capitalize(serviceName)} is unavailable.`,
-        true
-      );
-      updateUIColors("#ccc", selectedInput);
+      // Force PNG load if WebP errors out
+      setOverlay(pngUrl);
+      showToast(`High-res map unavailable. Showing fallback.`, true);
     }
   };
 
+  // Start loading WebP
   webpImg.src = webpUrl;
 
-  // CHECK CACHE IMMEDIATELY
+  // 2. Immediate Cache Check (Memory)
   if (webpImg.complete) {
-    // If it's already cached, run the logic immediately
-    // and skip the PNG logic entirely.
-    webpLoaded = true;
+    webpReady = true;
+    loadedWebpImages.add(serviceName);
     setOverlay(webpUrl);
     return;
   }
 
-  // If we are here, WebP is NOT instantly ready.
-  // Start loading PNG as a fallback, but with a small safety delay
-  // to give the browser a moment to resolve disk cache for WebP.
-  setTimeout(() => {
-    if (activeServiceRequest !== serviceName) {
-      return;
-    } // User switched services
-    if (webpLoaded) {
-      return;
-    } // WebP finished instantly, don't load PNG
-
-    const pngImg = new Image();
-    pngImg.src = pngUrl;
-
-    pngImg.onload = () => {
-      // CRITICAL CHECK: Only show PNG if WebP is STILL not ready
-      if (!webpLoaded && activeServiceRequest === serviceName) {
-        console.log(`Showing PNG placeholder for ${serviceName}`);
-        setOverlay(pngUrl);
+  // 3. Fallback Logic
+  // If we know it's preloaded, we DO NOT show PNG. We just wait for WebP
+  // If we don't know (first load or refresh), we start a timer to show PNG.
+  if (!isPreloaded) {
+    setTimeout(() => {
+      // If user switched or WebP finished in the meantime, stop.
+      if (activeServiceRequest !== serviceName) {
+        return;
       }
-    };
-  }, 50); // 50ms buffer prevents flickering
+      if (webpReady) {
+        return;
+      }
+      console.log(
+        `WebP not loaded yet. Showing PNG placeholder for ${serviceName}`
+      );
+
+      const pngImg = new Image();
+      pngImg.src = pngUrl;
+      pngImg.onload = () => {
+        // Check flag again in case WebP finished while PNG was decoding
+        if (!webpReady && activeServiceRequest === serviceName) {
+          setOverlay(pngUrl);
+        }
+      };
+    }, 100); // 100ms to allow Disk Cache to resolve
+  }
 }
 
 // --- Preload Background Images (WEBP ONLY) ---
@@ -371,6 +377,7 @@ function preloadRemainingLayers(data) {
 
   partners.forEach((serviceName) => {
     if (serviceName === activeService) {
+      loadedWebpImages.add(serviceName);
       return;
     }
 
@@ -378,6 +385,9 @@ function preloadRemainingLayers(data) {
     // If the user clicks this service later, the WebP will likely be in cache (Scenario A).
     // If not, the PNG logic (Scenario B) handles the wait.
     const img = new Image();
+    img.onload = () => {
+      loadedWebpImages.add(serviceName);
+    };
     img.src = `maps/${serviceName}.webp?t=${globalTimestamp}`;
   });
 }
