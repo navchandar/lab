@@ -200,7 +200,7 @@ def main():
         lat = item.get("lat")
         lng = item.get("lng")
 
-        logger.info(f"[{index}/{total_pending}] Checking PIN: {pin}...")
+        logger.info(f"[{index}/{total_pending}] Checking PIN: {pin}")
 
         # Perform the check
         status = check_pincode(session, lat, lng, pin)

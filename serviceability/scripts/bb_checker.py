@@ -60,19 +60,11 @@ def save_json(filename, data):
         logger.error(f"Could not save {filename}: {e}")
 
 
-def get_existing_partners(pin, availability_data):
-    """Checks if we already have data for this PIN."""
-    for entry in availability_data:
-        if entry["pin"] == pin:
-            return entry
-    return None
-
-
 def refresh_session(session):
     """Visits the homepage to get fresh cookies."""
     try:
         logger.info("Refreshing session cookies...")
-        session.get("https://www.bigbasket.com/", timeout=10)
+        session.get("https://www.bigbasket.com/", timeout=20)
     except Exception as e:
         logger.warning(f"Session refresh failed: {e}")
 
@@ -93,16 +85,9 @@ def check_pincode(session, lat, lng, pin):
             refresh_session(session)
             response = session.get(url, timeout=10)
 
-        # Sometimes a 303 is a temporary "please wait" or "refresh" signal
+        # 303 Redirects mean most likely no service
         if response.status_code == 303:
-            data = response.json()
-            errors = data.get("errors")
-            if errors and len(errors) > 0:
-                msg = errors[0].get("display_msg", "")
-                type = errors[0].get("type", "")
-                logger.warning(f"303 Response for PIN {pin}: {type} - {msg}")
-                if "not serve" in msg.lower():
-                    return 0
+            return 0
 
         if response.status_code != 200:
             logger.error(f"API Error {response.status_code} for PIN {pin}")
@@ -136,64 +121,74 @@ def check_pincode(session, lat, lng, pin):
 
 
 def get_pin_places(session, pin):
+    """
+    Uses Autocomplete to find sub-locations within a Pincode
+    and checks if ANY of them are serviceable.
+    """
     api_key = os.environ.get("GMAPS_API_KEY")
     if not api_key:
-        logger.error("GMAPS_API_KEY not found in environment variables.")
+        # Log once to avoid spamming
+        if not hasattr(get_pin_places, "logged_missing_key"):
+            logger.error("GMAPS_API_KEY not found. Skipping deep check.")
+            get_pin_places.logged_missing_key = True
         return None
 
     # Get Place ID from BigBasket's Autocomplete API
     bb_url = f"https://www.bigbasket.com/places/v1/places/autocomplete/?inputText={pin}"
+    gmaps_url = "https://maps.googleapis.com/maps/api/place/details/json"
 
     try:
         response = session.get(bb_url, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            preds = data.get("predictions", [])
-            if preds:
-                # loop through predictions to find a valid one
-                for location in preds:
-                    place_id = location.get("placeId")
+        if response.status_code != 200:
+            return None
 
-                    if place_id:
-                        # Get Lat/Lng from Google Maps Place Details API
-                        gmaps_url = (
-                            "https://maps.googleapis.com/maps/api/place/details/json"
-                        )
-                        params = {
-                            "place_id": place_id,
-                            "fields": "geometry",
-                            "key": api_key,
-                        }
+        data = response.json()
+        preds = data.get("predictions", [])
 
-                        try:
-                            gmaps_resp = requests.get(
-                                gmaps_url, params=params, timeout=10
+        if not preds:
+            return 0
+
+        if preds and len(preds) > 1:
+            logger.info(f"   -> Found {len(preds)} sub-locations. Checking...")
+
+            # Loop through predictions to find a valid one
+            for location in preds:
+                place_id = location.get("placeId")
+                if place_id:
+                    # Get Lat/Lng from Google Maps
+                    params = {
+                        "place_id": place_id,
+                        "fields": "geometry",
+                        "key": api_key,
+                    }
+
+                    try:
+                        # Short sleep
+                        time.sleep(0.5)
+                        gmaps_resp = requests.get(gmaps_url, params=params, timeout=10)
+                        gmaps_data = gmaps_resp.json()
+
+                        if gmaps_data.get("status") == "OK":
+                            geo = (
+                                gmaps_data.get("result", {})
+                                .get("geometry", {})
+                                .get("location", {})
                             )
-                            gmaps_data = gmaps_resp.json()
-                            if gmaps_data.get("status") == "OK":
-                                geo = (
-                                    gmaps_data.get("result", {})
-                                    .get("geometry", {})
-                                    .get("location", {})
-                                )
-                                lat = geo.get("lat")
-                                lng = geo.get("lng")
-                                if lat and lng:
-                                    logger.info(
-                                        f"Resolved Place ID {place_id} -> {lat}, {lng}"
-                                    )
-                                    # Check Serviceability using the resolved coordinates
-                                    status = check_pincode(session, lat, lng, pin)
-                                    if status is not None:
-                                        return status
-                        except Exception as e:
-                            logger.error(
-                                f"Google Maps lookup failed for {place_id}: {e}"
-                            )
-                            continue  # Try the next prediction
+                            lat = geo.get("lat")
+                            lng = geo.get("lng")
 
-        return None
+                            if lat and lng:
+                                # Check Serviceability
+                                status = check_pincode(session, lat, lng, pin)
 
+                                if status == 1:
+                                    logger.info(f"   -> Found Serviceable Location")
+                                    return 1
+
+                    except Exception as e:
+                        logger.error(f"Google Maps lookup failed for {place_id}: {e}")
+                        continue
+            return 0
     except Exception as e:
         logger.error(f"Address Request failed for PIN {pin}: {e}")
         return None
@@ -248,12 +243,17 @@ def main():
 
         logger.info(f"[{index}/{total_pending}] Checking PIN: {pin}")
 
-        # Perform the check
+        # 1. Standard Check (Lat/Lng Centroid)
         status = check_pincode(session, lat, lng, pin)
 
-        if status is None:
-            status = get_pin_places(session, pin)
+        # 2. Deep Check (If standard check failed or was 0)
+        if status != 1:
+            deep_status = get_pin_places(session, pin)
+            # Only update status if deep check returned a definitive result (0 or 1)
+            if deep_status is not None:
+                status = deep_status
 
+        # 3. Save Result
         if status is not None:
             # Check if we need to update existing or create new
             if pin in output_map:
@@ -274,7 +274,7 @@ def main():
                 output_map[pin] = new_entry
 
             result_msg = "✅ Serviceable" if status == 1 else "❌ Not Serviceable"
-            logger.info(f"   -> {result_msg}")
+            logger.info(f"   -> Result: {result_msg}")
 
             updates_buffer += 1
         else:
@@ -285,7 +285,7 @@ def main():
             save_json(OUTPUT_FILE, output_data)
             updates_buffer = 0
 
-        time.sleep(random.uniform(1.0, 2.0))
+        time.sleep(random.uniform(0.5, 1.5))
 
     # Final Save
     if updates_buffer > 0:

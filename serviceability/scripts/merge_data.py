@@ -11,7 +11,7 @@ OUTPUT_FILENAME = "availability.json"
 FINAL_OUTPUT = DATA_DIR / OUTPUT_FILENAME
 
 
-def load_json(filepath):
+def load_json(filepath) -> list:
     if not filepath.exists():
         return []
     try:
@@ -19,30 +19,39 @@ def load_json(filepath):
             return json.load(f)
     except Exception as e:
         print(f"Error reading {filepath.name}: {e}")
-        return []
+    return []
 
 
 def main():
     print("--- Starting Merge Process ---")
 
-    # 1. Dynamically find files
+    # Master dictionary: PIN -> Data Object
+    merged_map = {}
+
+    # --- Load the existing data file first (Preserve History) ---
+    if FINAL_OUTPUT.exists():
+        print(f"Loading existing master file: {OUTPUT_FILENAME}")
+        existing_data = load_json(FINAL_OUTPUT)
+        for entry in existing_data:
+            pin = entry.get("pin")
+            if pin:
+                merged_map[pin] = entry
+    else:
+        print(f"No existing {OUTPUT_FILENAME} found. Creating new.")
+
+    # --- Find and Merge new partial files ---
     # pattern: starts with "availability_", ends with ".json"
     candidates = list(DATA_DIR.glob("availability_*.json"))
 
-    # 2. Filter out the final output file (availability.json)
-    # We don't want to merge the output into itself!
+    # Filter out the final output file so we don't merge it into itself again
     files_to_merge = [f for f in candidates if f.name != OUTPUT_FILENAME]
 
     if not files_to_merge:
-        print("No 'availability_*.json' files found to merge.")
-        return
-
-    print(f"Found {len(files_to_merge)} files to merge:")
-    for f in files_to_merge:
-        print(f"  - {f.name}")
-
-    # 3. Master dictionary: PIN -> Data Object
-    merged_map = {}
+        print("No new 'availability_*.json' files found to merge.")
+    else:
+        print(f"Found {len(files_to_merge)} files to merge:")
+        for f in files_to_merge:
+            print(f"  - {f.name}")
 
     for filepath in files_to_merge:
         data = load_json(filepath)
@@ -52,25 +61,32 @@ def main():
             if not pin:
                 continue
 
-            # If pin not in master map, add it
+            # If pin not in master map, create it
             if pin not in merged_map:
                 merged_map[pin] = {"pin": pin, "partners": {}}
 
-            # Merge partners
-            # This logic preserves existing partners and adds/updates new ones
+            # Merge partners without removing existing ones
             new_partners = entry.get("partners", {})
             merged_map[pin]["partners"].update(new_partners)
 
     # 4. Convert map back to list
     final_list = list(merged_map.values())
 
-    # 5. Save
+    # Sorts the list in-place by the 'pin' key.
+    print("Sorting data by Pincode...")
+    try:
+        final_list.sort(key=lambda x: int(x["pin"]) if x["pin"].isdigit() else x["pin"])
+    except Exception as e:
+        print(f"Failed to sort numerically, trying string sort. ({e})")
+        final_list.sort(key=lambda x: x["pin"])
+
+    # 5. Save final output
     try:
         with open(FINAL_OUTPUT, "w", encoding="utf-8") as f:
-            json.dump(final_list, f, indent=1)
+            json.dump(final_list, f, indent=2)
 
         print(
-            f"\n✅ Successfully merged {len(final_list)} locations into {OUTPUT_FILENAME}"
+            f"✅ Successfully merged {len(final_list)} locations into {OUTPUT_FILENAME}"
         )
     except Exception as e:
         print(f"❌ Failed to save output: {e}")

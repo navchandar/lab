@@ -182,7 +182,7 @@ def main():
         place_id = item.get("place_id")  # We extracted this earlier
 
         logger.info(
-            f"[{index}/{total_pending}] Checking PIN: {pin} (PlaceID: {place_id[:10]}...)"
+            f"[{index}/{total_pending}] Checking PIN: {pin} (PlaceID: {place_id[:10]})"
         )
 
         # Perform the check using PLACE_ID
