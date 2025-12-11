@@ -542,10 +542,10 @@ function initSearch() {
         const lon = parseFloat(location.lon);
 
         // --- Zoom to location: Use flyTo for smooth animation ---
-        // 11 is the zoom level, 1.5 is the duration in seconds
+        // 11 is the zoom level, 2 is the duration in seconds
         map.flyTo([lat, lon], 11, {
-          duration: 1.5,
-          easeLinearity: 0.25,
+          duration: 2,
+          easeLinearity: 1.42,
         });
         console.log(`Moved to ${location.name}`);
 
