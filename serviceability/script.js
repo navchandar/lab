@@ -215,21 +215,23 @@ async function initApp() {
       }
     }
 
+    // Load map layer (will use the checked input)
+    updateMapLayer();
+
+    initBottomSheet();
+
     // 2. Check for 'q' (query/location) param
     const savedQuery = UrlState.get("q");
     if (savedQuery && searchFn) {
       const input = document.getElementById("location-search");
       if (input) {
         input.value = savedQuery;
-        // Execute search immediately
-        searchFn(savedQuery);
+        // Execute search after 1s for the map to render tiles
+        setTimeout(() => {
+          searchFn(savedQuery);
+        }, 1000);
       }
     }
-
-    // Load map layer (will use the checked input, whether default or restored)
-    updateMapLayer();
-
-    initBottomSheet();
 
     // Preload others after a short delay
     if ("requestIdleCallback" in window) {
