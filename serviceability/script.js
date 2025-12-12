@@ -180,13 +180,11 @@ function updateFooterTime(isoString) {
     // Create Date object (Automatically converts UTC to User's Local Time)
     const date = new Date(isoString);
 
-    // Format it nicely: "08 Dec, 10:30 PM"
+    // Format it nicely: "08 Dec"
     const formatted = new Intl.DateTimeFormat("en-IN", {
       day: "numeric",
       month: "short",
-      hour: "numeric",
-      minute: "numeric",
-      hour12: true,
+      year: "numeric",
     }).format(date);
 
     footerEl.textContent = `Last refreshed: ${formatted}`;
@@ -593,9 +591,9 @@ function initSearch() {
       if (window.innerWidth <= 600) {
         toggleSheet();
       }
-      map.flyTo(defaultLocation, 5, {
+      map.flyTo(defaultLocation, 8, {
         duration: 1.5,
-        easeLinearity: 0.5,
+        easeLinearity: 1,
       });
       console.log(`Moved to Default view`);
       return;
