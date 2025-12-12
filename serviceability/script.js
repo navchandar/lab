@@ -455,7 +455,10 @@ function updateMapLayer() {
     if (activeServiceRequest !== serviceName) {
       return;
     }
+
     const oldOverlay = currentOverlay;
+
+    // Create New Layer (Start invisible)
     const newOverlay = L.imageOverlay(url, mapBounds, {
       opacity: 0,
       interactive: false,
@@ -465,20 +468,23 @@ function updateMapLayer() {
     // Update global reference immediately
     currentOverlay = newOverlay;
 
-    // Trigger Animations Fade In
+    // Trigger Animation (Double rAF Pattern)
+    // First rAF: Wait for element insertion
     requestAnimationFrame(() => {
-      // A. Fade IN the New Layer
-      newOverlay.setOpacity(0.75);
-
-      // B. Fade OUT the Old Layer
-      if (oldOverlay) {
-        // Ensure old layer has class (just in case)
-        if (oldOverlay.getElement()) {
-          oldOverlay.getElement().classList.add("smooth-layer");
+      // Second rAF: Wait for the first paint to complete (opacity: 0 is now rendered)
+      requestAnimationFrame(() => {
+        // Now change values. The browser perceives this as a state change -> transition!
+        newOverlay.setOpacity(0.75);
+        // Fade OUT the Old Layer
+        if (oldOverlay) {
+          if (oldOverlay.getElement()) {
+            oldOverlay.getElement().classList.add("smooth-layer");
+          }
+          oldOverlay.setOpacity(0);
         }
-        oldOverlay.setOpacity(0);
-      }
+      });
     });
+
     // Cleanup Old Layer
     if (oldOverlay) {
       setTimeout(() => {
