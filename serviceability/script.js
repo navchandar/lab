@@ -509,9 +509,22 @@ function initSearch() {
   // Reusable search function
   const performSearch = async (queryOverride = null) => {
     // If override is provided (from URL), use it. Otherwise read input.
-    const query = queryOverride || input.value.trim();
+    let query = queryOverride;
+    if (query === null) {
+      query = input.value.trim();
+    }
 
     if (!query) {
+      // Clean up URL and move to default state
+      UrlState.set("q", null);
+      if (window.innerWidth <= 600) {
+        toggleSheet();
+      }
+      map.flyTo(defaultLocation, 5, {
+        duration: 1.5,
+        easeLinearity: 0.5,
+      });
+      console.log(`Moved to Default view`);
       return;
     }
 
@@ -521,7 +534,7 @@ function initSearch() {
     }
 
     // Update URL if this is a fresh user search
-    if (!queryOverride) {
+    if (!queryOverride && query !== null) {
       UrlState.set("q", query);
     }
 
@@ -575,6 +588,14 @@ function initSearch() {
 
   // Event Listener: Click Search Icon
   btn.addEventListener("click", performSearch);
+
+  // Reset map when user clicks the "X" (clear) button
+  input.addEventListener("search", () => {
+    if (input.value === "") {
+      performSearch();
+    }
+  });
+
   return performSearch;
 }
 

@@ -33,6 +33,7 @@ body {
 /* Full Screen Map */
 #map {
     z-index: 1;
+    background-color: #f0f0f0;
     width: 100vw;
     height: 100vh;
 }
@@ -556,6 +557,10 @@ body {
     .search-container:focus-within {
         border-color: #5f6368;
         background: #303134;
+    }
+
+    #map {
+        background-color: #121212;
     }
 
     #location-search {
