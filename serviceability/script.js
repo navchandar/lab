@@ -591,7 +591,7 @@ function initSearch() {
       if (window.innerWidth <= 600) {
         toggleSheet();
       }
-      map.flyTo(defaultLocation, 8, {
+      map.flyTo(defaultLocation, 6, {
         duration: 1.5,
         easeLinearity: 1,
       });

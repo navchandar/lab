@@ -121,7 +121,7 @@ def check_zomato_serviceability(session, lat, lng, place_id):
 
     try:
         # Add random sleep to avoid rate limits
-        time.sleep(random.uniform(0.5, 1.5))
+        time.sleep(random.uniform(2.0, 5.0))
 
         loc_resp = session.get(
             loc_url, params=loc_params, timeout=10, impersonate="chrome"

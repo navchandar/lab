@@ -2,10 +2,11 @@ import json
 import logging
 import os
 import random
+import re
 import time
 from pathlib import Path
 
-import requests
+from curl_cffi import requests
 
 # --- CONFIGURATION ---
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -64,9 +65,57 @@ def refresh_session(session):
     """Visits the homepage to get fresh cookies."""
     try:
         logger.info("Refreshing session cookies...")
-        session.get("https://www.bigbasket.com/", timeout=20)
+        session.get("https://www.bigbasket.com/", timeout=20, impersonate="chrome")
     except Exception as e:
         logger.warning(f"Session refresh failed: {e}")
+
+
+def get_lat_lng_from_place_id(session, place_id):
+    """
+    Resolves a Google Place ID to Lat/Lng
+    Priority: BigBasket -> Blinkit
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "application/json, text/plain, */*",
+    }
+    try:
+        bb_url = "https://www.bigbasket.com/places/v1/places/details/"
+        params = {"placeId": place_id}
+
+        resp = session.get(
+            bb_url, params=params, headers=headers, timeout=5, impersonate="chrome"
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            # BigBasket usually mirrors the Google API structure:
+            # result -> geometry -> location -> lat/lng
+            geo = data.get("result", {}).get("geometry", {}).get("location", {})
+            lat = geo.get("lat")
+            lng = geo.get("lng")
+
+            if lat and lng:
+                return lat, lng
+    except Exception as e:
+        logger.warning(f"BigBasket Place lookup failed: {e}")
+
+    # --- BLINKIT (First Fallback) ---
+    try:
+        blinkit_url = "https://blinkit.com/location/info"
+        params = {"place_id": place_id}
+        resp = requests.get(
+            blinkit_url, params=params, headers=headers, timeout=5, impersonate="chrome"
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            coord = data.get("coordinate", {})
+            lat = coord.get("lat")
+            lng = coord.get("lon")
+            if lat and lng:
+                return lat, lng
+    except Exception as e:
+        logger.warning(f"Blinkit Place lookup failed: {e}")
+    return None, None
 
 
 def check_pincode(session, lat, lng, pin):
@@ -76,14 +125,14 @@ def check_pincode(session, lat, lng, pin):
     url = f"https://www.bigbasket.com/ui-svc/v1/serviceable/?lat={lat}&lng={lng}&send_all_serviceability=true"
 
     try:
-        response = session.get(url, timeout=10)
+        response = session.get(url, timeout=10, impersonate="chrome")
 
         # If blocked or session expired, try refreshing once
         if response.status_code in [401, 403]:
             logger.warning("Session expired. Refreshing...")
             time.sleep(random.uniform(3.0, 5.0))
             refresh_session(session)
-            response = session.get(url, timeout=10)
+            response = session.get(url, timeout=10, impersonate="chrome")
 
         # 303 Redirects mean most likely no service
         if response.status_code == 303:
@@ -135,10 +184,9 @@ def get_pin_places(session, pin):
 
     # Get Place ID from BigBasket's Autocomplete API
     bb_url = f"https://www.bigbasket.com/places/v1/places/autocomplete/?inputText={pin}"
-    gmaps_url = "https://maps.googleapis.com/maps/api/place/details/json"
 
     try:
-        response = session.get(bb_url, timeout=10)
+        response = session.get(bb_url, timeout=10, impersonate="chrome")
         if response.status_code != 200:
             return None
 
@@ -153,41 +201,19 @@ def get_pin_places(session, pin):
 
             # Loop through predictions to find a valid one
             for location in preds:
-                place_id = location.get("placeId")
+                place_id = location.get("placeId") or location.get(
+                    "place_id"
+                )
+
                 if place_id:
-                    # Get Lat/Lng from Google Maps
-                    params = {
-                        "place_id": place_id,
-                        "fields": "geometry",
-                        "key": api_key,
-                    }
-
-                    try:
-                        # Short sleep
-                        time.sleep(0.5)
-                        gmaps_resp = requests.get(gmaps_url, params=params, timeout=10)
-                        gmaps_data = gmaps_resp.json()
-
-                        if gmaps_data.get("status") == "OK":
-                            geo = (
-                                gmaps_data.get("result", {})
-                                .get("geometry", {})
-                                .get("location", {})
-                            )
-                            lat = geo.get("lat")
-                            lng = geo.get("lng")
-
-                            if lat and lng:
-                                # Check Serviceability
-                                status = check_pincode(session, lat, lng, pin)
-
-                                if status == 1:
-                                    logger.info(f"   -> Found Serviceable Location")
-                                    return 1
-
-                    except Exception as e:
-                        logger.error(f"Google Maps lookup failed for {place_id}: {e}")
-                        continue
+                    lat, lng = get_lat_lng_from_place_id(session, place_id)
+                    if lat and lng:
+                        # Check Serviceability
+                        status = check_pincode(session, lat, lng, pin)
+                        print(f"{lat=} {lng=} {status=}")
+                        if status == 1:
+                            logger.info(f"   -> Found Serviceable Location")
+                            return 1
             return 0
     except Exception as e:
         logger.error(f"Address Request failed for PIN {pin}: {e}")

@@ -78,6 +78,51 @@ def refresh_session(session):
         logger.warning(f"Session refresh failed: {e}")
 
 
+def get_lat_lng_from_place_id(session, place_id):
+    """
+    Resolves a Google Place ID to Lat/Lng
+    Priority: BigBasket -> Blinkit
+    """
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "accept": "application/json, text/plain, */*",
+    }
+    try:
+        bb_url = "https://www.bigbasket.com/places/v1/places/details/"
+        params = {"placeId": place_id}
+
+        resp = requests.get(bb_url, params=params, headers=headers, timeout=5, impersonate="chrome")
+        if resp.status_code == 200:
+            data = resp.json()
+            # BigBasket usually mirrors the Google API structure:
+            # result -> geometry -> location -> lat/lng
+            geo = data.get("result", {}).get("geometry", {}).get("location", {})
+            lat = geo.get("lat")
+            lng = geo.get("lng")
+
+            if lat and lng:
+                return lat, lng
+    except Exception as e:
+        logger.warning(f"BigBasket Place lookup failed: {e}")
+
+    # --- BLINKIT (First Fallback) ---
+    try:
+        blinkit_url = "https://blinkit.com/location/info"
+        params = {"place_id": place_id}
+        resp = session.get(
+            blinkit_url, params=params, headers=headers, timeout=5, impersonate="chrome"
+        )
+        if resp.status_code == 200:
+            data = resp.json()
+            coord = data.get("coordinate", {})
+            lat = coord.get("lat")
+            lng = coord.get("lon")
+            if lat and lng:
+                return lat, lng
+    except Exception as e:
+        logger.warning(f"Blinkit Place lookup failed: {e}")
+    return None, None
+
 def check_pincode(session, place_id, pin):
     """
     Returns 1 if Blinkit is serviceable, 0 otherwise.
