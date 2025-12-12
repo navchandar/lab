@@ -465,19 +465,28 @@ function updateMapLayer() {
     // Update global reference immediately
     currentOverlay = newOverlay;
 
-    // 2. Trigger Fade In
+    // Trigger Animations Fade In
     requestAnimationFrame(() => {
-      // Change opacity to target
+      // A. Fade IN the New Layer
       newOverlay.setOpacity(0.75);
-    });
 
-    // 3. Remove old layer AFTER animation completes
+      // B. Fade OUT the Old Layer
+      if (oldOverlay) {
+        // Ensure old layer has class (just in case)
+        if (oldOverlay.getElement()) {
+          oldOverlay.getElement().classList.add("smooth-layer");
+        }
+        oldOverlay.setOpacity(0);
+      }
+    });
+    // Cleanup Old Layer
     if (oldOverlay) {
       setTimeout(() => {
+        // Only remove if it's still attached to the map
         if (map.hasLayer(oldOverlay)) {
           map.removeLayer(oldOverlay);
         }
-      }, 500);
+      }, 1000);
     }
   };
 
