@@ -5,7 +5,8 @@ let brandColors = {};
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
 let globalTimestamp = new Date().getTime();
-const loadedWebpImages = new Set();
+const loadedWebpImages = new Map();
+const MAX_CACHE_SIZE = 3; // Keep only 3 images in memory at once
 
 // --- URL STATE MANAGEMENT ---
 const UrlState = {
@@ -407,6 +408,26 @@ function generateControls(data) {
   });
 }
 
+// --- MEMORY MANAGEMENT HELPER ---
+function manageCacheMemory(newKey, newUrl) {
+  // Add the new item
+  loadedWebpImages.set(newKey, newUrl);
+
+  // Check if we exceeded the limit
+  if (loadedWebpImages.size > MAX_CACHE_SIZE) {
+    // Get the oldest key (Map iterators follow insertion order)
+    const oldestKey = loadedWebpImages.keys().next().value;
+    const oldestUrl = loadedWebpImages.get(oldestKey);
+
+    // Revoke the Blob URL (Critical: This actually frees the RAM)
+    URL.revokeObjectURL(oldestUrl);
+
+    // Remove from our Map
+    loadedWebpImages.delete(oldestKey);
+    console.log(`Cleared memory for: ${oldestKey}`);
+  }
+}
+
 // --- UPDATE MAP LAYER ---
 function updateMapLayer() {
   if (!mapBounds) {
@@ -446,90 +467,85 @@ function updateMapLayer() {
     updateUIColors(activeColor, selectedInput);
   };
 
-  // --- PROGRESSIVE STRATEGY ---
-  // 1. Check if we KNOW it's already preloaded in this session
-  const isPreloaded = loadedWebpImages.has(serviceName);
+  // 1. Check Memory Cache
+  if (loadedWebpImages.has(serviceName)) {
+    const blobUrl = loadedWebpImages.get(serviceName);
 
-  const webpImg = new Image();
+    // Refresh LRU Order: Delete and re-add to move it to the "end" (most recent)
+    loadedWebpImages.delete(serviceName);
+    manageCacheMemory(serviceName, blobUrl);
+
+    setOverlay(blobUrl);
+    console.log(`Using cached Blob for ${serviceName}`);
+    return;
+  }
+
+  // 2. Fetch and Cache
   let webpReady = false;
 
-  webpImg.onload = () => {
-    webpReady = true;
-    // Mark as loaded for future reference
-    loadedWebpImages.add(serviceName);
-    // WebP is ready, show it (replaces PNG if it was showing)
-    setOverlay(webpUrl);
-    console.log(`Loaded WebP for ${serviceName}`);
-  };
+  fetch(webpUrl)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error("Network error");
+      }
+      return res.blob();
+    })
+    .then((blob) => {
+      if (activeServiceRequest !== serviceName) {
+        return;
+      }
 
-  webpImg.onerror = () => {
-    console.error(`Failed to load WebP: ${webpUrl}`);
+      webpReady = true;
+      const objectUrl = URL.createObjectURL(blob);
+
+      // Use the helper to safely store it
+      manageCacheMemory(serviceName, objectUrl);
+
+      setOverlay(objectUrl);
+      console.log(`Loaded WebP for ${serviceName}`);
+    })
+    .catch((err) => {
+      console.error(err);
+      handleError();
+    });
+
+  // 3. Fallback Logic (Timer)
+  setTimeout(() => {
+    if (activeServiceRequest !== serviceName) {
+      return;
+    }
+    if (webpReady) {
+      return;
+    }
+    console.log(`WebP slow. Showing PNG placeholder.`);
+    setOverlay(pngUrl);
+  }, 100);
+
+  // --- ERROR HANDLER ---
+  function handleError() {
     if (!navigator.onLine) {
       showToast("You are offline. Map layer could not be loaded.", true);
     } else if (!currentOverlay) {
       // If Online, it's a missing file/server error
       showToast(`High-res map unavailable.`, true);
     }
-    // Attempt to load the PNG Fallback
+    // Try to load PNG
     setOverlay(pngUrl);
 
-    // Double-Failure Catch
+    // Double failure catch
     if (currentOverlay) {
-      const overlayImg = currentOverlay.getElement();
-      if (overlayImg) {
-        overlayImg.onerror = () => {
+      const img = currentOverlay.getElement();
+      if (img) {
+        img.onerror = () => {
+          if (map.hasLayer(currentOverlay)) {
+            map.removeLayer(currentOverlay);
+          }
           if (!navigator.onLine) {
-            showToast("You are offline. Map layer could not be loaded.", true);
-          } else {
-            // If we are here, BOTH WebP and PNG failed.
-            console.error("Double failure: PNG fallback also failed.");
-            showToast("Map data unavailable for this area.", true);
-            // Remove the broken image icon from the map
-            if (map.hasLayer(currentOverlay)) {
-              map.removeLayer(currentOverlay);
-            }
+            showToast("Offline: No map data.", true);
           }
         };
       }
     }
-  };
-
-  // Start loading WebP
-  webpImg.src = webpUrl;
-
-  // 2. Immediate Cache Check (Memory)
-  if (webpImg.complete) {
-    webpReady = true;
-    loadedWebpImages.add(serviceName);
-    setOverlay(webpUrl);
-    return;
-  }
-
-  // 3. Fallback Logic
-  // If we know it's preloaded, we DO NOT show PNG. We just wait for WebP
-  // If we don't know (first load or refresh), we start a timer to show PNG.
-  if (!isPreloaded) {
-    setTimeout(() => {
-      // If user switched or WebP finished in the meantime, stop.
-      if (activeServiceRequest !== serviceName) {
-        return;
-      }
-      if (webpReady) {
-        return;
-      }
-      console.log(
-        `WebP not loaded yet. Showing PNG placeholder for ${serviceName}`
-      );
-
-      const pngImg = new Image();
-      pngImg.src = pngUrl;
-      pngImg.onload = () => {
-        // Check flag again in case WebP finished while PNG was decoding
-        if (!webpReady && activeServiceRequest === serviceName) {
-          setOverlay(pngUrl);
-        }
-      };
-    }, 100); // 100ms to allow Disk Cache to resolve
   }
 }
 
@@ -540,27 +556,34 @@ function preloadRemainingLayers(data) {
   }
 
   const partners = Object.keys(data[0].partners);
-
   // Identify the currently active service so we don't download it twice
   const activeInput = document.querySelector('input[name="service"]:checked');
   const activeService = activeInput ? activeInput.value : null;
+  let count = 0;
 
   console.log("Preloading High-Res WebP maps in background...");
 
   partners.forEach((serviceName) => {
     if (serviceName === activeService) {
-      loadedWebpImages.add(serviceName);
+      return;
+    }
+    if (count >= MAX_CACHE_SIZE - 1) {
       return;
     }
 
+    count++;
+    const url = `maps/${serviceName}.webp?t=${globalTimestamp}`;
     // We only preload WebP.
-    // If the user clicks this service later, the WebP will likely be in cache (Scenario A).
-    // If not, the PNG logic (Scenario B) handles the wait.
-    const img = new Image();
-    img.onload = () => {
-      loadedWebpImages.add(serviceName);
-    };
-    img.src = `maps/${serviceName}.webp?t=${globalTimestamp}`;
+    // If the user clicks this service later, the WebP will likely be in cache
+    fetch(url)
+      .then((res) => (res.ok ? res.blob() : null))
+      .then((blob) => {
+        if (blob) {
+          const objectUrl = URL.createObjectURL(blob);
+          manageCacheMemory(serviceName, objectUrl);
+        }
+      })
+      .catch(() => {});
   });
 }
 
