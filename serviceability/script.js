@@ -80,18 +80,91 @@ window.addEventListener("online", () => {
   }, 2000);
 });
 
-// MAP SETUP
+// MAP INSTANCE SETUP
 const defaultLocation = [22.5937, 78.9629];
 const Zoom = { zoomControl: false };
 const map = L.map("map", Zoom).setView(defaultLocation, 5);
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
-// TILE LAYER SETUP
-L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-  attribution: "&copy; OpenStreetMap &copy; CARTO",
-  subdomains: "abcd",
-  maxZoom: 19,
-}).addTo(map);
+// --- TILE LAYER SETUP ---
+function setupMapTiles(mapInstance) {
+  // Define multiple map providers for redundancy
+  const PROVIDERS = [
+    {
+      name: "CartoDB Light",
+      url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      options: {
+        attribution: "&copy; OpenStreetMap &copy; CARTO",
+        subdomains: "abcd",
+        maxZoom: 19,
+      },
+    },
+    {
+      name: "Esri World Gray",
+      url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+      options: {
+        attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+        //  Esri stops at 16. This tells Leaflet to stretch zoom 16 tiles
+        // if the user zooms in deeper, avoiding blank screens.
+        maxNativeZoom: 16,
+        maxZoom: 19,
+      },
+    },
+  ];
+
+  let currentLayer = null;
+  let activeIndex = 0;
+  let errorCount = 0;
+  const ERROR_THRESHOLD = 5;
+
+  function loadLayer(index) {
+    if (index >= PROVIDERS.length) {
+      return;
+    }
+
+    const provider = PROVIDERS[index];
+    console.log(`Setting map provider to: ${provider.name}`);
+
+    // 1. Remove the old layer (Clean up previous tiles/settings)
+    if (currentLayer) {
+      mapInstance.removeLayer(currentLayer);
+    }
+
+    // 2. Create the new layer
+    currentLayer = L.tileLayer(provider.url, provider.options);
+
+    // 3. Attach Error Logic
+    currentLayer.on("tileerror", () => {
+      errorCount++;
+      if (errorCount > ERROR_THRESHOLD) {
+        // Only switch if we haven't exhausted providers
+        if (activeIndex < PROVIDERS.length - 1) {
+          console.warn("Provider failing. Switching...");
+          showToast("Map server slow. Switching provider...", true);
+
+          errorCount = 0; // Reset counter for the new provider
+          activeIndex++; // Move to next
+          loadLayer(activeIndex);
+        }
+      }
+    });
+
+    // 4. Attach Self-Healing Logic
+    // If a tile loads successfully, reset the counter.
+    // This prevents a switch if we just had 5 random errors over 30 minutes.
+    currentLayer.on("tileload", () => {
+      if (errorCount > 0) {
+        errorCount = 0;
+      }
+    });
+
+    // 5. Add to map
+    currentLayer.addTo(mapInstance);
+  }
+
+  // Initial Load
+  loadLayer(0);
+}
 
 // Helper: Capitalize first letter
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -600,5 +673,6 @@ function initSearch() {
 }
 
 // Start the App
+setupMapTiles(map);
 initApp();
 initModal();
