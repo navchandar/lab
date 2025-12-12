@@ -6,7 +6,7 @@ let brandColors = {};
 let activeServiceRequest = null;
 let globalTimestamp = new Date().getTime();
 const loadedWebpImages = new Map();
-const MAX_CACHE_SIZE = 3; // Keep only 3 images in memory at once
+const MAX_CACHE_SIZE = 7;
 
 // --- URL STATE MANAGEMENT ---
 const UrlState = {
@@ -455,16 +455,30 @@ function updateMapLayer() {
     if (activeServiceRequest !== serviceName) {
       return;
     }
-
-    if (currentOverlay) {
-      map.removeLayer(currentOverlay);
-    }
-    currentOverlay = L.imageOverlay(url, mapBounds, {
-      opacity: 0.75,
+    const oldOverlay = currentOverlay;
+    const newOverlay = L.imageOverlay(url, mapBounds, {
+      opacity: 0,
       interactive: false,
+      className: "smooth-layer",
     }).addTo(map);
 
-    updateUIColors(activeColor, selectedInput);
+    // Update global reference immediately
+    currentOverlay = newOverlay;
+
+    // 2. Trigger Fade In
+    requestAnimationFrame(() => {
+      // Change opacity to target
+      newOverlay.setOpacity(0.75);
+    });
+
+    // 3. Remove old layer AFTER animation completes
+    if (oldOverlay) {
+      setTimeout(() => {
+        if (map.hasLayer(oldOverlay)) {
+          map.removeLayer(oldOverlay);
+        }
+      }, 500);
+    }
   };
 
   // 1. Check Memory Cache
@@ -519,7 +533,7 @@ function updateMapLayer() {
     }
     console.log(`WebP slow. Showing PNG placeholder.`);
     setOverlay(pngUrl);
-  }, 100);
+  }, 2500);
 
   // --- ERROR HANDLER ---
   function handleError() {
