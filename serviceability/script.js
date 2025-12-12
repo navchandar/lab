@@ -35,19 +35,40 @@ function showToast(message, isError = false) {
     document.body.appendChild(toast);
   }
 
-  toast.textContent = message;
-  if (isError) {
-    toast.classList.add("error");
-  } else {
-    toast.classList.remove("error");
+  // Clear existing Auto-Hide timers
+  if (toast.timer) {
+    clearTimeout(toast.timer);
+  }
+  if (toast.animationTimer) {
+    clearTimeout(toast.animationTimer);
   }
 
-  toast.classList.add("show");
-  // Reset timer if toast is triggered rapidly
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => {
+  // Helper function to actually update DOM and show
+  const display = () => {
+    toast.textContent = message;
+    if (isError) {
+      toast.classList.add("error");
+    } else {
+      toast.classList.remove("error");
+    }
+    // Trigger Reflow (Reset CSS animation capability)
+    void toast.offsetWidth;
+    toast.classList.add("show");
+    // Set new Auto-Hide timer
+    toast.timer = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 3500);
+  };
+
+  // If visible, hide first. If hidden, show immediately.
+  if (toast.classList.contains("show")) {
     toast.classList.remove("show");
-  }, 3500);
+    toast.animationTimer = setTimeout(() => {
+      display();
+    }, 300);
+  } else {
+    display();
+  }
 }
 
 function hideToast() {
@@ -76,6 +97,7 @@ window.addEventListener("offline", () => {
 });
 window.addEventListener("online", () => {
   setTimeout(() => {
+    showToast("You are back offline!", false);
     hideToast();
   }, 2000);
 });
@@ -135,6 +157,12 @@ function setupMapTiles(mapInstance) {
 
     // 3. Attach Error Logic
     currentLayer.on("tileerror", () => {
+      // Check if user is offline. If so, do not count this as a server error.
+      if (!navigator.onLine) {
+        console.warn("Tile load failed, because device is offline.");
+        return;
+      }
+      // if tile load fails even if device is online, then count and switch map providers
       errorCount++;
       if (errorCount > ERROR_THRESHOLD) {
         // Only switch if we haven't exhausted providers
@@ -193,13 +221,17 @@ function updateFooterTime(isoString) {
   }
 }
 // Toggle function
-const toggleSheet = () => () => {
+const toggleSheet = () => {
   const card = document.getElementById("bottom-sheet");
-  card.classList.toggle("collapsed");
+  if (card) {
+    card.classList.toggle("collapsed");
+  }
 };
 const collapseSheet = () => {
   const card = document.getElementById("bottom-sheet");
-  card.classList.add("collapsed");
+  if (card) {
+    card.classList.add("collapsed");
+  }
 };
 
 // --- BOTTOM SHEET LOGIC for mobile ---
@@ -241,7 +273,7 @@ function initBottomSheet() {
   setTimeout(() => {
     // Only collapse if we are on mobile (screen width < 600px)
     if (window.innerWidth <= 600) {
-      card.classList.add("collapsed");
+      collapseSheet();
     }
   }, 1500);
 }
@@ -283,6 +315,8 @@ async function initApp() {
       const input = document.querySelector(`input[value="${savedService}"]`);
       if (input) {
         input.checked = true;
+      } else {
+        console.warn(`Radiobutton for ${savedService} not found in the UI`);
       }
     }
 
@@ -360,14 +394,12 @@ function generateControls(data) {
     // Add Event Listener directly to the input
     const input = label.querySelector("input");
     input.addEventListener("change", () => {
-      // Update URL when user clicks
+      // Update URL when user clicks and update Map layer
       UrlState.set("service", partner);
-
       updateMapLayer();
       // collapse the card after selection on mobile
       if (window.innerWidth <= 600) {
-        const card = document.getElementById("bottom-sheet");
-        card.classList.add("collapsed");
+        collapseSheet();
       }
     });
 
@@ -432,11 +464,33 @@ function updateMapLayer() {
 
   webpImg.onerror = () => {
     console.error(`Failed to load WebP: ${webpUrl}`);
-    // Only fallback if WebP dies completely
-    if (!currentOverlay) {
-      // Force PNG load if WebP errors out
-      setOverlay(pngUrl);
-      showToast(`High-res map unavailable. Showing fallback.`, true);
+    if (!navigator.onLine) {
+      showToast("You are offline. Map layer could not be loaded.", true);
+    } else if (!currentOverlay) {
+      // If Online, it's a missing file/server error
+      showToast(`High-res map unavailable.`, true);
+    }
+    // Attempt to load the PNG Fallback
+    setOverlay(pngUrl);
+
+    // Double-Failure Catch
+    if (currentOverlay) {
+      const overlayImg = currentOverlay.getElement();
+      if (overlayImg) {
+        overlayImg.onerror = () => {
+          if (!navigator.onLine) {
+            showToast("You are offline. Map layer could not be loaded.", true);
+          } else {
+            // If we are here, BOTH WebP and PNG failed.
+            console.error("Double failure: PNG fallback also failed.");
+            showToast("Map data unavailable for this area.", true);
+            // Remove the broken image icon from the map
+            if (map.hasLayer(currentOverlay)) {
+              map.removeLayer(currentOverlay);
+            }
+          }
+        };
+      }
     }
   };
 
