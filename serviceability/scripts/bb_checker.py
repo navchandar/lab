@@ -139,6 +139,7 @@ def check_pincode(session, lat, lng, pin):
             return 0
 
         if response.status_code != 200:
+            logger.info(response.text)
             logger.error(f"API Error {response.status_code} for PIN {pin}")
             return None
 
@@ -201,9 +202,7 @@ def get_pin_places(session, pin):
 
             # Loop through predictions to find a valid one
             for location in preds:
-                place_id = location.get("placeId") or location.get(
-                    "place_id"
-                )
+                place_id = location.get("placeId") or location.get("place_id")
 
                 if place_id:
                     lat, lng = get_lat_lng_from_place_id(session, place_id)
