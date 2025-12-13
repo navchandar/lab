@@ -2,21 +2,48 @@ import json
 import logging
 import os
 import random
-import re
 import time
 from pathlib import Path
 
-from curl_cffi import requests
+from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
+from playwright.sync_api import sync_playwright
 
 # --- CONFIGURATION ---
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
-
 DATA_DIR = PROJECT_ROOT / "data"
+
+if not DATA_DIR.exists():
+    DATA_DIR.mkdir(parents=True)
+
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 OUTPUT_FILE = DATA_DIR / "availability_zo.json"
+SAVE_INTERVAL = 5
 
-SAVE_INTERVAL = 10
+# --- LOCATORS (Centralized) ---
+LCTR = {
+    # The header button that opens the address modal
+    "header_location_btn": 'button[aria-haspopup="dialog"]',
+    # The modal that appears
+    "address_modal": '[data-testid="address-modal"]',
+    # The input box inside the modal
+    "search_input": '[data-testid="address-search-input"] input',
+    # The dropdown container for results
+    "result_container": '[data-testid="address-search-container"]',
+    # Individual result items (used for clicking)
+    "result_item": '[data-testid="address-search-item"]',
+    # "Location Unserviceable" indicators
+    "unserviceable_text": [
+        "Our team is working",
+        "Coming Soon",
+        "We’re Coming Soon",
+    ],
+    # "Serviceable" indicators
+    # If the location header updates to contain a number (the pincode), it's a good sign
+    "location_header_address": '[data-testid="location-header-address"]',
+    # Fallback element that only appears on the main store page (e.g., categories)
+    "store_element": '[data-testid="home-page-category-grid"]',
+}
 
 # Setup logger
 logging.basicConfig(
@@ -25,32 +52,6 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger()
-
-# Headers for Zepto
-HEADERS = {
-    "accept": "application/json, text/plain, */*",
-    "accept-language": "en-US,en;q=0.9",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
-    "app_sub_platform": "WEB",
-    "app_version": "13.44.1",
-    "appversion": "13.44.1",
-    "auth_revamp_flow": "v2",
-    "compatible_components": "CONVENIENCE_FEE,RAIN_FEE,EXTERNAL_COUPONS,STANDSTILL,BUNDLE,MULTI_SELLER_ENABLED,PIP_V1,ROLLUPS,SCHEDULED_DELIVERY,SAMPLING_ENABLED,ETA_NORMAL_WITH_149_DELIVERY,ETA_NORMAL_WITH_199_DELIVERY,HOMEPAGE_V2,NEW_ETA_BANNER,VERTICAL_FEED_PRODUCT_GRID,AUTOSUGGESTION_PAGE_ENABLED,AUTOSUGGESTION_PIP,AUTOSUGGESTION_AD_PIP,BOTTOM_NAV_FULL_ICON,COUPON_WIDGET_CART_REVAMP,DELIVERY_UPSELLING_WIDGET,MARKETPLACE_CATEGORY_GRID,NO_PLATFORM_CHECK_ENABLED_V2,SUPER_SAVER:1,SUPERSTORE_V1,PROMO_CASH:0,24X7_ENABLED_V1,TABBED_CAROUSEL_V2,HP_V4_FEED,WIDGET_BASED_ETA,PC_REVAMP_1,NO_COST_EMI_V1,PRE_SEARCH,ITEMISATION_ENABLED,ZEPTO_PASS,ZEPTO_PASS:5,BACHAT_FOR_ALL,SAMPLING_UPSELL_CAMPAIGN,DISCOUNTED_ADDONS_ENABLED,UPSELL_COUPON_SS:0,ENABLE_FLOATING_CART_BUTTON,NEW_FEE_STRUCTURE,NEW_BILL_INFO,RE_PROMISE_ETA_ORDER_SCREEN_ENABLED,SUPERSTORE_V1,MANUALLY_APPLIED_DELIVERY_FEE_RECEIVABLE,MARKETPLACE_REPLACEMENT,ZEPTO_PASS,ZEPTO_PASS:5,ZEPTO_PASS_RENEWAL,CART_REDESIGN_ENABLED,SHIPMENT_WIDGETIZATION_ENABLED,TABBED_CAROUSEL_V2,24X7_ENABLED_V1,PROMO_CASH:0,HOMEPAGE_V2,SUPER_SAVER:1,NO_PLATFORM_CHECK_ENABLED_V2,HP_V4_FEED,GIFT_CARD,SCLP_ADD_MONEY,GIFTING_ENABLED,OFSE,WIDGET_BASED_ETA,PC_REVAMP_1,NEW_ETA_BANNER,NO_COST_EMI_V1,ITEMISATION_ENABLED,SWAP_AND_SAVE_ON_CART,WIDGET_RESTRUCTURE,PRICING_CAMPAIGN_ID,BACHAT_FOR_ALL,TABBED_CAROUSEL_V3,CART_LMS:2,SAMPLING_UPSELL_CAMPAIGN,DISCOUNTED_ADDONS_ENABLED,UPSELL_COUPON_SS:0,SIZE_EXCHANGE_ENABLED,ENABLE_FLOATING_CART_BUTTON,SAMPLING_V3,HYBRID_CAMPAIGN,",
-    "marketplace_type": "SUPER_SAVER",
-    "origin": "https://www.zepto.com",
-    "platform": "WEB",
-    "priority": "u=1, i",
-    "referer": "https://www.zepto.com/",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
-    "source": "DIRECT",
-    "tenant": "ZEPTO",
-    "store_etas": '{"undefined":-1}',
-    "x-csrf-secret": "WMAGOPGIzcE",
-    "x-timezone": "37840759cad3a96cd3cc4a55482c6c4268e10ebbd1a21004d1e414d0e0c6b8bf",
-    "x-xsrf-token": "n12C21QBnYtrvxDN5Q9rI:Fs4Zs17uAYe4bp2wQPKSf-Gyb8A.5zaascuufHvMg2OdqdK6eja6gyvyWNa1rfwSGXjWe8o",
-}
 
 
 def load_json(filename):
@@ -73,199 +74,126 @@ def save_json(filename, data):
         logger.error(f"Could not save {filename}: {e}")
 
 
-def refresh_session(session):
+def click(page, selector, timeout=3000):
+    """Helper to click safely with a short timeout"""
+    try:
+        page.wait_for_selector(selector, state="visible", timeout=timeout)
+        page.click(selector)
+        return True
+    except:
+        return False
+
+
+def check_serviceability(page, search_term, is_pincode=True):
     """
-    Visits homepage and gather cookies. If successful, extracts fresh IDs.
-    If fails/not found, session keeps the hardcoded defaults from HEADERS.
+    Returns: (status, suggestion_texts)
+    status: 1 (Serviceable), 0 (Not Serviceable), None (Error)
     """
     try:
-        logger.info("Refreshing session & extracting headers...")
-        response = session.get(
-            "https://www.zepto.com/", timeout=20, impersonate="chrome"
-        )
+        # 1. Open Address Modal
+        if not click(page, LCTR["header_location_btn"]):
+            logger.warning("   -> Header button not found. Reloading...")
+            refresh_session(page)
+            page.wait_for_timeout(2000)
+            if not click(page, LCTR["header_location_btn"], timeout=5000):
+                logger.error("   -> Failed to open address modal.")
+                return None, []
 
-        if response.status_code != 200:
-            logger.warning(f"Homepage load failed: {response.status_code}")
-            return
+        # 2. Wait for Modal and Input
+        try:
+            page.wait_for_selector(LCTR["address_modal"], state="visible", timeout=5000)
+            page.wait_for_selector(LCTR["search_input"], state="visible", timeout=5000)
+        except PlaywrightTimeoutError:
+            logger.error("   -> Modal did not open.")
+            page.keyboard.press("Escape")
+            return None, []
 
-        html = response.text
+        # Clear and Type
+        page.fill(LCTR["search_input"], "")
+        page.wait_for_timeout(2000)
 
-        # 1. Device ID
-        device_match = re.search(r'"deviceId":\s*"([^"]+)"', html)
-        if device_match:
-            val = device_match.group(1)
-            session.headers.update(
-                {"device_id": val, "deviceid": val, "x-device-id": val}
-            )
+        # 3. Search and Wait for Results
+        try:
+            page.fill(LCTR["search_input"], search_term)
+            # page.type(LCTR["search_input"], search_term, delay=100)
+            # Wait for at least one result item to appear
+            page.wait_for_selector(LCTR["result_item"], timeout=6000)
+            time.sleep(1)
+        except PlaywrightTimeoutError:
+            logger.warning(f"   -> No results found for '{search_term}'")
+            page.keyboard.press("Escape")
+            return 0, []
 
-        # 2. Session ID
-        session_match = re.search(r'"session_id":\s*"([^"]+)"', html)
-        if session_match:
-            val = session_match.group(1)
-            session.headers.update({"session_id": val, "sessionid": val, "sid": val})
+        # 4. Extract Suggestions (for deep check)
+        suggestion_texts = []
+        if is_pincode:
+            # Get text from result items
+            items = page.locator(LCTR["result_item"]).all()
+            for item in items[:5]:  # Check top 5
+                txt = item.inner_text().replace("\n", ", ").strip()
+                if txt:
+                    suggestion_texts.append(txt)
 
-        # 3. CSRF Secret (Update if found, otherwise keep default)
-        csrf_match = re.search(r'"csrfToken":\s*"([^"]+)"', html) or re.search(
-            r'"x-csrf-secret":\s*"([^"]+)"', html
-        )
-        if csrf_match:
-            val = csrf_match.group(1)
-            logger.info(f"   -> Found fresh CSRF: {val[:5]}...")
-            session.headers.update({"x-csrf-secret": val})
+        # 5. Click the First Result
+        try:
+            # Click the *first* result item found
+            page.locator(LCTR["result_item"]).first.click()
+        except Exception as e:
+            logger.error(f"   -> Failed to click result: {e}")
+            page.keyboard.press("Escape")
+            return None, []
 
-    except Exception as e:
-        logger.warning(f"Session refresh/extraction failed: {e}")
+        # 6. Wait for Serviceability Logic
+        # We wait for EITHER the "Unserviceable" text OR the Header to update
+        page.wait_for_timeout(2000)  # Give UI a moment to react
+        time.sleep(1)
+        status = None  # Default to unknown
 
+        # CHECK A: Look for explicit "Unserviceable" signals
+        for text_check in LCTR["unserviceable_text"]:
+            if page.get_by_text(text_check).is_visible():
+                # We found an error message!
+                status = 0
+                break
 
-def check_pincode(session, lat, lng, pin):
-    """
-    Returns 1 if Zepto is serviceable, 0 otherwise.
-    """
-    base_url = "https://api.zepto.com/api/v2/get_page"
+        # CHECK B: If no error, look for "Serviceable" signals
+        if status is None:
+            try:
+                # Check if the header address now contains part of our search term (e.g. the pincode)
+                # or simply if the modal closed and we see the store
+                if page.locator(LCTR["address_modal"]).is_hidden():
+                    status = 1
+                elif page.locator(LCTR["location_header_address"]).is_visible():
+                    status = 1
+            except:
+                pass
 
-    params = {
-        "latitude": lat,
-        "longitude": lng,
-        "page_type": "HOME",
-        "version": "v2",
-        "show_new_eta_banner": "true",
-        "page_size": "1",
-        "enforce_platform_type": "DESKTOP",
-    }
+        # cleanup: Ensure modal is closed
+        if page.locator(LCTR["address_modal"]).is_visible():
+            page.keyboard.press("Escape")
+            page.wait_for_timeout(500)
 
-    try:
-        # Use session (with impersonation)
-        response = session.get(
-            base_url, params=params, timeout=10, impersonate="chrome"
-        )
-        print(response.headers)
-        if response.status_code in [401, 403]:
-            logger.warning("Session blocked/expired. Refreshing...")
-            time.sleep(random.uniform(3.0, 5.0))
-            refresh_session(session)
-            response = session.get(
-                base_url, params=params, timeout=10, impersonate="chrome"
-            )
-
-        if len(response.text) == 0:
-            logger.warning("Empty response received.")
-            return None
-
-        # if response.status_code == 303:
-        #     return 0
-
-        if response.status_code != 200:
-            logger.error(f"API Error {response.status_code} for PIN {pin}")
-            return None
-
-        data = response.json()
-
-        # Path: storeServiceableResponse -> serviceable
-        service_data = data.get("storeServiceableResponse", {})
-        is_serviceable = service_data.get("serviceable")
-
-        if is_serviceable is True:
-            return 1
-        elif is_serviceable is False:
-            return 0
-        else:
-            logger.warning(f"PIN {pin}: 'serviceable' key missing in response.")
-            return None
+        return status, suggestion_texts
 
     except Exception as e:
-        logger.error(f"Request failed for PIN {pin}: {e}")
-        return None
+        logger.error(f"   -> Unexpected error checking '{search_term}': {e}")
+        # Emergency Cleanup
+        try:
+            page.keyboard.press("Escape")
+            refresh_session(page)
+        except:
+            pass
+        return None, []
 
 
-def get_pin_places(session, pin):
-    """
-    Deep Check:
-    1. Call Zepto Autocomplete (using Zepto session).
-    2. Call Google Maps (using clean requests).
-    3. Call Zepto Check (using Zepto session).
-    """
-    api_key = os.environ.get("GMAPS_API_KEY")
-    if not api_key:
-        if not hasattr(get_pin_places, "logged_missing_key"):
-            logger.error("GMAPS_API_KEY not found. Skipping deep check.")
-            get_pin_places.logged_missing_key = True
-        return None
-
-    # Zepto Autocomplete
-    zepto_auto_url = (
-        f"https://api.zepto.com/api/v1/maps/place/autocomplete/?place_name={pin}"
-    )
-    # Google Maps Details
-    gmaps_details_url = "https://maps.googleapis.com/maps/api/place/details/json"
-
-    try:
-        # 1. Zepto Autocomplete: Use SESSION (needs impersonation)
-        response = session.get(zepto_auto_url, timeout=10, impersonate="chrome")
-
-        if response.status_code != 200:
-            return None
-
-        data = response.json()
-        preds = data.get("predictions", [])
-
-        if not preds:
-            return 0
-
-        logger.info(
-            f"   -> Deep check found {len(preds)} sub-locations via Zepto. Checking..."
-        )
-
-        if preds and len(preds) > 1:
-            logger.info(f"   -> Found {len(preds)} sub-locations. Checking...")
-
-            for location in preds:
-                place_id = location.get("place_id")
-
-                if place_id:
-                    # 2. Google Maps: Use REQUESTS
-                    det_params = {
-                        "place_id": place_id,
-                        "fields": "geometry",
-                        "key": api_key,
-                    }
-
-                    try:
-                        time.sleep(0.5)
-                        gmaps_resp = requests.get(
-                            gmaps_details_url, params=det_params, timeout=10
-                        )
-                        gmaps_data = gmaps_resp.json()
-
-                        if gmaps_data.get("status") == "OK":
-                            geo = (
-                                gmaps_data.get("result", {})
-                                .get("geometry", {})
-                                .get("location", {})
-                            )
-                            lat = geo.get("lat")
-                            lng = geo.get("lng")
-
-                            if lat and lng:
-                                # 3. Check Serviceability: Use SESSION
-                                status = check_pincode(session, lat, lng, pin)
-                                if status == 1:
-                                    return 1
-
-                    except Exception as e:
-                        logger.error(f"Google Maps lookup failed for {place_id}: {e}")
-                        continue
-
-            return 0
-
-    except Exception as e:
-        logger.error(f"Address Request failed for PIN {pin}: {e}")
-        return None
+def refresh_session(page):
+    logger.info("Loading Zepto Homepage...")
+    page.goto("https://www.zepto.com/", wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_timeout(2000)
 
 
 def main():
-    logger.info("--- Starting Zepto Checker ---")
-    logger.info(f"Reading from: {INPUT_FILE}")
-    logger.info(f"Writing to:   {OUTPUT_FILE}")
+    logger.info("--- Starting Zepto Checker (Playwright) ---")
 
     input_data = load_json(INPUT_FILE)
     output_data = load_json(OUTPUT_FILE)
@@ -275,9 +203,8 @@ def main():
 
     for item in input_data:
         pin = item.get("pin")
-        if not pin or not item.get("lat") or not item.get("lng"):
+        if not pin:
             continue
-
         if pin not in output_map:
             pending_items.append(item)
         elif "zepto" not in output_map[pin].get("partners", {}):
@@ -285,66 +212,86 @@ def main():
 
     total_pending = len(pending_items)
     if total_pending == 0:
-        logger.info("All pincodes are already updated for Zepto!")
+        logger.info("All pincodes are already updated!")
         return
 
     logger.info(f"Found {total_pending} pincodes to process.")
 
-    # SESSION SETUP
-    session = requests.Session()
-    session.headers.update(HEADERS)
-    refresh_session(session)
-    time.sleep(random.uniform(3.0, 5.0))
+    with sync_playwright() as p:
+        browser = p.chromium.launch(
+            headless=True,  # Set to True for production
+            args=[
+                "--window-size=1280,720",
+                "--disable-blink-features=AutomationControlled",
+            ],
+        )
+        context = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 720},
+        )
+        page = context.new_page()
+        refresh_session(page)
+        updates_buffer = 0
 
-    updates_buffer = 0
+        try:
+            for index, item in enumerate(pending_items, 1):
+                pin = str(item.get("pin"))
+                logger.info(f"[{index}/{total_pending}] Checking PIN: {pin}")
 
-    for index, item in enumerate(pending_items, 1):
-        pin = item.get("pin")
-        lat = item.get("lat")
-        lng = item.get("lng")
+                # 1. Standard Check
+                status, suggestions = check_serviceability(page, pin, is_pincode=True)
 
-        logger.info(f"[{index}/{total_pending}] Checking PIN: {pin}")
+                # 2. Deep Check (Retry specific addresses if PIN failed)
+                if status == 0 and len(suggestions) > 1:
+                    logger.info(
+                        f"   -> PIN failed. Deep checking {len(suggestions)-1} sub-locations..."
+                    )
 
-        # 1. Standard Check (Lat/Lng Centroid)
-        status = check_pincode(session, lat, lng, pin)
-        time.sleep(random.uniform(3.0, 5.0))
+                    for sub_addr in suggestions[1:]:
+                        # Only try addresses that actually contain the pincode we want
+                        if pin in sub_addr:
+                            logger.info(f"      -> Trying: {sub_addr[:30]}...")
+                            sub_status, _ = check_serviceability(
+                                page, sub_addr, is_pincode=False
+                            )
+                            if sub_status == 1:
+                                logger.info("      -> Found serviceable sub-location!")
+                                status = 1
+                                break
+                            time.sleep(1)
 
-        # 2. Deep Check
-        if status is not None and status != 1:
-            deep_status = get_pin_places(session, pin)
-            if deep_status is not None:
-                status = deep_status
+                # 3. Save Result
+                if status is not None:
+                    if pin in output_map:
+                        entry = output_map[pin]
+                        if "partners" not in entry:
+                            entry["partners"] = {}
+                        entry["partners"]["zepto"] = status
+                    else:
+                        new_entry = {"pin": pin, "partners": {"zepto": status}}
+                        output_data.append(new_entry)
+                        output_map[pin] = new_entry
 
-        # 3. Save Result
-        if status is not None:
-            if pin in output_map:
-                entry = output_map[pin]
-                if "partners" not in entry:
-                    entry["partners"] = {}
-                entry["partners"]["zepto"] = status
-            else:
-                new_entry = {
-                    "pin": pin,
-                    "partners": {"zepto": status},
-                }
-                output_data.append(new_entry)
-                output_map[pin] = new_entry
+                    result_msg = (
+                        "✅ Serviceable" if status == 1 else "❌ Not Serviceable"
+                    )
+                    logger.info(f"   -> Result: {result_msg}")
+                    updates_buffer += 1
 
-            result_msg = "✅ Serviceable" if status == 1 else "❌ Not Serviceable"
-            logger.info(f"   -> Result: {result_msg}")
+                if updates_buffer >= SAVE_INTERVAL:
+                    save_json(OUTPUT_FILE, output_data)
+                    updates_buffer = 0
 
-            updates_buffer += 1
-        else:
-            logger.error(f"   -> Failed to get status for PIN {pin}.")
+                time.sleep(random.uniform(1.0, 2.0))
 
-        if updates_buffer >= SAVE_INTERVAL:
-            save_json(OUTPUT_FILE, output_data)
-            updates_buffer = 0
-
-        time.sleep(random.uniform(1.0, 2.0))
-
-    if updates_buffer > 0:
-        save_json(OUTPUT_FILE, output_data)
+        except KeyboardInterrupt:
+            logger.warning("Interrupted by user! Saving progress...")
+        except Exception as e:
+            # Catch other random crashes
+            logger.error(f"Unexpected crash: {e}")
+        finally:
+            if updates_buffer > 0:
+                save_json(OUTPUT_FILE, output_data)
 
     logger.info("--- Zepto Checker Completed ---")
 
