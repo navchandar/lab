@@ -116,7 +116,8 @@ body {
 }
 
 .radio-card:has(input:checked)::after {
-    height: 6px; 
+    height: 6px;
+    content: "";
 }
 
 /* The visual part of the radio button */

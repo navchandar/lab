@@ -182,7 +182,8 @@ class MapRenderer:
 
             # TODO: handle diff between quick commerce and standard delivery
             # status == 1 (QC) and status == 2 (STD)
-            if partners.get(service) >= 1:
+            service_availability = partners.get(service)
+            if service_availability and service_availability >= 1:
                 lat = loc["lat"]
                 lng = loc["lng"]
                 # --- Project the points ---
