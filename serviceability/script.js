@@ -293,7 +293,7 @@ async function initApp() {
       throw new Error("Failed to load map data files.");
     }
 
-    const boundsData = await boundsResponse.json();
+    const boundsData = await response.json();
     globalTimestamp = new Date(boundsData.lastUpdated).getTime();
 
     // Store global data
