@@ -5,8 +5,10 @@ let brandColors = {};
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
 let globalTimestamp = new Date().getTime();
-const loadedWebpImages = new Map();
-const MAX_CACHE_SIZE = 7;
+
+// cache leaflet image layers
+const layerCache = new Map();
+const MAX_CACHE_SIZE = 5;
 
 // --- URL STATE MANAGEMENT ---
 const UrlState = {
@@ -444,21 +446,26 @@ function generateControls(data) {
 }
 
 // --- MEMORY MANAGEMENT HELPER ---
-function manageCacheMemory(newKey, newUrl) {
+function manageCacheMemory(key, data) {
+  // data = { overlay: L.imageOverlay, url: blobUrl }
   // Add the new item
-  loadedWebpImages.set(newKey, newUrl);
+  layerCache.set(key, data);
 
   // Check if we exceeded the limit
-  if (loadedWebpImages.size > MAX_CACHE_SIZE) {
-    // Get the oldest key (Map iterators follow insertion order)
-    const oldestKey = loadedWebpImages.keys().next().value;
-    const oldestUrl = loadedWebpImages.get(oldestKey);
+  if (layerCache.size > MAX_CACHE_SIZE) {
+    const oldestKey = layerCache.keys().next().value;
+    const oldestData = layerCache.get(oldestKey);
 
-    // Revoke the Blob URL (Critical: This actually frees the RAM)
-    URL.revokeObjectURL(oldestUrl);
+    // Remove from map if it happens to be there
+    if (map.hasLayer(oldestData.overlay)) {
+      map.removeLayer(oldestData.overlay);
+    }
 
-    // Remove from our Map
-    loadedWebpImages.delete(oldestKey);
+    // Revoke Blob (Free RAM)
+    URL.revokeObjectURL(oldestData.url);
+
+    // Delete from Map
+    layerCache.delete(oldestKey);
     console.log(`Cleared memory for: ${oldestKey}`);
   }
 }
@@ -475,7 +482,7 @@ function getOpacityForZoom() {
   // Define Opacity Levels based on Mode
   // Light Mode: Needs higher opacity to stand out against white map
   // Night Mode: Needs lower opacity to blend with dark map
-  const maxOpacity = isDarkMode ? 0.6 : 0.9; 
+  const maxOpacity = isDarkMode ? 0.6 : 0.9;
   const minOpacity = isDarkMode ? 0.3 : 0.4;
 
   // Handle the "Fixed" ranges
@@ -520,71 +527,65 @@ function updateMapLayer() {
   const webpUrl = `maps/${serviceName}.webp?t=${globalTimestamp}`;
 
   // Helper to place overlay on map
-  const setOverlay = (url) => {
-    // Only proceed if the user hasn't switched to a different service
+  const setOverlay = (layerObj) => {
     if (activeServiceRequest !== serviceName) {
       return;
     }
 
     const oldOverlay = currentOverlay;
+    const newOverlay = layerObj;
 
-    // Create New Layer (Start invisible)
-    const newOverlay = L.imageOverlay(url, mapBounds, {
-      opacity: 0,
-      interactive: false,
-      className: "smooth-layer",
-    }).addTo(map);
+    // Ensure layer is initially invisible before adding
+    newOverlay.setOpacity(0);
+
+    // Add to Map (If not already there)
+    if (!map.hasLayer(newOverlay)) {
+      newOverlay.addTo(map);
+    }
 
     updateUIColors(activeColor, selectedInput);
-
-    // Update global reference immediately
     currentOverlay = newOverlay;
 
-    // Trigger Animation (Double rAF Pattern)
-    // First rAF: Wait for element insertion
+    // Trigger Animation
     requestAnimationFrame(() => {
-      // Second rAF: Wait for the first paint to complete (opacity: 0 is now rendered)
       requestAnimationFrame(() => {
-        // Now change values. The browser perceives this as a state change -> transition!
-        // Calculate the dynamic opacity based on CURRENT zoom
+        // Calculate dynamic opacity
         const targetOpacity = getOpacityForZoom();
         newOverlay.setOpacity(targetOpacity);
 
         // Fade OUT the Old Layer
-        if (oldOverlay) {
+        if (oldOverlay && oldOverlay !== newOverlay) {
           if (oldOverlay.getElement()) {
             oldOverlay.getElement().classList.add("smooth-layer");
           }
           oldOverlay.setOpacity(0);
+
+          // Remove old layer from DOM after fade to save GPU memory
+          // But KEEP it in layerCache object
+          setTimeout(() => {
+            if (map.hasLayer(oldOverlay) && oldOverlay !== currentOverlay) {
+              map.removeLayer(oldOverlay);
+            }
+          }, 600);
         }
       });
     });
-
-    // Cleanup Old Layer
-    if (oldOverlay) {
-      setTimeout(() => {
-        // Only remove if it's still attached to the map
-        if (map.hasLayer(oldOverlay)) {
-          map.removeLayer(oldOverlay);
-        }
-      }, 1000);
-    }
   };
 
-  // 1. Check Memory Cache
-  if (loadedWebpImages.has(serviceName)) {
-    const blobUrl = loadedWebpImages.get(serviceName);
+  // Check Layer Cache (Fastest)
+  if (layerCache.has(serviceName)) {
+    const cachedData = layerCache.get(serviceName);
 
-    // Refresh LRU Order: Delete and re-add to move it to the "end" (most recent)
-    loadedWebpImages.delete(serviceName);
-    manageCacheMemory(serviceName, blobUrl);
+    // Refresh LRU Order
+    layerCache.delete(serviceName);
+    manageCacheMemory(serviceName, cachedData);
 
-    setOverlay(blobUrl);
-    console.log(`Using cached Blob for ${serviceName}`);
+    setOverlay(cachedData.overlay);
+    console.log(`Using cached Layer for ${serviceName}`);
     return;
   }
 
-  // 2. Fetch and Cache
+  // Fetch and Cache (First Load)
   let webpReady = false;
 
   fetch(webpUrl)
@@ -602,10 +603,17 @@ function updateMapLayer() {
       webpReady = true;
       const objectUrl = URL.createObjectURL(blob);
 
-      // Use the helper to safely store it
-      manageCacheMemory(serviceName, objectUrl);
+      // Create Layer
+      const newOverlay = L.imageOverlay(objectUrl, mapBounds, {
+        opacity: 0,
+        interactive: false,
+        className: "smooth-layer",
+      });
 
-      setOverlay(objectUrl);
+      // Cache It
+      manageCacheMemory(serviceName, { overlay: newOverlay, url: objectUrl });
+
+      setOverlay(newOverlay);
       console.log(`Loaded WebP for ${serviceName}`);
     })
     .catch((err) => {
@@ -621,8 +629,14 @@ function updateMapLayer() {
     if (webpReady) {
       return;
     }
+
+    // Fallback: Create a temporary PNG layer (we don't cache this usually)
     console.log(`WebP slow. Showing PNG placeholder.`);
-    setOverlay(pngUrl);
+    const pngOverlay = L.imageOverlay(pngUrl, mapBounds, {
+      opacity: 0,
+      className: "smooth-layer",
+    });
+    setOverlay(pngOverlay);
   }, 2500);
 
   // --- ERROR HANDLER ---
@@ -653,7 +667,7 @@ function updateMapLayer() {
   }
 }
 
-// --- Preload Background Images (WEBP ONLY) ---
+// --- Preload Background Images (Create Layers with WebP in Background) ---
 function preloadRemainingLayers(data) {
   if (!data || data.length === 0) {
     return;
@@ -665,10 +679,11 @@ function preloadRemainingLayers(data) {
   const activeService = activeInput ? activeInput.value : null;
   let count = 0;
 
-  console.log("Preloading High-Res WebP maps in background...");
+  console.log("Pre-warming map layers in background...");
 
   partners.forEach((serviceName) => {
-    if (serviceName === activeService) {
+    // Skip if active or already cached
+    if (serviceName === activeService || layerCache.has(serviceName)) {
       return;
     }
     if (count >= MAX_CACHE_SIZE - 1) {
@@ -684,7 +699,16 @@ function preloadRemainingLayers(data) {
       .then((blob) => {
         if (blob) {
           const objectUrl = URL.createObjectURL(blob);
-          manageCacheMemory(serviceName, objectUrl);
+
+          // Create the layer NOW (but don't add to map yet)
+          // This allows the browser to parse the image object in idle time
+          const overlay = L.imageOverlay(objectUrl, mapBounds, {
+            opacity: 0, // Ready to fade in
+            interactive: false,
+            className: "smooth-layer",
+          });
+
+          manageCacheMemory(serviceName, { overlay: overlay, url: objectUrl });
         }
       })
       .catch(() => {});
@@ -754,20 +778,28 @@ function initSearch() {
   const input = document.getElementById("location-search");
   const btn = document.getElementById("search-btn");
 
+  // Variable to track status
+  let isSearching = false;
+
   if (!input || !btn) {
     return null;
   }
 
   // Reusable search function
   const performSearch = async (queryOverride = null) => {
+    // Stop if already searching
+    if (isSearching) {
+      return;
+    }
+
     // If override is provided (from URL), use it. Otherwise read input.
     let query = queryOverride;
     if (query === null) {
       query = input.value.trim();
     }
 
+    // Handle "Clear" / Empty state (No network request needed here)
     if (!query) {
-      // Clean up URL and move to default state
       UrlState.set("q", null);
       if (window.innerWidth <= 600) {
         toggleSheet();
@@ -790,8 +822,11 @@ function initSearch() {
       UrlState.set("q", query);
     }
 
-    // Visual feedback: Change icon opacity or show loading cursor
+    // Lock the Interface
+    isSearching = true;
+    input.disabled = true;
     btn.style.opacity = "0.5";
+    btn.style.cursor = "not-allowed";
 
     try {
       const q = encodeURIComponent(query);
@@ -822,12 +857,17 @@ function initSearch() {
     } catch (error) {
       console.error("Search failed:", error);
       showToast("Search failed due to network error.", true);
-      // uncollapse bottom sheet in mobile
+
+      // uncollapse bottom sheet in mobile on error so user can try again
       if (window.innerWidth <= 600) {
         toggleSheet();
       }
     } finally {
+      // Unlock the Interface
+      isSearching = false;
+      input.disabled = false;
       btn.style.opacity = "1";
+      btn.style.cursor = "pointer";
     }
   };
 
