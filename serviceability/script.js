@@ -464,20 +464,38 @@ function manageCacheMemory(newKey, newUrl) {
 }
 
 function getOpacityForZoom() {
-  const zoom = map.getZoom();
+  const currentzoom = map.getZoom();
+  // Detect Dark Mode
+  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-  // Logic:
-  // Zoomed Out (Country View) - level 8 or less -> 0.85 Opacity
-  if (zoom <= 8) {
-    return 0.85;
+  /// Define your Start/End zoom levels
+  const startZoom = 8; // Highest Opacity here
+  const endZoom = 12; // Lowest Opacity here
+
+  // Define Opacity Levels based on Mode
+  // Light Mode: Needs higher opacity to stand out against white map
+  // Night Mode: Needs lower opacity to blend with dark map
+  const maxOpacity = isDarkMode ? 0.6 : 0.9; 
+  const minOpacity = isDarkMode ? 0.3 : 0.4;
+
+  // Handle the "Fixed" ranges
+  if (currentzoom <= startZoom) {
+    return maxOpacity;
   }
-  // Zoomed In (Street View) -> Low Opacity (Transparent)
-  if (zoom >= 14) {
-    return 0.4;
+  if (currentzoom >= endZoom) {
+    return minOpacity;
   }
 
-  // Linear interpolation for levels (Between zoom 8 and 14)
-  return 0.85 - (zoom - 8) * 0.075;
+  // Calculate Linear Interpolation (The "In-Between")
+  // e.g. If currentzoom is 12, range is 4, we are 2 steps in. 2/4 = 0.5 (50%)
+  const progress = (currentzoom - startZoom) / (endZoom - startZoom);
+
+  // Apply that progress to the opacity range
+  // We want to go DOWN, so we subtract the difference from the Max
+  const opacityRange = maxOpacity - minOpacity;
+  const finalOpacity = maxOpacity - progress * opacityRange;
+
+  return Number(finalOpacity.toFixed(1));
 }
 
 // --- UPDATE MAP LAYER ---
