@@ -4,6 +4,7 @@ let mapBounds = null;
 let brandColors = {};
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
+let isLayerSwitching = false;
 let globalTimestamp = new Date().getTime();
 
 // cache leaflet image layers
@@ -361,6 +362,9 @@ async function initApp() {
     }
 
     map.on("zoom", () => {
+      if (isLayerSwitching) {
+        return;
+      }
       // Only update if we have an active layer
       if (currentOverlay) {
         currentOverlay.setOpacity(getOpacityForZoom());
@@ -368,6 +372,9 @@ async function initApp() {
     });
 
     map.on("zoomstart", () => {
+      if (isLayerSwitching) {
+        return;
+      }
       if (currentOverlay && currentOverlay.getElement()) {
         // Remove smooth class during zoom so updates are instant
         currentOverlay.getElement().classList.remove("smooth-layer");
@@ -532,6 +539,8 @@ function updateMapLayer() {
       return;
     }
 
+    // Switch image layers and lock interactions
+    isLayerSwitching = true;
     const oldOverlay = currentOverlay;
     const newOverlay = layerObj;
 
@@ -568,6 +577,15 @@ function updateMapLayer() {
             }
           }, 600);
         }
+
+        // UNLOCK INTERACTIONS after CSS transition finishes
+        setTimeout(() => {
+          isLayerSwitching = false;
+          // Safety Check: update the opacity to match the *current* final zoom
+          if (currentOverlay) {
+            currentOverlay.setOpacity(getOpacityForZoom());
+          }
+        }, 700);
       });
     });
   };
