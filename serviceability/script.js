@@ -316,6 +316,12 @@ async function initApp() {
       const input = document.querySelector(`input[value="${savedService}"]`);
       if (input) {
         input.checked = true;
+        // Remove 'selected-card' class from other elements
+        input.parentNode.parentNode
+          .querySelectorAll(".radio-card")
+          .forEach((c) => c.classList.remove("selected-card"));
+        // Add to only the checked one
+        input.parentNode.classList.add("selected-card");
       } else {
         console.warn(`Radiobutton for ${savedService} not found in the UI`);
       }
@@ -376,9 +382,6 @@ function generateControls(data) {
     // Default to first item checked, UNLESS URL overrides it later in initApp
     const isDefault = index === 0;
     const isChecked = isDefault ? "checked" : "";
-    if (isDefault) {
-      label.classList.add("selected-card");
-    }
 
     // Get color for this partner (Default green if missing)
     const color = brandColors[partner] || "#2ecc71";
