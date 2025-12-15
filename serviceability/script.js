@@ -378,6 +378,7 @@ function generateControls(data) {
 
     // Get color for this partner (Default green if missing)
     const color = brandColors[partner] || "#2ecc71";
+    label.style.setProperty("--brand-color", color);
 
     label.innerHTML = `
             <input 
@@ -388,7 +389,6 @@ function generateControls(data) {
             >
             <div class="card-content">
                 <span class="service-name">${capitalize(partner)}</span>
-                <span class="status-dot" style="background-color: ${color}"></span>
             </div>
         `;
 
@@ -464,6 +464,8 @@ function updateMapLayer() {
       interactive: false,
       className: "smooth-layer",
     }).addTo(map);
+
+    updateUIColors(activeColor, selectedInput);
 
     // Update global reference immediately
     currentOverlay = newOverlay;

@@ -179,7 +179,10 @@ class MapRenderer:
         for loc in self.data.locations:
             pin = loc["pin"]
             partners = self.data.availability.get(pin, {})
-            if partners.get(service) == 1:
+
+            # TODO: handle diff between quick commerce and standard delivery
+            # status == 1 (QC) and status == 2 (STD)
+            if partners.get(service) >= 1:
                 lat = loc["lat"]
                 lng = loc["lng"]
                 # --- Project the points ---
