@@ -467,19 +467,17 @@ function getOpacityForZoom() {
   const zoom = map.getZoom();
 
   // Logic:
-  // Zoom 8 or less -> 0.5 Opacity (faint)
-  // Zoom 15 or more -> 0.85 Opacity (strong)
-  // In between -> scale linearly
-
+  // Zoomed Out (Country View) - level 8 or less -> 0.85 Opacity
   if (zoom <= 8) {
-    return 0.5;
-  }
-  if (zoom >= 14) {
     return 0.85;
   }
+  // Zoomed In (Street View) -> Low Opacity (Transparent)
+  if (zoom >= 14) {
+    return 0.4;
+  }
 
-  // Linear interpolation for levels
-  return 0.5 + (zoom - 8) * 0.1;
+  // Linear interpolation for levels (Between zoom 8 and 14)
+  return 0.85 - (zoom - 8) * 0.075;
 }
 
 // --- UPDATE MAP LAYER ---
