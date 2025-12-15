@@ -287,16 +287,12 @@ async function initApp() {
   try {
     // Load Data & Bounds in parallel
     const timestamp = new Date().getTime();
-    const [availResponse, boundsResponse] = await Promise.all([
-      fetch(`data/availability.json?t=${timestamp}`),
-      fetch(`maps/bounds.json?t=${timestamp}`),
-    ]);
+    const response = await fetch(`maps/bounds.json?t=${timestamp}`);
 
-    if (!availResponse.ok || !boundsResponse.ok) {
+    if (!response.ok) {
       throw new Error("Failed to load map data files.");
     }
 
-    const availabilityData = await availResponse.json();
     const boundsData = await boundsResponse.json();
     globalTimestamp = new Date(boundsData.lastUpdated).getTime();
 
@@ -306,7 +302,7 @@ async function initApp() {
     updateFooterTime(boundsData.lastUpdated);
 
     // Generate Radio Buttons
-    generateControls(availabilityData);
+    generateControls(boundsData.services);
 
     // Initialize Search Logic
     const searchFn = initSearch();
@@ -352,12 +348,12 @@ async function initApp() {
     if ("requestIdleCallback" in window) {
       // Run when the browser is idle
       requestIdleCallback(() => {
-        preloadRemainingLayers(availabilityData);
+        preloadRemainingLayers(boundsData.services);
       });
     } else {
       // Fallback for older browsers
       setTimeout(() => {
-        preloadRemainingLayers(availabilityData);
+        preloadRemainingLayers(boundsData.services);
       }, 3000);
     }
 
@@ -393,18 +389,16 @@ async function initApp() {
 }
 
 // Function to Generate HTML
-function generateControls(data) {
-  if (!data || data.length === 0) {
+function generateControls(servicesList) {
+  if (!servicesList || servicesList.length === 0) {
     return;
   }
 
-  // Get partners from the first item
-  const firstItem = data[0];
-  const partners = Object.keys(firstItem.partners);
   const container = document.getElementById("options-container");
   container.innerHTML = "";
 
-  partners.forEach((partner, index) => {
+  // Get partners from the list
+  servicesList.forEach((partner, index) => {
     // Create the label element
     const label = document.createElement("label");
     label.className = "radio-card";
@@ -686,12 +680,11 @@ function updateMapLayer() {
 }
 
 // --- Preload Background Images (Create Layers with WebP in Background) ---
-function preloadRemainingLayers(data) {
-  if (!data || data.length === 0) {
+function preloadRemainingLayers(servicesList) {
+  if (!servicesList || servicesList.length === 0) {
     return;
   }
 
-  const partners = Object.keys(data[0].partners);
   // Identify the currently active service so we don't download it twice
   const activeInput = document.querySelector('input[name="service"]:checked');
   const activeService = activeInput ? activeInput.value : null;
@@ -699,7 +692,7 @@ function preloadRemainingLayers(data) {
 
   console.log("Pre-warming map layers in background...");
 
-  partners.forEach((serviceName) => {
+  servicesList.forEach((serviceName) => {
     // Skip if active or already cached
     if (serviceName === activeService || layerCache.has(serviceName)) {
       return;

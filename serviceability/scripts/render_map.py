@@ -158,12 +158,13 @@ class MapRenderer:
         ne_lon, ne_lat = to_latlng.transform(max_x, max_y)
 
         data = {
+            "lastUpdated": current_time,
             # Leaflet wants [Lat, Lng]
             "southWest": [sw_lat, sw_lon],
             "northEast": [ne_lat, ne_lon],
-            "colors": self.cfg.BRAND_COLORS,
-            "lastUpdated": current_time,
             "formats": ["webp", "png"],
+            "colors": self.cfg.BRAND_COLORS,
+            "services": list(self.cfg.SERVICES)
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
@@ -264,12 +265,12 @@ class MapRenderer:
 
                 # resize the image
                 img_small = img.resize((w, h), resample=Image.Resampling.LANCZOS)
-                final_png = img_small.quantize(colors=128, method=2, dither=1)
+                final_png = img_small.quantize(colors=32, method=2, dither=0)
 
                 # Atomic write for PNG
                 tmp_png = png_path.with_suffix(".png.tmp")
                 # optimize=True is very effective for PNGs with reduced colors
-                final_png.save(tmp_png, format="PNG", optimize=True)
+                final_png.save(tmp_png, format="PNG", optimize=True, compress_level=9)
                 tmp_png.replace(png_path)
                 png_size = png_path.stat().st_size / (1024 * 1024)
                 png_size = f"{png_size:.2f}MB"
