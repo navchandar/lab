@@ -357,6 +357,26 @@ async function initApp() {
         preloadRemainingLayers(availabilityData);
       }, 3000);
     }
+
+    map.on("zoom", () => {
+      // Only update if we have an active layer
+      if (currentOverlay) {
+        currentOverlay.setOpacity(getOpacityForZoom());
+      }
+    });
+
+    map.on("zoomstart", () => {
+      if (currentOverlay && currentOverlay.getElement()) {
+        // Remove smooth class during zoom so updates are instant
+        currentOverlay.getElement().classList.remove("smooth-layer");
+      }
+    });
+    map.on("zoomend", () => {
+      if (currentOverlay && currentOverlay.getElement()) {
+        // Add it back after zooming finishes
+        currentOverlay.getElement().classList.add("smooth-layer");
+      }
+    });
   } catch (error) {
     console.error("Initialization failed:", error);
     showToast("Error loading map data. Please try refreshing.", true);
@@ -443,6 +463,25 @@ function manageCacheMemory(newKey, newUrl) {
   }
 }
 
+function getOpacityForZoom() {
+  const zoom = map.getZoom();
+
+  // Logic:
+  // Zoom 8 or less -> 0.5 Opacity (faint)
+  // Zoom 15 or more -> 0.85 Opacity (strong)
+  // In between -> scale linearly
+
+  if (zoom <= 8) {
+    return 0.5;
+  }
+  if (zoom >= 14) {
+    return 0.85;
+  }
+
+  // Linear interpolation for levels
+  return 0.5 + (zoom - 8) * 0.1;
+}
+
 // --- UPDATE MAP LAYER ---
 function updateMapLayer() {
   if (!mapBounds) {
@@ -491,7 +530,10 @@ function updateMapLayer() {
       // Second rAF: Wait for the first paint to complete (opacity: 0 is now rendered)
       requestAnimationFrame(() => {
         // Now change values. The browser perceives this as a state change -> transition!
-        newOverlay.setOpacity(0.75);
+        // Calculate the dynamic opacity based on CURRENT zoom
+        const targetOpacity = getOpacityForZoom();
+        newOverlay.setOpacity(targetOpacity);
+
         // Fade OUT the Old Layer
         if (oldOverlay) {
           if (oldOverlay.getElement()) {
