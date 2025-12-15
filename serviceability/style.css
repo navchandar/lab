@@ -103,20 +103,20 @@ body {
     position: absolute;
     bottom: 0;
     left: 0;
-    transition: height 0.1s ease-in-out;
+    transition: height 0.2s ease-in-out;
     background-color: var(--brand-color);
     width: 100%;
-    height: 3px;
+    height: 1px;
     pointer-events: none;
     content: "";
 }
 
 .radio-card:hover::after {
-    height: 8px;
+    height: 2px;
 }
 
-.radio-card:has(input:checked)::after {
-    height: 6px;
+.radio-card.selected-card::after {
+    height: 4px;
     content: "";
 }
 

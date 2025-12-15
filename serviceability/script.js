@@ -374,7 +374,11 @@ function generateControls(data) {
     const label = document.createElement("label");
     label.className = "radio-card";
     // Default to first item checked, UNLESS URL overrides it later in initApp
-    const isChecked = index === 0 ? "checked" : "";
+    const isDefault = index === 0;
+    const isChecked = isDefault ? "checked" : "";
+    if (isDefault) {
+      label.classList.add("selected-card");
+    }
 
     // Get color for this partner (Default green if missing)
     const color = brandColors[partner] || "#2ecc71";
@@ -395,9 +399,17 @@ function generateControls(data) {
     // Add Event Listener directly to the input
     const input = label.querySelector("input");
     input.addEventListener("change", () => {
+      // Remove 'selected-card' class from ALL radio cards in this container
+      container
+        .querySelectorAll(".radio-card")
+        .forEach((c) => c.classList.remove("selected-card"));
+
       // Update URL when user clicks and update Map layer
       UrlState.set("service", partner);
       updateMapLayer();
+
+      // Add 'selected-card' class to THIS card
+      label.classList.add("selected-card");
       // collapse the card after selection on mobile
       if (window.innerWidth <= 600) {
         collapseSheet();
