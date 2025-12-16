@@ -134,29 +134,38 @@ const MaskedCanvas = L.Canvas.extend({
     L.Canvas.prototype._update.call(this);
 
     // Apply the Mask
-    if (this._maskOverlay && this._map) {
+    if (this._maskOverlay && this._map && this._bounds) {
       const imgElement = this._maskOverlay.getElement();
 
       // Safety checks: Image must be loaded and visible in DOM
       if (imgElement && imgElement.complete && imgElement.naturalWidth > 0) {
-        // Save current state (so we don't break other things)
+        // Save current state
         this._ctx.save();
 
         // --- Cookie Cutter Mode ---
-        // "destination-in" = Keep existing content only where new content overlaps
+        // "destination-in" = Keep existing dots ONLY where the image is opaque
         this._ctx.globalCompositeOperation = "destination-in";
 
         // Calculate where to draw the image on the canvas
         // We convert the Image Overlay's Lat/Lng bounds to Pixel coordinates
         const bounds = this._maskOverlay.getBounds();
+
+        // Get Absolute World Coordinates of the Image
         const topLeft = this._map.latLngToLayerPoint(bounds.getNorthWest());
         const bottomRight = this._map.latLngToLayerPoint(bounds.getSouthEast());
 
+        // Get the Canvas's Current Offset (The Critical Fix)
+        // this._bounds.min represents the Top-Left corner of the currently drawn canvas
+        const offset = this._bounds.min;
+
+        // Calculate Local Coordinates relative to the Canvas
+        const localX = topLeft.x - offset.x;
+        const localY = topLeft.y - offset.y;
         const width = bottomRight.x - topLeft.x;
         const height = bottomRight.y - topLeft.y;
 
-        // Draw the hidden WebP image onto the canvas as the mask
-        this._ctx.drawImage(imgElement, topLeft.x, topLeft.y, width, height);
+        // Draw the mask using LOCAL coordinates
+        this._ctx.drawImage(imgElement, localX, localY, width, height);
 
         // Restore normal drawing mode
         this._ctx.restore();
