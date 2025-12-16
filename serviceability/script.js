@@ -502,6 +502,7 @@ function generateControls(servicesList) {
     return;
   }
 
+  const bottomSheet = document.getElementById("bottom-sheet");
   const container = document.getElementById("options-container");
   container.innerHTML = "";
 
@@ -548,9 +549,17 @@ function generateControls(servicesList) {
       if (window.innerWidth <= 600) {
         collapseSheet();
       }
+      focusMap();
     });
 
     container.appendChild(label);
+  });
+
+  // Display the control box
+  requestAnimationFrame(() => {
+    if (bottomSheet) {
+      bottomSheet.style.opacity = "1";
+    }
   });
 }
 
@@ -1045,10 +1054,24 @@ function initModal() {
   });
 }
 
+// Transfer keyboard focus to the map
+function focusMap() {
+  const mapEl = document.getElementById("map");
+  if (mapEl) {
+    // Leaflet maps usually have tabindex set, but we ensure it here
+    // so the div can actually receive focus.
+    if (!mapEl.hasAttribute("tabindex")) {
+      mapEl.setAttribute("tabindex", "0");
+    }
+    mapEl.focus();
+  }
+}
+
 // --- SEARCH LOGIC ---
 function initSearch() {
   const input = document.getElementById("location-search");
   const btn = document.getElementById("search-btn");
+  const searchContainer = input.closest(".search-container");
 
   // Variable to track status
   let isSearching = false;
@@ -1113,6 +1136,9 @@ function initSearch() {
     input.disabled = true;
     btn.style.opacity = "0.5";
     btn.style.cursor = "not-allowed";
+    if (searchContainer) {
+      searchContainer.classList.add("loading");
+    }
 
     try {
       // SEND NETWORK REQUEST
@@ -1140,7 +1166,11 @@ function initSearch() {
         toggleSheet();
       }
     } finally {
+      focusMap();
       // Unlock the Interface
+      if (searchContainer) {
+        searchContainer.classList.remove("loading");
+      }
       isSearching = false;
       input.disabled = false;
       btn.style.opacity = "1";

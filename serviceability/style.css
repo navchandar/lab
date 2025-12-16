@@ -38,13 +38,19 @@ body {
     height: 100vh;
 }
 
+/* Remove blue outline when map is focused */
+#map:focus {
+    outline: none;
+}
+
 /* Floating Control Card - Material Surface */
 .controls-card {
     position: absolute;
     top: 24px;
     left: 24px;
+    opacity: 0;
     z-index: 1000;
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), height 0.3s ease-in;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), height 0.3s ease-in, opacity 0.3s ease-in;
     box-sizing: content-box;
     box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2),
         0 4px 5px 0 rgba(0, 0, 0, 0.14),
@@ -376,6 +382,47 @@ body {
     background: #ffffff;
 }
 
+.search-container.loading {
+    position: relative;
+    cursor: wait;
+    background-color: #eef2ff;
+    overflow: hidden;
+}
+
+/* Disable interactions while loading */
+.search-container.loading input,
+.search-container.loading button {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* The Moving Progress Bar */
+.search-container.loading::after {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    transform: translateX(-100%);
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(90deg,
+            transparent,
+            #3b82f6,
+            transparent);
+    width: 100%;
+    height: 2px;
+    content: "";
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+
 #location-search {
     flex-grow: 1;
     outline: none;
@@ -443,6 +490,33 @@ body {
 
 .smooth-layer {
     transition: opacity 0.5s ease-in-out;
+}
+
+.shortcuts-text {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    cursor: default;
+    border-top: 1px dashed #eee;
+    padding-top: 10px;
+    color: #888;
+    font-size: 0.75rem;
+    user-select: none;
+}
+
+.shortcuts-text b {
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.04);
+    padding: 0 4px;
+    color: #555;
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.shortcuts-text .divider {
+    color: #ddd;
 }
 
 
@@ -532,6 +606,10 @@ body {
 
     .controls-card.collapsed {
         transform: translateY(calc(100% - 85px));
+    }
+
+    .shortcuts-text {
+        display: none;
     }
 
     /* Style the Drag Handle */
@@ -653,6 +731,16 @@ body {
 
     .drag-handle {
         background-color: #5f6368 !important;
+    }
+
+    .shortcuts-text {
+        border-top-color: #333;
+        color: #bdbdbd;
+    }
+
+    .shortcuts-text b {
+        background: rgba(255, 255, 255, 0.1);
+        color: #d0d0d0;
     }
 
     /* Invert the Light Map to Dark Map */
