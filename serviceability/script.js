@@ -576,17 +576,6 @@ function renderVisibleDots(dotSize = 25) {
     return;
   }
 
-  // --- Calculate Opacity Based on Zoom ---
-  const currentZoom = map.getZoom();
-  const dynamicOpacity = getOpacityForZoom(currentZoom);
-
-  // --- Apply opacity to the entire Canvas Renderer element ---
-  // This fades the whole "layer" after the dots have merged safely.
-  const canvasElement = myCanvasRenderer.getContainer();
-  if (canvasElement) {
-    canvasElement.style.opacity = dynamicOpacity;
-  }
-
   // Filter: Only what is on screen
   const bounds = map.getBounds();
   const visiblePoints = rawServiceData.filter((point) => {
@@ -620,6 +609,16 @@ function renderVisibleDots(dotSize = 25) {
       .bindPopup(`<b>${capitalize(serviceName)}</b><br>Service available`)
       .addTo(dotLayer);
   });
+
+  // --- Calculate Opacity Based on Zoom ---
+  const currentZoom = map.getZoom();
+  const dynamicOpacity = getOpacityForZoom(currentZoom);
+
+  // --- Apply opacity to the entire Canvas Renderer element ---
+  // This fades the whole "layer" after the dots have merged safely.
+  if (myCanvasRenderer && myCanvasRenderer._container) {
+    myCanvasRenderer._container.style.opacity = dynamicOpacity;
+  }
 }
 
 // --- UPDATE MAP LAYER ---
