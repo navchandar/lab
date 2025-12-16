@@ -521,7 +521,9 @@ function getOpacityForZoom() {
 // 1. The Switch Logic
 function handleZoomChange() {
   // If we are currently animating a layer swap, don't interfere
-  if (isLayerSwitching) return;
+  if (isLayerSwitching) {
+    return;
+  }
 
   const zoom = map.getZoom();
 
@@ -568,11 +570,15 @@ function handleZoomChange() {
 }
 
 // 2. The Render Logic
-function renderVisibleDots() {
+function renderVisibleDots(dotSize = 25) {
   // If no data loaded yet, do nothing
   if (!rawServiceData || rawServiceData.length === 0) {
     return;
   }
+
+  // --- Calculate Opacity Based on Zoom ---
+  const currentZoom = map.getZoom();
+  const dynamicOpacity = getOpacityForZoom(currentZoom);
 
   // Filter: Only what is on screen
   const bounds = map.getBounds();
@@ -596,15 +602,15 @@ function renderVisibleDots() {
   visiblePoints.forEach((pt) => {
     L.circleMarker([pt[0], pt[1]], {
       renderer: myCanvasRenderer,
-      radius: 6,
+      radius: dotSize,
       fillColor: color,
-      color: "#fff",
+      color: "#ffffff00",
       weight: 1,
       opacity: 1,
-      fillOpacity: 0.9,
+      fillOpacity: dynamicOpacity,
       interactive: true,
     })
-      .bindPopup(`<b>${capitalize(serviceName)}</b><br>Service Available`)
+      .bindPopup(`<b>${capitalize(serviceName)}</b><br>Service available`)
       .addTo(dotLayer);
   });
 }
