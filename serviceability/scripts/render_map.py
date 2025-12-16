@@ -60,14 +60,14 @@ class MapConfig:
     )
 
     # --- IMAGE QUALITY SETTINGS ---
-    # Width 30 inches * 300 DPI = 9000 pixels wide (High Quality)
-    IMG_WIDTH_INCHES: float = 30
+    # Width 14 inches * 300 DPI = 4200 pixels wide (High Quality)
+    IMG_WIDTH_INCHES: float = 14
     DPI: int = 300
 
     # WebP Settings (High Quality)
-    WEBP_QUALITY: int = 100
-    # PNG Settings - 0.2 means the PNG will be 20% of the size of the WebP
-    PNG_SCALE_FACTOR: float = 0.2
+    WEBP_QUALITY: int = 90
+    # PNG Settings - 0.1 means the PNG will be 10% of the size of the WebP
+    PNG_SCALE_FACTOR: float = 0.1
 
     # Services to Render
     SERVICES: Tuple[str, ...] = (
@@ -164,7 +164,7 @@ class MapRenderer:
             "northEast": [ne_lat, ne_lon],
             "formats": ["webp", "png"],
             "colors": self.cfg.BRAND_COLORS,
-            "services": list(self.cfg.SERVICES)
+            "services": list(self.cfg.SERVICES),
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
@@ -248,7 +248,7 @@ class MapRenderer:
                     tmp_webp,
                     format="WEBP",
                     quality=self.cfg.WEBP_QUALITY,
-                    method=5, # Best compression method
+                    method=5,  # Best compression method
                     lossless=True,
                     exact=True,  # Critical: Preserves transparent pixel values
                 )
@@ -319,6 +319,26 @@ class MapRenderer:
             path, transform=ax.transData, facecolor="none", edgecolor="none"
         )
         return patch
+
+    def save_service_json(self, service: str) -> None:
+        """Saves a lightweight JSON list of coordinates [lat, lng] for this service."""
+        # Note: Leaflet prefers [Lat, Lng]
+        active_points = []
+
+        for loc in self.data.locations:
+            pin = loc["pin"]
+            partners = self.data.availability.get(pin, {})
+            if partners.get(service, 0) >= 1:
+                # Precision 4 is ~11 meters, plenty for a dot map. Saves text space.
+                lat = round(loc["lat"], 4)
+                lng = round(loc["lng"], 4)
+                active_points.append([lat, lng])
+
+        out_path = self.cfg.MAPS_DIR / f"{service}.json"
+        with open(out_path, "w") as f:
+            # remove whitespace to save space
+            json.dump(active_points, f, separators=(",", ":"))
+        logger.info(f"Saved {service}.json with {len(active_points)} points.")
 
     def render_service(self, service: str) -> None:
         """Generates and saves map in PNG and WEBP for a single service."""
@@ -417,6 +437,7 @@ def main():
     # Render Loop
     for service in config.SERVICES:
         renderer.render_service(service)
+        renderer.save_service_json(service)
 
     logger.info("All maps generated successfully.")
 

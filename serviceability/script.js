@@ -7,6 +7,12 @@ let activeServiceRequest = null;
 let isLayerSwitching = false;
 let globalTimestamp = new Date().getTime();
 
+// --- HYBRID MAP VARIABLES ---
+let dotLayer = null;
+let rawServiceData = []; // Stores the raw JSON points [lat, lng]
+let isHighZoom = false;
+const ZOOM_THRESHOLD = 10; // Zoom level to switch from Image -> Dots
+
 // cache leaflet image layers
 const layerCache = new Map();
 const MAX_CACHE_SIZE = 5;
@@ -111,6 +117,9 @@ const defaultLocation = [22.5937, 78.9629];
 const Zoom = { zoomControl: false };
 const map = L.map("map", Zoom).setView(defaultLocation, 5);
 L.control.zoom({ position: "bottomright" }).addTo(map);
+
+// Define Canvas Renderer Globally
+const myCanvasRenderer = L.canvas({ padding: 0.5 });
 
 // --- TILE LAYER SETUP ---
 function setupMapTiles(mapInstance) {
@@ -308,7 +317,7 @@ async function initApp() {
     const searchFn = initSearch();
 
     // --- RESTORE STATE FROM URL ---
-    // 1. Check for 'service' param
+    // Check for 'service' param
     const savedService = UrlState.get("service");
     if (savedService) {
       // Try to select the radio button
@@ -331,7 +340,7 @@ async function initApp() {
 
     initBottomSheet();
 
-    // 2. Check for 'q' (query/location) param
+    // Check for 'q' (query/location) param
     const savedQuery = UrlState.get("q");
     if (savedQuery && searchFn) {
       const input = document.getElementById("location-search");
@@ -357,28 +366,31 @@ async function initApp() {
       }, 3000);
     }
 
-    map.on("zoom", () => {
-      if (isLayerSwitching) {
-        return;
-      }
-      // Only update if we have an active layer
-      if (currentOverlay) {
-        currentOverlay.setOpacity(getOpacityForZoom());
+    // --- EVENT LISTENERS FOR HYBRID MAP ---
+    // Zoom Logic (Decide between Dots or Image)
+    map.on("zoom", handleZoomChange);
+
+    // Move Logic (Update visible dots when zoom in)
+    map.on("moveend", () => {
+      if (isHighZoom) {
+        renderVisibleDots();
       }
     });
 
+    // Animation Logic (For Image Overlay)
     map.on("zoomstart", () => {
       if (isLayerSwitching) {
         return;
       }
-      if (currentOverlay && currentOverlay.getElement()) {
-        // Remove smooth class during zoom so updates are instant
+      // Only remove smooth class if the image is actually visible
+      if (!isHighZoom && currentOverlay && currentOverlay.getElement()) {
         currentOverlay.getElement().classList.remove("smooth-layer");
       }
     });
+
     map.on("zoomend", () => {
-      if (currentOverlay && currentOverlay.getElement()) {
-        // Add it back after zooming finishes
+      // Add it back after zooming finishes
+      if (!isHighZoom && currentOverlay && currentOverlay.getElement()) {
         currentOverlay.getElement().classList.add("smooth-layer");
       }
     });
@@ -506,6 +518,97 @@ function getOpacityForZoom() {
   return Number(finalOpacity.toFixed(1));
 }
 
+// 1. The Switch Logic
+function handleZoomChange() {
+  // If we are currently animating a layer swap, don't interfere
+  if (isLayerSwitching) return;
+
+  const zoom = map.getZoom();
+
+  // CASE A: High Zoom -> Show Dots
+  if (zoom >= ZOOM_THRESHOLD) {
+    if (!isHighZoom) {
+      isHighZoom = true;
+      // Hide Image Layer immediately
+      if (currentOverlay) {
+        currentOverlay.setOpacity(0);
+      }
+      // Render dots
+      renderVisibleDots();
+    } else {
+      // Already in high zoom, ensure image is hidden
+      if (currentOverlay) {
+        currentOverlay.setOpacity(0);
+      }
+    }
+  }
+
+  // CASE B: Low Zoom -> Show Image
+  else {
+    if (isHighZoom) {
+      isHighZoom = false;
+
+      // Show Image Layer
+      if (currentOverlay) {
+        currentOverlay.setOpacity(getOpacityForZoom());
+      }
+
+      // DESTROY Dots (Save Memory)
+      if (dotLayer) {
+        map.removeLayer(dotLayer);
+        dotLayer = null;
+      }
+    } else {
+      // Just standard opacity update
+      if (currentOverlay) {
+        currentOverlay.setOpacity(getOpacityForZoom());
+      }
+    }
+  }
+}
+
+// 2. The Render Logic
+function renderVisibleDots() {
+  // If no data loaded yet, do nothing
+  if (!rawServiceData || rawServiceData.length === 0) {
+    return;
+  }
+
+  // Filter: Only what is on screen
+  const bounds = map.getBounds();
+  const visiblePoints = rawServiceData.filter((point) => {
+    return bounds.contains(L.latLng(point[0], point[1]));
+  });
+
+  // Clear or Create Layer
+  if (dotLayer) {
+    dotLayer.clearLayers();
+  } else {
+    dotLayer = L.layerGroup().addTo(map);
+  }
+
+  // Get active color
+  const selectedInput = document.querySelector('input[name="service"]:checked');
+  const serviceName = selectedInput ? selectedInput.value : "default";
+  const color = brandColors[serviceName] || "#2ecc71";
+
+  // Batch draw using Canvas Renderer
+  visiblePoints.forEach((pt) => {
+    L.circleMarker([pt[0], pt[1]], {
+      renderer: myCanvasRenderer,
+      radius: 6,
+      fillColor: color,
+      color: "#fff",
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.9,
+      interactive: true,
+    })
+      .bindPopup(`<b>${capitalize(serviceName)}</b><br>Service Available`)
+      .addTo(dotLayer);
+  });
+}
+
 // --- UPDATE MAP LAYER ---
 function updateMapLayer() {
   if (!mapBounds) {
@@ -522,8 +625,24 @@ function updateMapLayer() {
 
   // LOCK: Update the active request
   activeServiceRequest = serviceName;
+  updateUIColors(activeColor, selectedInput);
 
-  // URLS
+  // --- PART 1: Fetch JSON Data (For High Zoom) ---
+  fetch(`maps/${serviceName}.json?t=${globalTimestamp}`)
+    .then((res) => res.json())
+    .then((data) => {
+      // Only update if user hasn't switched services again
+      if (activeServiceRequest === serviceName) {
+        rawServiceData = data;
+        // If we are currently zoomed in, update dots immediately
+        if (map.getZoom() >= ZOOM_THRESHOLD) {
+          renderVisibleDots();
+        }
+      }
+    })
+    .catch((e) => console.warn("No JSON points found for this service", e));
+
+  // --- PART 2: Handle Image Overlay (For Low Zoom) ---
   const pngUrl = `maps/${serviceName}.png?t=${globalTimestamp}`;
   const webpUrl = `maps/${serviceName}.webp?t=${globalTimestamp}`;
 
@@ -546,17 +665,19 @@ function updateMapLayer() {
       newOverlay.addTo(map);
     }
 
-    updateUIColors(activeColor, selectedInput);
     currentOverlay = newOverlay;
 
     // Trigger Animation
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        // Calculate dynamic opacity
-        const targetOpacity = getOpacityForZoom();
+        // Decide Visibility:
+        // If High Zoom -> Opacity 0
+        // If Low Zoom  -> Calculated Opacity
+        const targetOpacity =
+          map.getZoom() >= ZOOM_THRESHOLD ? 0 : getOpacityForZoom();
         newOverlay.setOpacity(targetOpacity);
 
-        // Fade OUT the Old Layer
+        // Fade OUT Old Layer
         if (oldOverlay && oldOverlay !== newOverlay) {
           if (oldOverlay.getElement()) {
             oldOverlay.getElement().classList.add("smooth-layer");
@@ -575,16 +696,18 @@ function updateMapLayer() {
         // UNLOCK INTERACTIONS after CSS transition finishes
         setTimeout(() => {
           isLayerSwitching = false;
-          // Safety Check: update the opacity to match the *current* final zoom
+          // Final check in case user zoomed during the switch
           if (currentOverlay) {
-            currentOverlay.setOpacity(getOpacityForZoom());
+            const finalOpacity =
+              map.getZoom() >= ZOOM_THRESHOLD ? 0 : getOpacityForZoom();
+            currentOverlay.setOpacity(finalOpacity);
           }
         }, 700);
       });
     });
   };
 
-  // Check Layer Cache (Fastest)
+  // Check Cache
   if (layerCache.has(serviceName)) {
     const cachedData = layerCache.get(serviceName);
 
@@ -597,9 +720,8 @@ function updateMapLayer() {
     return;
   }
 
-  // Fetch and Cache (First Load)
+  // Fetch WebP
   let webpReady = false;
-
   fetch(webpUrl)
     .then((res) => {
       if (!res.ok) {
@@ -633,7 +755,7 @@ function updateMapLayer() {
       handleError();
     });
 
-  // 3. Fallback Logic (Timer)
+  // Fallback Timer
   setTimeout(() => {
     if (activeServiceRequest !== serviceName) {
       return;
@@ -661,21 +783,6 @@ function updateMapLayer() {
     }
     // Try to load PNG
     setOverlay(pngUrl);
-
-    // Double failure catch
-    if (currentOverlay) {
-      const img = currentOverlay.getElement();
-      if (img) {
-        img.onerror = () => {
-          if (map.hasLayer(currentOverlay)) {
-            map.removeLayer(currentOverlay);
-          }
-          if (!navigator.onLine) {
-            showToast("Offline: No map data.", true);
-          }
-        };
-      }
-    }
   }
 }
 
