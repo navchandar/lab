@@ -6,6 +6,9 @@ let brandColors = {};
 let activeServiceRequest = null;
 let isLayerSwitching = false;
 let globalTimestamp = new Date().getTime();
+// Global Search Cache local storage
+const CACHE_KEY_PREFIX = "geo_cache_";
+const CACHE_EXPIRY_DAYS = 7; // Expire cache after 1 week
 
 // --- HYBRID MAP VARIABLES ---
 let dotLayer = null;
@@ -246,6 +249,46 @@ const collapseSheet = () => {
     card.classList.add("collapsed");
   }
 };
+
+// --- Save to LocalStorage ---
+function saveToCache(query, data) {
+  try {
+    const record = {
+      timestamp: Date.now(),
+      data: data,
+    };
+    // Save to LocalStorage (Persists after refresh)
+    localStorage.setItem(CACHE_KEY_PREFIX + query, JSON.stringify(record));
+  } catch (e) {
+    console.warn("LocalStorage full or disabled", e);
+  }
+}
+
+// --- Read from LocalStorage ---
+function getFromCache(query) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_PREFIX + query);
+    if (!raw) {
+      return null;
+    }
+
+    const record = JSON.parse(raw);
+
+    // Check Expiry (Time in milliseconds)
+    const ageInMs = Date.now() - record.timestamp;
+    const maxAgeInMs = CACHE_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
+
+    if (ageInMs > maxAgeInMs) {
+      // Delete old data and return null to force a new network fetch
+      localStorage.removeItem(CACHE_KEY_PREFIX + query);
+      return null;
+    }
+
+    return record.data;
+  } catch (e) {
+    return null;
+  }
+}
 
 // --- BOTTOM SHEET LOGIC for mobile ---
 function initBottomSheet() {
@@ -956,6 +999,16 @@ function initSearch() {
       UrlState.set("q", query);
     }
 
+    // Normalize query key (lowercase)
+    const cacheKey = query.toLowerCase();
+    // CHECK CACHE (LocalStorage)
+    const cachedResult = getFromCache(cacheKey);
+    if (cachedResult) {
+      console.log(`Loaded "${query}" from LocalStorage`);
+      handleSearchResult(cachedResult);
+      return;
+    }
+
     // Lock the Interface
     isSearching = true;
     input.disabled = true;
@@ -963,6 +1016,7 @@ function initSearch() {
     btn.style.cursor = "not-allowed";
 
     try {
+      // SEND NETWORK REQUEST
       const q = encodeURIComponent(query);
       // Using OpenStreetMap Nominatim API (Free) with 'countrycodes=in'
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=in&limit=1`;
@@ -971,30 +1025,10 @@ function initSearch() {
       const results = await response.json();
 
       if (results && results.length > 0) {
-        const location = results[0];
-        const lat = parseFloat(location.lat);
-        const lon = parseFloat(location.lon);
-        const newLatLng = new L.LatLng(lat, lon);
-
-        // --- Check if we are already here ---
-        const currentCenter = map.getCenter();
-        const distanceInMeters = currentCenter.distanceTo(newLatLng);
-
-        // If distance is less than 3km (3000 meters), consider it "Same Area"
-        if (distanceInMeters < 3000) {
-          showToast(`Already at ${location.name.split(",")[0]}`, false);
-        } else {
-          console.log(`Moving to ${location.name}`);
-        }
-        // --- Zoom to location: Use flyTo for smooth animation ---
-        // 11 is the zoom level, 2 is the duration in seconds
-        map.flyTo([lat, lon], 11, {
-          duration: 2,
-          easeLinearity: 1.42,
-        });
-
-        // Hide keyboard on mobile
-        input.blur();
+        const bestMatch = results[0];
+        // SAVE TO CACHE (LocalStorage)
+        saveToCache(cacheKey, bestMatch);
+        handleSearchResult(bestMatch);
       } else {
         showToast("Location not found. Try a City or Pincode.", true);
       }
@@ -1013,6 +1047,33 @@ function initSearch() {
       btn.style.opacity = "1";
       btn.style.cursor = "pointer";
     }
+  };
+
+  // Helper to handle the moving logic on map
+  const handleSearchResult = (location) => {
+    const lat = parseFloat(location.lat);
+    const lon = parseFloat(location.lon);
+    const newLatLng = new L.LatLng(lat, lon);
+    const currentCenter = map.getCenter();
+
+    // --- Check if we are already here ---
+    // If distance is less than 3km (3000 meters), consider it "Same Area"
+    if (currentCenter.distanceTo(newLatLng) < 3000) {
+      const name = location.display_name || location.name;
+      showToast(`Already at ${name.split(",")[0]}`, false);
+    } else {
+      console.log(`Moving to ${location.name}`);
+    }
+
+    // --- Zoom to location: Use flyTo for smooth animation ---
+    // 11 is the zoom level, 2 is the duration in seconds
+    map.flyTo([lat, lon], 11, {
+      duration: 2,
+      easeLinearity: 1.42,
+    });
+
+    // Hide keyboard on mobile
+    input.blur();
   };
 
   // Event Listener: 'Enter' key
