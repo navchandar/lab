@@ -121,8 +121,52 @@ const Zoom = { zoomControl: false };
 const map = L.map("map", Zoom).setView(defaultLocation, 5);
 L.control.zoom({ position: "bottomright" }).addTo(map);
 
-// Define Canvas Renderer Globally
-const myCanvasRenderer = L.canvas({ padding: 0.5 });
+// Define custom Canvas Renderer Globally
+const MaskedCanvas = L.Canvas.extend({
+  // Store the overlay reference
+  setMask: function (imageOverlay) {
+    this._maskOverlay = imageOverlay;
+  },
+
+  // Override the main draw loop
+  _update: function () {
+    // Run the standard Leaflet drawing (draws the dots)
+    L.Canvas.prototype._update.call(this);
+
+    // Apply the Mask
+    if (this._maskOverlay && this._map) {
+      const imgElement = this._maskOverlay.getElement();
+
+      // Safety checks: Image must be loaded and visible in DOM
+      if (imgElement && imgElement.complete && imgElement.naturalWidth > 0) {
+        // Save current state (so we don't break other things)
+        this._ctx.save();
+
+        // --- Cookie Cutter Mode ---
+        // "destination-in" = Keep existing content only where new content overlaps
+        this._ctx.globalCompositeOperation = "destination-in";
+
+        // Calculate where to draw the image on the canvas
+        // We convert the Image Overlay's Lat/Lng bounds to Pixel coordinates
+        const bounds = this._maskOverlay.getBounds();
+        const topLeft = this._map.latLngToLayerPoint(bounds.getNorthWest());
+        const bottomRight = this._map.latLngToLayerPoint(bounds.getSouthEast());
+
+        const width = bottomRight.x - topLeft.x;
+        const height = bottomRight.y - topLeft.y;
+
+        // Draw the hidden WebP image onto the canvas as the mask
+        this._ctx.drawImage(imgElement, topLeft.x, topLeft.y, width, height);
+
+        // Restore normal drawing mode
+        this._ctx.restore();
+      }
+    }
+  },
+});
+
+// Initialize your renderer with this new class
+const myCanvasRenderer = new MaskedCanvas();
 
 // --- TILE LAYER SETUP ---
 function setupMapTiles(mapInstance) {
@@ -702,6 +746,10 @@ function updateMapLayer() {
   const serviceName = selectedInput.value;
   const activeColor = brandColors[serviceName] || "#2ecc71";
 
+  if (dotLayer) {
+    dotLayer.clearLayers();
+  }
+
   // LOCK: Update the active request
   activeServiceRequest = serviceName;
   updateUIColors(activeColor, selectedInput);
@@ -745,6 +793,12 @@ function updateMapLayer() {
     }
 
     currentOverlay = newOverlay;
+
+    // Update the mask reference
+    myCanvasRenderer.setMask(newOverlay);
+    if (isHighZoom) {
+      renderVisibleDots();
+    }
 
     // Trigger Animation
     requestAnimationFrame(() => {
@@ -1090,8 +1144,8 @@ function initSearch() {
     }
 
     // --- Zoom to location: Use flyTo for smooth animation ---
-    // 11 is the zoom level, 2 is the duration in seconds
-    map.flyTo([lat, lon], 11, {
+    // 10 is the zoom level, 2 is the duration in seconds
+    map.flyTo([lat, lon], 10, {
       duration: 2,
       easeLinearity: 1.42,
     });
