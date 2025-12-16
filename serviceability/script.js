@@ -14,7 +14,7 @@ const CACHE_EXPIRY_DAYS = 7; // Expire cache after 1 week
 let dotLayer = null;
 let rawServiceData = []; // Stores the raw JSON points [lat, lng]
 let isHighZoom = false;
-const ZOOM_THRESHOLD = 10; // Zoom level to switch from Image -> Dots
+const ZOOM_THRESHOLD = 11; // Zoom level to switch from Image -> Dots
 
 // cache leaflet image layers
 const layerCache = new Map();
@@ -561,6 +561,28 @@ function getOpacityForZoom() {
   return Number(finalOpacity.toFixed(1));
 }
 
+function getRadiusForZoom(zoom) {
+  if (zoom < 10) {
+    return 25; // Tiny dot (State view)
+  }
+  if (zoom < 11) {
+    return 50; // Small Blob
+  }
+  if (zoom < 12) {
+    return 100; // City view
+  }
+  if (zoom < 13) {
+    return 200; // Medium circle (Area view)
+  }
+  if (zoom < 14) {
+    return 400; // District view
+  }
+  if (zoom < 15) {
+    return 800; // Neighborhood (Massive overlap)
+  }
+  return 1500; // Huge "Coverage Zone" (Street view)
+}
+
 // 1. The Switch Logic
 function handleZoomChange() {
   // If we are currently animating a layer swap, don't interfere
@@ -613,11 +635,17 @@ function handleZoomChange() {
 }
 
 // 2. The Render Logic
-function renderVisibleDots(dotSize = 25) {
+function renderVisibleDots() {
   // If no data loaded yet, do nothing
   if (!rawServiceData || rawServiceData.length === 0) {
     return;
   }
+
+  // --- Get Zoom & Calculate ---
+  const currentZoom = map.getZoom();
+  // Get dynamic values based on zoom
+  const dynamicRadius = getRadiusForZoom(currentZoom);
+  const dynamicOpacity = getOpacityForZoom(currentZoom);
 
   // Filter: Only what is on screen
   const bounds = map.getBounds();
@@ -641,7 +669,7 @@ function renderVisibleDots(dotSize = 25) {
   visiblePoints.forEach((pt) => {
     L.circleMarker([pt[0], pt[1]], {
       renderer: myCanvasRenderer,
-      radius: dotSize,
+      radius: dynamicRadius,
       fillColor: color,
       color: "#ffffff00",
       weight: 1,
@@ -652,10 +680,6 @@ function renderVisibleDots(dotSize = 25) {
       .bindPopup(`<b>${capitalize(serviceName)}</b><br>Service available`)
       .addTo(dotLayer);
   });
-
-  // --- Calculate Opacity Based on Zoom ---
-  const currentZoom = map.getZoom();
-  const dynamicOpacity = getOpacityForZoom(currentZoom);
 
   // --- Apply opacity to the entire Canvas Renderer element ---
   // This fades the whole "layer" after the dots have merged safely.
