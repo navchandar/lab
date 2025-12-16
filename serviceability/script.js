@@ -616,24 +616,24 @@ function getOpacityForZoom() {
 
 function getRadiusForZoom(zoom) {
   if (zoom < 10) {
-    return 25; // Tiny dot (State view)
+    return 20; // Tiny dot (State view)
   }
   if (zoom < 11) {
-    return 50; // Small Blob
+    return 30; // Small Blob
   }
   if (zoom < 12) {
-    return 100; // City view
+    return 60; // City view
   }
   if (zoom < 13) {
-    return 200; // Medium circle (Area view)
+    return 120; // Medium circle (Area view)
   }
   if (zoom < 14) {
-    return 400; // District view
+    return 250; // District view
   }
   if (zoom < 15) {
-    return 800; // Neighborhood (Massive overlap)
+    return 500; // Neighborhood (Massive overlap)
   }
-  return 1500; // Huge "Coverage Zone" (Street view)
+  return 1000; // Huge "Coverage Zone" (Street view)
 }
 
 // 1. The Switch Logic
