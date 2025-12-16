@@ -580,6 +580,13 @@ function renderVisibleDots(dotSize = 25) {
   const currentZoom = map.getZoom();
   const dynamicOpacity = getOpacityForZoom(currentZoom);
 
+  // --- Apply opacity to the entire Canvas Renderer element ---
+  // This fades the whole "layer" after the dots have merged safely.
+  const canvasElement = myCanvasRenderer.getContainer();
+  if (canvasElement) {
+    canvasElement.style.opacity = dynamicOpacity;
+  }
+
   // Filter: Only what is on screen
   const bounds = map.getBounds();
   const visiblePoints = rawServiceData.filter((point) => {
@@ -607,7 +614,7 @@ function renderVisibleDots(dotSize = 25) {
       color: "#ffffff00",
       weight: 1,
       opacity: 1,
-      fillOpacity: dynamicOpacity,
+      fillOpacity: 1,
       interactive: true,
     })
       .bindPopup(`<b>${capitalize(serviceName)}</b><br>Service available`)
@@ -915,6 +922,10 @@ function initSearch() {
     if (isSearching) {
       return;
     }
+    // check if it is a string. If not, set it to null.
+    if (typeof queryOverride !== "string") {
+      queryOverride = null;
+    }
 
     // If override is provided (from URL), use it. Otherwise read input.
     let query = queryOverride;
@@ -964,14 +975,24 @@ function initSearch() {
         const location = results[0];
         const lat = parseFloat(location.lat);
         const lon = parseFloat(location.lon);
+        const newLatLng = new L.LatLng(lat, lon);
 
+        // --- Check if we are already here ---
+        const currentCenter = map.getCenter();
+        const distanceInMeters = currentCenter.distanceTo(newLatLng);
+
+        // If distance is less than 3km (3000 meters), consider it "Same Area"
+        if (distanceInMeters < 3000) {
+          showToast(`Already at ${location.name.split(",")[0]}`, false);
+        } else {
+          console.log(`Moving to ${location.name}`);
+        }
         // --- Zoom to location: Use flyTo for smooth animation ---
         // 11 is the zoom level, 2 is the duration in seconds
         map.flyTo([lat, lon], 11, {
           duration: 2,
           easeLinearity: 1.42,
         });
-        console.log(`Moved to ${location.name}`);
 
         // Hide keyboard on mobile
         input.blur();
