@@ -592,7 +592,7 @@ function getOpacityForZoom() {
   // Light Mode: Needs higher opacity to stand out against white map
   // Night Mode: Needs lower opacity to blend with dark map
   const maxOpacity = isDarkMode ? 0.6 : 0.9;
-  const minOpacity = isDarkMode ? 0.3 : 0.4;
+  const minOpacity = isDarkMode ? 0.2 : 0.3;
 
   // Handle the "Fixed" ranges
   if (currentzoom <= startZoom) {
@@ -628,10 +628,10 @@ function getRadiusForZoom(zoom) {
     return 120; // Medium circle (Area view)
   }
   if (zoom < 14) {
-    return 250; // District view
+    return 240; // District view
   }
   if (zoom < 15) {
-    return 500; // Neighborhood (Massive overlap)
+    return 480; // Neighborhood (Massive overlap)
   }
   return 1000; // Huge "Coverage Zone" (Street view)
 }
@@ -726,7 +726,7 @@ function renderVisibleDots() {
       fillColor: color,
       color: "#ffffff00",
       weight: 1,
-      opacity: 1,
+      opacity: 0.8,
       fillOpacity: 1,
       interactive: true,
     })
