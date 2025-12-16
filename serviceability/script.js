@@ -805,8 +805,20 @@ function updateMapLayer() {
 
     // Update the mask reference
     myCanvasRenderer.setMask(newOverlay);
-    if (isHighZoom) {
-      renderVisibleDots();
+    // Check if image is ALREADY loaded
+    const img = newOverlay.getElement();
+    if (img && img.complete) {
+      if (isHighZoom) {
+        renderVisibleDots();
+      }
+    } else {
+      // Wait for it to load, then draw
+      newOverlay.on("load", () => {
+        if (isHighZoom && activeServiceRequest === serviceName) {
+          console.log("Mask Image Loaded - Redrawing dots");
+          renderVisibleDots();
+        }
+      });
     }
 
     // Trigger Animation
