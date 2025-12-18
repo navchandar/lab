@@ -519,7 +519,10 @@ function generateControls(servicesList) {
 
   // Get partners from the list
   servicesList.forEach((partner, index) => {
-    // Create the label element
+    // --- Calculate Shortcut 1-9 ---
+    const shortcutKey = index + 1;
+    const hasShortcut = shortcutKey <= 9;
+
     const label = document.createElement("label");
     label.className = "radio-card";
     // Default to first item checked, UNLESS URL overrides it later in initApp
@@ -530,15 +533,23 @@ function generateControls(servicesList) {
     const color = brandColors[partner] || "#2ecc71";
     label.style.setProperty("--brand-color", color);
 
+    // --- Add the Visual Hint ---
+    // Check `hasShortcut` so we don't print "10" or "11"
+    const hintHtml = hasShortcut
+      ? `<span class="shortcut-hint">${shortcutKey}</span>`
+      : "";
+
     label.innerHTML = `
             <input 
                 type="radio" 
                 name="service" 
                 value="${partner}" 
                 ${isChecked}
+                data-index="${index}"
             >
             <div class="card-content">
                 <span class="service-name">${capitalize(partner)}</span>
+                ${hintHtml}
             </div>
         `;
 
@@ -565,6 +576,32 @@ function generateControls(servicesList) {
 
     container.appendChild(label);
   });
+
+  // --- EVENT LISTENER: Handle Key Presses ---
+  // Ensure we don't add the listener multiple times if this function reruns
+  if (!window.hasServiceShortcuts) {
+    document.addEventListener("keydown", (e) => {
+      // Stop if user is typing in the search box
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") {
+        return;
+      }
+
+      const key = parseInt(e.key);
+      // Check if key is 1-9
+      if (!isNaN(key) && key >= 1 && key <= 9) {
+        const targetIndex = key - 1;
+        // Find the input with this index
+        const targetInput = container.querySelector(
+          `input[data-index="${targetIndex}"]`
+        );
+        // Trigger the 'change' event logic automatically
+        if (targetInput) {
+          targetInput.click();
+        }
+      }
+    });
+    window.hasServiceShortcuts = true;
+  }
 
   // Display the control box
   requestAnimationFrame(() => {

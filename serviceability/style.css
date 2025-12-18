@@ -149,6 +149,31 @@ body {
     padding: 10px 16px;
 }
 
+/* The Shortcut Number Styling */
+.shortcut-hint {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.03);
+    min-width: 18px;
+    height: 18px;
+    color: #5f6368;
+    font-size: 11px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* When selected, make it pop slightly */
+.radio-card.selected-card .shortcut-hint {
+    border-color: #3c4043;
+    background-color: rgba(0, 0, 0, 0.08);
+    color: #3c4043;
+    font-weight: 700;
+}
+
 .service-name {
     transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
     color: #3c4043;
@@ -595,6 +620,10 @@ body {
         padding: 7px 16px;
     }
 
+    .shortcut-hint {
+        display: none;
+    }
+
     .toast-notification {
         top: 20px;
         bottom: auto;
@@ -711,6 +740,19 @@ body {
     .card-content {
         border-color: #5f6368;
         background: #35363a !important;
+    }
+
+    .shortcut-hint {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background-color: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .radio-card.selected-card .shortcut-hint {
+        box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
     }
 
     .radio-card:hover .service-name {
