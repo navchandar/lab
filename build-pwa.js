@@ -234,7 +234,16 @@ const urlsToCache = [
     ${allFilesToCache.join(",\n  ")}
 ];
 
-const duplicates = urlsToCache.filter((item, index, arr) => arr.indexOf(item) !== index);
+const ALLOWED_CDN_HOSTS = new Set([
+  "cdn.datatables.net",
+  "cdnjs.cloudflare.com",
+  "cdn.jsdelivr.net",
+  "unpkg.com",
+]);
+
+const duplicates = urlsToCache.filter(
+  (item, index, arr) => arr.indexOf(item) !== index
+);
 if (duplicates.length > 0) {
   console.warn("[SW] Duplicate URLs detected in cache list:", duplicates);
 }
@@ -248,19 +257,27 @@ self.addEventListener("install", (event) => {
 
       // Map each URL to a Promise for cache.add()
       const cachePromises = urlsToCache.map((url) => {
-        return cache.add(url)
-          .then(() => ({ status: 'fulfilled', url }))
-          .catch((error) => ({ status: 'rejected', url, error }));
+        return cache
+          .add(url)
+          .then(() => ({ status: "fulfilled", url }))
+          .catch((error) => ({ status: "rejected", url, error }));
       });
 
       // Wait for all caching attempts to finish (settle)
       return Promise.allSettled(cachePromises).then((results) => {
-        const failed = results.filter(result => result.status === 'rejected');
-        const successful = results.filter(result => result.status === 'fulfilled');
+        const failed = results.filter((result) => result.status === "rejected");
+        const successful = results.filter(
+          (result) => result.status === "fulfilled"
+        );
 
         console.log("[SW] Successfully cached", successful.length, "resources");
         if (failed.length > 0) {
-          console.error("[SW]", failed.length, "resources failed to cache:", failed);
+          console.error(
+            "[SW]",
+            failed.length,
+            "resources failed to cache:",
+            failed
+          );
         }
 
         // ONLY AFTER CACHING IS COMPLETE, THEN SKIP WAITING
@@ -269,7 +286,6 @@ self.addEventListener("install", (event) => {
     })
   );
 });
-
 
 self.addEventListener("activate", (event) => {
   console.log("[SW] Activating:", CACHE_NAME);
@@ -294,51 +310,98 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
+  const req = event.request;
+
+  // Exit early: only handle safe, HTTP(S), GET requests
+  if (req.method !== "GET") {
+    return;
+  }
+  const url = new URL(req.url);
+  if (!["http:", "https:"].includes(url.protocol)) {
+    return;
+  }
+
+  // skip range/credentialed requests to avoid side effects
+  if (req.headers.has("range")) {
+    return;
+  }
+  if (req.credentials === "include") {
+    return;
+  }
+
+  // Domain lockdown for GitHub Pages
+  const ONLY_CURRENT_HOST = true;
+  const isSameOrigin = url.origin === self.location.origin;
+  const isGithubPagesHost = url.hostname.endsWith(".github.io");
+  const isAllowedOrigin = ONLY_CURRENT_HOST
+    ? url.hostname === self.location.hostname
+    : isSameOrigin || isGithubPagesHost;
+
+  const isAllowedCdn =
+    typeof ALLOWED_CDN_HOSTS !== "undefined" &&
+    ALLOWED_CDN_HOSTS.has(url.hostname);
+
+  if (!isAllowedOrigin && !isAllowedCdn) {
+    return;
+  }
+
+  const normalizedPath = url.pathname.replace(/^\/|\/$/g, "");
+
   event.respondWith(
     (async () => {
       try {
-        const requestUrl = new URL(event.request.url);
-        const requestPath = requestUrl.pathname.startsWith('/')
-          ? requestUrl.pathname.substring(1)
-          : requestUrl.pathname;
-
-        // Skip unsupported schemes
-        if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') {
-          return fetch(event.request);
-        }
-
-        // ✅ Skip requests to ignored directories
-        const isIgnored = IGNORED_DIRS.some(dir => {
-          const pattern = new RegExp(\`^\${dir}(/|$)\`);
-          return pattern.test(requestPath);
+        const ignoreList = Array.isArray(IGNORED_DIRS) ? IGNORED_DIRS : [];
+        const isIgnored = ignoreList.some((dir) => {
+          const cleanDir = String(dir).replace(/^\/|\/$/g, "");
+          return (
+            normalizedPath === cleanDir ||
+            normalizedPath.startsWith(cleanDir + "/")
+          );
         });
 
         if (isIgnored) {
-          return fetch(event.request); // Don't cache, just fetch
+          return fetch(req); // Don't cache, just fetch
         }
 
-        const shouldBeCached = urlsToCache.includes(requestPath);
-        const cachedResponse = await caches.match(event.request);
+        const cacheList = Array.isArray(urlsToCache) ? urlsToCache : [];
+        const shouldBeCached = cacheList.some((path) => {
+          const cleanPath = String(path).replace(/^\/|\/$/g, "");
+          return (
+            normalizedPath === cleanPath ||
+            (normalizedPath === "" && cleanPath === "index.html")
+          );
+        });
 
-        const fetchPromise = fetch(event.request).then(async networkResponse => {
-          try {
-            if (shouldBeCached && networkResponse.ok && networkResponse.type === 'basic') {
-              const cache = await caches.open(CACHE_NAME);
-              cache.put(event.request, networkResponse.clone());
-            }
-          } catch (cacheError) {
-            console.warn("[SW] Failed to update cache:", cacheError);
+        if (shouldBeCached) {
+          const cached = await caches.match(req);
+
+          // Background revalidation
+          const refresh = fetch(req)
+            .then(async (fresh) => {
+              // Allow "basic" (same-origin) OR "cors" (CDN)
+              const isCacheableType =
+                fresh.type === "basic" || fresh.type === "cors";
+              if (fresh.ok && isCacheableType) {
+                const cache = await caches.open(CACHE_NAME);
+                await cache.put(req, fresh.clone());
+              }
+              return fresh;
+            })
+            .catch(() => null);
+
+          if (cached) {
+            event.waitUntil(refresh);
+            return cached;
           }
-          return networkResponse;
-        });
 
-        return (cachedResponse && shouldBeCached) ? cachedResponse : fetchPromise;
-      } catch (error) {
-        console.error("[SW] Fetch handler failed:", error);
-        return new Response("Service unavailable", {
-          status: 503,
-          statusText: "Service Unavailable",
-        });
+          const freshResponse = await refresh;
+          return freshResponse || fetch(req);
+        }
+
+        return fetch(req);
+      } catch (err) {
+        console.warn("[SW] Fetch error:", err);
+        return fetch(req); // If error, just fetch
       }
     })()
   );
