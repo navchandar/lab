@@ -58,6 +58,19 @@ class MapConfig:
             "zepto": "#6035D0",  # Zepto Violet
         }
     )
+    SHORTCUTS:  Dict[str, str] = field(
+        default_factory=lambda: {
+            "amazon": "a",
+            "flipkart": "f",
+            "bigbasket": "b",
+            "blinkit": "k",
+            "zomato": "z",
+            "swiggy": "s",
+            "instamart": "i",
+            "jiomart": "j",
+            "meesho": "m",
+            "zepto": "p"
+    })
 
     # --- IMAGE QUALITY SETTINGS ---
     # Width 14 inches * 300 DPI = 4200 pixels wide (High Quality)
@@ -164,6 +177,7 @@ class MapRenderer:
             "northEast": [ne_lat, ne_lon],
             "formats": ["webp", "png"],
             "colors": self.cfg.BRAND_COLORS,
+            "shortcuts": self.cfg.SHORTCUTS,
             "services": list(self.cfg.SERVICES),
         }
 
