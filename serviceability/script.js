@@ -433,17 +433,17 @@ async function initApp() {
     // If we have services, but the URL is empty or incorrect
     if (availableServices.length > 0) {
       if (!savedService || !availableServices.includes(savedService)) {
+        if (!availableServices.includes(savedService)) {
+          showToast(`${savedService} is not available`, true);
+          console.warn(
+            `${savedService} is not available in ${availableServices}`
+          );
+        }
         // Select the first available item
         savedService = availableServices[0];
         // Update the URL immediately
         UrlState.set("service", savedService);
         console.log(`URL reset to default service: ${savedService}`);
-      }
-      if (!availableServices.includes(savedService)) {
-        showToast(`${savedService} is not available`, true);
-        console.warn(
-          `${savedService} is not available in ${availableServices}`
-        );
       }
     }
 
