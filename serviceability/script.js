@@ -1161,7 +1161,7 @@ function initSearch() {
   let isSearching = false;
   // If we are on big screen, show the shortcut hint
   if (input && window.matchMedia("(min-width: 600px)").matches) {
-    input.placeholder = "Search City or Pincode ( Press / )";
+    input.placeholder = "Search City or Pincode      [ / ]";
   }
 
   if (!input || !btn) {
