@@ -433,8 +433,12 @@ async function initApp() {
     // If we have services, but the URL is empty or incorrect
     if (availableServices.length > 0) {
       if (!savedService || !availableServices.includes(savedService)) {
-        if (!availableServices.includes(savedService)) {
-          showToast(`${savedService} is not available`, true);
+        if (
+          savedService &&
+          savedService !== "" &&
+          !availableServices.includes(savedService)
+        ) {
+          showToast(`${savedService.toUpperCase()} is not available`, true);
           console.warn(
             `${savedService} is not available in ${availableServices}`
           );
@@ -1151,12 +1155,17 @@ function focusMap() {
 function initSearch() {
   const input = document.getElementById("location-search");
   const btn = document.getElementById("search-btn");
-  const searchContainer = input.closest(".search-container");
+  const searchContainer = input ? input.closest(".search-container") : null;
 
   // Variable to track status
   let isSearching = false;
+  // If we are on big screen, show the shortcut hint
+  if (input && window.matchMedia("(min-width: 600px)").matches) {
+    input.placeholder = "Search City or Pincode ( Press / )";
+  }
 
   if (!input || !btn) {
+    console.warn("Search input/button not found");
     return null;
   }
 
@@ -1299,6 +1308,40 @@ function initSearch() {
   input.addEventListener("search", () => {
     if (input.value === "") {
       performSearch();
+    }
+  });
+
+  // --- Search Listener (/) ---
+  document.addEventListener("keydown", (e) => {
+    // Check if the key is '/'
+    if (e.key === "/") {
+      // Don't trigger if user is already typing in an input/textarea
+      // (This prevents the shortcut from firing if they are typing a URL or date elsewhere)
+      const tag = document.activeElement.tagName.toLowerCase();
+      if (tag === "input" || tag === "textarea") {
+        return;
+      }
+
+      // Prevent the '/' character from actually being typed into the box
+      e.preventDefault();
+
+      // Expand bottom sheet on mobile if it's collapsed so input is visible
+      const bottomSheet = document.getElementById("bottom-sheet");
+      if (
+        window.innerWidth <= 600 &&
+        bottomSheet &&
+        bottomSheet.classList.contains("collapsed")
+      ) {
+        bottomSheet.classList.remove("collapsed");
+      }
+
+      // Focus the input
+      input.focus();
+
+      // If text exists, select all of it (Autoselect)
+      if (input.value) {
+        input.select();
+      }
     }
   });
 
