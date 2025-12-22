@@ -2,6 +2,7 @@
 let currentOverlay = null;
 let mapBounds = null;
 let brandColors = {};
+let brandShortcuts = {};
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
 let isLayerSwitching = false;
@@ -415,6 +416,7 @@ async function initApp() {
     // Store global data
     mapBounds = [boundsData.southWest, boundsData.northEast];
     brandColors = boundsData.colors || {};
+    brandShortcuts = boundsData.shortcuts || {};
     updateFooterTime(boundsData.lastUpdated);
 
     // Generate Radio Buttons
@@ -519,10 +521,6 @@ function generateControls(servicesList) {
 
   // Get partners from the list
   servicesList.forEach((partner, index) => {
-    // --- Calculate Shortcut 1-9 ---
-    const shortcutKey = index + 1;
-    const hasShortcut = shortcutKey <= 9;
-
     const label = document.createElement("label");
     label.className = "radio-card";
     // Default to first item checked, UNLESS URL overrides it later in initApp
@@ -534,9 +532,15 @@ function generateControls(servicesList) {
     label.style.setProperty("--brand-color", color);
 
     // --- Add the Visual Hint ---
-    // Check `hasShortcut` so we don't print "10" or "11"
-    const hintHtml = hasShortcut
-      ? `<span class="shortcut-hint">${shortcutKey}</span>`
+    // Only generate the keyboard shortcut hint span if a key exists
+    const shortcutKey = brandShortcuts[partner];
+    const hintHtml = shortcutKey
+      ? `<span class="shortcut-hint">${shortcutKey.toUpperCase()}</span>`
+      : "";
+
+    // Only add data-shortcut attribute if a key exists
+    const dataAttribute = shortcutKey
+      ? `data-shortcut="${shortcutKey.toLowerCase()}"`
       : "";
 
     label.innerHTML = `
@@ -545,7 +549,7 @@ function generateControls(servicesList) {
                 name="service" 
                 value="${partner}" 
                 ${isChecked}
-                data-index="${index}"
+                ${dataAttribute}
             >
             <div class="card-content">
                 <span class="service-name">${capitalize(partner)}</span>
@@ -553,7 +557,7 @@ function generateControls(servicesList) {
             </div>
         `;
 
-    // Add Event Listener directly to the input
+    // Standard Change Listener
     const input = label.querySelector("input");
     input.addEventListener("change", () => {
       // Remove 'selected-card' class from ALL radio cards in this container
@@ -586,18 +590,14 @@ function generateControls(servicesList) {
         return;
       }
 
-      const key = parseInt(e.key);
-      // Check if key is 1-9
-      if (!isNaN(key) && key >= 1 && key <= 9) {
-        const targetIndex = key - 1;
-        // Find the input with this index
-        const targetInput = container.querySelector(
-          `input[data-index="${targetIndex}"]`
-        );
-        // Trigger the 'change' event logic automatically
-        if (targetInput) {
-          targetInput.click();
-        }
+      const key = e.key.toLowerCase();
+      // Conditionally select the corresponding radio button
+      const targetInput = container.querySelector(
+        `input[data-shortcut="${key}"]`
+      );
+      // Trigger the 'change' event logic automatically
+      if (targetInput) {
+        targetInput.click();
       }
     });
     window.hasServiceShortcuts = true;
@@ -956,7 +956,10 @@ function updateMapLayer() {
       });
 
       // Cache It
-      manageCacheMemory(serviceName, { overlay: newOverlay, url: objectUrl });
+      manageCacheMemory(serviceName, {
+        overlay: newOverlay,
+        url: objectUrl,
+      });
 
       setOverlay(newOverlay);
       console.log(`Loaded WebP for ${serviceName}`);
@@ -1037,7 +1040,10 @@ function preloadRemainingLayers(servicesList) {
             className: "smooth-layer",
           });
 
-          manageCacheMemory(serviceName, { overlay: overlay, url: objectUrl });
+          manageCacheMemory(serviceName, {
+            overlay: overlay,
+            url: objectUrl,
+          });
         }
       })
       .catch(() => {});

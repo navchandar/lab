@@ -2754,6 +2754,7 @@ const BASE_REMOVE_TITLES = [
   "In-Person Hiring Drive- ",
   "In-Person Hiring Drive",
   "Hiring Drive",
+  "We are hiring",
   "We're Hiring",
   "We Are Hiring – ",
   "We are Hiring",
@@ -2782,6 +2783,7 @@ const BASE_REMOVE_TITLES = [
   "Urgent Opening for",
   "Urgent Opening ",
   "Urgent ",
+  "!!!",
   ", IMMEDIATE JOINER. Across",
   "Immediate opening for ",
   "Hiring Immediately",
@@ -2820,7 +2822,6 @@ const BASE_REMOVE_TITLES = [
   "- E",
   "- EY",
   "India",
-  "- ",
 ];
 
 const prefix = [

@@ -47,30 +47,43 @@ class MapConfig:
     BRAND_COLORS: Dict[str, str] = field(
         default_factory=lambda: {
             "amazon": "#FF9900",  # Amazon Orange
+            "amazon fresh": "#77BC1F",  # Amazon Fresh Lima
             "flipkart": "#2874F0",  # Flipkart Blue
+            "myntra": "#F41CB2",  # Myntra Shocking Pink
             "bigbasket": "#84C225",  # Bigbasket Green
-            "blinkit": "#F8CB46",  # Blinkit Yellow
             "zomato": "#E23744",  # Zomato Red
+            "blinkit": "#F8CB46",  # Blinkit Yellow
             "swiggy": "#FC8019",  # Swiggy Orange
             "instamart": "#FC8019",  # Swiggy Orange
             "jiomart": "#0093D0",  # Jio Blue
+            "ajio": "#2f4254",  # Ajio Greenish
             "meesho": "#F43397",  # Meesho Pink
             "zepto": "#6035D0",  # Zepto Violet
+            "pharmeasy": "#007F56" # PharmEasy Rain Forest
+            "apollo 24|7": "#097895" # Apollo 24/7 Blue Chill
+            "tata 1mg": "#FE6F61" # Tata 1mg Bittersweet
         }
     )
     SHORTCUTS:  Dict[str, str] = field(
         default_factory=lambda: {
             "amazon": "a",
+            "amazon fresh": "h",
             "flipkart": "f",
+            "myntra": "y",
             "bigbasket": "b",
-            "blinkit": "k",
             "zomato": "z",
+            "blinkit": "k",
             "swiggy": "s",
             "instamart": "i",
             "jiomart": "j",
+            "ajio": "o",
             "meesho": "m",
-            "zepto": "p"
-    })
+            "zepto": "e",
+            "pharmeasy": "p",
+            "apollo 24|7": "l",
+            "tata 1mg": "t"
+        }
+    )
 
     # --- IMAGE QUALITY SETTINGS ---
     # Width 14 inches * 300 DPI = 4200 pixels wide (High Quality)
@@ -85,16 +98,23 @@ class MapConfig:
     # Services to Render
     SERVICES: Tuple[str, ...] = (
         "amazon",
+        "amazon fresh",
         "flipkart",
+        "myntra",
         "bigbasket",
-        "blinkit",
         "zomato",
+        "blinkit",
         "swiggy",
         "instamart",
         "jiomart",
+        "ajio",
         "meesho",
         "zepto",
+        "pharmeasy",
+        "apollo 24|7",
+        "tata 1mg"
     )
+
 
 
 config = MapConfig()
@@ -158,8 +178,41 @@ class MapRenderer:
         self._fig_width = self.cfg.IMG_WIDTH_INCHES
         self._fig_height = self._fig_width * self._aspect_ratio
 
+    
+    def _get_counts(self) -> Dict[str, int]:
+        """Helper to calculate point counts for all services."""
+        service_counts = {}
+        logger.info("Calculating service coverage point count")
+        
+        for service in self.cfg.SERVICES:
+            count = 0
+            for loc in self.data.locations:
+                pin = loc["pin"]
+                partners = self.data.availability.get(pin, {})
+                if partners.get(service, 0) >= 1:
+                    count += 1
+            service_counts[service] = count
+            logger.info(f"   -> {service}: {count} points")
+        return service_counts
+
+
     def save_bounds_json(self) -> None:
         """Exports bounds, colors and timestamp so Leaflet knows placement and branding."""
+
+        counts = self._get_counts()
+        
+        # Filter Logic
+        valid_services = []
+        MIN_POINTS = 10
+
+        for service in self.cfg.SERVICES:
+            count = counts.get(service, 0)
+            if count >= MIN_POINTS:
+                valid_services.append(service)
+                logger.info(f"Saving {service}: {count} points")
+            else:
+                logger.warning(f"Skipped {service}: ({count} points)")
+
 
         # CAPTURE CURRENT UTC TIME
         current_time = datetime.now(timezone.utc).isoformat()
@@ -178,13 +231,17 @@ class MapRenderer:
             "formats": ["webp", "png"],
             "colors": self.cfg.BRAND_COLORS,
             "shortcuts": self.cfg.SHORTCUTS,
-            "services": list(self.cfg.SERVICES),
+            "counts": counts,
+            "services": valid_services,
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
         with open(out_path, "w") as f:
             json.dump(data, f, indent=2)
         logger.info(f"Saved bounds to {out_path} at {current_time}")
+
+        return valid_services
+
 
     def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
         """Filters lat/lng points for a specific service."""
@@ -445,11 +502,14 @@ def main():
     # Initialize Renderer
     renderer = MapRenderer(config, data_mgr)
 
-    # Save Metadata
-    renderer.save_bounds_json()
+    # Save Metadata - filters the list AND saves bounds.json
+    valid_services = renderer.save_bounds_json()
+    if not valid_services:
+        logger.error("No services met the minimum point threshold. Exiting.")
+        return
 
-    # Render Loop
-    for service in config.SERVICES:
+    # Render Loop (Iterate ONLY over valid services)
+    for service in valid_services:
         renderer.render_service(service)
         renderer.save_service_json(service)
 
