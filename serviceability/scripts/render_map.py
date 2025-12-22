@@ -59,8 +59,8 @@ class MapConfig:
             "ajio": "#2f4254",  # Ajio Greenish
             "meesho": "#F43397",  # Meesho Pink
             "zepto": "#6035D0",  # Zepto Violet
-            "pharmeasy": "#007F56" # PharmEasy Rain Forest
-            "apollo 24|7": "#097895" # Apollo 24/7 Blue Chill
+            "pharmeasy": "#007F56", # PharmEasy Rain Forest
+            "apollo 24|7": "#097895", # Apollo 24/7 Blue Chill
             "tata 1mg": "#FE6F61" # Tata 1mg Bittersweet
         }
     )
