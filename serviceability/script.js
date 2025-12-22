@@ -419,15 +419,35 @@ async function initApp() {
     brandShortcuts = boundsData.shortcuts || {};
     updateFooterTime(boundsData.lastUpdated);
 
+    // Get the list of what is actually available
+    const availableServices = boundsData.services || [];
     // Generate Radio Buttons
-    generateControls(boundsData.services);
+    generateControls(availableServices);
 
     // Initialize Search Logic
     const searchFn = initSearch();
 
     // --- RESTORE STATE FROM URL ---
     // Check for 'service' param
-    const savedService = UrlState.get("service");
+    let savedService = UrlState.get("service");
+    // If we have services, but the URL is empty or incorrect
+    if (availableServices.length > 0) {
+      if (!savedService || !availableServices.includes(savedService)) {
+        // Select the first available item
+        savedService = availableServices[0];
+        // Update the URL immediately
+        UrlState.set("service", savedService);
+        console.log(`URL reset to default service: ${savedService}`);
+      }
+      if (!availableServices.includes(savedService)) {
+        showToast(`${savedService} is not available`, true);
+        console.warn(
+          `${savedService} is not available in ${availableServices}`
+        );
+      }
+    }
+
+    // Select the radio button
     if (savedService) {
       // Try to select the radio button
       const input = document.querySelector(`input[value="${savedService}"]`);
@@ -512,6 +532,7 @@ async function initApp() {
 // Function to Generate HTML
 function generateControls(servicesList) {
   if (!servicesList || servicesList.length === 0) {
+    console.warn(`No services found: ${servicesList}`);
     return;
   }
 
@@ -1052,6 +1073,11 @@ function preloadRemainingLayers(servicesList) {
 
 // Helper to update Legend and Card colors
 function updateUIColors(color, selectedInput) {
+  const themeColor = document.getElementById("theme-color");
+  if (themeColor) {
+    themeColor.setAttribute("content", color);
+  }
+
   // Update Legend "Serviceable" Dot
   const legendDot = document.querySelector(
     "div.legend-item:nth-child(1) > span"

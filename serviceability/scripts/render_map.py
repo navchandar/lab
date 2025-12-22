@@ -42,6 +42,29 @@ class MapConfig:
     DOT_ALPHA: float = 0.5
     BOUNDARY_WIDTH: float = 0.3
 
+    # Services to Render
+    SERVICES: Tuple[str, ...] = (
+        "amazon",
+        "amazon fresh",
+        "flipkart",
+        "myntra",
+        "bigbasket",
+        "zomato",
+        "blinkit",
+        "swiggy",
+        "instamart",
+        "jiomart",
+        "ajio",
+        "dmart ready",
+        "meesho",
+        "zepto",
+        "pharmeasy",
+        "apollo 24|7",
+        "tata 1mg",
+        "firstcry",
+        "licious"
+    )
+
     # Brand Identity Colors (Hex Codes)
     DEFAULT_COLOR: str = "#2ecc71"  # Fallback Green
     BRAND_COLORS: Dict[str, str] = field(
@@ -57,11 +80,14 @@ class MapConfig:
             "instamart": "#FC8019",  # Swiggy Orange
             "jiomart": "#0093D0",  # Jio Blue
             "ajio": "#2f4254",  # Ajio Greenish
+            "dmart ready": "#046D39", # DMart Fun Green
             "meesho": "#F43397",  # Meesho Pink
             "zepto": "#6035D0",  # Zepto Violet
             "pharmeasy": "#007F56", # PharmEasy Rain Forest
             "apollo 24|7": "#097895", # Apollo 24/7 Blue Chill
-            "tata 1mg": "#FE6F61" # Tata 1mg Bittersweet
+            "tata 1mg": "#FE6F61", # Tata 1mg Bittersweet
+            "firstcry": "#FFD91B", # FirstCry Candlelight
+            "licious": "#E31D36" # Licious Alizarin Crimson
         }
     )
     SHORTCUTS:  Dict[str, str] = field(
@@ -77,11 +103,14 @@ class MapConfig:
             "instamart": "i",
             "jiomart": "j",
             "ajio": "o",
+            "dmart ready": "d",
             "meesho": "m",
             "zepto": "e",
             "pharmeasy": "p",
             "apollo 24|7": "l",
-            "tata 1mg": "t"
+            "tata 1mg": "t",
+            "firstcry": "c",
+            "licious": "u"
         }
     )
 
@@ -94,27 +123,6 @@ class MapConfig:
     WEBP_QUALITY: int = 90
     # PNG Settings - 0.1 means the PNG will be 10% of the size of the WebP
     PNG_SCALE_FACTOR: float = 0.1
-
-    # Services to Render
-    SERVICES: Tuple[str, ...] = (
-        "amazon",
-        "amazon fresh",
-        "flipkart",
-        "myntra",
-        "bigbasket",
-        "zomato",
-        "blinkit",
-        "swiggy",
-        "instamart",
-        "jiomart",
-        "ajio",
-        "meesho",
-        "zepto",
-        "pharmeasy",
-        "apollo 24|7",
-        "tata 1mg"
-    )
-
 
 
 config = MapConfig()
