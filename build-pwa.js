@@ -345,14 +345,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  const normalizedPath = url.pathname.replace(/^\/|\/$/g, "");
+  const normalizedPath = url.pathname.replace(/^\\/|\\/$/g, "");
 
   event.respondWith(
     (async () => {
       try {
         const ignoreList = Array.isArray(IGNORED_DIRS) ? IGNORED_DIRS : [];
         const isIgnored = ignoreList.some((dir) => {
-          const cleanDir = String(dir).replace(/^\/|\/$/g, "");
+          const cleanDir = String(dir).replace(/^\\/|\\/$/g, "");
           return (
             normalizedPath === cleanDir ||
             normalizedPath.startsWith(cleanDir + "/")
@@ -365,7 +365,7 @@ self.addEventListener("fetch", (event) => {
 
         const cacheList = Array.isArray(urlsToCache) ? urlsToCache : [];
         const shouldBeCached = cacheList.some((path) => {
-          const cleanPath = String(path).replace(/^\/|\/$/g, "");
+          const cleanPath = String(path).replace(/^\\/|\\/$/g, "");
           return (
             normalizedPath === cleanPath ||
             (normalizedPath === "" && cleanPath === "index.html")
