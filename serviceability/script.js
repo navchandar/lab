@@ -559,8 +559,9 @@ function generateControls(servicesList) {
     // --- Add the Visual Hint ---
     // Only generate the keyboard shortcut hint span if a key exists
     const shortcutKey = brandShortcuts[partner];
+    const s = shortcutKey ? shortcutKey.toUpperCase() : "";
     const hintHtml = shortcutKey
-      ? `<span class="shortcut-hint">${shortcutKey.toUpperCase()}</span>`
+      ? `<span title="Keyboard shortcut: ${s}" class="shortcut-hint">${s}</span>`
       : "";
 
     // Only add data-shortcut attribute if a key exists
