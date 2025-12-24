@@ -67,6 +67,7 @@ class MapConfig:
         "tata 1mg",
         "firstcry",
         "licious",
+        "freshtohome",
     )
 
     # Brand Identity Colors (Hex Codes)
@@ -96,6 +97,7 @@ class MapConfig:
             "tata 1mg": "#FE6F61",  # Tata 1mg Bittersweet
             "firstcry": "#FFD91B",  # FirstCry Candlelight
             "licious": "#E31D36",  # Licious Alizarin Crimson
+            "freshtohome": "#633688",  # FreshToHome Eminence
         }
     )
     SHORTCUTS: Dict[str, str] = field(
@@ -123,6 +125,7 @@ class MapConfig:
             "tata 1mg": "t",
             "firstcry": "c",
             "licious": "u",
+            "freshtohome": "r",
         }
     )
 
