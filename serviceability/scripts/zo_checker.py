@@ -289,7 +289,7 @@ async def main():
                     result_msg = (
                         "✅ Serviceable" if status == 1 else "❌ Not Serviceable"
                     )
-                    logger.info(f"   -> Result: {result_msg}")
+                    logger.info(f"   -> {updates_buffer} Result: {result_msg}")
 
                 # Save periodically
                 if updates_buffer % SAVE_INTERVAL == 0:

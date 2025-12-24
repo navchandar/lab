@@ -46,9 +46,13 @@ class MapConfig:
     SERVICES: Tuple[str, ...] = (
         "amazon",
         "amazon fresh",
+        "amazon now",
         "flipkart",
+        "flipkart minutes",
         "myntra",
+        "myntra m-now",
         "bigbasket",
+        "bigbasket bbnow",
         "zomato",
         "blinkit",
         "swiggy",
@@ -71,9 +75,13 @@ class MapConfig:
         default_factory=lambda: {
             "amazon": "#FF9900",  # Amazon Orange
             "amazon fresh": "#77BC1F",  # Amazon Fresh Lima
+            "amazon now": "#0673F7",
             "flipkart": "#2874F0",  # Flipkart Blue
+            "flipkart minutes": "#920040",
             "myntra": "#F41CB2",  # Myntra Shocking Pink
+            "myntra m-now": "#F41CB2",
             "bigbasket": "#84C225",  # Bigbasket Green
+            "bigbasket bbnow": "#84C225", 
             "zomato": "#E23744",  # Zomato Red
             "blinkit": "#F8CB46",  # Blinkit Yellow
             "swiggy": "#FC8019",  # Swiggy Orange
@@ -94,9 +102,13 @@ class MapConfig:
         default_factory=lambda: {
             "amazon": "a",
             "amazon fresh": "h",
+            "amazon now": "n",
             "flipkart": "f",
+            "flipkart minutes": "",
             "myntra": "y",
+            "myntra m-now": "w",
             "bigbasket": "b",
+            "bigbasket bbnow": "",
             "zomato": "z",
             "blinkit": "k",
             "swiggy": "s",
