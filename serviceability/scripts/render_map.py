@@ -62,7 +62,7 @@ class MapConfig:
         "apollo 24|7",
         "tata 1mg",
         "firstcry",
-        "licious"
+        "licious",
     )
 
     # Brand Identity Colors (Hex Codes)
@@ -80,17 +80,17 @@ class MapConfig:
             "instamart": "#FC8019",  # Swiggy Orange
             "jiomart": "#0093D0",  # Jio Blue
             "ajio": "#2f4254",  # Ajio Greenish
-            "dmart ready": "#046D39", # DMart Fun Green
+            "dmart ready": "#046D39",  # DMart Fun Green
             "meesho": "#F43397",  # Meesho Pink
             "zepto": "#6035D0",  # Zepto Violet
-            "pharmeasy": "#007F56", # PharmEasy Rain Forest
-            "apollo 24|7": "#097895", # Apollo 24/7 Blue Chill
-            "tata 1mg": "#FE6F61", # Tata 1mg Bittersweet
-            "firstcry": "#FFD91B", # FirstCry Candlelight
-            "licious": "#E31D36" # Licious Alizarin Crimson
+            "pharmeasy": "#007F56",  # PharmEasy Rain Forest
+            "apollo 24|7": "#097895",  # Apollo 24/7 Blue Chill
+            "tata 1mg": "#FE6F61",  # Tata 1mg Bittersweet
+            "firstcry": "#FFD91B",  # FirstCry Candlelight
+            "licious": "#E31D36",  # Licious Alizarin Crimson
         }
     )
-    SHORTCUTS:  Dict[str, str] = field(
+    SHORTCUTS: Dict[str, str] = field(
         default_factory=lambda: {
             "amazon": "a",
             "amazon fresh": "h",
@@ -110,7 +110,7 @@ class MapConfig:
             "apollo 24|7": "l",
             "tata 1mg": "t",
             "firstcry": "c",
-            "licious": "u"
+            "licious": "u",
         }
     )
 
@@ -186,12 +186,11 @@ class MapRenderer:
         self._fig_width = self.cfg.IMG_WIDTH_INCHES
         self._fig_height = self._fig_width * self._aspect_ratio
 
-    
     def _get_counts(self) -> Dict[str, int]:
         """Helper to calculate point counts for all services."""
         service_counts = {}
         logger.info("Calculating service coverage point count")
-        
+
         for service in self.cfg.SERVICES:
             count = 0
             for loc in self.data.locations:
@@ -203,12 +202,11 @@ class MapRenderer:
             logger.info(f"   -> {service}: {count} points")
         return service_counts
 
-
     def save_bounds_json(self) -> None:
         """Exports bounds, colors and timestamp so Leaflet knows placement and branding."""
 
         counts = self._get_counts()
-        
+
         # Filter Logic
         valid_services = []
         MIN_POINTS = 10
@@ -220,7 +218,6 @@ class MapRenderer:
                 logger.info(f"Saving {service}: {count} points")
             else:
                 logger.warning(f"Skipped {service}: ({count} points)")
-
 
         # CAPTURE CURRENT UTC TIME
         current_time = datetime.now(timezone.utc).isoformat()
@@ -249,7 +246,6 @@ class MapRenderer:
         logger.info(f"Saved bounds to {out_path} at {current_time}")
 
         return valid_services
-
 
     def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
         """Filters lat/lng points for a specific service."""
