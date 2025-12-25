@@ -45,11 +45,11 @@
       "count": 49
     },
     {
-      "label": "Amazon",
-      "count": 43
+      "label": "IBM",
+      "count": 44
     },
     {
-      "label": "IBM",
+      "label": "Amazon",
       "count": 43
     },
     {
@@ -84,7 +84,7 @@
   "byLocation": [
     {
       "label": "Bengaluru, Karnataka, India",
-      "count": 1318
+      "count": 1319
     },
     {
       "label": "Hyderabad, Telangana, India",
@@ -96,7 +96,7 @@
     },
     {
       "label": "Chennai, Tamil Nadu, India",
-      "count": 303
+      "count": 304
     },
     {
       "label": "Noida, Uttar Pradesh, India",
@@ -126,7 +126,7 @@
   "byRoleType": [
     {
       "label": "SoftwareQA",
-      "count": 1133
+      "count": 1134
     },
     {
       "label": "SoftwareDEV",
@@ -138,7 +138,7 @@
     },
     {
       "label": "DevOps/SRE",
-      "count": 493
+      "count": 494
     },
     {
       "label": "ML/AI",
@@ -175,27 +175,35 @@
   ],
   "techVsRole": {
     "SoftwareQA": {
-      "totalJobs": 1133,
+      "totalJobs": 1134,
       "techs": [
         {
           "label": "Python",
-          "count": 346
+          "count": 347
         },
         {
           "label": "Java",
-          "count": 413
+          "count": 414
+        },
+        {
+          "label": "CI_CD",
+          "count": 388
+        },
+        {
+          "label": "Automation_Tools",
+          "count": 644
+        },
+        {
+          "label": "MobileTest",
+          "count": 114
+        },
+        {
+          "label": "Agile_Scrum",
+          "count": 557
         },
         {
           "label": "Git",
           "count": 357
-        },
-        {
-          "label": "CI_CD",
-          "count": 387
-        },
-        {
-          "label": "Automation_Tools",
-          "count": 643
         },
         {
           "label": "APITest",
@@ -224,10 +232,6 @@
         {
           "label": "RDBMS",
           "count": 59
-        },
-        {
-          "label": "Agile_Scrum",
-          "count": 556
         },
         {
           "label": "Embedded_Tools",
@@ -272,10 +276,6 @@
         {
           "label": "IdentitySec",
           "count": 4
-        },
-        {
-          "label": "MobileTest",
-          "count": 113
         },
         {
           "label": "Cert_AWS",
@@ -689,11 +689,11 @@
       ]
     },
     "DevOps/SRE": {
-      "totalJobs": 493,
+      "totalJobs": 494,
       "techs": [
         {
           "label": "Python",
-          "count": 255
+          "count": 256
         },
         {
           "label": "Java",
@@ -712,16 +712,28 @@
           "count": 151
         },
         {
+          "label": "DataStreaming",
+          "count": 49
+        },
+        {
+          "label": "AWS_Cloud",
+          "count": 259
+        },
+        {
+          "label": "Containerization",
+          "count": 240
+        },
+        {
+          "label": "Observability",
+          "count": 128
+        },
+        {
           "label": "SRE",
-          "count": 88
+          "count": 89
         },
         {
           "label": "NetworkSec",
           "count": 26
-        },
-        {
-          "label": "AWS_Cloud",
-          "count": 258
         },
         {
           "label": "Azure_Cloud",
@@ -732,16 +744,8 @@
           "count": 166
         },
         {
-          "label": "Containerization",
-          "count": 239
-        },
-        {
           "label": "IaC",
           "count": 148
-        },
-        {
-          "label": "Observability",
-          "count": 127
         },
         {
           "label": "NoSQL_DB",
@@ -794,10 +798,6 @@
         {
           "label": "BigData",
           "count": 34
-        },
-        {
-          "label": "DataStreaming",
-          "count": 48
         },
         {
           "label": "MachineLearning",
@@ -2266,6 +2266,40 @@
       ]
     },
     {
+      "company": "IBM",
+      "totalJobs": 44,
+      "distribution": [
+        {
+          "range": "0-3 Years",
+          "count": 0
+        },
+        {
+          "range": "4-6 Years",
+          "count": 21
+        },
+        {
+          "range": "7-9 Years",
+          "count": 0
+        },
+        {
+          "range": "10-12 Years",
+          "count": 0
+        },
+        {
+          "range": "13-16 Years",
+          "count": 0
+        },
+        {
+          "range": "17-20 Years",
+          "count": 1
+        },
+        {
+          "range": "21+ Years",
+          "count": 0
+        }
+      ]
+    },
+    {
       "company": "Amazon",
       "totalJobs": 43,
       "distribution": [
@@ -2292,40 +2326,6 @@
         {
           "range": "17-20 Years",
           "count": 0
-        },
-        {
-          "range": "21+ Years",
-          "count": 0
-        }
-      ]
-    },
-    {
-      "company": "IBM",
-      "totalJobs": 43,
-      "distribution": [
-        {
-          "range": "0-3 Years",
-          "count": 0
-        },
-        {
-          "range": "4-6 Years",
-          "count": 20
-        },
-        {
-          "range": "7-9 Years",
-          "count": 0
-        },
-        {
-          "range": "10-12 Years",
-          "count": 0
-        },
-        {
-          "range": "13-16 Years",
-          "count": 0
-        },
-        {
-          "range": "17-20 Years",
-          "count": 1
         },
         {
           "range": "21+ Years",
@@ -2759,5 +2759,5 @@
     "17-20 Years",
     "21+ Years"
   ],
-  "totalCount": 4785
+  "totalCount": 4787
 }
