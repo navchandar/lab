@@ -87,13 +87,27 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-right: 4px;
+    max-height: 60vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.options::-webkit-scrollbar {
+    width: 6px;
+}
+
+.options::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
 .radio-card {
     position: relative;
     cursor: pointer;
     margin: 0;
-    overflow: hidden
+    min-height: 32px;
+    overflow: hidden;
 }
 
 .radio-card input {
@@ -573,16 +587,23 @@ body {
     }
 
     .legend {
+        justify-content: center;
         margin-top: 15px;
         padding: 10px 50px;
+    }
+
+    .radio-card {
+        max-width: 93%;
+        min-height: 32px;
     }
 
     .options {
         display: flex;
         flex-direction: column;
         gap: 5px;
+        padding-right: 10px;
+        max-height: 33vh;
     }
-
 
     .last-refresh {
         padding-bottom: 10px;
@@ -618,6 +639,7 @@ body {
     }
 
     .card-content {
+        justify-content: center;
         padding: 7px 16px;
     }
 

@@ -583,6 +583,13 @@ function generateControls(servicesList) {
             </div>
         `;
 
+    // --- Handle Collapse on Mobile ---
+    label.addEventListener("click", () => {
+      if (window.innerWidth <= 600) {
+        collapseSheet();
+      }
+    });
+
     // Standard Change Listener
     const input = label.querySelector("input");
     input.addEventListener("change", () => {
