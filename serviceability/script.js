@@ -1202,7 +1202,10 @@ function initSearch() {
 
     // Handle "Clear" / Empty state (No network request needed here)
     if (!query) {
-      UrlState.set("q", null);
+      // Only update URL if it's not already null
+      if (UrlState.get("q") !== null) {
+        UrlState.set("q", null, "push");
+      }
       if (window.innerWidth <= 600) {
         toggleSheet();
       }
@@ -1219,8 +1222,8 @@ function initSearch() {
       collapseSheet();
     }
 
-    // Update URL if this is a fresh user search
-    if (!queryOverride && query !== null) {
+    // Only update URL if it's different from current
+    if (!queryOverride && UrlState.get("q") !== query) {
       UrlState.set("q", query, "push");
     }
 
@@ -1368,6 +1371,7 @@ function initSearch() {
     }
   });
 
+  window.performGlobalSearch = performSearch;
   return performSearch;
 }
 
@@ -1401,12 +1405,10 @@ window.addEventListener("popstate", (event) => {
   const searchInput = document.getElementById("location-search");
 
   // If URL has a query, put it in the box. else clear
-  if (searchInput) {
-    if (query) {
-      searchInput.value = query;
-    } else {
-      searchInput.value = "";
-    }
+  if (searchInput && window.performGlobalSearch) {
+    // Update text box
+    searchInput.value = query || "";
+    window.performGlobalSearch(query);
   }
 });
 
