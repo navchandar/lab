@@ -32,6 +32,9 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 💼 <a href="https://navchandar.github.io/lab/jobs/" target="_blank">**Job Listings**</a> | Identify latest job posts and classify them to be sortable and searchable | 🟩🟩🟩🟩🟩 100% |
 | 🗺️ <a href="https://navchandar.github.io/lab/serviceability/" target="_blank">**Serviceability Map**</a> | Identify and visualize the delivery coverage for major platforms using an interactive Map | 🟩🟩🟩🟩⬜ 80% |
 
+| 🏥 <a href="https://navchandar.github.io/lab/hospitals/" target="_blank">**Hospitals Network**</a> | Identify and visualize the in-network and excluded hospitals using an interactive Map | 🟩⬜⬜⬜⬜ 10% |
+
+
 
 ### Status 
 

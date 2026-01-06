@@ -16,6 +16,7 @@ const IGNORED_DIRS = [
   "jobs",
   "smart-dom-inspector",
   "serviceability",
+  "hospitals",
 ];
 const IGNORED_FILES = [
   "build-pwa.js",
