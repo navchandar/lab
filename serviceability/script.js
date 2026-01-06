@@ -1371,6 +1371,45 @@ function initSearch() {
   return performSearch;
 }
 
+// --- LISTEN FOR BROWSER NAVIGATION (Back/Forward) ---
+window.addEventListener("popstate", (event) => {
+  // Recover the Service from the URL
+  const service = UrlState.get("service");
+
+  if (service) {
+    const input = document.querySelector(`input[value="${service}"]`);
+    if (input) {
+      // Update the Radio Button UI
+      input.checked = true;
+
+      // Update the visual styling (remove 'selected-card' from others)
+      const container = document.getElementById("options-container");
+      if (container) {
+        container
+          .querySelectorAll(".radio-card")
+          .forEach((c) => c.classList.remove("selected-card"));
+        input.closest(".radio-card").classList.add("selected-card");
+      }
+
+      // Update the Map Layer (force it to switch)
+      updateMapLayer();
+    }
+  }
+
+  // Recover the Search Query from the URL
+  const query = UrlState.get("q");
+  const searchInput = document.getElementById("location-search");
+
+  // If URL has a query, put it in the box. else clear
+  if (searchInput) {
+    if (query) {
+      searchInput.value = query;
+    } else {
+      searchInput.value = "";
+    }
+  }
+});
+
 // Start the App
 setupMapTiles(map);
 initApp();
