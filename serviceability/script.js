@@ -1403,14 +1403,21 @@ window.addEventListener("popstate", (event) => {
   }
 
   // Recover the Search Query from the URL
-  const query = UrlState.get("q");
+  const nextQuery = UrlState.get("q") || "";
   const searchInput = document.getElementById("location-search");
 
   // If URL has a query, put it in the box. else clear
   if (searchInput && window.performGlobalSearch) {
-    // Update text box
-    searchInput.value = query || "";
-    window.performGlobalSearch(query);
+    // Get the 'old' state currently in the box
+    const currentQuery = searchInput.value || "";
+    // Only perform search if the query actually CHANGED
+    if (currentQuery !== nextQuery) {
+      console.log(`History change: "${currentQuery}" -> "${nextQuery}"`);
+      // Update text box
+      searchInput.value = nextQuery;
+      // If nextQuery is empty string, performGlobalSearch(null) will correctly clear the map
+      window.performGlobalSearch(nextQuery || null);
+    }
   }
 });
 
