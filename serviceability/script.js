@@ -27,15 +27,21 @@ const UrlState = {
     const params = new URLSearchParams(window.location.search);
     return params.get(key);
   },
-  set: (key, value) => {
+  // Added 'method' parameter, defaulting to 'replace'
+  set: (key, value, method = "replace") => {
     const url = new URL(window.location);
     if (value) {
       url.searchParams.set(key, value);
     } else {
       url.searchParams.delete(key);
     }
-    // Update URL without reloading the page
-    window.history.replaceState({}, "", url);
+
+    // Use pushState for user interactions, replaceState for defaults/logic
+    if (method === "push") {
+      window.history.pushState({}, "", url);
+    } else {
+      window.history.replaceState({}, "", url);
+    }
   },
 };
 
@@ -599,7 +605,7 @@ function generateControls(servicesList) {
         .forEach((c) => c.classList.remove("selected-card"));
 
       // Update URL when user clicks and update Map layer
-      UrlState.set("service", partner);
+      UrlState.set("service", partner, "push");
       updateMapLayer();
 
       // Add 'selected-card' class to THIS card
@@ -1215,7 +1221,7 @@ function initSearch() {
 
     // Update URL if this is a fresh user search
     if (!queryOverride && query !== null) {
-      UrlState.set("q", query);
+      UrlState.set("q", query, "push");
     }
 
     // Normalize query key (lowercase)
@@ -1237,14 +1243,19 @@ function initSearch() {
       searchContainer.classList.add("loading");
     }
 
+    const controller = new AbortController();
+    // Set a 30-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
       // SEND NETWORK REQUEST
       const q = encodeURIComponent(query);
       // Using OpenStreetMap Nominatim API (Free) with 'countrycodes=in'
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=in&limit=1`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=in&limit=1&accept-language=en`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: controller.signal });
       const results = await response.json();
+      clearTimeout(timeoutId); // Clear timeout if successful
 
       if (results && results.length > 0) {
         const bestMatch = results[0];
@@ -1256,7 +1267,11 @@ function initSearch() {
       }
     } catch (error) {
       console.error("Search failed:", error);
-      showToast("Search failed due to network error.", true);
+      if (error.name === "AbortError") {
+        showToast("Search timed out. Try again.", true);
+      } else {
+        showToast("Search failed due to network error.", true);
+      }
 
       // uncollapse bottom sheet in mobile on error so user can try again
       if (window.innerWidth <= 600) {
