@@ -159,10 +159,8 @@ def check_pincode(session, place_id, pin):
 
         # 4. Final Decision Logic
         if serviceable_flag is True:
-            logger.info("   -> Location marked as Serviceable")
             return 1
         elif serviceable_flag is False:
-            logger.info("   -> Location marked as Unserviceable")
             return 0
         else:
             # Fallback: If the key itself is missing from JSON

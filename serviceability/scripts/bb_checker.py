@@ -135,7 +135,7 @@ def check_pincode(session, lat, lng, pin):
             response = session.get(url, timeout=10, impersonate="chrome")
 
         # 303 Redirects mean most likely no service
-        if response.status_code == 303:
+        if response.status_code == 303 or response.status_code == 400:
             return 0
 
         if response.status_code != 200:
