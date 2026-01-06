@@ -1169,7 +1169,7 @@ function initSearch() {
   let isSearching = false;
   // If we are on big screen, show the shortcut hint
   if (input && window.matchMedia("(min-width: 600px)").matches) {
-    input.placeholder = "Search City or Pincode  [ / ]";
+    input.placeholder = "Search City or PIN code  [ / ]";
   }
 
   if (!input || !btn) {
@@ -1252,7 +1252,7 @@ function initSearch() {
         saveToCache(cacheKey, bestMatch);
         handleSearchResult(bestMatch);
       } else {
-        showToast("Location not found. Try a City or Pincode.", true);
+        showToast("Location not found. Try a City or PIN code.", true);
       }
     } catch (error) {
       console.error("Search failed:", error);
