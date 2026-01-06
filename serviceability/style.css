@@ -77,6 +77,7 @@ body {
 .header p {
     margin: 5px 0 10px 0;
     color: #3c3e42;
+    font-size: 12px;
     letter-spacing: 0.25px;
 }
 
@@ -180,7 +181,7 @@ body {
 }
 
 /* When selected, make it pop slightly */
-.radio-card.selected-card .shortcut-hint{
+.radio-card.selected-card .shortcut-hint {
     border-color: #3c4043;
     background-color: rgba(0, 0, 0, 0.08);
     color: #3c4043;
@@ -699,8 +700,8 @@ body {
         cursor: pointer;
     }
 
-    .leaflet-bottom .leaflet-control {
-        margin-bottom: 60px !important;
+    .leaflet-bottom .leaflet-control-zoom {
+        margin-bottom: 20vh !important;
     }
 
 }
@@ -773,23 +774,29 @@ body {
     .shortcut-hint {
         border: 1px solid rgba(255, 255, 255, 0.2);
         background-color: rgba(255, 255, 255, 0.05);
-        color: rgba(255, 255, 255, 0.8);
+        color: rgba(255, 255, 255, 0.8) !important;
     }
 
     .radio-card.selected-card .shortcut-hint {
         box-shadow: 0 0 8px rgba(255, 255, 255, 0.1);
         border-color: rgba(255, 255, 255, 0.8);
         background-color: rgba(255, 255, 255, 0.15);
-        color: #ffffff;
+        color: #ffffff !important;
+    }
+
+
+    .radio-card:hover .shortcut-hint {
+        color: #ffffff !important;
+        font-weight: 700;
     }
 
     .radio-card:hover .service-name {
-        color: #efefef;
+        color: #efefef !important;
     }
 
     .radio-card:hover .card-content {
-        border-color: #5f6368;
-        background-color: #3c4043 !important;
+        border-color: #7a7a7a !important;
+        background-color: #292929 !important;
     }
 
     .radio-card input:checked~.card-content {
@@ -835,6 +842,16 @@ body {
 
     .leaflet-control-attribution a {
         color: #8ab4f8 !important;
+    }
+
+    .leaflet-bottom .leaflet-control-zoom a {
+        background-color: #363636 !important;
+        color: #bdbdbd !important;
+    }
+
+    .leaflet-bottom .leaflet-control-zoom a:hover {
+        background-color: #242424 !important;
+        color: #dbdbdb !important;
     }
 
     .modal-content {

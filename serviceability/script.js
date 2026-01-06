@@ -298,7 +298,7 @@ function updateFooterTime(isoString) {
       year: "numeric",
     }).format(date);
 
-    footerEl.textContent = `Last refreshed: ${formatted}`;
+    footerEl.textContent = `Last updated: ${formatted}`;
   } catch (e) {
     console.warn("Could not parse date:", e);
   }
@@ -890,7 +890,9 @@ function updateMapLayer() {
     const newOverlay = layerObj;
 
     // Ensure layer is initially invisible before adding
-    newOverlay.setOpacity(0);
+    if (newOverlay) {
+      newOverlay.setOpacity(0);
+    }
 
     // Add to Map (If not already there)
     if (!map.hasLayer(newOverlay)) {
@@ -925,15 +927,18 @@ function updateMapLayer() {
         // If Low Zoom  -> Calculated Opacity
         const targetOpacity =
           map.getZoom() >= ZOOM_THRESHOLD ? 0 : getOpacityForZoom();
-        newOverlay.setOpacity(targetOpacity);
+        if (newOverlay) {
+          newOverlay.setOpacity(targetOpacity);
+        }
 
         // Fade OUT Old Layer
         if (oldOverlay && oldOverlay !== newOverlay) {
           if (oldOverlay.getElement()) {
             oldOverlay.getElement().classList.add("smooth-layer");
           }
-          oldOverlay.setOpacity(0);
-
+          if (oldOverlay) {
+            oldOverlay.setOpacity(0);
+          }
           // Remove old layer from DOM after fade to save GPU memory
           // But KEEP it in layerCache object
           setTimeout(() => {
