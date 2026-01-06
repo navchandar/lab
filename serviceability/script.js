@@ -1194,6 +1194,8 @@ function initSearch() {
       queryOverride = null;
     }
 
+    // If queryOverride is NOT a string, user clicked the button/hit enter
+    const isManualSearch = typeof queryOverride !== "string";
     // If override is provided (from URL), use it. Otherwise read input.
     let query = queryOverride;
     if (query === null) {
@@ -1264,7 +1266,7 @@ function initSearch() {
         const bestMatch = results[0];
         // SAVE TO CACHE (LocalStorage)
         saveToCache(cacheKey, bestMatch);
-        handleSearchResult(bestMatch);
+        handleSearchResult(bestMatch, isManualSearch);
       } else {
         showToast("Location not found. Try a City or PIN code.", true);
       }
@@ -1294,7 +1296,7 @@ function initSearch() {
   };
 
   // Helper to handle the moving logic on map
-  const handleSearchResult = (location) => {
+  const handleSearchResult = (location, shouldShowToast = true) => {
     const lat = parseFloat(location.lat);
     const lon = parseFloat(location.lon);
     const newLatLng = new L.LatLng(lat, lon);
@@ -1302,7 +1304,7 @@ function initSearch() {
 
     // --- Check if we are already here ---
     // If distance is less than 3km (3000 meters), consider it "Same Area"
-    if (currentCenter.distanceTo(newLatLng) < 3000) {
+    if (shouldShowToast && currentCenter.distanceTo(newLatLng) < 3000) {
       const name = location.display_name || location.name;
       showToast(`Already at ${name.split(",")[0]}`, false);
     } else {
