@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>Hospital Network Map - India</title>
+
+    <meta
+      name="description"
+      content="Interactive map to verify Health Insurance Network Hospitals and Excluded (Blacklisted) facilities in India. Avoid claim rejection by checking HDFC Ergo, ICICI, and other lists before admission."
+    />
+
+    <meta
+      name="keywords"
+      content="excluded hospitals list, health insurance blacklist, cashless hospital locator, network hospitals india, HDFC Ergo excluded hospitals, ICICI Lombard network, insurance claim rejection, IRDAI hospital list, medical insurance coverage map, GIPSA PPN network, hospital pincode checker"
+    />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+
+    <link rel="canonical" href="https://navchandar.github.io/lab/hospitals/" />
+
+    <link
+      rel="shortcut icon"
+      href="data:image/png;base64,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"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://navchandar.github.io/lab/hospitals/"
+    />
+    <meta property="og:title" content="Hospital Network Map - India" />
+    <meta
+      property="og:description"
+      content="Don't get your claim rejected. Instantly visualize In-Network (Cashless) and Excluded hospitals near you on an interactive map."
+    />
+    <meta
+      property="og:image"
+      content="https://navchandar.github.io/lab/hospitals/preview.jpg"
+    />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Hospital Network Map - India" />
+    <meta
+      name="twitter:description"
+      content="Visual tool to find Cashless hospitals and avoid Excluded (Blacklisted) medical centers for health insurance claims in India."
+    />
+    <meta
+      name="twitter:image"
+      content="https://navchandar.github.io/lab/hospitals/preview.jpg"
+    />
+
+    <meta
+      name="theme-color"
+      content="#2c3e50"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#121212"
+      media="(prefers-color-scheme: dark)"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Hospital Network Map - India",
+        "alternateName": "Cashless & Excluded Hospital List Visualizer",
+        "url": "https://navchandar.github.io/lab/hospitals/",
+        "applicationCategory": "MedicalApplication",
+        "operatingSystem": "Any",
+        "browserRequirements": "Requires JavaScript enabled",
+        "description": "An interactive map to verify hospital network status for health insurance claims in India. Visualize cashless facility availability and identify hospitals on the GIPSA/IRDAI excluded list.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "INR",
+          "availability": "https://schema.org/InStock"
+        },
+        "featureList": [
+          "Search hospitals by Name, Pincode or City",
+          "Check Cashless vs Reimbursement status",
+          "Identify GIPSA PPN Network Hospitals",
+          "View IRDAI Excluded Hospitals"
+        ],
+        "keywords": "cashless hospitals India, GIPSA network map, excluded hospitals list, health insurance network, PPN hospitals, ROHINI code search",
+        "isAccessibleForFree": true
+      }
+    </script>
+
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
+    />
+
+    <style>
+      /* --- THEME VARIABLES --- */
+      :root {
+          --bg-color: #ffffff;
+          --sidebar-bg: #f8f9fa;
+          --text-primary: #333333;
+          --text-secondary: #666666;
+          --border-color: #dddddd;
+          --hover-bg: #e9ecef;
+          --active-bg: #e3f2fd;
+          --primary-color: #2c3e50;
+          --accent-color: #2196f3;
+          --danger-color: #d32f2f;
+          --success-color: #2e7d32;
+          --modal-overlay: rgba(0, 0, 0, 0.6);
+          --modal-bg: #ffffff;
+          --input-bg: #ffffff;
+          /* Popup Vars */
+          --popup-bg: #ffffff;
+          --popup-text: #333333;
+      }
+
+      @media (prefers-color-scheme: dark) {
+          :root {
+              --bg-color: #121212;
+              --sidebar-bg: #1e1e1e;
+              --text-primary: #e0e0e0;
+              --text-secondary: #aaaaaa;
+              --border-color: #333333;
+              --hover-bg: #2c2c2c;
+              --active-bg: #1a3b5c;
+              --primary-color: #1a1a1a;
+              --accent-color: #64b5f6;
+              --danger-color: #ef5350;
+              --success-color: #66bb6a;
+              --modal-overlay: rgba(0, 0, 0, 0.8);
+              --modal-bg: #1e1e1e;
+              --input-bg: #2c2c2c;
+              /* Dark Popup Vars */
+              --popup-bg: #2c2c2c;
+              --popup-text: #f0f0f0;
+          }
+      }
+
+      body {
+          margin: 0;
+          background: var(--bg-color);
+          padding: 0;
+          color: var(--text-primary);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      /* Layout */
+      .container {
+          display: flex;
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
+      }
+
+      .sidebar {
+          display: flex;
+          flex-shrink: 0;
+          flex-direction: column;
+          z-index: 1000;
+          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+          border-right: 1px solid var(--border-color);
+          background: var(--sidebar-bg);
+          width: 380px;
+      }
+
+      .header {
+          background: var(--primary-color);
+          padding: 15px;
+          color: white;
+      }
+
+      .header h1 {
+          margin: 0;
+          font-size: 1.2rem;
+      }
+
+      .header p {
+          opacity: 0.8;
+          margin: 4px 0 0;
+          font-size: 0.8rem;
+      }
+
+      /* Dataset Toggle */
+      .dataset-toggle {
+          display: flex;
+          gap: 10px;
+          background: color-mix(in srgb, var(--primary-color), black 20%);
+          padding: 10px 15px;
+      }
+
+      .toggle-btn {
+          flex: 1;
+          transition: all 0.2s;
+          cursor: pointer;
+          border: none;
+          border-radius: 4px;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 8px;
+          color: rgba(255, 255, 255, 0.7);
+          font-weight: 600;
+          font-size: 0.85rem;
+      }
+
+      .toggle-btn.active {
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          background: var(--accent-color);
+          color: white;
+      }
+
+      /* Controls */
+      .controls {
+          border-bottom: 1px solid var(--border-color);
+          background: var(--sidebar-bg);
+          padding: 12px;
+      }
+
+      .search-wrapper {
+          position: relative;
+          margin-bottom: 10px;
+          width: 100%;
+      }
+
+      .search-box {
+          box-sizing: border-box;
+          border: 1px solid var(--border-color);
+          border-radius: 4px;
+          background: var(--input-bg);
+          padding: 8px 30px 8px 10px;
+          width: 100%;
+          color: var(--text-primary);
+      }
+
+      .search-clear {
+          display: none;
+          position: absolute;
+          top: 50%;
+          right: 8px;
+          transform: translateY(-50%);
+          cursor: pointer;
+          color: var(--text-secondary);
+          font-size: 1.1rem;
+      }
+
+      .search-clear:hover {
+          color: var(--text-primary);
+      }
+
+      /* Filters */
+      .filter-label {
+          display: block;
+          margin-bottom: 6px;
+          color: var(--text-secondary);
+          font-weight: bold;
+          font-size: 0.8rem;
+      }
+
+      .checkbox-group {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          max-height: 80px;
+          overflow-y: auto;
+      }
+
+      .checkbox-item {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          border: 1px solid var(--border-color);
+          border-radius: 12px;
+          background: var(--hover-bg);
+          padding: 3px 8px;
+          color: var(--text-primary);
+          font-size: 0.75rem;
+      }
+
+      .checkbox-item input {
+          margin-right: 5px;
+      }
+
+      /* Results List */
+      .results-info {
+          border-top: 1px solid var(--border-color);
+          border-bottom: 1px solid var(--border-color);
+          background: var(--hover-bg);
+          padding: 8px 15px;
+          color: var(--text-secondary);
+          font-weight: 600;
+          font-size: 0.75rem;
+      }
+
+      .hospital-list {
+          flex: 1;
+          margin: 0;
+          padding: 0;
+          overflow-y: auto;
+          list-style: none;
+      }
+
+      .hospital-item {
+          transition: background 0.1s;
+          cursor: pointer;
+          border-bottom: 1px solid var(--border-color);
+          padding: 10px 15px;
+      }
+
+      .hospital-item:hover {
+          background: var(--hover-bg);
+      }
+
+      .hospital-item.active {
+          border-left: 4px solid var(--accent-color);
+          background: var(--active-bg);
+      }
+
+      .h-name {
+          display: block;
+          margin-bottom: 2px;
+          color: var(--text-primary);
+          font-weight: 600;
+          font-size: 0.85rem;
+          line-height: 1.2;
+      }
+
+      .h-loc {
+          display: block;
+          color: var(--text-secondary);
+          font-size: 0.75rem;
+      }
+
+      .badge {
+          display: inline-block;
+          margin-top: 4px;
+          border: 1px solid transparent;
+          border-radius: 3px;
+          padding: 1px 5px;
+          font-weight: bold;
+          font-size: 0.65rem;
+      }
+
+      .badge.excluded {
+          border-color: rgba(211, 47, 47, 0.2);
+          background: rgba(211, 47, 47, 0.1);
+          color: var(--danger-color);
+      }
+
+      .badge.network {
+          border-color: rgba(46, 125, 50, 0.2);
+          background: rgba(46, 125, 50, 0.1);
+          color: var(--success-color);
+      }
+
+      /* Sidebar Footer */
+      .sidebar-footer {
+          display: flex;
+          justify-content: center;
+          gap: 15px;
+          margin-top: auto;
+          border-top: 1px solid var(--border-color);
+          background: var(--hover-bg);
+          padding: 10px 15px;
+          font-size: 0.75rem;
+      }
+
+      .footer-link {
+          cursor: pointer;
+          border-bottom: 1px dotted var(--text-secondary);
+          color: var(--text-secondary);
+          text-decoration: none;
+      }
+
+      .footer-link:hover {
+          border-bottom-color: var(--accent-color);
+          color: var(--accent-color);
+      }
+
+      /* Map & Dark Mode Popups */
+      #map {
+          flex: 1;
+          z-index: 1;
+          background: var(--bg-color);
+          height: 100%;
+      }
+
+      /* Leaflet Dark Mode Overrides */
+      .leaflet-popup-content-wrapper,
+      .leaflet-popup-tip {
+          box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+          background: var(--popup-bg);
+          color: var(--popup-text);
+      }
+
+      .leaflet-container a.leaflet-popup-close-button {
+          color: var(--text-secondary);
+      }
+
+      /* Loading */
+      #loading {
+          display: flex;
+          position: fixed;
+          top: 0;
+          left: 0;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+          background: var(--modal-overlay);
+          width: 100%;
+          height: 100%;
+          color: white;
+      }
+
+      .spinner {
+          animation: spin 0.8s linear infinite;
+          margin-bottom: 10px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-top: 3px solid white;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+      }
+
+      @keyframes spin {
+          0% {
+              transform: rotate(0deg);
+          }
+
+          100% {
+              transform: rotate(360deg);
+          }
+      }
+
+      /* Toast */
+      #toast {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          visibility: hidden;
+          z-index: 10000;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+          border-radius: 4px;
+          background-color: #333;
+          padding: 12px;
+          min-width: 200px;
+          color: #fff;
+          font-size: 0.85rem;
+          text-align: center;
+      }
+
+      #toast.show {
+          visibility: visible;
+          animation: fadein 0.3s, fadeout 0.3s 2.5s;
+      }
+
+      #toast.error {
+          background-color: var(--danger-color);
+      }
+
+      /* Modal */
+      .modal-overlay {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          justify-content: center;
+          align-items: center;
+          opacity: 0;
+          z-index: 10001;
+          transition: opacity 0.2s;
+          background: var(--modal-overlay);
+          width: 100%;
+          height: 100%;
+      }
+
+      .modal-overlay.open {
+          opacity: 1;
+      }
+
+      .modal-content {
+          position: relative;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+          border-radius: 8px;
+          background: var(--modal-bg);
+          padding: 20px;
+          width: 600px;
+          max-width: 90%;
+          max-height: 85vh;
+          overflow-y: auto;
+          color: var(--text-primary);
+      }
+
+      .modal-close {
+          position: absolute;
+          top: 15px;
+          right: 15px;
+          cursor: pointer;
+          color: var(--text-secondary);
+          font-size: 1.2rem;
+          line-height: 1;
+      }
+
+      .modal-close:hover {
+          color: var(--text-primary);
+      }
+
+      .modal-title {
+          margin: 0 0 15px 0;
+          border-bottom: 1px solid var(--border-color);
+          padding-bottom: 10px;
+          font-size: 1.1rem;
+      }
+
+      .modal-body {
+          color: var(--text-secondary);
+          font-size: 0.85rem;
+          line-height: 1.5;
+      }
+
+      .modal-body h3 {
+          margin: 12px 0 4px;
+          color: var(--text-primary);
+          font-size: 0.9rem;
+      }
+
+      .modal-body p {
+          margin-bottom: 8px;
+      }
+
+      /* Sources Table */
+      .source-table {
+          margin-top: 10px;
+          border-collapse: collapse;
+          width: 100%;
+          font-size: 0.8rem;
+      }
+
+      .source-table th,
+      .source-table td {
+          border-bottom: 1px solid var(--border-color);
+          padding: 8px;
+          text-align: left;
+      }
+
+      .source-table th {
+          background: var(--hover-bg);
+          color: var(--text-primary);
+          font-weight: 600;
+      }
+
+      .source-table td {
+          color: var(--text-primary);
+      }
+
+      .source-table a {
+          color: var(--accent-color);
+          text-decoration: none;
+      }
+
+      .source-table a:hover {
+          text-decoration: underline;
+      }
+
+      /* Mobile Responsiveness */
+      @media (max-width: 768px) {
+          .container {
+              flex-direction: column;
+          }
+
+          .sidebar {
+              border-right: none;
+              border-bottom: 1px solid var(--border-color);
+              width: 100%;
+              height: 45vh;
+          }
+
+          #map {
+              height: 55vh;
+          }
+
+          .header h1 {
+              font-size: 1rem;
+          }
+
+          .modal-content {
+              padding: 15px;
+              max-height: 80vh;
+          }
+      }
+
+      @keyframes fadein {
+          from {
+              bottom: 0;
+              opacity: 0;
+          }
+
+          to {
+              bottom: 20px;
+              opacity: 1;
+          }
+      }
+
+      @keyframes fadeout {
+          from {
+              bottom: 20px;
+              opacity: 1;
+          }
+
+          to {
+              bottom: 0;
+              opacity: 0;
+          }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="loading">
+      <div class="spinner"></div>
+      <div id="loadingText">Initializing Map...</div>
+    </div>
+
+    <div id="toast"></div>
+
+    <div class="modal-overlay" id="genericModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <h2 class="modal-title" id="modalTitle">Title</h2>
+        <div class="modal-body" id="modalBody"></div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="sidebar">
+        <div class="header">
+          <h1>Hospital Network Map</h1>
+          <p>Verify coverage before you go</p>
+        </div>
+
+        <div class="dataset-toggle">
+          <button
+            class="toggle-btn active"
+            id="btn-network"
+            onclick="loadDataset('network')"
+          >
+            In-Network
+          </button>
+          <button
+            class="toggle-btn"
+            id="btn-excluded"
+            onclick="loadDataset('excluded')"
+          >
+            Excluded
+          </button>
+        </div>
+
+        <div class="controls">
+          <div class="search-wrapper">
+            <input
+              type="text"
+              id="searchInput"
+              class="search-box"
+              placeholder="Search name, city, pin..."
+              autocomplete="off"
+            />
+            <span class="search-clear" id="searchClear">&times;</span>
+          </div>
+
+          <span class="filter-label">Filter by Company:</span>
+          <div class="checkbox-group" id="insurerFilters">
+            <span
+              style="font-size:0.75rem; padding: 5px; color: var(--text-secondary);"
+              >Loading filters...</span
+            >
+          </div>
+        </div>
+
+        <div class="results-info">
+          <span id="resultsCount">Initializing...</span>
+        </div>
+
+        <ul class="hospital-list" id="hospitalList"></ul>
+
+        <div class="sidebar-footer">
+          <span class="footer-link" onclick="openSourcesModal()"
+            >Data Sources</span
+          >
+          <span class="footer-link" onclick="openDisclaimerModal()"
+            >Disclaimer</span
+          >
+        </div>
+      </div>
+
+      <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <script>
+      // --- CONFIG ---
+      const CONFIG = {
+        network: {
+          url: "data/innetwork.json",
+          color: "#2e7d32",
+          label: "In-Network",
+        },
+        excluded: {
+          url: "data/excluded.json",
+          color: "#d32f2f",
+          label: "Excluded",
+        },
+      };
+      const SOURCES_URL = "data/sources.json";
+
+      // --- STATE ---
+      let map, markersClusterGroup, tileLayer;
+      let currentType = "network";
+      let currentDataset = [];
+      let markerMap = {};
+      let currentFilteredData = [];
+
+      // --- INIT ---
+      document.addEventListener("DOMContentLoaded", () => {
+        initMap();
+        loadDataset("network");
+        setupEventListeners();
+      });
+
+      function initMap() {
+        // 1. Detect Dark Mode
+        const isDarkMode =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+        // 2. Set Tile URLs
+        const lightTiles =
+          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+        const darkTiles =
+          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+        const tilesUrl = isDarkMode ? darkTiles : lightTiles;
+
+        map = L.map("map", { zoomControl: false }).setView(
+          [20.5937, 78.9629],
+          5
+        );
+        L.control.zoom({ position: "topright" }).addTo(map);
+
+        tileLayer = L.tileLayer(tilesUrl, {
+          attribution: "&copy; OpenStreetMap &copy; CARTO",
+          subdomains: "abcd",
+          maxZoom: 19,
+        }).addTo(map);
+
+        markersClusterGroup = L.markerClusterGroup({
+          chunkedLoading: true,
+          maxClusterRadius: 45,
+          showCoverageOnHover: false,
+        });
+        map.addLayer(markersClusterGroup);
+        map.on("moveend", () => updateSidebarList(false));
+
+        // 3. Listen for System Theme Changes
+        window
+          .matchMedia("(prefers-color-scheme: dark)")
+          .addEventListener("change", (e) => {
+            const newUrl = e.matches ? darkTiles : lightTiles;
+            tileLayer.setUrl(newUrl);
+          });
+      }
+
+      function setupEventListeners() {
+        // Search Input & Clear
+        const searchInput = document.getElementById("searchInput");
+        const searchClear = document.getElementById("searchClear");
+
+        searchInput.addEventListener("input", () => {
+          searchClear.style.display = searchInput.value ? "block" : "none";
+          applyFilters();
+        });
+
+        searchClear.addEventListener("click", () => {
+          searchInput.value = "";
+          searchClear.style.display = "none";
+          applyFilters();
+          searchInput.focus();
+        });
+
+        // Modal Close Events
+        const modalOverlay = document.getElementById("genericModal");
+        modalOverlay.addEventListener("click", (e) => {
+          if (e.target === modalOverlay) closeModal();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && modalOverlay.style.display === "flex")
+            closeModal();
+        });
+      }
+
+      // --- DATA LOADING ---
+      async function loadDataset(type) {
+        currentType = type;
+
+        // UI Resets
+        updateToggleUI();
+        showLoading(true, `Loading ${CONFIG[type].label}...`);
+        document.getElementById("resultsCount").innerText = "Loading data...";
+        document.getElementById("hospitalList").innerHTML = "";
+        markersClusterGroup.clearLayers();
+
+        try {
+          const response = await fetch(CONFIG[type].url);
+          if (!response.ok) throw new Error("Data file not found");
+
+          currentDataset = await response.json();
+
+          generateCompanyFilters(currentDataset);
+          applyFilters();
+
+          showLoading(false);
+        } catch (error) {
+          console.error(error);
+          showLoading(false);
+          showToast(`Failed to load data: ${error.message}`, true);
+          document.getElementById("resultsCount").innerText =
+            "Error loading data";
+          document.getElementById("hospitalList").innerHTML =
+            '<li style="padding:15px;text-align:center;">Data unavailable.</li>';
+          currentDataset = [];
+          currentFilteredData = [];
+        }
+      }
+
+      function updateToggleUI() {
+        document
+          .getElementById("btn-network")
+          .classList.toggle("active", currentType === "network");
+        document
+          .getElementById("btn-excluded")
+          .classList.toggle("active", currentType === "excluded");
+      }
+
+      // --- FILTERS & RENDERING ---
+      function generateCompanyFilters(data) {
+        const container = document.getElementById("insurerFilters");
+        container.innerHTML = "";
+
+        const companies = new Set();
+        data.forEach((item) => {
+          const list =
+            item.excluded_by ||
+            item.insurers ||
+            (item.company ? [item.company] : []);
+          if (Array.isArray(list)) list.forEach((c) => companies.add(c));
+        });
+
+        if (companies.size === 0) {
+          container.innerHTML =
+            '<span style="font-size:0.75rem; color:var(--text-secondary); padding:5px;">No specific filters</span>';
+          return;
+        }
+
+        companies.forEach((company) => {
+          const wrapper = document.createElement("label");
+          wrapper.className = "checkbox-item";
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = company;
+          checkbox.checked = true;
+          checkbox.addEventListener("change", applyFilters);
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(document.createTextNode(company));
+          container.appendChild(wrapper);
+        });
+      }
+
+      function applyFilters() {
+        if (!currentDataset.length) return;
+
+        const searchText = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        const checkboxes = document.querySelectorAll(
+          '#insurerFilters input[type="checkbox"]'
+        );
+
+        const selectedCompanies =
+          checkboxes.length > 0
+            ? Array.from(checkboxes)
+                .filter((cb) => cb.checked)
+                .map((cb) => cb.value)
+            : null;
+
+        currentFilteredData = currentDataset.filter((item) => {
+          const searchStr =
+            `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
+          if (searchText && !searchStr.includes(searchText)) return false;
+
+          const itemCompanies =
+            item.excluded_by ||
+            item.insurers ||
+            (item.company ? [item.company] : []);
+          if (selectedCompanies && itemCompanies.length > 0) {
+            return itemCompanies.some((c) => selectedCompanies.includes(c));
+          }
+          return true;
+        });
+
+        renderMapMarkers(currentFilteredData);
+        updateSidebarList(true);
+      }
+
+      function renderMapMarkers(data) {
+        markersClusterGroup.clearLayers();
+        markerMap = {};
+        const isExcluded = currentType === "excluded";
+        const color = CONFIG[currentType].color;
+
+        const markers = data
+          .map((item, index) => {
+            if (!item.lat || !item.lng) return null;
+            item._ui_id = index;
+
+            const marker = L.marker([item.lat, item.lng]);
+
+            const companyList = (item.excluded_by || item.insurers || []).join(
+              ", "
+            );
+            const badgeHtml = isExcluded
+              ? `<div class="badge excluded">⛔ EXCLUDED</div>`
+              : `<div class="badge network">✅ IN-NETWORK</div>`;
+
+            marker.bindPopup(`
+                    <div style="min-width:200px; font-family:inherit;">
+                        ${badgeHtml}
+                        <h3 style="margin:5px 0; color:${color}; font-size:1rem;">${
+              item.name
+            }</h3>
+                        <p style="margin:4px 0; font-size:0.85rem; color:var(--text-primary); opacity:0.8;">${
+                          item.address
+                        }, ${item.city}</p>
+                        <p style="margin:4px 0; font-size:0.85rem;"><strong>PIN:</strong> ${
+                          item.pincode || "N/A"
+                        }</p>
+                        ${
+                          companyList
+                            ? `<div style="margin-top:8px; font-size:0.75rem; color:var(--text-secondary); border-top:1px solid var(--border-color); padding-top:4px;">${companyList}</div>`
+                            : ""
+                        }
+                    </div>
+                `);
+
+            markerMap[index] = marker;
+            return marker;
+          })
+          .filter((m) => m !== null);
+
+        markersClusterGroup.addLayers(markers);
+      }
+
+      function updateSidebarList(resetScroll = false) {
+        const listContainer = document.getElementById("hospitalList");
+        const countLabel = document.getElementById("resultsCount");
+
+        if (resetScroll) listContainer.scrollTop = 0;
+
+        if (!currentFilteredData || currentFilteredData.length === 0) {
+          countLabel.innerText = "No hospitals found";
+          listContainer.innerHTML = "";
+          return;
+        }
+
+        // Visible Bounds Filter
+        const bounds = map.getBounds();
+        const visibleItems = currentFilteredData.filter((item) => {
+          if (!item.lat || !item.lng) return false;
+          return bounds.contains(L.latLng(item.lat, item.lng));
+        });
+
+        countLabel.innerText = `Showing ${visibleItems.length} of ${currentFilteredData.length} locations`;
+
+        const RENDER_LIMIT = 50;
+        const zoom = map.getZoom();
+
+        listContainer.innerHTML = "";
+
+        if (zoom < 8 && visibleItems.length > 300) {
+          listContainer.innerHTML = `<li style="padding:20px; text-align:center; color:var(--text-secondary); font-size:0.85rem;">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
+          return;
+        }
+
+        const itemsToRender = visibleItems.slice(0, RENDER_LIMIT);
+        const isExcluded = currentType === "excluded";
+
+        itemsToRender.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "hospital-item";
+
+          const companyList = (item.excluded_by || item.insurers || []).join(
+            ", "
+          );
+          const badgeLabel = isExcluded ? "Excluded" : "Network";
+          const badgeClass = isExcluded ? "excluded" : "network";
+
+          li.innerHTML = `
+                    <span class="h-name">${item.name}</span>
+                    <span class="h-loc">${item.city}${
+            item.pincode ? " - " + item.pincode : ""
+          }</span>
+                    <span class="badge ${badgeClass}">${badgeLabel}: ${companyList.substring(
+            0,
+            25
+          )}${companyList.length > 25 ? "..." : ""}</span>
+                `;
+
+          li.addEventListener("click", () => {
+            const marker = markerMap[item._ui_id];
+            if (marker) {
+              // 1. Uncluster (Zoom) logic
+              markersClusterGroup.zoomToShowLayer(marker, () => {
+                // 2. Smooth Fly Logic (1.5 seconds)
+                map.flyTo(marker.getLatLng(), 16, {
+                  duration: 1.5,
+                  easeLinearity: 0.25,
+                });
+                // 3. Open Popup after flight
+                setTimeout(() => marker.openPopup(), 1500);
+              });
+
+              // Mobile UX: Close Sidebar on selection
+              if (window.innerWidth <= 768) {
+                // Just highlight, don't auto-close sidebar or user loses context?
+                // Actually user wants to see map. Scroll map into view?
+                document
+                  .getElementById("map")
+                  .scrollIntoView({ behavior: "smooth" });
+              }
+
+              document
+                .querySelectorAll(".hospital-item")
+                .forEach((el) => el.classList.remove("active"));
+              li.classList.add("active");
+            }
+          });
+
+          listContainer.appendChild(li);
+        });
+
+        if (visibleItems.length > RENDER_LIMIT) {
+          const more = document.createElement("li");
+          more.style.padding = "15px";
+          more.style.textAlign = "center";
+          more.style.color = "var(--text-secondary)";
+          more.style.fontSize = "0.8rem";
+          more.innerText = `+ ${visibleItems.length - RENDER_LIMIT} more...`;
+          listContainer.appendChild(more);
+        }
+      }
+
+      // --- MODALS ---
+      function openModal(title, htmlContent) {
+        document.getElementById("modalTitle").innerText = title;
+        document.getElementById("modalBody").innerHTML = htmlContent;
+        const overlay = document.getElementById("genericModal");
+        overlay.style.display = "flex";
+        setTimeout(() => overlay.classList.add("open"), 10);
+      }
+
+      function closeModal() {
+        const overlay = document.getElementById("genericModal");
+        overlay.classList.remove("open");
+        setTimeout(() => (overlay.style.display = "none"), 200);
+      }
+
+      function openDisclaimerModal() {
+        const content = `
+                <h3>Informational Purpose Only:</h3>
+                <p>This repository, the associated software, and the visualized data are intended strictly for educational and informational purposes. This project is not affiliated with, endorsed by, or representative of any insurance company, regulatory body (such as IRDAI), or healthcare institution.</p>
+                
+                <h3>No Warranty of Accuracy:</h3>
+                <p>While every effort is made to ensure the programmatic extraction of data is accurate, the source documents (PDFs) are subject to change without notice. The developers make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability of the data. Data latency may occur; the official list on the insurer's website may differ from the data presented here.</p>
+                
+                <h3>Limitation of Liability:</h3>
+                <p>In no event will the developers or contributors be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any financial loss arising from the use of this data. A decision to seek medical treatment at any specific facility is the sole responsibility of the individual.</p>
+                
+                <h3>Mandatory Verification:</h3>
+                <p>Users are explicitly advised to independently verify the current status of any hospital directly with their specific insurance provider or Third Party Administrator (TPA) prior to admission. The official policy document and the insurer’s real-time confirmation serve as the final authority on insurance coverage.</p>
+                <p><strong>Always inform your insurer before admission.</strong></p>
+            `;
+        openModal("Legal Disclaimer", content);
+      }
+
+      async function openSourcesModal() {
+        openModal("Data Sources", "<p>Loading sources...</p>");
+
+        try {
+          const response = await fetch(SOURCES_URL);
+          if (!response.ok) throw new Error("Sources file missing");
+          const data = await response.json();
+
+          let html = `
+                    <p>The data visualized here is parsed from the following official documents:</p>
+                    <table class="source-table">
+                        <thead>
+                            <tr>
+                                <th>Company Name</th>
+                                <th>In-Network</th>
+                                <th>Excluded</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+          data.forEach((row) => {
+            // Helper to create link or dash
+            const makeLink = (url) =>
+              url ? `<a href="${url}" target="_blank">Link</a>` : "-";
+
+            html += `<tr>
+                        <td>${row.company}</td>
+                        <td>${makeLink(row.network_url)}</td>
+                        <td>${makeLink(row.excluded_url)}</td>
+                    </tr>`;
+          });
+
+          html += `</tbody></table>`;
+          document.getElementById("modalBody").innerHTML = html;
+        } catch (e) {
+          document.getElementById(
+            "modalBody"
+          ).innerHTML = `<p style="color:var(--danger-color)">Could not load sources list.</p>`;
+        }
+      }
+
+      // --- UTILS ---
+      function showLoading(show, text) {
+        const el = document.getElementById("loading");
+        if (show) {
+          document.getElementById("loadingText").innerText = text;
+          el.style.display = "flex";
+        } else {
+          el.style.display = "none";
+        }
+      }
+
+      function showToast(msg, isError) {
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.className = isError ? "show error" : "show";
+        setTimeout(() => (t.className = t.className.replace("show", "")), 3000);
+      }
+    </script>
+  </body>
+</html>

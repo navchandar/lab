@@ -20,7 +20,7 @@ Rendering 19,000+ geometric points in a browser can cause significant lag. This 
 
 ## Tech Stack
 
- - Frontend: HTML5, CSS3, Vanilla JS, Leaflet.js
+ - Frontend: HTML5, CSS3, JavaScript, Leaflet.js
 
  - Data Processing: Python, GeoPandas, Matplotlib, Google Maps API
 
