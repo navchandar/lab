@@ -287,13 +287,12 @@
         }
       }
 
-      /* Optional: Filled style if preferred */
-       /* .toggle-btn.active {
+      .toggle-btn.active {
+        box-shadow: var(--shadow-sm);
+        border-color: var(--accent-color);
         background: var(--accent-color);
         color: white;
-        border-color: var(--accent-color);
-        box-shadow: var(--shadow-sm);
-      } */
+      }
 
       /* Controls */
       .controls {
@@ -332,7 +331,7 @@
         top: 50%;
         right: 10px;
         transform: translateY(-50%);
-        transition: color 0.2s;
+        transition: color 0.1s;
         cursor: pointer;
         color: var(--text-secondary);
         font-size: 1.1rem;
@@ -356,8 +355,9 @@
       .checkbox-group {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
-        max-height: 80px;
+        justify-content: start;
+        gap: 10px;
+        max-height: 70px;
         overflow-y: auto;
       }
 
@@ -367,7 +367,7 @@
         transition: all 0.2s;
         cursor: pointer;
         border: 1px solid var(--border-color);
-        border-radius: 20px; /* Pill shape */
+        border-radius: 15px;
         background: var(--bg-color);
         padding: 4px 10px;
         color: var(--text-secondary);
@@ -377,12 +377,17 @@
 
       .checkbox-item:hover {
         border-color: var(--text-secondary);
+        border-radius: 10px;
         color: var(--text-primary);
       }
 
       .checkbox-item input {
         margin-right: 6px;
         accent-color: var(--accent-color);
+      }
+
+      .checkbox-item:has(input[type="checkbox"]:checked) {
+        color: var(--popup-text);
       }
 
       /* Results List */
@@ -476,9 +481,10 @@
         color: var(--text-primary);
         font-size: 1.1rem !important;
       }
+
       .leaflet-control-reset-btn:hover {
-      background-color: #f4f4f4;
-      font-weight: bold;
+        background-color: #f4f4f4;
+        font-weight: bold;
       }
 
       /* Sidebar Footer */
@@ -600,6 +606,12 @@
         opacity: 1;
       }
 
+      .no-companies {
+        padding: 2px 2px 2px 10px;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
+      }
+
       .error {
         color: var(--danger-color);
       }
@@ -661,7 +673,7 @@
         position: absolute;
         top: 20px;
         right: 20px;
-        transition: color 0.2s;
+        transition: color 0.1s;
         cursor: pointer;
         color: var(--text-secondary);
         font-size: 1.5rem;
@@ -762,10 +774,43 @@
       /* Mobile Responsiveness */
       @media (max-width: 768px) {
         .container { flex-direction: column; }
-        .sidebar { border-right: none; border-bottom: 1px solid var(--border-color); width: 100%; height: 45vh; }
+        .sidebar { border-right: none; border-bottom: 1px solid var(--border-color); width: 100%; height: 40vh; }
+        .sidebar-footer {gap: 50px;padding: 5px 30px;font-size: 0.6rem;}
         #map { height: 55vh; }
+        .header { padding: 10px 25px;  text-align: center;}
         .header h1 { font-size: 1rem; }
+        .header p {font-size: 0.7rem;}
+        .modal-title {margin: 0 0 10px 0;padding-bottom: 10px;font-size: 1rem;}
+        .modal-body h3 {font-size: 0.85rem;}
+        .modal-body p { font-size: 0.8rem;}
         .modal-content { padding: 20px; max-height: 80vh; }
+        .source-table td:nth-of-type(1) {font-weight: 500;}
+        .source-table td { font-size: 0.8rem;}
+        .dataset-toggle {
+          gap: 10px;
+          padding: 6px 20px;
+        }
+        .toggle-btn {padding: 7px;font-size: 0.7rem;}
+        .controls {padding: 5px 20px;}
+        .search-wrapper {margin-bottom: 10px;}
+        .search-box {font-size: 0.8rem;}
+        .hospital-list {display: none;}
+        .filter-label {padding: 0 0 0 5px;}
+        .results-info {justify-content: center;align-items: center;border: none;padding: 5px 20px;}
+        .checkbox-group {
+          display: flex;
+          flex-wrap: nowrap;
+          gap: 5px;
+          max-height: 50px;
+          overflow-x: scroll;
+          overflow-y: hidden;
+        }
+        .checkbox-item {
+          border: 0.5px solid var(--border-color);
+          border-radius: 10px;
+          padding: 2px 8px;
+          font-size: 0.65rem;
+        }
       }
 
       /* Animation Keyframes */
@@ -810,7 +855,7 @@
       <div class="sidebar">
         <div class="header">
           <h1>Hospital Network Map</h1>
-          <p>Verify coverage before you go</p>
+          <p>Know where to go and where not to!</p>
         </div>
 
         <div class="dataset-toggle">
@@ -818,7 +863,7 @@
             class="toggle-btn active"
             id="btn-network"
             onclick="loadDataset('network')"
-            data-tooltip="View in-network hospitals where Cashless Treatment is eligible"
+            data-tooltip="View hospitals in-network of Insurance providers, where Cashless Treatment is eligible"
           >
             In-Network
           </button>
@@ -826,7 +871,7 @@
             class="toggle-btn"
             id="btn-excluded"
             onclick="loadDataset('excluded')"
-            data-tooltip="View excluded/blacklisted hospitals. No coverage from Insurers!"
+            data-tooltip="View hospitals that are excluded/blacklisted by Insurance providers and disqualified from claims"
           >
             Excluded
           </button>
@@ -873,7 +918,10 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
     <script>
-      // --- CONFIG ---
+      /**
+       * MODULE: CONFIGURATION
+       * Centralized configuration for endpoints and map settings.
+       */
       const CONFIG = {
         network: {
           url: "data/innetwork.json",
@@ -887,575 +935,639 @@
         },
       };
       const SOURCES_URL = "data/sources.json";
+      const MAP_DEFAULTS = {
+        center: [22.5937, 78.9629],
+        zoom: 5,
+        options: { zoomControl: false },
+      };
 
-      // --- STATE ---
-      let map, markersClusterGroup, tileLayer;
-      let currentType = "network";
-      let currentDataset = [];
-      let markerMap = {};
-      let currentFilteredData = [];
-      let clickedMarker = null;
-      const defaultLocation = [22.5937, 78.9629];
-      const Zoom = { zoomControl: false };
+      /**
+       * MODULE: STATE MANAGEMENT
+       * Global state variables.
+       */
+      const AppState = {
+        map: null,
+        markersClusterGroup: null,
+        tileLayer: null,
+        currentType: "network",
+        currentDataset: [], // Raw data from JSON
+        currentFilteredData: [], // Data after search/checkbox filters
+        markerMap: {}, // Quick lookup for markers by ID
+        clickedMarker: null, // Track sticky tooltip state
+      };
 
       // --- INIT ---
       document.addEventListener("DOMContentLoaded", () => {
-        initMap();
-        loadDataset("network");
-        setupEventListeners();
+        MapManager.init();
+        DataManager.loadDataset("network");
+        UIManager.setupEventListeners();
       });
 
-      function initMap() {
-        // 1. Detect Dark Mode
-        const isDarkMode =
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches;
+      /**
+       * MODULE: MAP MANAGER
+       * Handles Leaflet initialization, layers, and interactions.
+       */
+      const MapManager = {
+        init: () => {
+          // 1. Detect Dark Mode
+          const isDarkMode =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-        // 2. Set Tile URLs
-        const lightTiles =
-          "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-        const darkTiles =
-          "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-        const tilesUrl = isDarkMode ? darkTiles : lightTiles;
+          // 2. Tile Setup
+          const lightTiles =
+            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+          const darkTiles =
+            "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+          const tilesUrl = isDarkMode ? darkTiles : lightTiles;
 
-        // MAP INSTANCE SETUP
-        map = L.map("map", Zoom).setView(defaultLocation, 5);
-        L.control.zoom({ position: "bottomright" }).addTo(map);
+          // 3. Map Instantiation
+          AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
+            MAP_DEFAULTS.center,
+            MAP_DEFAULTS.zoom
+          );
+          L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
 
-        const ResetControl = L.Control.extend({
-          options: { position: "bottomright" },
-          onAdd: function (map) {
-            const container = L.DomUtil.create(
-              "div",
-              "leaflet-bar leaflet-control"
-            );
-            const btn = L.DomUtil.create(
-              "a",
-              "leaflet-control-reset-btn",
-              container
-            );
-            btn.href = "#";
-            btn.title = "Reset View";
-            btn.innerHTML = "⟲"; // Unicode Refresh Icon
-            btn.onclick = (e) => {
-              L.DomEvent.preventDefault(e);
-              resetMapView();
-            };
-            return container;
-          },
-        });
-        map.addControl(new ResetControl());
-
-        tileLayer = L.tileLayer(tilesUrl, {
-          attribution: "&copy; OpenStreetMap &copy; CARTO",
-          subdomains: "abcd",
-          maxZoom: 19,
-        }).addTo(map);
-
-        markersClusterGroup = L.markerClusterGroup({
-          chunkedLoading: true,
-          maxClusterRadius: 45,
-          showCoverageOnHover: false,
-        });
-        markersClusterGroup.on("clustermouseover", function (a) {
-          // If less than 10 markers, expand (spiderfy) them immediately
-          if (a.layer.getChildCount() < 10) {
-            a.layer.spiderfy();
-          }
-        });
-
-        map.addLayer(markersClusterGroup);
-        map.on("moveend", () => updateSidebarList(false));
-
-        map.on("click", () => {
-          clickedMarker = null;
-          map.closePopup();
-        });
-
-        // 3. Listen for System Theme Changes
-        window
-          .matchMedia("(prefers-color-scheme: dark)")
-          .addEventListener("change", (e) => {
-            const newUrl = e.matches ? darkTiles : lightTiles;
-            tileLayer.setUrl(newUrl);
+          // 4. Custom Reset Control
+          const ResetControl = L.Control.extend({
+            options: { position: "bottomright" },
+            onAdd: function (map) {
+              const container = L.DomUtil.create(
+                "div",
+                "leaflet-bar leaflet-control"
+              );
+              const btn = L.DomUtil.create(
+                "a",
+                "leaflet-control-reset-btn",
+                container
+              );
+              btn.href = "#";
+              btn.title = "Reset View";
+              btn.innerHTML = "⟲";
+              btn.onclick = (e) => {
+                L.DomEvent.preventDefault(e);
+                MapManager.resetView();
+              };
+              return container;
+            },
           });
-      }
+          AppState.map.addControl(new ResetControl());
 
-      function setupEventListeners() {
-        // Search Input & Clear
-        const searchInput = document.getElementById("searchInput");
-        const searchClear = document.getElementById("searchClear");
+          // 5. Layer Setup
+          AppState.tileLayer = L.tileLayer(tilesUrl, {
+            attribution: "&copy; OpenStreetMap &copy; CARTO",
+            subdomains: "abcd",
+            maxZoom: 19,
+          }).addTo(AppState.map);
 
-        searchInput.addEventListener("input", () => {
-          searchClear.style.display = searchInput.value ? "block" : "none";
-          applyFilters();
-        });
+          AppState.markersClusterGroup = L.markerClusterGroup({
+            chunkedLoading: true,
+            maxClusterRadius: 45,
+            showCoverageOnHover: false,
+          });
 
-        searchClear.addEventListener("click", () => {
-          searchInput.value = "";
-          searchClear.style.display = "none";
-          applyFilters();
-          searchInput.focus();
-          resetMapView();
-        });
+          // Spiderfy logic on hover for small clusters
+          AppState.markersClusterGroup.on("clustermouseover", function (a) {
+            if (a.layer.getChildCount() < 10) {
+              a.layer.spiderfy();
+            }
+          });
 
-        // Modal Close Events
-        const modalOverlay = document.getElementById("genericModal");
-        modalOverlay.addEventListener("click", (e) => {
-          if (e.target === modalOverlay) closeModal();
-        });
-        document.addEventListener("keydown", (e) => {
-          if (e.key === "Escape" && modalOverlay.style.display === "flex")
-            closeModal();
-        });
-      }
+          AppState.map.addLayer(AppState.markersClusterGroup);
 
-      // --- DATA LOADING ---
-      async function loadDataset(type) {
-        currentType = type;
+          // 6. Event Binding
+          AppState.map.on("moveend", () => UIManager.updateSidebarList(false));
+          AppState.map.on("click", () => {
+            AppState.clickedMarker = null;
+            AppState.map.closePopup();
+          });
 
-        // UI Resets
-        updateToggleUI();
-        showLoading(true, `Loading ${CONFIG[type].label}...`);
+          // Theme Listener
+          window
+            .matchMedia("(prefers-color-scheme: dark)")
+            .addEventListener("change", (e) => {
+              const newUrl = e.matches ? darkTiles : lightTiles;
+              AppState.tileLayer.setUrl(newUrl);
+            });
+        },
 
-        const listContainer = document.getElementById("hospitalList");
-        const countLabel = document.getElementById("resultsCount");
-        countLabel.classList.remove("error");
-        countLabel.innerText = "Loading data...";
-        listContainer.innerHTML = "";
-        markersClusterGroup.clearLayers();
+        resetView: () => {
+          AppState.map.flyTo(MAP_DEFAULTS.center, MAP_DEFAULTS.zoom, {
+            duration: 1.5,
+            easeLinearity: 0.25,
+          });
+        },
 
-        try {
-          const response = await fetch(CONFIG[type].url);
-          if (!response.ok) throw new Error("Data file not found");
+        renderMarkers: (data) => {
+          AppState.markersClusterGroup.clearLayers();
+          AppState.markerMap = {};
+          const isExcluded = AppState.currentType === "excluded";
+          const color = CONFIG[AppState.currentType].color;
 
-          currentDataset = await response.json();
+          const markers = data
+            .map((item, index) => {
+              if (!item.lat || !item.lng) return null;
+              item._ui_id = index;
 
-          generateCompanyFilters(currentDataset);
-          applyFilters();
+              const marker = L.marker([item.lat, item.lng]);
 
-          showLoading(false);
-        } catch (error) {
-          console.error(error);
-          showLoading(false);
-          showToast(`Failed to load data: ${error.message}`, true);
-          countLabel.innerText = "Error Loading Data!";
-          countLabel.classList.add("error");
-          listContainer.innerHTML =
-            '<li style="padding:15px;text-align:center;">Data unavailable.</li>';
-          currentDataset = [];
-          currentFilteredData = [];
-        }
-      }
+              // Safe access to array
+              const companyList = (
+                item.excluded_by ||
+                item.insurers ||
+                []
+              ).join(", ");
 
-      function updateToggleUI() {
-        document
-          .getElementById("btn-network")
-          .classList.toggle("active", currentType === "network");
-        document
-          .getElementById("btn-excluded")
-          .classList.toggle("active", currentType === "excluded");
-      }
+              const badgeHtml = isExcluded
+                ? `<div class="badge excluded">⛔ EXCLUDED</div>`
+                : `<div class="badge network">✅ IN-NETWORK</div>`;
 
-      // --- FILTERS & RENDERING ---
-      function generateCompanyFilters(data) {
-        const countLabel = document.getElementById("resultsCount");
-        const container = document.getElementById("insurerFilters");
-        container.innerHTML = "";
+              const popupContent = `
+                      <div style="min-width:200px; font-family:inherit;">
+                          ${badgeHtml}
+                          <h3 style="margin:5px 0; color:${color}; font-size:1rem;">${
+                item.name
+              }</h3>
+                          <p style="margin:4px 0; font-size:0.85rem; color:var(--text-primary); opacity:0.8;">
+                              ${item.address}, ${item.city}
+                          </p>
+                          <p style="margin:4px 0; font-size:0.85rem;"><strong>PIN:</strong> ${
+                            item.pincode || "N/A"
+                          }</p>
+                          ${
+                            companyList
+                              ? `<div style="margin-top:8px; font-size:0.75rem; color:var(--text-secondary); border-top:1px solid var(--border-color); padding-top:4px;">${companyList}</div>`
+                              : ""
+                          }
+                      </div>
+                  `;
 
-        const companies = new Set();
-        data.forEach((item) => {
-          const list =
-            item.excluded_by ||
-            item.insurers ||
-            (item.company ? [item.company] : []);
-          if (Array.isArray(list)) list.forEach((c) => companies.add(c));
-        });
+              marker.bindPopup(popupContent);
 
-        if (companies.size === 0) {
-          countLabel.innerHTML = "No Data Found!";
-          countLabel.classList.add("error");
-          container.innerHTML =
-            '<span style="font-size:0.75rem; color:var(--text-secondary); padding:5px;">None</span>';
-          return;
-        }
+              // Hover/Click Logic
+              marker.on("mouseover", function () {
+                if (AppState.clickedMarker !== this) this.openPopup();
+              });
+              marker.on("mouseout", function () {
+                if (AppState.clickedMarker !== this) this.closePopup();
+              });
+              marker.on("click", function (e) {
+                AppState.clickedMarker = this;
+                this.openPopup();
+                L.DomEvent.stopPropagation(e);
+              });
 
-        companies.forEach((company) => {
-          const wrapper = document.createElement("label");
-          wrapper.className = "checkbox-item";
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.value = company;
-          checkbox.checked = true;
-          checkbox.addEventListener("change", applyFilters);
-          wrapper.appendChild(checkbox);
-          wrapper.appendChild(document.createTextNode(company));
-          container.appendChild(wrapper);
-        });
-      }
+              AppState.markerMap[index] = marker;
+              return marker;
+            })
+            .filter((m) => m !== null);
 
-      function applyFilters() {
-        if (!currentDataset.length) return;
+          AppState.markersClusterGroup.addLayers(markers);
+        },
+      };
 
-        const searchText = document
-          .getElementById("searchInput")
-          .value.toLowerCase();
-        const checkboxes = document.querySelectorAll(
-          '#insurerFilters input[type="checkbox"]'
-        );
+      /**
+       * MODULE: DATA MANAGER
+       * Handles fetching, parsing, and error state for data.
+       */
+      const DataManager = {
+        resetState: () => {
+          // CRITICAL: Clear data immediately so map moves don't show stale info
+          AppState.currentDataset = [];
+          AppState.currentFilteredData = [];
+          AppState.markersClusterGroup.clearLayers();
+          AppState.markerMap = {};
+        },
 
-        const selectedCompanies =
-          checkboxes.length > 0
-            ? Array.from(checkboxes)
-                .filter((cb) => cb.checked)
-                .map((cb) => cb.value)
-            : null;
+        loadDataset: async (type) => {
+          AppState.currentType = type;
 
-        currentFilteredData = currentDataset.filter((item) => {
-          const searchStr =
-            `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
-          if (searchText && !searchStr.includes(searchText)) return false;
+          // 1. Immediate Reset
+          DataManager.resetState();
+          UIManager.updateToggleUI();
+          UIManager.showLoading(
+            true,
+            `Loading ${CONFIG[type].label} Hospitals...`
+          );
 
-          const itemCompanies =
-            item.excluded_by ||
-            item.insurers ||
-            (item.company ? [item.company] : []);
-          if (selectedCompanies && itemCompanies.length > 0) {
-            return itemCompanies.some((c) => selectedCompanies.includes(c));
+          // Reset Sidebar & Filters immediately to "Loading" state
+          document.getElementById("hospitalList").innerHTML = "";
+          document.getElementById("resultsCount").innerText = "Loading data...";
+          document.getElementById("insurerFilters").innerHTML =
+            '<span class="filter-loading">Loading filters...</span>';
+
+          try {
+            const response = await fetch(CONFIG[type].url);
+
+            if (!response.ok) {
+              throw new Error(`HTTP Error ${response.status}: File not found`);
+            }
+
+            AppState.currentDataset = await response.json();
+
+            // If JSON is valid but empty array
+            if (
+              !Array.isArray(AppState.currentDataset) ||
+              AppState.currentDataset.length === 0
+            ) {
+              console.warn("Dataset is empty");
+              AppState.currentDataset = []; // Ensure array
+            }
+
+            UIManager.generateCompanyFilters(AppState.currentDataset);
+            UIManager.applyFilters();
+          } catch (error) {
+            console.error("Data Load Error:", error);
+            DataManager.handleLoadError(error);
+          } finally {
+            UIManager.showLoading(false);
           }
-          return true;
-        });
+        },
 
-        renderMapMarkers(currentFilteredData);
-        updateSidebarList(true);
-      }
+        handleLoadError: (error) => {
+          // Update all UI components to reflect error state
+          UIManager.showToast(`Failed to load data: ${error.message}`, true);
 
-      function renderMapMarkers(data) {
-        markersClusterGroup.clearLayers();
-        markerMap = {};
-        const isExcluded = currentType === "excluded";
-        const color = CONFIG[currentType].color;
+          const countLabel = document.getElementById("resultsCount");
+          countLabel.innerText = "Data Unavailable";
+          countLabel.classList.add("error");
 
-        const markers = data
-          .map((item, index) => {
-            if (!item.lat || !item.lng) return null;
-            item._ui_id = index;
+          document.getElementById("hospitalList").innerHTML =
+            '<li style="padding:15px;text-align:center;color:var(--text-secondary)">No data available for this category.</li>';
 
-            const marker = L.marker([item.lat, item.lng]);
+          // Ensure filters show "None"
+          UIManager.generateCompanyFilters([]);
+        },
+      };
+
+      /**
+       * MODULE: UI MANAGER
+       * Handles DOM updates, Sidebar, Modals, and Toasts.
+       */
+      const UIManager = {
+        setupEventListeners: () => {
+          // Search
+          const searchInput = document.getElementById("searchInput");
+          const searchClear = document.getElementById("searchClear");
+
+          searchInput.addEventListener("input", () => {
+            searchClear.style.display = searchInput.value ? "block" : "none";
+            UIManager.applyFilters();
+          });
+
+          searchClear.addEventListener("click", () => {
+            searchInput.value = "";
+            searchClear.style.display = "none";
+            UIManager.applyFilters();
+            searchInput.focus();
+            MapManager.resetView();
+          });
+
+          // Modal
+          const modalOverlay = document.getElementById("genericModal");
+          // Click outside to close
+          modalOverlay.addEventListener("click", (e) => {
+            const rect = e.target.getBoundingClientRect();
+            // This check ensures we clicked the overlay (backdrop), not the content
+            if (e.target === modalOverlay) UIManager.closeModal();
+          });
+        },
+
+        updateToggleUI: () => {
+          document
+            .getElementById("btn-network")
+            .classList.toggle("active", AppState.currentType === "network");
+          document
+            .getElementById("btn-excluded")
+            .classList.toggle("active", AppState.currentType === "excluded");
+        },
+
+        generateCompanyFilters: (data) => {
+          const countLabel = document.getElementById("resultsCount");
+          const container = document.getElementById("insurerFilters");
+          container.innerHTML = "";
+
+          if (!data || data.length === 0) {
+            container.innerHTML = '<span class="filter-loading">None</span>';
+            return;
+          }
+
+          const companies = new Set();
+          data.forEach((item) => {
+            const list =
+              item.excluded_by ||
+              item.insurers ||
+              (item.company ? [item.company] : []);
+            if (Array.isArray(list)) list.forEach((c) => companies.add(c));
+          });
+
+          if (companies.size === 0) {
+            container.innerHTML = '<span class="filter-loading">None</span>';
+            return;
+          }
+
+          companies.forEach((company) => {
+            const wrapper = document.createElement("label");
+            wrapper.className = "checkbox-item";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = company;
+            checkbox.checked = true;
+            checkbox.addEventListener("change", UIManager.applyFilters);
+
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(document.createTextNode(company));
+            container.appendChild(wrapper);
+          });
+        },
+
+        applyFilters: () => {
+          // If dataset is empty, skip logic but ensure map is cleared
+          if (!AppState.currentDataset.length) {
+            AppState.currentFilteredData = [];
+            MapManager.renderMarkers([]);
+            UIManager.updateSidebarList(true);
+            return;
+          }
+
+          const searchText = document
+            .getElementById("searchInput")
+            .value.toLowerCase();
+          const checkboxes = document.querySelectorAll(
+            '#insurerFilters input[type="checkbox"]'
+          );
+
+          const selectedCompanies =
+            checkboxes.length > 0
+              ? Array.from(checkboxes)
+                  .filter((cb) => cb.checked)
+                  .map((cb) => cb.value)
+              : null;
+
+          AppState.currentFilteredData = AppState.currentDataset.filter(
+            (item) => {
+              // Search Filter
+              const searchStr =
+                `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
+              if (searchText && !searchStr.includes(searchText)) return false;
+
+              // Company Filter
+              const itemCompanies =
+                item.excluded_by ||
+                item.insurers ||
+                (item.company ? [item.company] : []);
+              if (selectedCompanies && itemCompanies.length > 0) {
+                return itemCompanies.some((c) => selectedCompanies.includes(c));
+              }
+              return true;
+            }
+          );
+
+          MapManager.renderMarkers(AppState.currentFilteredData);
+          UIManager.updateSidebarList(true);
+        },
+
+        updateSidebarList: (resetScroll = false) => {
+          const listContainer = document.getElementById("hospitalList");
+          const countLabel = document.getElementById("resultsCount");
+          const RENDER_LIMIT = 500;
+
+          if (resetScroll) listContainer.scrollTop = 0;
+
+          // Handle Empty State
+          if (
+            !AppState.currentFilteredData ||
+            AppState.currentFilteredData.length === 0
+          ) {
+            countLabel.classList.remove("error");
+            // Only show "No Hospitals" if we actually have a dataset loaded, otherwise it might be a loading state
+            if (AppState.currentDataset.length > 0) {
+              countLabel.innerText = "No Matches Found";
+            } else {
+              countLabel.innerText = "No Data";
+            }
+            listContainer.innerHTML = "";
+            return;
+          }
+
+          // Visible Bounds Filter
+          const bounds = AppState.map.getBounds();
+          const visibleItems = AppState.currentFilteredData.filter((item) => {
+            if (!item.lat || !item.lng) return false;
+            return bounds.contains(L.latLng(item.lat, item.lng));
+          });
+
+          countLabel.classList.remove("error");
+          countLabel.innerText = `Showing ${visibleItems.length} of ${AppState.currentFilteredData.length} locations`;
+
+          const zoom = AppState.map.getZoom();
+          listContainer.innerHTML = "";
+
+          // Optimization for large datasets
+          if (zoom < 8 && visibleItems.length > RENDER_LIMIT) {
+            listContainer.innerHTML = `<li class="toolarge">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
+            return;
+          }
+
+          const itemsToRender = visibleItems.slice(0, RENDER_LIMIT);
+          const isExcluded = AppState.currentType === "excluded";
+
+          itemsToRender.forEach((item) => {
+            const li = document.createElement("li");
+            li.className = "hospital-item";
 
             const companyList = (item.excluded_by || item.insurers || []).join(
               ", "
             );
-            const badgeHtml = isExcluded
-              ? `<div class="badge excluded">⛔ EXCLUDED</div>`
-              : `<div class="badge network">✅ IN-NETWORK</div>`;
+            const badgeLabel = isExcluded ? "Excluded" : "Network";
+            const badgeClass = isExcluded ? "excluded" : "network";
 
-            const popupContent = `
-                    <div style="min-width:200px; font-family:inherit;">
-                        ${badgeHtml}
-                        <h3 style="margin:5px 0; color:${color}; font-size:1rem;">${
-              item.name
-            }</h3>
-                        <p style="margin:4px 0; font-size:0.85rem; color:var(--text-primary); opacity:0.8;">${
-                          item.address
-                        }, ${item.city}</p>
-                        <p style="margin:4px 0; font-size:0.85rem;"><strong>PIN:</strong> ${
-                          item.pincode || "N/A"
-                        }</p>
-                        ${
-                          companyList
-                            ? `<div style="margin-top:8px; font-size:0.75rem; color:var(--text-secondary); border-top:1px solid var(--border-color); padding-top:4px;">${companyList}</div>`
-                            : ""
-                        }
-                    </div>
-                `;
-            marker.bindPopup(popupContent);
-            marker.on("mouseover", function (e) {
-              // Only open on hover if this isn't the currently "clicked/locked" marker
-              if (clickedMarker !== this) {
-                this.openPopup();
-              }
-            });
+            li.innerHTML = `
+                      <span class="h-name">${item.name}</span>
+                      <span class="h-loc">${item.city}${
+              item.pincode ? " - " + item.pincode : ""
+            }</span>
+                      <span class="badge ${badgeClass}">${badgeLabel}: ${companyList.substring(
+              0,
+              25
+            )}${companyList.length > 25 ? "..." : ""}</span>
+                  `;
 
-            marker.on("mouseout", function (e) {
-              // Only close on mouseout if this isn't the "locked" marker
-              if (clickedMarker !== this) {
-                this.closePopup();
-              }
-            });
-
-            marker.on("click", function (e) {
-              // Lock this marker as the active one
-              clickedMarker = this;
-              this.openPopup();
-
-              // Stop the click from propagating to the map (which would reset it)
-              L.DomEvent.stopPropagation(e);
-            });
-
-            markerMap[index] = marker;
-            return marker;
-          })
-          .filter((m) => m !== null);
-
-        markersClusterGroup.addLayers(markers);
-      }
-
-      function updateSidebarList(resetScroll = false) {
-        const listContainer = document.getElementById("hospitalList");
-        const countLabel = document.getElementById("resultsCount");
-        const RENDER_LIMIT = 500;
-        if (resetScroll) listContainer.scrollTop = 0;
-
-        if (!currentFilteredData || currentFilteredData.length === 0) {
-          countLabel.innerText = "No Hospitals Found!";
-          countLabel.classList.add("error");
-          listContainer.innerHTML = "";
-          return;
-        }
-
-        // Visible Bounds Filter
-        const bounds = map.getBounds();
-        const visibleItems = currentFilteredData.filter((item) => {
-          if (!item.lat || !item.lng) return false;
-          return bounds.contains(L.latLng(item.lat, item.lng));
-        });
-
-        countLabel.classList.remove("error");
-        countLabel.innerText = `Showing ${visibleItems.length} of ${currentFilteredData.length} locations`;
-
-        const zoom = map.getZoom();
-        listContainer.innerHTML = "";
-
-        if (zoom < 8 && visibleItems.length > RENDER_LIMIT) {
-          listContainer.innerHTML = `<li class="toolarge">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
-          return;
-        }
-
-        const itemsToRender = visibleItems.slice(0, RENDER_LIMIT);
-        const isExcluded = currentType === "excluded";
-
-        itemsToRender.forEach((item) => {
-          const li = document.createElement("li");
-          li.className = "hospital-item";
-
-          const companyList = (item.excluded_by || item.insurers || []).join(
-            ", "
-          );
-          const badgeLabel = isExcluded ? "Excluded" : "Network";
-          const badgeClass = isExcluded ? "excluded" : "network";
-
-          li.innerHTML = `
-                    <span class="h-name">${item.name}</span>
-                    <span class="h-loc">${item.city}${
-            item.pincode ? " - " + item.pincode : ""
-          }</span>
-                    <span class="badge ${badgeClass}">${badgeLabel}: ${companyList.substring(
-            0,
-            25
-          )}${companyList.length > 25 ? "..." : ""}</span>
-                `;
-
-          li.addEventListener("mouseenter", () => {
-            const marker = markerMap[item._ui_id];
-            if (marker) {
-              // 1. Check if the marker is inside a cluster
-              const visibleParent =
-                markersClusterGroup.getVisibleParent(marker);
-
-              // If visibleParent is NOT the marker, it means it's a cluster
-              if (visibleParent && visibleParent !== marker) {
-                // Apply the same "< 10" logic
-                if (visibleParent.getChildCount() < 10) {
-                  visibleParent.spiderfy();
+            // Hover Effects (Jump)
+            li.addEventListener("mouseenter", () => {
+              const marker = AppState.markerMap[item._ui_id];
+              if (marker) {
+                const visibleParent =
+                  AppState.markersClusterGroup.getVisibleParent(marker);
+                if (visibleParent && visibleParent !== marker) {
+                  if (visibleParent.getChildCount() < 10)
+                    visibleParent.spiderfy();
                 }
+                setTimeout(() => {
+                  const icon = marker.getElement();
+                  if (icon) icon.classList.add("marker-jump");
+                }, 300);
               }
+            });
 
-              // 2. Existing "Jump" Animation Logic
-              // We use a small timeout to allow the spiderfy animation to create the DOM element
-              setTimeout(() => {
+            li.addEventListener("mouseleave", () => {
+              const marker = AppState.markerMap[item._ui_id];
+              if (marker) {
                 const icon = marker.getElement();
-                if (icon) icon.classList.add("marker-jump");
-              }, 300); // 300ms delay to wait for spiderfy expansion
-            }
-          });
-
-          li.addEventListener("mouseleave", () => {
-            const marker = markerMap[item._ui_id];
-            if (marker) {
-              const icon = marker.getElement();
-              if (icon) icon.classList.remove("marker-jump");
-            }
-          });
-
-          li.addEventListener("click", () => {
-            const marker = markerMap[item._ui_id];
-            if (marker) {
-              // 1. Uncluster (Zoom) logic
-              markersClusterGroup.zoomToShowLayer(marker, () => {
-                setTimeout(() => marker.openPopup(), 100);
-              });
-
-              // Mobile UX: Close Sidebar on selection
-              if (window.innerWidth <= 768) {
-                document
-                  .getElementById("map")
-                  .scrollIntoView({ behavior: "smooth" });
+                if (icon) icon.classList.remove("marker-jump");
               }
+            });
 
-              document
-                .querySelectorAll(".hospital-item")
-                .forEach((el) => el.classList.remove("active"));
-              li.classList.add("active");
-            }
+            // Click Selection
+            li.addEventListener("click", () => {
+              const marker = AppState.markerMap[item._ui_id];
+              if (marker) {
+                AppState.markersClusterGroup.zoomToShowLayer(marker, () => {
+                  setTimeout(() => marker.openPopup(), 100);
+                });
+
+                // Mobile UX
+                if (window.innerWidth <= 768) {
+                  document
+                    .getElementById("map")
+                    .scrollIntoView({ behavior: "smooth" });
+                }
+
+                document
+                  .querySelectorAll(".hospital-item")
+                  .forEach((el) => el.classList.remove("active"));
+                li.classList.add("active");
+              }
+            });
+
+            listContainer.appendChild(li);
           });
 
-          listContainer.appendChild(li);
-        });
-
-        if (visibleItems.length > RENDER_LIMIT) {
-          const more = document.createElement("li");
-          more.style.padding = "15px";
-          more.style.textAlign = "center";
-          more.style.color = "var(--text-secondary)";
-          more.style.fontSize = "0.8rem";
-          more.innerText = `+ ${visibleItems.length - RENDER_LIMIT} more...`;
-          listContainer.appendChild(more);
-        }
-      }
-
-      // --- MODALS ---
-      function openModal(title, htmlContent) {
-        const dialog = document.getElementById("genericModal");
-
-        // Set Content
-        document.getElementById("modalTitle").innerText = title;
-        document.getElementById("modalBody").innerHTML = htmlContent;
-        dialog.addEventListener("click", (event) => {
-          const rect = event.target.getBoundingClientRect();
-          // Detect if click was outside the dialog bounds
-          if (
-            rect.left > event.clientX ||
-            rect.right < event.clientX ||
-            rect.top > event.clientY ||
-            rect.bottom < event.clientY
-          ) {
-            try {
-              dialog.close();
-            } catch (e) {
-              console.error("Error closing modal:", e);
-            }
+          if (visibleItems.length > RENDER_LIMIT) {
+            const more = document.createElement("li");
+            more.style.padding = "15px";
+            more.style.textAlign = "center";
+            more.style.color = "var(--text-secondary)";
+            more.style.fontSize = "0.8rem";
+            more.innerText = `+ ${visibleItems.length - RENDER_LIMIT} more...`;
+            listContainer.appendChild(more);
           }
-        });
-        // Native function that opens the modal AND traps focus automatically
-        if (typeof dialog.showModal === "function") {
-          dialog.showModal();
-        } else {
-          console.error("This browser does not support <dialog> API");
-        }
-      }
+        },
 
-      function closeModal() {
-        const dialog = document.getElementById("genericModal");
-        dialog.close();
-      }
+        showLoading: (show, text) => {
+          const el = document.getElementById("loading");
+          if (show) {
+            document.getElementById("loadingText").innerText = text;
+            el.style.display = "flex";
+          } else {
+            el.style.display = "none";
+          }
+        },
 
-      function openDisclaimerModal() {
-        const content = `
-                <h3>Informational Purpose Only:</h3>
-                <p>This repository, the associated software, and the visualized data are intended strictly for educational and informational purposes. This project is not affiliated with, endorsed by, or representative of any insurance company, regulatory body (such as IRDAI), or healthcare institution.</p>
-                
-                <h3>No Warranty of Accuracy:</h3>
-                <p>While every effort is made to ensure the programmatic extraction of data is accurate, the source documents (PDFs) are subject to change without notice. The developers make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability of the data. Data latency may occur; the official list on the insurer's website may differ from the data presented here.</p>
-                
-                <h3>Limitation of Liability:</h3>
-                <p>In no event will the developers or contributors be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any financial loss arising from the use of this data. A decision to seek medical treatment at any specific facility is the sole responsibility of the individual.</p>
-                
-                <h3>Mandatory Verification:</h3>
-                <p>Users are explicitly advised to independently verify the current status of any hospital directly with their specific insurance provider or Third Party Administrator (TPA) prior to admission. The official policy document and the insurer’s real-time confirmation serve as the final authority on insurance coverage.</p>
-                <p><strong>Always inform your insurer before admission.</strong></p>
-                <p>
-              License:
-              <a
-                href="https://github.com/navchandar/lab/blob/main/LICENSE"
-                target="_blank"
-                >GNU GPLv3
-              </a>
-              | Report bugs via
-              <a href="https://github.com/navchandar/lab/issues" target="_blank"
-                >GitHub
-              </a>
-            </p>
-            `;
-        openModal("Legal Disclaimer", content);
-      }
+        showToast: (msg, isError) => {
+          const t = document.getElementById("toast");
+          t.innerText = msg;
+          t.className = isError ? "show error" : "show";
+          setTimeout(
+            () => (t.className = t.className.replace("show", "")),
+            5000
+          );
+        },
 
-      async function openSourcesModal() {
-        openModal("Data Source", "<p>Loading sources...</p>");
+        // --- MODALS ---
+        openModal: (title, htmlContent) => {
+          const dialog = document.getElementById("genericModal");
+          document.getElementById("modalTitle").innerText = title;
+          document.getElementById("modalBody").innerHTML = htmlContent;
 
-        try {
-          const response = await fetch(SOURCES_URL);
-          if (!response.ok) throw new Error("Sources file missing");
-          const data = await response.json();
+          if (typeof dialog.showModal === "function") {
+            dialog.showModal();
+            document.getElementById("modalTitle").scrollIntoView();
+            document.getElementById("modalTitle").focus();
+          } else {
+            alert("Browser not supported. Update to latest version.");
+          }
+        },
 
-          let html = `
-                    <p>The data visualized here is gathered and parsed from the following sources:</p>
-                    <table class="source-table">
-                        <thead>
-                            <tr>
-                                <th>Company Name</th>
-                                <th>In-Network</th>
-                                <th>Excluded</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
+        closeModal: () => {
+          document.getElementById("genericModal").close();
+        },
 
-          data.forEach((row) => {
-            // Helper to create link or dash
-            const makeLink = (url) =>
-              url ? `<a href="${url}" target="_blank">Link</a>` : "-";
+        openDisclaimerModal: () => {
+          const content = `
+                  <h3>Informational Purpose Only:</h3>
+                  <p>This repository, the associated software, and the visualized data are intended strictly for educational and informational purposes. This project is not affiliated with, endorsed by, or representative of any insurance company, regulatory body (such as IRDAI), or healthcare institution.</p>
+                  
+                  <h3>No Warranty of Accuracy:</h3>
+                  <p>While every effort is made to ensure the programmatic extraction of data is accurate, the source documents (PDFs) are subject to change without notice. The developers make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability of the data. Data latency may occur; the official list on the insurer's website may differ from the data presented here.</p>
+                  
+                  <h3>Limitation of Liability:</h3>
+                  <p>In no event will the developers or contributors be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any financial loss arising from the use of this data. A decision to seek medical treatment at any specific facility is the sole responsibility of the individual.</p>
+                  
+                  <h3>Mandatory Verification:</h3>
+                  <p>Users are explicitly advised to independently verify the current status of any hospital directly with their specific insurance provider or Third Party Administrator (TPA) prior to admission. The official policy document and the insurer’s real-time confirmation serve as the final authority on insurance coverage.</p>
+                  <p><strong>Always inform your insurer before admission.</strong></p>
+                  <p>
+                License:
+                <a
+                  href="https://github.com/navchandar/lab/blob/main/LICENSE"
+                  target="_blank"
+                  >GNU GPLv3
+                </a>
+                | Report bugs via
+                <a href="https://github.com/navchandar/lab/issues" target="_blank"
+                  >GitHub
+                </a>
+              </p>
+              `;
+          UIManager.openModal("Legal Disclaimer", content);
+        },
 
-            html += `<tr>
-                        <td>${row.company}</td>
-                        <td>${makeLink(row.network_url)}</td>
-                        <td>${makeLink(row.excluded_url)}</td>
-                    </tr>`;
-          });
+        openSourcesModal: async () => {
+          UIManager.openModal("Data Source", "<p>Loading sources...</p>");
+          try {
+            const response = await fetch(SOURCES_URL);
+            if (!response.ok) throw new Error("Sources file missing");
+            const data = await response.json();
 
-          html += `</tbody></table>`;
-          document.getElementById("modalBody").innerHTML = html;
-        } catch (e) {
-          document.getElementById(
-            "modalBody"
-          ).innerHTML = `<p style="color:var(--danger-color)">Could not load sources list.</p>`;
-        }
-      }
+            let html = `
+                      <p>The data visualized here is gathered and parsed from the following sources:</p>
+                      <table class="source-table">
+                          <thead>
+                              <tr>
+                                  <th>Company Name</th>
+                                  <th>In‑Network</th>
+                                  <th>Excluded</th>
+                              </tr>
+                          </thead>
+                          <tbody>
+                  `;
+            data.forEach((row) => {
+              const makeLink = (url) =>
+                url ? `<a href="${url}" target="_blank">Link</a>` : "-";
+              html += `<tr>
+                          <td>${row.company}</td>
+                          <td>${makeLink(row.network_url)}</td>
+                          <td>${makeLink(row.excluded_url)}</td>
+                      </tr>`;
+            });
+            html += `</tbody></table>`;
+            document.getElementById("modalBody").innerHTML = html;
+          } catch (e) {
+            document.getElementById(
+              "modalBody"
+            ).innerHTML = `<p style="color:var(--danger-color)">Could not load sources list.</p>`;
+          }
+        },
+      };
 
-      // --- UTILS ---
-      function resetMapView() {
-        map.flyTo(defaultLocation, 5, {
-          duration: 1.5,
-          easeLinearity: 0.25,
-        });
-      }
-
-      function showLoading(show, text) {
-        const el = document.getElementById("loading");
-        if (show) {
-          document.getElementById("loadingText").innerText = text;
-          el.style.display = "flex";
-        } else {
-          el.style.display = "none";
-        }
-      }
-
-      function showToast(msg, isError) {
-        const t = document.getElementById("toast");
-        t.innerText = msg;
-        t.className = isError ? "show error" : "show";
-        setTimeout(() => (t.className = t.className.replace("show", "")), 5000);
-      }
+      // Expose functions globally for HTML onclick attributes
+      window.loadDataset = DataManager.loadDataset;
+      window.openDisclaimerModal = UIManager.openDisclaimerModal;
+      window.openSourcesModal = UIManager.openSourcesModal;
+      window.closeModal = UIManager.closeModal;
+      window.resetMapView = MapManager.resetView;
     </script>
   </body>
 </html>
