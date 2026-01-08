@@ -266,6 +266,10 @@
         .toggle-btn.active {
             background: color-mix(in srgb, var(--accent-color), black 80%);
         }
+        .sidebar-footer{
+          background: rgba(32, 33, 36, 0.8) !important;
+          color: #9aa0a6 !important;
+        }
         /* Invert the copyright text so it remains readable */
         .leaflet-control-attribution {
             background: rgba(32, 33, 36, 0.8) !important;
@@ -774,8 +778,20 @@
       /* Mobile Responsiveness */
       @media (max-width: 768px) {
         .container { flex-direction: column; }
-        .sidebar { border-right: none; border-bottom: 1px solid var(--border-color); width: 100%; height: 40vh; }
-        .sidebar-footer {gap: 50px;padding: 5px 30px;font-size: 0.6rem;}
+        .sidebar { border-right: none; border-bottom: 1px solid var(--border-color); width: 100%; height: 36.5vh; }
+        .sidebar-footer {
+          position: fixed;
+          bottom: 0;
+          left: 0;
+          gap: 10px;
+          margin: 0;
+          background: #fff;
+          background: rgba(255, 255, 255, 0.8);
+          padding: 2px;
+          color: #333;
+          color: #9aa0a6 !important;
+          font-size: 0.6rem;
+        }
         #map { height: 55vh; }
         .header { padding: 10px 25px;  text-align: center;}
         .header h1 { font-size: 1rem; }
@@ -1345,7 +1361,7 @@
             if (AppState.currentDataset.length > 0) {
               countLabel.innerText = "No Matches Found";
             } else {
-              countLabel.innerText = "No Data";
+              countLabel.innerText = "No Data Found";
             }
             listContainer.innerHTML = "";
             return;
