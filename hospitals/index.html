@@ -109,44 +109,52 @@
     <style>
       /* --- THEME VARIABLES --- */
       :root {
+        /* Modern Slate Palette (Light) */
         --bg-color: #ffffff;
-        --sidebar-bg: #f8f9fa;
-        --text-primary: #333333;
-        --text-secondary: #666666;
-        --border-color: #dddddd;
-        --hover-bg: #e9ecef;
-        --active-bg: #e3f2fd;
-        --primary-color: #2c3e50;
-        --accent-color: #2196f3;
-        --danger-color: #d32f2f;
-        --success-color: #2e7d32;
-        --modal-overlay: rgba(0, 0, 0, 0.6);
+        --sidebar-bg: #ffffff;
+        --text-primary: #1e293b; /* Slate-800 */
+        --text-secondary: #64748b; /* Slate-500 */
+        --border-color: #e2e8f0; /* Slate-200 */
+        --hover-bg: #d7ebff; /* Slate-100 */
+        --active-bg: #eff6ff; /* Blue-50 */
+        --primary-color: #0f172a; /* Slate-900 */
+        --accent-color: #3b82f6; /* Blue-500 */
+        --danger-color: #ef4444; /* Red-500 */
+        --success-color: #10b981; /* Emerald-500 */
+        --modal-overlay: rgba(15, 23, 42, 0.6); /* Tinted overlay */
         --modal-bg: #ffffff;
-        --input-bg: #ffffff;
+        --input-bg: #f8fafc;
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --radius-sm: 6px;
+        --radius-md: 8px;
+
         /* Popup Vars */
         --popup-bg: #ffffff;
-        --popup-text: #333333;
+        --popup-text: #1e293b;
       }
 
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg-color: #121212;
-          --sidebar-bg: #1e1e1e;
-          --text-primary: #e0e0e0;
-          --text-secondary: #aaaaaa;
-          --border-color: #333333;
-          --hover-bg: #2c2c2c;
-          --active-bg: #1a3b5c;
-          --primary-color: #1a1a1a;
-          --accent-color: #64b5f6;
-          --danger-color: #ef5350;
-          --success-color: #66bb6a;
-          --modal-overlay: rgba(0, 0, 0, 0.8);
-          --modal-bg: #1e1e1e;
-          --input-bg: #2c2c2c;
+          /* Modern Slate Palette (Dark) */
+          --bg-color: #0f172a; /* Slate-900 */
+          --sidebar-bg: #1e293b; /* Slate-800 */
+          --text-primary: #f8fafc; /* Slate-50 */
+          --text-secondary: #94a3b8; /* Slate-400 */
+          --border-color: #334155; /* Slate-700 */
+          --hover-bg: #334155; /* Slate-700 */
+          --active-bg: #1e3a8a; /* Blue-900 */
+          --primary-color: #020617; /* Slate-950 */
+          --accent-color: #60a5fa; /* Blue-400 */
+          --danger-color: #f87171; /* Red-400 */
+          --success-color: #34d399; /* Emerald-400 */
+          --modal-overlay: rgba(0, 0, 0, 0.75);
+          --modal-bg: #1e293b;
+          --input-bg: #0f172a;
+
           /* Dark Popup Vars */
-          --popup-bg: #2c2c2c;
-          --popup-text: #f0f0f0;
+          --popup-bg: #1e293b;
+          --popup-text: #f8fafc;
         }
       }
 
@@ -155,7 +163,24 @@
         background: var(--bg-color);
         padding: 0;
         color: var(--text-primary);
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased; /* Crisper text */
+      }
+
+      /* Custom Scrollbar for Webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        border-radius: 4px;
+        background: var(--border-color);
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
       }
 
       /* Layout */
@@ -171,112 +196,143 @@
         flex-shrink: 0;
         flex-direction: column;
         z-index: 1000;
-        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        transition: transform 0.3s ease;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08); /* Softer, deeper shadow */
         border-right: 1px solid var(--border-color);
         background: var(--sidebar-bg);
         width: 380px;
       }
 
       .header {
+        border-bottom: 1px solid rgba(255,255,255,0.1);
         background: var(--primary-color);
-        padding: 15px;
+        padding: 20px;
         color: white;
       }
 
       .header h1 {
         margin: 0;
-        font-size: 1.2rem;
+        font-weight: 700;
+        font-size: 1.25rem;
+        letter-spacing: -0.025em;
       }
 
       .header p {
         opacity: 0.8;
-        margin: 4px 0 0;
-        font-size: 0.8rem;
+        margin: 6px 0 0;
+        font-weight: 400;
+        font-size: 0.85rem;
       }
 
       /* Dataset Toggle */
       .dataset-toggle {
         display: flex;
-        gap: 10px;
-        background: color-mix(in srgb, var(--primary-color), black 20%);
-        padding: 10px 15px;
+        gap: 8px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--sidebar-bg);
+        padding: 12px 15px;
       }
 
       .toggle-btn {
+        display: flex;
         position: relative;
         flex: 1;
-        transition: all 0.2s;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
-        border: none;
-        border-radius: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        padding: 8px;
-        color: white;
-        font-weight: bold;
-        font-size: 0.9rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        background: var(--input-bg);
+        padding: 10px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      .toggle-btn:hover {
+        background: var(--hover-bg);
+        color: var(--text-primary);
       }
 
       .toggle-btn.active {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        border-color: var(--accent-color);
+        background: color-mix(in srgb, var(--accent-color), white 90%);
+        color: var(--accent-color);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .toggle-btn.active {
+            background: color-mix(in srgb, var(--accent-color), black 80%);
+        }
+        /* Invert the copyright text so it remains readable */
+        .leaflet-control-attribution {
+            background: rgba(32, 33, 36, 0.8) !important;
+            color: #9aa0a6 !important;
+        }
+
+        .leaflet-control-attribution a {
+            color: #8ab4f8 !important;
+        }
+
+        .leaflet-bottom .leaflet-control-zoom a, .leaflet-control-reset-btn {
+            background-color: #363636 !important;
+            color: #bdbdbd !important;
+        }
+
+        .leaflet-bottom .leaflet-control-zoom a:hover, .leaflet-control-reset-btn:hover {
+            background-color: #242424 !important;
+            color: #dbdbdb !important;
+        }
+      }
+
+      /* Optional: Filled style if preferred */
+       /* .toggle-btn.active {
         background: var(--accent-color);
         color: white;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2)
-      }
-
-      toggle-btn:hover {
-        filter: brightness(0.9);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-        text-decoration: none;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
-      }
-
-      /* Tooltip style for toggle buttons */
-      .toggle-btn:hover::after {
-        position: absolute;
-        bottom: -40px;
-        left: 50%;
-        transform: translateX(-20%);
-        opacity: 0.9;
-        z-index: 2000;
-        border-radius: 4px;
-        background: #333;
-        padding: 5px 10px;
-        pointer-events: none;
-        content: attr(data-tooltip);
-        color: white;
-        font-size: 0.75rem;
-        white-space: nowrap;
-      }
+        border-color: var(--accent-color);
+        box-shadow: var(--shadow-sm);
+      } */
 
       /* Controls */
       .controls {
         border-bottom: 1px solid var(--border-color);
         background: var(--sidebar-bg);
-        padding: 12px;
+        padding: 15px;
       }
 
       .search-wrapper {
         position: relative;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
         width: 100%;
       }
 
       .search-box {
+        transition: border-color 0.2s, box-shadow 0.2s;
         box-sizing: border-box;
         border: 1px solid var(--border-color);
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         background: var(--input-bg);
-        padding: 8px 30px 8px 10px;
+        padding: 10px 35px 10px 12px;
         width: 100%;
         color: var(--text-primary);
+        font-size: 0.9rem;
+      }
+
+      .search-box:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color), transparent 85%);
+        border-color: var(--accent-color);
       }
 
       .search-clear {
         display: none;
         position: absolute;
         top: 50%;
-        right: 8px;
+        right: 10px;
         transform: translateY(-50%);
+        transition: color 0.2s;
         cursor: pointer;
         color: var(--text-secondary);
         font-size: 1.1rem;
@@ -289,16 +345,18 @@
       /* Filters */
       .filter-label {
         display: block;
-        margin-bottom: 6px;
-        color: var(--text-secondary);
-        font-weight: bold;
-        font-size: 0.8rem;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
       }
 
       .checkbox-group {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 6px;
         max-height: 80px;
         overflow-y: auto;
       }
@@ -306,111 +364,141 @@
       .checkbox-item {
         display: flex;
         align-items: center;
+        transition: all 0.2s;
         cursor: pointer;
         border: 1px solid var(--border-color);
-        border-radius: 12px;
-        background: var(--hover-bg);
-        padding: 3px 8px;
-        color: var(--text-primary);
+        border-radius: 20px; /* Pill shape */
+        background: var(--bg-color);
+        padding: 4px 10px;
+        color: var(--text-secondary);
+        font-weight: 500;
         font-size: 0.75rem;
       }
 
+      .checkbox-item:hover {
+        border-color: var(--text-secondary);
+        color: var(--text-primary);
+      }
+
       .checkbox-item input {
-        margin-right: 5px;
+        margin-right: 6px;
+        accent-color: var(--accent-color);
       }
 
       /* Results List */
       .results-info {
-        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         border-bottom: 1px solid var(--border-color);
-        background: var(--hover-bg);
-        padding: 8px 15px;
+        background: var(--bg-color);
+        padding: 10px 15px;
         color: var(--text-secondary);
         font-weight: 600;
         font-size: 0.75rem;
       }
 
-      .results-info>.error {
-        color: var(--danger-color);
-      }
-
       .hospital-list {
         flex: 1;
         margin: 0;
+        background: var(--sidebar-bg);
         padding: 0;
         overflow-y: auto;
         list-style: none;
       }
 
       .hospital-item {
-        transition: background 0.1s;
+        position: relative;
+        transition: all 0.2s ease;
         cursor: pointer;
         border-bottom: 1px solid var(--border-color);
-        padding: 10px 15px;
+        padding: 12px 15px;
+        overflow: hidden;
       }
 
       .hospital-item:hover {
         background: var(--hover-bg);
+        padding-left: 18px; /* Slight movement effect */
       }
 
       .hospital-item.active {
         border-left: 4px solid var(--accent-color);
         background: var(--active-bg);
+        padding-left: 15px; /* Compensate for border */
       }
 
       .h-name {
         display: block;
-        margin-bottom: 2px;
+        margin-bottom: 4px;
         color: var(--text-primary);
         font-weight: 600;
-        font-size: 0.85rem;
-        line-height: 1.2;
+        font-size: 0.9rem;
+        line-height: 1.3;
       }
 
       .h-loc {
         display: block;
         color: var(--text-secondary);
-        font-size: 0.75rem;
+        font-size: 0.8rem;
       }
 
       .badge {
-        display: inline-block;
-        margin-top: 4px;
+        display: inline-flex;
+        align-items: center;
+        margin-top: 6px;
         border: 1px solid transparent;
-        border-radius: 3px;
-        padding: 1px 5px;
-        font-weight: bold;
+        border-radius: 4px;
+        padding: 2px 6px;
+        font-weight: 600;
         font-size: 0.65rem;
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
       }
 
       .badge.excluded {
-        border-color: rgba(211, 47, 47, 0.2);
-        background: rgba(211, 47, 47, 0.1);
+        border-color: color-mix(in srgb, var(--danger-color), transparent 80%);
+        background: color-mix(in srgb, var(--danger-color), transparent 90%);
         color: var(--danger-color);
       }
 
       .badge.network {
-        border-color: rgba(46, 125, 50, 0.2);
-        background: rgba(46, 125, 50, 0.1);
+        border-color: color-mix(in srgb, var(--success-color), transparent 80%);
+        background: color-mix(in srgb, var(--success-color), transparent 90%);
         color: var(--success-color);
+      }
+
+      .leaflet-control-reset-btn {
+        display: flex !important;
+        justify-content: center;
+        align-items: end;
+        cursor: pointer;
+        background: var(--bg-color);
+        color: var(--text-primary);
+        font-size: 1.1rem !important;
+      }
+      .leaflet-control-reset-btn:hover {
+      background-color: #f4f4f4;
+      font-weight: bold;
       }
 
       /* Sidebar Footer */
       .sidebar-footer {
         display: flex;
         justify-content: center;
-        gap: 15px;
+        gap: 20px;
         margin-top: auto;
         border-top: 1px solid var(--border-color);
-        background: var(--hover-bg);
-        padding: 10px 15px;
+        background: var(--bg-color);
+        padding: 12px 15px;
         font-size: 0.75rem;
       }
 
       .footer-link {
+        transition: color 0.2s, border-bottom-color 0.2s;
         cursor: pointer;
-        border-bottom: 1px dotted var(--text-secondary);
+        border-bottom: 1px solid transparent;
         color: var(--text-secondary);
+        font-weight: 500;
         text-decoration: none;
       }
 
@@ -419,7 +507,7 @@
         color: var(--accent-color);
       }
 
-      /* Map & Dark Mode Popups */
+      /* Map */
       #map {
         flex: 1;
         z-index: 1;
@@ -427,16 +515,29 @@
         height: 100%;
       }
 
-      /* Leaflet Dark Mode Overrides */
-      .leaflet-popup-content-wrapper,
-      .leaflet-popup-tip {
-        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+      /* Leaflet Customization */
+      .leaflet-popup-content-wrapper {
+        box-shadow: var(--shadow-md);
+        border-radius: var(--radius-md);
         background: var(--popup-bg);
+        padding: 0;
+        overflow: hidden;
         color: var(--popup-text);
       }
 
+      .leaflet-popup-content {
+        margin: 14px 16px;
+        line-height: 1.5;
+      }
+
+      .leaflet-popup-tip {
+        background: var(--popup-bg);
+      }
+
       .leaflet-container a.leaflet-popup-close-button {
+        padding: 8px;
         color: var(--text-secondary);
+        font-size: 16px;
       }
 
       /* Loading */
@@ -449,53 +550,58 @@
         justify-content: center;
         align-items: center;
         z-index: 9999;
-        background: var(--modal-overlay);
+        transition: opacity 0.4s ease;
+        background: var(--bg-color); /* Cleaner than opacity for initial load */
         width: 100%;
         height: 100%;
-        color: white;
+        color: var(--accent-color);
       }
 
       .spinner {
-        animation: spin 0.8s linear infinite;
-        margin-bottom: 10px;
-        border: 3px solid rgba(255, 255, 255, 0.3);
-        border-top: 3px solid white;
+        animation: spin 1s cubic-bezier(0.55, 0.055, 0.675, 0.19) infinite;
+        margin-bottom: 15px;
+        border: 3px solid transparent;
+        border-top: 3px solid var(--accent-color);
+        border-right: 3px solid var(--accent-color);
         border-radius: 50%;
-        width: 30px;
-        height: 30px;
+        width: 40px;
+        height: 40px;
       }
 
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-
-        100% {
-          transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
 
       /* Toast */
       #toast {
         position: fixed;
-        bottom: 20px;
+        bottom: 30px;
         left: 50%;
-        transform: translateX(-50%);
+        transform: translateX(-50%) translateY(20px);
         visibility: hidden;
+        opacity: 0;
         z-index: 10000;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-        border-radius: 4px;
-        background-color: #333;
-        padding: 12px;
-        min-width: 200px;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: var(--shadow-md);
+        border-radius: var(--radius-md);
+        background-color: var(--primary-color);
+        padding: 12px 20px;
+        min-width: 250px;
         color: #fff;
-        font-size: 0.85rem;
+        font-weight: 500;
+        font-size: 0.9rem;
         text-align: center;
       }
 
       #toast.show {
+        transform: translateX(-50%) translateY(0);
         visibility: visible;
-        animation: fadein 0.3s, fadeout 0.3s 2.5s;
+        opacity: 1;
+      }
+
+      .error {
+        color: var(--danger-color);
       }
 
       #toast.error {
@@ -503,31 +609,46 @@
       }
 
       /* Modal */
-      .modal-overlay {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        justify-content: center;
-        align-items: center;
-        opacity: 0;
-        z-index: 10001;
-        transition: opacity 0.2s;
-        background: var(--modal-overlay);
-        width: 100%;
-        height: 100%;
+      dialog.native-modal {
+          box-shadow: var(--shadow-md);
+          border: none;
+          border-radius: var(--radius-md);
+          background: transparent;
+          padding: 0;
+          width: 600px;
+          max-width: 90%;
+      }
+      dialog.native-modal::backdrop {
+          backdrop-filter: blur(2px);
+          transition: opacity 0.3s;
+          background: var(--modal-overlay);
       }
 
-      .modal-overlay.open {
-        opacity: 1;
+      /* Animation for opening */
+      dialog.native-modal[open] {
+          animation: zoomIn 0.3s ease-out;
+      }
+
+      dialog.native-modal[open]::backdrop {
+          animation: fadeIn 0.3s ease-out;
+      }
+
+      .modal-wrapper {
+          background: var(--modal-bg);
+          padding: 25px;
+          max-height: 85vh;
+          overflow-y: auto;
+          color: var(--text-primary);
       }
 
       .modal-content {
         position: relative;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        border-radius: 8px;
+        transform: scale(0.95);
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: var(--shadow-md);
+        border-radius: var(--radius-md);
         background: var(--modal-bg);
-        padding: 20px;
+        padding: 25px;
         width: 600px;
         max-width: 90%;
         max-height: 85vh;
@@ -535,13 +656,15 @@
         color: var(--text-primary);
       }
 
+
       .modal-close {
         position: absolute;
-        top: 15px;
-        right: 15px;
+        top: 20px;
+        right: 20px;
+        transition: color 0.2s;
         cursor: pointer;
         color: var(--text-secondary);
-        font-size: 1.2rem;
+        font-size: 1.5rem;
         line-height: 1;
       }
 
@@ -550,56 +673,81 @@
       }
 
       .modal-title {
-        margin: 0 0 15px 0;
+        margin: 0 0 20px 0;
         border-bottom: 1px solid var(--border-color);
-        padding-bottom: 10px;
-        font-size: 1.1rem;
+        padding-bottom: 15px;
+        font-weight: 700;
+        font-size: 1.25rem;
       }
 
       .modal-body {
         color: var(--text-secondary);
-        font-size: 0.85rem;
-        line-height: 1.5;
+        font-size: 0.9rem;
+        line-height: 1.2;
       }
 
       .modal-body h3 {
-        margin: 12px 0 2px;
+        margin: 15px 0 8px;
         color: var(--text-primary);
-        font-size: 0.9rem;
+        font-weight: 600;
+        font-size: 1rem;
       }
 
       .modal-body p {
-        margin-top: 0;
-        margin-bottom: 8px;
+        margin: 8px 0;
+      }
+
+      .modal-body a {
+        transition: color 0.2s, border-bottom-color 0.2s;
+        border-bottom: 0;
+        color: var(--accent-color);
+        font-weight: 500;
+        text-decoration: none;
+      }
+
+      .modal-body a:hover {
+        border-bottom: 1px solid var(--accent-color);
       }
 
       /* Sources Table */
       .source-table {
-        margin-top: 10px;
-        border-collapse: collapse;
+        margin-top: 15px;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        border-collapse: separate;
+        border-spacing: 0;
         width: 100%;
-        font-size: 0.8rem;
+        overflow: hidden;
+        font-size: 0.85rem;
       }
 
       .source-table th,
       .source-table td {
         border-bottom: 1px solid var(--border-color);
-        padding: 8px;
+        padding: 10px 12px;
         text-align: left;
       }
 
+      .source-table tr:last-child td {
+        border-bottom: none;
+      }
+
       .source-table th {
-        background: var(--hover-bg);
+        border-bottom: 2px solid var(--border-color);
+        background: var(--bg-color);
         color: var(--text-primary);
         font-weight: 600;
       }
 
-      .source-table td {
+      .source-table td:nth-of-type(1) {
+        width: 50%;
         color: var(--text-primary);
+        font-weight: 700;
       }
 
       .source-table a {
         color: var(--accent-color);
+        font-weight: 500;
         text-decoration: none;
       }
 
@@ -607,74 +755,36 @@
         text-decoration: underline;
       }
 
+      /* Utilities */
+      .toolarge { padding:20px; color:var(--text-secondary); font-size:0.85rem; text-align:center; }
+      .filter-loading { padding: 5px; color: var(--text-secondary); font-size:0.75rem; }
+
       /* Mobile Responsiveness */
       @media (max-width: 768px) {
-        .container {
-          flex-direction: column;
-        }
-
-        .sidebar {
-          border-right: none;
-          border-bottom: 1px solid var(--border-color);
-          width: 100%;
-          height: 45vh;
-        }
-
-        #map {
-          height: 55vh;
-        }
-
-        .header h1 {
-          font-size: 1rem;
-        }
-
-        .modal-content {
-          padding: 15px;
-          max-height: 80vh;
-        }
+        .container { flex-direction: column; }
+        .sidebar { border-right: none; border-bottom: 1px solid var(--border-color); width: 100%; height: 45vh; }
+        #map { height: 55vh; }
+        .header h1 { font-size: 1rem; }
+        .modal-content { padding: 20px; max-height: 80vh; }
       }
 
-      @keyframes fadein {
-        from {
-          bottom: 0;
-          opacity: 0;
-        }
-
-        to {
-          bottom: 20px;
-          opacity: 1;
-        }
-      }
-
-      @keyframes fadeout {
-        from {
-          bottom: 20px;
-          opacity: 1;
-        }
-
-        to {
-          bottom: 0;
-          opacity: 0;
-        }
-      }
-
+      /* Animation Keyframes */
       @keyframes jump {
-        0% {
-          top: 0;
-        }
+        0% { top: 0; }
+        50% { top: -20px; }
+        100% { top: 0; }
+      }
+      @keyframes zoomIn {
+          from { transform: scale(0.95); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+      }
 
-        50% {
-          top: -20px;
-        }
-
-        /* Jump height */
-        100% {
-          top: 0;
-        }
+      @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
       }
 
       .marker-jump {
-        /* Animate "top" to avoid conflict with Leaflet's "transform" positioning */
         animation: jump 0.4s ease-in-out;
       }
     </style>
@@ -688,13 +798,13 @@
 
     <div id="toast"></div>
 
-    <div class="modal-overlay" id="genericModal">
-      <div class="modal-content">
+    <dialog id="genericModal" class="native-modal">
+      <div class="modal-wrapper">
         <span class="modal-close" onclick="closeModal()">&times;</span>
         <h2 class="modal-title" id="modalTitle">Title</h2>
         <div class="modal-body" id="modalBody"></div>
       </div>
-    </div>
+    </dialog>
 
     <div class="container">
       <div class="sidebar">
@@ -728,7 +838,7 @@
               type="search"
               id="searchInput"
               class="search-box"
-              placeholder="Search name, city, pin..."
+              placeholder="Search hospital name, city..."
               autocomplete="off"
             />
             <span class="search-clear" id="searchClear">&times;</span>
@@ -736,10 +846,7 @@
 
           <span class="filter-label">Filter by Company:</span>
           <div class="checkbox-group" id="insurerFilters">
-            <span
-              style="font-size:0.75rem; padding: 5px; color: var(--text-secondary);"
-              >Loading filters...</span
-            >
+            <span class="filter-loading">Loading filters...</span>
           </div>
         </div>
 
@@ -788,6 +895,8 @@
       let markerMap = {};
       let currentFilteredData = [];
       let clickedMarker = null;
+      const defaultLocation = [22.5937, 78.9629];
+      const Zoom = { zoomControl: false };
 
       // --- INIT ---
       document.addEventListener("DOMContentLoaded", () => {
@@ -810,10 +919,32 @@
         const tilesUrl = isDarkMode ? darkTiles : lightTiles;
 
         // MAP INSTANCE SETUP
-        const defaultLocation = [22.5937, 78.9629];
-        const Zoom = { zoomControl: false };
         map = L.map("map", Zoom).setView(defaultLocation, 5);
         L.control.zoom({ position: "bottomright" }).addTo(map);
+
+        const ResetControl = L.Control.extend({
+          options: { position: "bottomright" },
+          onAdd: function (map) {
+            const container = L.DomUtil.create(
+              "div",
+              "leaflet-bar leaflet-control"
+            );
+            const btn = L.DomUtil.create(
+              "a",
+              "leaflet-control-reset-btn",
+              container
+            );
+            btn.href = "#";
+            btn.title = "Reset View";
+            btn.innerHTML = "⟲"; // Unicode Refresh Icon
+            btn.onclick = (e) => {
+              L.DomEvent.preventDefault(e);
+              resetMapView();
+            };
+            return container;
+          },
+        });
+        map.addControl(new ResetControl());
 
         tileLayer = L.tileLayer(tilesUrl, {
           attribution: "&copy; OpenStreetMap &copy; CARTO",
@@ -865,6 +996,7 @@
           searchClear.style.display = "none";
           applyFilters();
           searchInput.focus();
+          resetMapView();
         });
 
         // Modal Close Events
@@ -1072,7 +1204,7 @@
       function updateSidebarList(resetScroll = false) {
         const listContainer = document.getElementById("hospitalList");
         const countLabel = document.getElementById("resultsCount");
-
+        const RENDER_LIMIT = 500;
         if (resetScroll) listContainer.scrollTop = 0;
 
         if (!currentFilteredData || currentFilteredData.length === 0) {
@@ -1092,13 +1224,11 @@
         countLabel.classList.remove("error");
         countLabel.innerText = `Showing ${visibleItems.length} of ${currentFilteredData.length} locations`;
 
-        const RENDER_LIMIT = 50;
         const zoom = map.getZoom();
-
         listContainer.innerHTML = "";
 
-        if (zoom < 8 && visibleItems.length > 500) {
-          listContainer.innerHTML = `<li style="padding:20px; text-align:center; color:var(--text-secondary); font-size:0.85rem;">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
+        if (zoom < 8 && visibleItems.length > RENDER_LIMIT) {
+          listContainer.innerHTML = `<li class="toolarge">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
           return;
         }
 
@@ -1196,17 +1326,38 @@
 
       // --- MODALS ---
       function openModal(title, htmlContent) {
+        const dialog = document.getElementById("genericModal");
+
+        // Set Content
         document.getElementById("modalTitle").innerText = title;
         document.getElementById("modalBody").innerHTML = htmlContent;
-        const overlay = document.getElementById("genericModal");
-        overlay.style.display = "flex";
-        setTimeout(() => overlay.classList.add("open"), 10);
+        dialog.addEventListener("click", (event) => {
+          const rect = event.target.getBoundingClientRect();
+          // Detect if click was outside the dialog bounds
+          if (
+            rect.left > event.clientX ||
+            rect.right < event.clientX ||
+            rect.top > event.clientY ||
+            rect.bottom < event.clientY
+          ) {
+            try {
+              dialog.close();
+            } catch (e) {
+              console.error("Error closing modal:", e);
+            }
+          }
+        });
+        // Native function that opens the modal AND traps focus automatically
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+        } else {
+          console.error("This browser does not support <dialog> API");
+        }
       }
 
       function closeModal() {
-        const overlay = document.getElementById("genericModal");
-        overlay.classList.remove("open");
-        setTimeout(() => (overlay.style.display = "none"), 200);
+        const dialog = document.getElementById("genericModal");
+        dialog.close();
       }
 
       function openDisclaimerModal() {
@@ -1282,6 +1433,13 @@
       }
 
       // --- UTILS ---
+      function resetMapView() {
+        map.flyTo(defaultLocation, 5, {
+          duration: 1.5,
+          easeLinearity: 0.25,
+        });
+      }
+
       function showLoading(show, text) {
         const el = document.getElementById("loading");
         if (show) {
