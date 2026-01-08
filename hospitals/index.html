@@ -109,521 +109,573 @@
     <style>
       /* --- THEME VARIABLES --- */
       :root {
-          --bg-color: #ffffff;
-          --sidebar-bg: #f8f9fa;
-          --text-primary: #333333;
-          --text-secondary: #666666;
-          --border-color: #dddddd;
-          --hover-bg: #e9ecef;
-          --active-bg: #e3f2fd;
-          --primary-color: #2c3e50;
-          --accent-color: #2196f3;
-          --danger-color: #d32f2f;
-          --success-color: #2e7d32;
-          --modal-overlay: rgba(0, 0, 0, 0.6);
-          --modal-bg: #ffffff;
-          --input-bg: #ffffff;
-          /* Popup Vars */
-          --popup-bg: #ffffff;
-          --popup-text: #333333;
+        --bg-color: #ffffff;
+        --sidebar-bg: #f8f9fa;
+        --text-primary: #333333;
+        --text-secondary: #666666;
+        --border-color: #dddddd;
+        --hover-bg: #e9ecef;
+        --active-bg: #e3f2fd;
+        --primary-color: #2c3e50;
+        --accent-color: #2196f3;
+        --danger-color: #d32f2f;
+        --success-color: #2e7d32;
+        --modal-overlay: rgba(0, 0, 0, 0.6);
+        --modal-bg: #ffffff;
+        --input-bg: #ffffff;
+        /* Popup Vars */
+        --popup-bg: #ffffff;
+        --popup-text: #333333;
       }
 
       @media (prefers-color-scheme: dark) {
-          :root {
-              --bg-color: #121212;
-              --sidebar-bg: #1e1e1e;
-              --text-primary: #e0e0e0;
-              --text-secondary: #aaaaaa;
-              --border-color: #333333;
-              --hover-bg: #2c2c2c;
-              --active-bg: #1a3b5c;
-              --primary-color: #1a1a1a;
-              --accent-color: #64b5f6;
-              --danger-color: #ef5350;
-              --success-color: #66bb6a;
-              --modal-overlay: rgba(0, 0, 0, 0.8);
-              --modal-bg: #1e1e1e;
-              --input-bg: #2c2c2c;
-              /* Dark Popup Vars */
-              --popup-bg: #2c2c2c;
-              --popup-text: #f0f0f0;
-          }
+        :root {
+          --bg-color: #121212;
+          --sidebar-bg: #1e1e1e;
+          --text-primary: #e0e0e0;
+          --text-secondary: #aaaaaa;
+          --border-color: #333333;
+          --hover-bg: #2c2c2c;
+          --active-bg: #1a3b5c;
+          --primary-color: #1a1a1a;
+          --accent-color: #64b5f6;
+          --danger-color: #ef5350;
+          --success-color: #66bb6a;
+          --modal-overlay: rgba(0, 0, 0, 0.8);
+          --modal-bg: #1e1e1e;
+          --input-bg: #2c2c2c;
+          /* Dark Popup Vars */
+          --popup-bg: #2c2c2c;
+          --popup-text: #f0f0f0;
+        }
       }
 
       body {
-          margin: 0;
-          background: var(--bg-color);
-          padding: 0;
-          color: var(--text-primary);
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        background: var(--bg-color);
+        padding: 0;
+        color: var(--text-primary);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
 
       /* Layout */
       .container {
-          display: flex;
-          width: 100vw;
-          height: 100vh;
-          overflow: hidden;
+        display: flex;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
       }
 
       .sidebar {
-          display: flex;
-          flex-shrink: 0;
-          flex-direction: column;
-          z-index: 1000;
-          box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-          border-right: 1px solid var(--border-color);
-          background: var(--sidebar-bg);
-          width: 380px;
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+        z-index: 1000;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        border-right: 1px solid var(--border-color);
+        background: var(--sidebar-bg);
+        width: 380px;
       }
 
       .header {
-          background: var(--primary-color);
-          padding: 15px;
-          color: white;
+        background: var(--primary-color);
+        padding: 15px;
+        color: white;
       }
 
       .header h1 {
-          margin: 0;
-          font-size: 1.2rem;
+        margin: 0;
+        font-size: 1.2rem;
       }
 
       .header p {
-          opacity: 0.8;
-          margin: 4px 0 0;
-          font-size: 0.8rem;
+        opacity: 0.8;
+        margin: 4px 0 0;
+        font-size: 0.8rem;
       }
 
       /* Dataset Toggle */
       .dataset-toggle {
-          display: flex;
-          gap: 10px;
-          background: color-mix(in srgb, var(--primary-color), black 20%);
-          padding: 10px 15px;
+        display: flex;
+        gap: 10px;
+        background: color-mix(in srgb, var(--primary-color), black 20%);
+        padding: 10px 15px;
       }
 
       .toggle-btn {
-          flex: 1;
-          transition: all 0.2s;
-          cursor: pointer;
-          border: none;
-          border-radius: 4px;
-          background: rgba(255, 255, 255, 0.1);
-          padding: 8px;
-          color: rgba(255, 255, 255, 0.7);
-          font-weight: 600;
-          font-size: 0.85rem;
+        position: relative;
+        flex: 1;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px;
+        color: white;
+        font-weight: bold;
+        font-size: 0.9rem;
       }
 
       .toggle-btn.active {
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          background: var(--accent-color);
-          color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        background: var(--accent-color);
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2)
+      }
+
+      toggle-btn:hover {
+        filter: brightness(0.9);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+        text-decoration: none;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+      }
+
+      /* Tooltip style for toggle buttons */
+      .toggle-btn:hover::after {
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-20%);
+        opacity: 0.9;
+        z-index: 2000;
+        border-radius: 4px;
+        background: #333;
+        padding: 5px 10px;
+        pointer-events: none;
+        content: attr(data-tooltip);
+        color: white;
+        font-size: 0.75rem;
+        white-space: nowrap;
       }
 
       /* Controls */
       .controls {
-          border-bottom: 1px solid var(--border-color);
-          background: var(--sidebar-bg);
-          padding: 12px;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--sidebar-bg);
+        padding: 12px;
       }
 
       .search-wrapper {
-          position: relative;
-          margin-bottom: 10px;
-          width: 100%;
+        position: relative;
+        margin-bottom: 10px;
+        width: 100%;
       }
 
       .search-box {
-          box-sizing: border-box;
-          border: 1px solid var(--border-color);
-          border-radius: 4px;
-          background: var(--input-bg);
-          padding: 8px 30px 8px 10px;
-          width: 100%;
-          color: var(--text-primary);
+        box-sizing: border-box;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        background: var(--input-bg);
+        padding: 8px 30px 8px 10px;
+        width: 100%;
+        color: var(--text-primary);
       }
 
       .search-clear {
-          display: none;
-          position: absolute;
-          top: 50%;
-          right: 8px;
-          transform: translateY(-50%);
-          cursor: pointer;
-          color: var(--text-secondary);
-          font-size: 1.1rem;
+        display: none;
+        position: absolute;
+        top: 50%;
+        right: 8px;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 1.1rem;
       }
 
       .search-clear:hover {
-          color: var(--text-primary);
+        color: var(--text-primary);
       }
 
       /* Filters */
       .filter-label {
-          display: block;
-          margin-bottom: 6px;
-          color: var(--text-secondary);
-          font-weight: bold;
-          font-size: 0.8rem;
+        display: block;
+        margin-bottom: 6px;
+        color: var(--text-secondary);
+        font-weight: bold;
+        font-size: 0.8rem;
       }
 
       .checkbox-group {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          max-height: 80px;
-          overflow-y: auto;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        max-height: 80px;
+        overflow-y: auto;
       }
 
       .checkbox-item {
-          display: flex;
-          align-items: center;
-          cursor: pointer;
-          border: 1px solid var(--border-color);
-          border-radius: 12px;
-          background: var(--hover-bg);
-          padding: 3px 8px;
-          color: var(--text-primary);
-          font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        background: var(--hover-bg);
+        padding: 3px 8px;
+        color: var(--text-primary);
+        font-size: 0.75rem;
       }
 
       .checkbox-item input {
-          margin-right: 5px;
+        margin-right: 5px;
       }
 
       /* Results List */
       .results-info {
-          border-top: 1px solid var(--border-color);
-          border-bottom: 1px solid var(--border-color);
-          background: var(--hover-bg);
-          padding: 8px 15px;
-          color: var(--text-secondary);
-          font-weight: 600;
-          font-size: 0.75rem;
+        border-top: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+        background: var(--hover-bg);
+        padding: 8px 15px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.75rem;
+      }
+
+      .results-info>.error {
+        color: var(--danger-color);
       }
 
       .hospital-list {
-          flex: 1;
-          margin: 0;
-          padding: 0;
-          overflow-y: auto;
-          list-style: none;
+        flex: 1;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto;
+        list-style: none;
       }
 
       .hospital-item {
-          transition: background 0.1s;
-          cursor: pointer;
-          border-bottom: 1px solid var(--border-color);
-          padding: 10px 15px;
+        transition: background 0.1s;
+        cursor: pointer;
+        border-bottom: 1px solid var(--border-color);
+        padding: 10px 15px;
       }
 
       .hospital-item:hover {
-          background: var(--hover-bg);
+        background: var(--hover-bg);
       }
 
       .hospital-item.active {
-          border-left: 4px solid var(--accent-color);
-          background: var(--active-bg);
+        border-left: 4px solid var(--accent-color);
+        background: var(--active-bg);
       }
 
       .h-name {
-          display: block;
-          margin-bottom: 2px;
-          color: var(--text-primary);
-          font-weight: 600;
-          font-size: 0.85rem;
-          line-height: 1.2;
+        display: block;
+        margin-bottom: 2px;
+        color: var(--text-primary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        line-height: 1.2;
       }
 
       .h-loc {
-          display: block;
-          color: var(--text-secondary);
-          font-size: 0.75rem;
+        display: block;
+        color: var(--text-secondary);
+        font-size: 0.75rem;
       }
 
       .badge {
-          display: inline-block;
-          margin-top: 4px;
-          border: 1px solid transparent;
-          border-radius: 3px;
-          padding: 1px 5px;
-          font-weight: bold;
-          font-size: 0.65rem;
+        display: inline-block;
+        margin-top: 4px;
+        border: 1px solid transparent;
+        border-radius: 3px;
+        padding: 1px 5px;
+        font-weight: bold;
+        font-size: 0.65rem;
       }
 
       .badge.excluded {
-          border-color: rgba(211, 47, 47, 0.2);
-          background: rgba(211, 47, 47, 0.1);
-          color: var(--danger-color);
+        border-color: rgba(211, 47, 47, 0.2);
+        background: rgba(211, 47, 47, 0.1);
+        color: var(--danger-color);
       }
 
       .badge.network {
-          border-color: rgba(46, 125, 50, 0.2);
-          background: rgba(46, 125, 50, 0.1);
-          color: var(--success-color);
+        border-color: rgba(46, 125, 50, 0.2);
+        background: rgba(46, 125, 50, 0.1);
+        color: var(--success-color);
       }
 
       /* Sidebar Footer */
       .sidebar-footer {
-          display: flex;
-          justify-content: center;
-          gap: 15px;
-          margin-top: auto;
-          border-top: 1px solid var(--border-color);
-          background: var(--hover-bg);
-          padding: 10px 15px;
-          font-size: 0.75rem;
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: auto;
+        border-top: 1px solid var(--border-color);
+        background: var(--hover-bg);
+        padding: 10px 15px;
+        font-size: 0.75rem;
       }
 
       .footer-link {
-          cursor: pointer;
-          border-bottom: 1px dotted var(--text-secondary);
-          color: var(--text-secondary);
-          text-decoration: none;
+        cursor: pointer;
+        border-bottom: 1px dotted var(--text-secondary);
+        color: var(--text-secondary);
+        text-decoration: none;
       }
 
       .footer-link:hover {
-          border-bottom-color: var(--accent-color);
-          color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
+        color: var(--accent-color);
       }
 
       /* Map & Dark Mode Popups */
       #map {
-          flex: 1;
-          z-index: 1;
-          background: var(--bg-color);
-          height: 100%;
+        flex: 1;
+        z-index: 1;
+        background: var(--bg-color);
+        height: 100%;
       }
 
       /* Leaflet Dark Mode Overrides */
       .leaflet-popup-content-wrapper,
       .leaflet-popup-tip {
-          box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
-          background: var(--popup-bg);
-          color: var(--popup-text);
+        box-shadow: 0 3px 14px rgba(0, 0, 0, 0.4);
+        background: var(--popup-bg);
+        color: var(--popup-text);
       }
 
       .leaflet-container a.leaflet-popup-close-button {
-          color: var(--text-secondary);
+        color: var(--text-secondary);
       }
 
       /* Loading */
       #loading {
-          display: flex;
-          position: fixed;
-          top: 0;
-          left: 0;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-          z-index: 9999;
-          background: var(--modal-overlay);
-          width: 100%;
-          height: 100%;
-          color: white;
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 0;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        background: var(--modal-overlay);
+        width: 100%;
+        height: 100%;
+        color: white;
       }
 
       .spinner {
-          animation: spin 0.8s linear infinite;
-          margin-bottom: 10px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-top: 3px solid white;
-          border-radius: 50%;
-          width: 30px;
-          height: 30px;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 10px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
       }
 
       @keyframes spin {
-          0% {
-              transform: rotate(0deg);
-          }
+        0% {
+          transform: rotate(0deg);
+        }
 
-          100% {
-              transform: rotate(360deg);
-          }
+        100% {
+          transform: rotate(360deg);
+        }
       }
 
       /* Toast */
       #toast {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          visibility: hidden;
-          z-index: 10000;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-          border-radius: 4px;
-          background-color: #333;
-          padding: 12px;
-          min-width: 200px;
-          color: #fff;
-          font-size: 0.85rem;
-          text-align: center;
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        visibility: hidden;
+        z-index: 10000;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        border-radius: 4px;
+        background-color: #333;
+        padding: 12px;
+        min-width: 200px;
+        color: #fff;
+        font-size: 0.85rem;
+        text-align: center;
       }
 
       #toast.show {
-          visibility: visible;
-          animation: fadein 0.3s, fadeout 0.3s 2.5s;
+        visibility: visible;
+        animation: fadein 0.3s, fadeout 0.3s 2.5s;
       }
 
       #toast.error {
-          background-color: var(--danger-color);
+        background-color: var(--danger-color);
       }
 
       /* Modal */
       .modal-overlay {
-          display: none;
-          position: fixed;
-          top: 0;
-          left: 0;
-          justify-content: center;
-          align-items: center;
-          opacity: 0;
-          z-index: 10001;
-          transition: opacity 0.2s;
-          background: var(--modal-overlay);
-          width: 100%;
-          height: 100%;
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        z-index: 10001;
+        transition: opacity 0.2s;
+        background: var(--modal-overlay);
+        width: 100%;
+        height: 100%;
       }
 
       .modal-overlay.open {
-          opacity: 1;
+        opacity: 1;
       }
 
       .modal-content {
-          position: relative;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-          border-radius: 8px;
-          background: var(--modal-bg);
-          padding: 20px;
-          width: 600px;
-          max-width: 90%;
-          max-height: 85vh;
-          overflow-y: auto;
-          color: var(--text-primary);
+        position: relative;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        background: var(--modal-bg);
+        padding: 20px;
+        width: 600px;
+        max-width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        color: var(--text-primary);
       }
 
       .modal-close {
-          position: absolute;
-          top: 15px;
-          right: 15px;
-          cursor: pointer;
-          color: var(--text-secondary);
-          font-size: 1.2rem;
-          line-height: 1;
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        cursor: pointer;
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        line-height: 1;
       }
 
       .modal-close:hover {
-          color: var(--text-primary);
+        color: var(--text-primary);
       }
 
       .modal-title {
-          margin: 0 0 15px 0;
-          border-bottom: 1px solid var(--border-color);
-          padding-bottom: 10px;
-          font-size: 1.1rem;
+        margin: 0 0 15px 0;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        font-size: 1.1rem;
       }
 
       .modal-body {
-          color: var(--text-secondary);
-          font-size: 0.85rem;
-          line-height: 1.5;
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        line-height: 1.5;
       }
 
       .modal-body h3 {
-          margin: 12px 0 4px;
-          color: var(--text-primary);
-          font-size: 0.9rem;
+        margin: 12px 0 2px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
       }
 
       .modal-body p {
-          margin-bottom: 8px;
+        margin-top: 0;
+        margin-bottom: 8px;
       }
 
       /* Sources Table */
       .source-table {
-          margin-top: 10px;
-          border-collapse: collapse;
-          width: 100%;
-          font-size: 0.8rem;
+        margin-top: 10px;
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.8rem;
       }
 
       .source-table th,
       .source-table td {
-          border-bottom: 1px solid var(--border-color);
-          padding: 8px;
-          text-align: left;
+        border-bottom: 1px solid var(--border-color);
+        padding: 8px;
+        text-align: left;
       }
 
       .source-table th {
-          background: var(--hover-bg);
-          color: var(--text-primary);
-          font-weight: 600;
+        background: var(--hover-bg);
+        color: var(--text-primary);
+        font-weight: 600;
       }
 
       .source-table td {
-          color: var(--text-primary);
+        color: var(--text-primary);
       }
 
       .source-table a {
-          color: var(--accent-color);
-          text-decoration: none;
+        color: var(--accent-color);
+        text-decoration: none;
       }
 
       .source-table a:hover {
-          text-decoration: underline;
+        text-decoration: underline;
       }
 
       /* Mobile Responsiveness */
       @media (max-width: 768px) {
-          .container {
-              flex-direction: column;
-          }
+        .container {
+          flex-direction: column;
+        }
 
-          .sidebar {
-              border-right: none;
-              border-bottom: 1px solid var(--border-color);
-              width: 100%;
-              height: 45vh;
-          }
+        .sidebar {
+          border-right: none;
+          border-bottom: 1px solid var(--border-color);
+          width: 100%;
+          height: 45vh;
+        }
 
-          #map {
-              height: 55vh;
-          }
+        #map {
+          height: 55vh;
+        }
 
-          .header h1 {
-              font-size: 1rem;
-          }
+        .header h1 {
+          font-size: 1rem;
+        }
 
-          .modal-content {
-              padding: 15px;
-              max-height: 80vh;
-          }
+        .modal-content {
+          padding: 15px;
+          max-height: 80vh;
+        }
       }
 
       @keyframes fadein {
-          from {
-              bottom: 0;
-              opacity: 0;
-          }
+        from {
+          bottom: 0;
+          opacity: 0;
+        }
 
-          to {
-              bottom: 20px;
-              opacity: 1;
-          }
+        to {
+          bottom: 20px;
+          opacity: 1;
+        }
       }
 
       @keyframes fadeout {
-          from {
-              bottom: 20px;
-              opacity: 1;
-          }
+        from {
+          bottom: 20px;
+          opacity: 1;
+        }
 
-          to {
-              bottom: 0;
-              opacity: 0;
-          }
+        to {
+          bottom: 0;
+          opacity: 0;
+        }
+      }
+
+      @keyframes jump {
+        0% {
+          top: 0;
+        }
+
+        50% {
+          top: -20px;
+        }
+
+        /* Jump height */
+        100% {
+          top: 0;
+        }
+      }
+
+      .marker-jump {
+        /* Animate "top" to avoid conflict with Leaflet's "transform" positioning */
+        animation: jump 0.4s ease-in-out;
       }
     </style>
   </head>
@@ -656,6 +708,7 @@
             class="toggle-btn active"
             id="btn-network"
             onclick="loadDataset('network')"
+            data-tooltip="View in-network hospitals where Cashless Treatment is eligible"
           >
             In-Network
           </button>
@@ -663,6 +716,7 @@
             class="toggle-btn"
             id="btn-excluded"
             onclick="loadDataset('excluded')"
+            data-tooltip="View excluded/blacklisted hospitals. No coverage from Insurers!"
           >
             Excluded
           </button>
@@ -671,7 +725,7 @@
         <div class="controls">
           <div class="search-wrapper">
             <input
-              type="text"
+              type="search"
               id="searchInput"
               class="search-box"
               placeholder="Search name, city, pin..."
@@ -696,12 +750,12 @@
         <ul class="hospital-list" id="hospitalList"></ul>
 
         <div class="sidebar-footer">
-          <span class="footer-link" onclick="openSourcesModal()"
-            >Data Sources</span
-          >
-          <span class="footer-link" onclick="openDisclaimerModal()"
-            >Disclaimer</span
-          >
+          <span class="footer-link" onclick="openSourcesModal()">
+            Data Source
+          </span>
+          <span class="footer-link" onclick="openDisclaimerModal()">
+            Disclaimer
+          </span>
         </div>
       </div>
 
@@ -733,6 +787,7 @@
       let currentDataset = [];
       let markerMap = {};
       let currentFilteredData = [];
+      let clickedMarker = null;
 
       // --- INIT ---
       document.addEventListener("DOMContentLoaded", () => {
@@ -754,11 +809,11 @@
           "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
         const tilesUrl = isDarkMode ? darkTiles : lightTiles;
 
-        map = L.map("map", { zoomControl: false }).setView(
-          [20.5937, 78.9629],
-          5
-        );
-        L.control.zoom({ position: "topright" }).addTo(map);
+        // MAP INSTANCE SETUP
+        const defaultLocation = [22.5937, 78.9629];
+        const Zoom = { zoomControl: false };
+        map = L.map("map", Zoom).setView(defaultLocation, 5);
+        L.control.zoom({ position: "bottomright" }).addTo(map);
 
         tileLayer = L.tileLayer(tilesUrl, {
           attribution: "&copy; OpenStreetMap &copy; CARTO",
@@ -771,8 +826,20 @@
           maxClusterRadius: 45,
           showCoverageOnHover: false,
         });
+        markersClusterGroup.on("clustermouseover", function (a) {
+          // If less than 10 markers, expand (spiderfy) them immediately
+          if (a.layer.getChildCount() < 10) {
+            a.layer.spiderfy();
+          }
+        });
+
         map.addLayer(markersClusterGroup);
         map.on("moveend", () => updateSidebarList(false));
+
+        map.on("click", () => {
+          clickedMarker = null;
+          map.closePopup();
+        });
 
         // 3. Listen for System Theme Changes
         window
@@ -818,8 +885,12 @@
         // UI Resets
         updateToggleUI();
         showLoading(true, `Loading ${CONFIG[type].label}...`);
-        document.getElementById("resultsCount").innerText = "Loading data...";
-        document.getElementById("hospitalList").innerHTML = "";
+
+        const listContainer = document.getElementById("hospitalList");
+        const countLabel = document.getElementById("resultsCount");
+        countLabel.classList.remove("error");
+        countLabel.innerText = "Loading data...";
+        listContainer.innerHTML = "";
         markersClusterGroup.clearLayers();
 
         try {
@@ -836,9 +907,9 @@
           console.error(error);
           showLoading(false);
           showToast(`Failed to load data: ${error.message}`, true);
-          document.getElementById("resultsCount").innerText =
-            "Error loading data";
-          document.getElementById("hospitalList").innerHTML =
+          countLabel.innerText = "Error Loading Data!";
+          countLabel.classList.add("error");
+          listContainer.innerHTML =
             '<li style="padding:15px;text-align:center;">Data unavailable.</li>';
           currentDataset = [];
           currentFilteredData = [];
@@ -856,6 +927,7 @@
 
       // --- FILTERS & RENDERING ---
       function generateCompanyFilters(data) {
+        const countLabel = document.getElementById("resultsCount");
         const container = document.getElementById("insurerFilters");
         container.innerHTML = "";
 
@@ -869,8 +941,10 @@
         });
 
         if (companies.size === 0) {
+          countLabel.innerHTML = "No Data Found!";
+          countLabel.classList.add("error");
           container.innerHTML =
-            '<span style="font-size:0.75rem; color:var(--text-secondary); padding:5px;">No specific filters</span>';
+            '<span style="font-size:0.75rem; color:var(--text-secondary); padding:5px;">None</span>';
           return;
         }
 
@@ -944,7 +1018,7 @@
               ? `<div class="badge excluded">⛔ EXCLUDED</div>`
               : `<div class="badge network">✅ IN-NETWORK</div>`;
 
-            marker.bindPopup(`
+            const popupContent = `
                     <div style="min-width:200px; font-family:inherit;">
                         ${badgeHtml}
                         <h3 style="margin:5px 0; color:${color}; font-size:1rem;">${
@@ -962,7 +1036,30 @@
                             : ""
                         }
                     </div>
-                `);
+                `;
+            marker.bindPopup(popupContent);
+            marker.on("mouseover", function (e) {
+              // Only open on hover if this isn't the currently "clicked/locked" marker
+              if (clickedMarker !== this) {
+                this.openPopup();
+              }
+            });
+
+            marker.on("mouseout", function (e) {
+              // Only close on mouseout if this isn't the "locked" marker
+              if (clickedMarker !== this) {
+                this.closePopup();
+              }
+            });
+
+            marker.on("click", function (e) {
+              // Lock this marker as the active one
+              clickedMarker = this;
+              this.openPopup();
+
+              // Stop the click from propagating to the map (which would reset it)
+              L.DomEvent.stopPropagation(e);
+            });
 
             markerMap[index] = marker;
             return marker;
@@ -979,7 +1076,8 @@
         if (resetScroll) listContainer.scrollTop = 0;
 
         if (!currentFilteredData || currentFilteredData.length === 0) {
-          countLabel.innerText = "No hospitals found";
+          countLabel.innerText = "No Hospitals Found!";
+          countLabel.classList.add("error");
           listContainer.innerHTML = "";
           return;
         }
@@ -991,6 +1089,7 @@
           return bounds.contains(L.latLng(item.lat, item.lng));
         });
 
+        countLabel.classList.remove("error");
         countLabel.innerText = `Showing ${visibleItems.length} of ${currentFilteredData.length} locations`;
 
         const RENDER_LIMIT = 50;
@@ -998,7 +1097,7 @@
 
         listContainer.innerHTML = "";
 
-        if (zoom < 8 && visibleItems.length > 300) {
+        if (zoom < 8 && visibleItems.length > 500) {
           listContainer.innerHTML = `<li style="padding:20px; text-align:center; color:var(--text-secondary); font-size:0.85rem;">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
           return;
         }
@@ -1027,24 +1126,48 @@
           )}${companyList.length > 25 ? "..." : ""}</span>
                 `;
 
+          li.addEventListener("mouseenter", () => {
+            const marker = markerMap[item._ui_id];
+            if (marker) {
+              // 1. Check if the marker is inside a cluster
+              const visibleParent =
+                markersClusterGroup.getVisibleParent(marker);
+
+              // If visibleParent is NOT the marker, it means it's a cluster
+              if (visibleParent && visibleParent !== marker) {
+                // Apply the same "< 10" logic
+                if (visibleParent.getChildCount() < 10) {
+                  visibleParent.spiderfy();
+                }
+              }
+
+              // 2. Existing "Jump" Animation Logic
+              // We use a small timeout to allow the spiderfy animation to create the DOM element
+              setTimeout(() => {
+                const icon = marker.getElement();
+                if (icon) icon.classList.add("marker-jump");
+              }, 300); // 300ms delay to wait for spiderfy expansion
+            }
+          });
+
+          li.addEventListener("mouseleave", () => {
+            const marker = markerMap[item._ui_id];
+            if (marker) {
+              const icon = marker.getElement();
+              if (icon) icon.classList.remove("marker-jump");
+            }
+          });
+
           li.addEventListener("click", () => {
             const marker = markerMap[item._ui_id];
             if (marker) {
               // 1. Uncluster (Zoom) logic
               markersClusterGroup.zoomToShowLayer(marker, () => {
-                // 2. Smooth Fly Logic (1.5 seconds)
-                map.flyTo(marker.getLatLng(), 16, {
-                  duration: 1.5,
-                  easeLinearity: 0.25,
-                });
-                // 3. Open Popup after flight
-                setTimeout(() => marker.openPopup(), 1500);
+                setTimeout(() => marker.openPopup(), 100);
               });
 
               // Mobile UX: Close Sidebar on selection
               if (window.innerWidth <= 768) {
-                // Just highlight, don't auto-close sidebar or user loses context?
-                // Actually user wants to see map. Scroll map into view?
                 document
                   .getElementById("map")
                   .scrollIntoView({ behavior: "smooth" });
@@ -1100,12 +1223,24 @@
                 <h3>Mandatory Verification:</h3>
                 <p>Users are explicitly advised to independently verify the current status of any hospital directly with their specific insurance provider or Third Party Administrator (TPA) prior to admission. The official policy document and the insurer’s real-time confirmation serve as the final authority on insurance coverage.</p>
                 <p><strong>Always inform your insurer before admission.</strong></p>
+                <p>
+              License:
+              <a
+                href="https://github.com/navchandar/lab/blob/main/LICENSE"
+                target="_blank"
+                >GNU GPLv3
+              </a>
+              | Report bugs via
+              <a href="https://github.com/navchandar/lab/issues" target="_blank"
+                >GitHub
+              </a>
+            </p>
             `;
         openModal("Legal Disclaimer", content);
       }
 
       async function openSourcesModal() {
-        openModal("Data Sources", "<p>Loading sources...</p>");
+        openModal("Data Source", "<p>Loading sources...</p>");
 
         try {
           const response = await fetch(SOURCES_URL);
@@ -1113,7 +1248,7 @@
           const data = await response.json();
 
           let html = `
-                    <p>The data visualized here is parsed from the following official documents:</p>
+                    <p>The data visualized here is gathered and parsed from the following sources:</p>
                     <table class="source-table">
                         <thead>
                             <tr>
@@ -1161,7 +1296,7 @@
         const t = document.getElementById("toast");
         t.innerText = msg;
         t.className = isError ? "show error" : "show";
-        setTimeout(() => (t.className = t.className.replace("show", "")), 3000);
+        setTimeout(() => (t.className = t.className.replace("show", "")), 5000);
       }
     </script>
   </body>
