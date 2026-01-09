@@ -203,8 +203,8 @@ def process_files():
     # 3. AGGREGATE DATA
     for file_path in json_files:
         company_name = file_path.name.replace(
-            "_Excluded_Hospitals_List.json", ""
-        ).replace("_", " ")
+            " Excluded_Hospitals_List.json", ""
+        ).replace("_", " ").strip()
 
         try:
             with open(file_path, "r", encoding="utf-8") as f:

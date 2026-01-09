@@ -20,14 +20,13 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://www.hdfcergo.com"
-TARGET_PAGE_URL = f"{BASE_URL}/locators/cashless-everywhere"
 
+COMPANY = "HDFC ERGO"
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 DATA_DIR = PROJECT_ROOT / "data"
-OUTPUT_FILENAME = DATA_DIR / "HDFC_ERGO_Excluded_Hospitals_List.json"
-
+SOURCE_FILE = DATA_DIR / "sources.json"
+OUTPUT_FILENAME = DATA_DIR / COMPANY + " Excluded_Hospitals_List.json"
 
 HEADERS = {
     "User-Agent": (
@@ -36,6 +35,20 @@ HEADERS = {
         "Chrome/91.0.4472.124 Safari/537.36"
     )
 }
+
+
+def get_excluded_url(COMPANY):
+    excluded_url = ""
+    try:
+        with open(SOURCE_FILE, "r", encoding="utf-8") as f:
+            source_list = json.load(f)
+            for i in source_list:
+                if i.get("company") == COMPANY:
+                    excluded_url = i.get("excluded_url", "")
+                    break
+    except Exception as e:
+        logger.error(f"Error reading JSON: {e}")
+    return excluded_url
 
 
 def fetch_url_content(url: str) -> Optional[bytes]:
@@ -418,6 +431,7 @@ def process_and_save_json(raw_data: List[Dict[str, Any]], filename: str):
 
 
 def main():
+    TARGET_PAGE_URL = get_excluded_url(COMPANY)
     # 1. Get Landing Page
     page_content = fetch_url_content(TARGET_PAGE_URL)
     if not page_content:
