@@ -117,7 +117,7 @@ window.addEventListener("offline", () => {
 });
 window.addEventListener("online", () => {
   setTimeout(() => {
-    showToast("You are back offline!", false);
+    showToast("You are back online!", false);
     hideToast();
   }, 2000);
 });

@@ -256,10 +256,32 @@
         color: var(--text-primary);
       }
 
+      .toggle-btn:hover::after {
+        position: absolute;
+        bottom: -40px;
+        left: 50%;
+        transform: translateX(-20%);
+        opacity: 0.9;
+        z-index: 2000;
+        border-radius: 4px;
+        background: #333;
+        padding: 5px 10px;
+        pointer-events: none;
+        content: attr(data-tooltip);
+        color: white;
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+
+
       .toggle-btn.active {
         border-color: var(--accent-color);
         background: color-mix(in srgb, var(--accent-color), white 90%);
         color: var(--accent-color);
+      }
+
+      .toggle-btn.active:hover {
+          filter: brightness(1.1);
       }
 
       @media (prefers-color-scheme: dark) {
@@ -484,6 +506,7 @@
         background: var(--bg-color);
         color: var(--text-primary);
         font-size: 1.1rem !important;
+        user-select: none;
       }
 
       .leaflet-control-reset-btn:hover {
@@ -620,6 +643,10 @@
         color: var(--danger-color);
       }
 
+      .results-info>.error {
+        color: var(--danger-color);
+      }
+
       #toast.error {
         background-color: var(--danger-color);
       }
@@ -692,6 +719,7 @@
         margin: 0 0 20px 0;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 15px;
+        scroll-margin-top: 20px;
         font-weight: 700;
         font-size: 1.25rem;
       }
@@ -1222,6 +1250,16 @@
        */
       const UIManager = {
         setupEventListeners: () => {
+
+          // NETWORK STATUS CHECK
+          window.addEventListener("offline", () => {
+            showToast("You seem to offline. Map may not load.", true);
+          });
+          window.addEventListener("online", () => {
+            setTimeout(() => {
+              showToast("You are back online!", false);
+            }, 2000);
+          });
           // Search
           const searchInput = document.getElementById("searchInput");
           const searchClear = document.getElementById("searchClear");
@@ -1499,7 +1537,11 @@
 
           if (typeof dialog.showModal === "function") {
             dialog.showModal();
-            document.getElementById("modalTitle").scrollIntoView();
+            document.getElementById("modalTitle").scrollIntoView({
+              behavior: "instant",
+              block: "start",
+              inline: "start",
+            });
             document.getElementById("modalTitle").focus();
           } else {
             alert("Browser not supported. Update to latest version.");
