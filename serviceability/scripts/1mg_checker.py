@@ -11,7 +11,11 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = (
+    Path(__file__).resolve().parent
+    if "__file__" in globals()
+    else Path(Path.cwd() / "scripts").resolve()
+)
 PROJECT_ROOT = SCRIPT_DIR.parent
 
 DATA_DIR = PROJECT_ROOT / "data"
