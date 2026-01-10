@@ -305,13 +305,13 @@ function updateFooterTime(isoString) {
 }
 // Toggle function
 const toggleSheet = () => {
-  const card = document.getElementById("bottom-sheet");
+  const card = document.getElementById("sidebar");
   if (card) {
     card.classList.toggle("collapsed");
   }
 };
 const collapseSheet = () => {
-  const card = document.getElementById("bottom-sheet");
+  const card = document.getElementById("sidebar");
   if (card) {
     card.classList.add("collapsed");
   }
@@ -358,8 +358,8 @@ function getFromCache(query) {
 }
 
 // --- BOTTOM SHEET LOGIC for mobile ---
-function initBottomSheet() {
-  const card = document.getElementById("bottom-sheet");
+function initsidebar() {
+  const card = document.getElementById("sidebar");
   const header = document.getElementById("card-header");
   const btn = document.getElementById("search-btn");
   const mapEl = document.getElementById("map");
@@ -477,7 +477,7 @@ async function initApp() {
     // Load map layer (will use the checked input)
     updateMapLayer();
 
-    initBottomSheet();
+    initsidebar();
 
     // Check for 'q' (query/location) param
     const savedQuery = UrlState.get("q");
@@ -546,7 +546,7 @@ function generateControls(servicesList) {
     return;
   }
 
-  const bottomSheet = document.getElementById("bottom-sheet");
+  const sidebar = document.getElementById("sidebar");
   const container = document.getElementById("options-container");
   container.innerHTML = "";
 
@@ -644,8 +644,8 @@ function generateControls(servicesList) {
 
   // Display the control box
   requestAnimationFrame(() => {
-    if (bottomSheet) {
-      bottomSheet.style.opacity = "1";
+    if (sidebar) {
+      sidebar.style.opacity = "1";
     }
   });
 }
@@ -1359,13 +1359,13 @@ function initSearch() {
       e.preventDefault();
 
       // Expand bottom sheet on mobile if it's collapsed so input is visible
-      const bottomSheet = document.getElementById("bottom-sheet");
+      const sidebar = document.getElementById("sidebar");
       if (
         window.innerWidth <= 600 &&
-        bottomSheet &&
-        bottomSheet.classList.contains("collapsed")
+        sidebar &&
+        sidebar.classList.contains("collapsed")
       ) {
-        bottomSheet.classList.remove("collapsed");
+        sidebar.classList.remove("collapsed");
       }
 
       // Focus the input

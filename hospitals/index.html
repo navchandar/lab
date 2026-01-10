@@ -137,8 +137,8 @@
       @media (prefers-color-scheme: dark) {
         :root {
           /* Modern Slate Palette (Dark) */
-          --bg-color: #0f172a; /* Slate-900 */
-          --sidebar-bg: #1e293b; /* Slate-800 */
+          --bg-color: #202124;
+          --sidebar-bg: #292a2d;
           --text-primary: #f8fafc; /* Slate-50 */
           --text-secondary: #94a3b8; /* Slate-400 */
           --border-color: #334155; /* Slate-700 */
@@ -149,7 +149,7 @@
           --danger-color: #f87171; /* Red-400 */
           --success-color: #34d399; /* Emerald-400 */
           --modal-overlay: rgba(0, 0, 0, 0.75);
-          --modal-bg: #1e293b;
+          --modal-bg: #292a2d;
           --input-bg: #0f172a;
 
           /* Dark Popup Vars */
@@ -241,18 +241,19 @@
         align-items: center;
         gap: 6px;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer;
+        cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.9);
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
         background: var(--input-bg);
         padding: 10px;
         color: var(--text-secondary);
         font-weight: 600;
-        font-size: 0.85rem;
+        font-size: 0.85rem; 
       }
 
       .toggle-btn:hover {
-        background: var(--hover-bg);
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.8);
         color: var(--text-primary);
       }
 
@@ -281,12 +282,14 @@
       }
 
       .toggle-btn.active:hover {
+          transform: translateY(-2px);
           filter: brightness(1.1);
+          box-shadow: 0 2px 5px rgba(0,0,0,0.8);
       }
 
       @media (prefers-color-scheme: dark) {
         .toggle-btn.active {
-            background: color-mix(in srgb, var(--accent-color), black 80%);
+            background: color-mix(in srgb, var(--accent-color), black 80%) !important;
         }
         .sidebar-footer{
           background: rgba(32, 33, 36, 0.8) !important;
@@ -811,15 +814,17 @@
           position: fixed;
           bottom: 0;
           left: 0;
-          gap: 10px;
+          gap: 5px;
           margin: 0;
+          margin-right: 10px;
           background: #fff;
           background: rgba(255, 255, 255, 0.8);
           padding: 2px;
           color: #333;
           color: #9aa0a6 !important;
-          font-size: 0.6rem;
+          font-size: 0.65rem;
         }
+        .footer-link {margin: 0 2px 0 2px;}
         #map { height: 55vh; }
         .header { padding: 10px 25px;  text-align: center;}
         .header h1 { font-size: 1rem; }
