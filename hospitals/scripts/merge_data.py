@@ -16,265 +16,289 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s",
     datefmt="%H:%M:%S",
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("GeocodingPipeline")
 
 # Paths
-SCRIPT_DIR = Path(__file__).resolve().parent
+SCRIPT_DIR = (
+    Path(__file__).resolve().parent
+    if "__file__" in globals()
+    else Path(Path.cwd() / "scripts").resolve()
+)
 PROJECT_ROOT = SCRIPT_DIR.parent
 DATA_DIR = PROJECT_ROOT / "data"
 OUTPUT_FILE = DATA_DIR / "excluded.json"
 TEMP_FILE = DATA_DIR / "excluded_processing.tmp.json"
 
-# Google Maps Config
+# API Config
 GMAPS_API_KEY = os.getenv("GMAPS_API_KEY")
 GMAPS_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
-SAVE_INTERVAL = 10  # Save every N records
+SAVE_INTERVAL = 10  # Save every N API calls
 
 
-# --- Network Setup (Session with Retries) ---
-def get_session():
-    """
-    Creates a requests session with automatic retries for stability.
-    """
-    session = requests.Session()
-    retries = Retry(
-        total=3,
-        backoff_factor=1,  # Sleep 1s, 2s, 4s between retries
-        status_forcelist=[500, 502, 503, 504],
-    )
-    adapter = HTTPAdapter(max_retries=retries)
-    session.mount("https://", adapter)
-    session.mount("http://", adapter)
-    return session
+class GeocodingPipeline:
+    def __init__(self):
+        self.data: Dict[str, Dict[str, Any]] = {}
+        self.session = self._init_session()
+        self.api_hits = 0
 
+    def _init_session(self) -> requests.Session:
+        """Configures a resilient HTTP session."""
+        session = requests.Session()
+        retries = Retry(
+            total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504]
+        )
+        session.mount("https://", HTTPAdapter(max_retries=retries))
+        return session
 
-session = get_session()
+    def generate_unique_id(self, name: str, pin: str, city: str) -> str:
+        """Generates a stable ID for deduplication."""
+        clean_name = str(name).strip().upper()
+        clean_pin = str(pin).strip()
+        clean_city = str(city).strip().upper()
 
+        # Prefer Pincode, fallback to City for suffix
+        suffix = clean_pin if clean_pin and clean_pin.lower() != "none" else clean_city
+        return f"{clean_name}_{suffix}"
 
-def get_lat_lng(hospital) -> Dict[str, float]:
-    """
-    Queries Google Maps Geocoding API with retries and session reuse.
-    """
-    blank = {"lat": 0.0, "lng": 0.0, "accuracy": "None"}
-    if not GMAPS_API_KEY:
-        return blank
+    def load_existing_data(self):
+        """Loads excluded.json into memory to support resuming/updating."""
+        if not OUTPUT_FILE.exists():
+            logger.info("No existing output file found. Starting fresh.")
+            return
 
-    # params = {"address": address_query, "key": GMAPS_API_KEY}
-    address_query = hospital["name"] + ", " + hospital["address"]
-    if hospital["city"]:
-        address_query = address_query + " " + hospital["city"]
-    if hospital["state"]:
-        address_query = address_query + " " + hospital["state"]
-    if hospital["pincode"] and str(hospital["pincode"]) not in address_query:
-        address_query = address_query + " " + str(hospital["pincode"])
-
-    params = {
-        "address": address_query,
-        "components": f"country:IN",
-        "key": GMAPS_API_KEY,
-    }
-
-    try:
-        response = session.get(GMAPS_GEOCODE_URL, params=params, timeout=10)
-        response.raise_for_status()
-        data = response.json()
-
-        if data["status"] == "OK":
-            result = data["results"][0]
-            loc_type = result.get("geometry", {}).get("location_type")
-
-            # Check if the result is precise enough
-            if loc_type in ["ROOFTOP", "RANGE_INTERPOLATED"]:
-                location = result["geometry"]["location"]
-                logger.info(f"Found {location}")
-                return {
-                    "lat": location["lat"],
-                    "lng": location["lng"],
-                    "accuracy": "HIGH",
-                }
-            else:
-                location = result["geometry"]["location"]
-                logger.warning(
-                    f"Low accuracy {location} ({loc_type}) for: {address_query}"
-                )
-                return {
-                    "lat": location["lat"],
-                    "lng": location["lng"],
-                    "accuracy": "LOW",
-                }
-        elif data["status"] == "ZERO_RESULTS":
-            # Valid response but no coordinates found
-            logger.info(f"No geocoding results for '{address_query}'")
-            return blank
-        else:
-            logger.warning(f"Geocoding issue for '{address_query}': {data['status']}")
-            return blank
-
-    except Exception as e:
-        logger.error(f"Error geocoding '{address_query}': {e}")
-        return blank
-
-
-def generate_unique_id(hospital: Dict[str, Any]) -> str:
-    name = str(hospital.get("Hospital Name", "")).strip().upper()
-    pin = str(hospital.get("Pin Code", "")).strip()
-    city = str(hospital.get("City", "")).strip().upper()
-    suffix = pin if pin and pin.lower() != "none" else city
-    return f"{name}_{suffix}"
-
-
-def load_existing_data() -> Dict[str, Dict[str, Any]]:
-    """
-    Loads previously saved data to avoid re-geocoding known hospitals.
-    This enables 'resume' functionality.
-    """
-    existing_map = {}
-    if OUTPUT_FILE.exists():
         try:
             with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
-                data = json.load(f)
-                for item in data:
-                    # Reconstruct ID mechanism to match current data
-                    reconstruct = {
-                        "Hospital Name": item.get("name"),
-                        "Pin Code": item.get("pincode"),
-                        "City": item.get("city"),
-                    }
-                    uid = generate_unique_id(reconstruct)
-                    existing_map[uid] = item
-            logger.info(
-                f"Loaded {len(existing_map)} existing records. Already geocoded items will be skipped."
-            )
+                raw_list = json.load(f)
+
+            for item in raw_list:
+                # Reconstruct ID to map back to dictionary
+                uid = self.generate_unique_id(
+                    item.get("name"), item.get("pincode"), item.get("city")
+                )
+                self.data[uid] = item
+                # Ensure internal flag is False by default
+                self.data[uid]["_needs_update"] = False
+
+            logger.info(f"Loaded {len(self.data)} existing records.")
         except Exception as e:
-            logger.warning(f"Could not load existing file, starting fresh: {e}")
-    return existing_map
+            logger.error(f"Failed to load existing data: {e}")
 
+    def merge_sources(self):
+        """
+        Reads source files, adds new records, and marks existing ones for
+        update if Address changed or Accuracy is LOW.
+        """
+        source_files = list(DATA_DIR.glob("*Excluded_Hospitals_List.json"))
+        if not source_files:
+            logger.warning("No source files found in data directory.")
+            return
 
-def save_progress(data_list: List[Dict[str, Any]], is_final: bool = False):
-    """
-    Saves data to a temp file, then renames to final if is_final is True.
-    """
+        logger.info(f"Merging data from {len(source_files)} source files...")
 
-    # Sort before saving
-    def sort_key(item):
-        pin = item.get("pincode")
-        pin_val = str(pin) if pin else "999999"
-        name_val = str(item.get("name", ""))
-        return (pin_val, name_val)
+        for file_path in source_files:
+            company_name = file_path.name.replace(
+                " Excluded_Hospitals_List.json", ""
+            ).strip()
 
-    data_list.sort(key=sort_key)
+            try:
+                with open(file_path, "r", encoding="utf-8") as f:
+                    source_data = json.load(f)
 
-    try:
-        with open(TEMP_FILE, "w", encoding="utf-8") as f:
-            json.dump(data_list, f, indent=4, ensure_ascii=False)
+                for record in source_data:
+                    self._process_source_record(record, company_name)
 
-        if is_final:
-            shutil.move(str(TEMP_FILE), str(OUTPUT_FILE))
-            logger.info(
-                f"Final success! Saved {len(data_list)} records to {OUTPUT_FILE}"
-            )
+            except Exception as e:
+                logger.error(f"Error reading {file_path.name}: {e}")
+
+    def _process_source_record(self, record: Dict, company: str):
+        # Extract fields from Source (Title Case keys)
+        src_name = record.get("Hospital Name", "")
+        src_addr = record.get("Address", "")
+        src_city = record.get("City", "")
+        src_state = record.get("State", "")
+        src_pin = record.get("Pin Code", "")
+
+        uid = self.generate_unique_id(src_name, src_pin, src_city)
+
+        if uid in self.data:
+            existing = self.data[uid]
+
+            # --- UPDATE LOGIC ---
+            # 1. Check if Address changed (Compare stripped strings)
+            old_addr = str(existing.get("address", "")).strip()
+            new_addr = str(src_addr).strip()
+
+            has_address_changed = (old_addr != new_addr) and (new_addr != "")
+
+            # 2. Check if Accuracy is Low
+            is_low_accuracy = existing.get("accuracy") == "LOW"
+
+            if has_address_changed or is_low_accuracy:
+                # UPDATE INFO
+                existing["address"] = new_addr
+                existing["city"] = src_city
+                existing["state"] = src_state
+                existing["pincode"] = src_pin
+
+                # FLAG FOR RE-GEOCODING
+                existing["_needs_update"] = True
+
+                reason = "Address Changed" if has_address_changed else "Low Accuracy"
+                logger.info(f"Marked for update ({reason}): {src_name}")
+
+            # Merge Company
+            if company not in existing["excluded_by"]:
+                existing["excluded_by"].append(company)
+
         else:
-            logger.info(f"Auto-saved progress: {len(data_list)} records.")
+            # NEW RECORD
+            self.data[uid] = {
+                "name": src_name,
+                "address": src_addr,
+                "city": src_city,
+                "state": src_state,
+                "pincode": src_pin,
+                "excluded_by": [company],
+                "lat": 0.0,
+                "lng": 0.0,
+                "accuracy": "Pending",
+                "_needs_update": True,  # New records always need geocoding
+            }
 
-    except Exception as e:
-        logger.error(f"Failed to save file: {e}")
+    def fetch_geocoding(self, record: Dict) -> Dict[str, Any]:
+        """Queries Google Maps API."""
+        if not GMAPS_API_KEY:
+            return {"lat": 0.0, "lng": 0.0, "accuracy": "NoKey"}
 
-
-def process_files():
-    if not DATA_DIR.exists():
-        logger.error(f"Data directory not found: {DATA_DIR}")
-        return
-
-    if not GMAPS_API_KEY:
-        logger.error("CRITICAL: GMAPS_API_KEY is not set. Geocoding will fail.")
-        return
-
-    # 1. LOAD PREVIOUS STATE (Resume capability)
-    unique_hospitals = load_existing_data()
-
-    # 2. READ NEW FILES
-    json_files = list(DATA_DIR.glob("*Excluded_Hospitals_List.json"))
-    if not json_files:
-        logger.warning("No input JSON files found.")
-        return
-
-    logger.info(f"Found {len(json_files)} input files.")
-
-    # 3. AGGREGATE DATA
-    for file_path in json_files:
-        company_name = file_path.name.replace(
-            " Excluded_Hospitals_List.json", ""
-        ).replace("_", " ").strip()
-
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            for record in data:
-                uid = generate_unique_id(record)
-
-                if uid not in unique_hospitals:
-                    # New Entry
-                    unique_hospitals[uid] = {
-                        "name": record.get("Hospital Name"),
-                        "address": record.get("Address"),
-                        "city": record.get("City"),
-                        "state": record.get("State"),
-                        "pincode": record.get("Pin Code"),
-                        "excluded_by": [company_name],
-                    }
-                else:
-                    # Merge excluded_by list
-                    if company_name not in unique_hospitals[uid]["excluded_by"]:
-                        unique_hospitals[uid]["excluded_by"].append(company_name)
-        except Exception as e:
-            logger.error(f"Failed to read {file_path}: {e}")
-
-    # 4. GEOCODE LOOP
-    total = len(unique_hospitals)
-    logger.info(f"Total unique hospitals to process: {total}")
-
-    processed_count = 0
-    api_hits = 0
-
-    for uid, hospital in unique_hospitals.items():
-        processed_count += 1
-
-        # RESUME CHECK: If lat/lng exists, skip API call
-        if hospital.get("lat") and hospital.get("lng"):
-            if hospital["lat"] != 0.0 or hospital["lng"] != 0.0:
-                continue
-
-        # Construct Query
+        # Construct Address Query
         parts = [
-            hospital["name"],
-            hospital["address"],
-            hospital["city"],
-            hospital["state"],
-            hospital["pincode"],
+            record.get("name"),
+            record.get("address"),
+            record.get("city"),
+            record.get("state"),
+            str(record.get("pincode")) if record.get("pincode") else "",
             "India",
         ]
-        query_string = ", ".join([str(p) for p in parts if p])
+        # Remove empty parts and duplicates
+        clean_parts = []
+        for p in parts:
+            if p and str(p).strip() not in clean_parts:
+                clean_parts.append(str(p).strip())
 
-        logger.info(f"[{processed_count}/{total}] Geocoding: {hospital['name']}")
+        query = ", ".join(clean_parts)
 
-        coords = get_lat_lng(hospital)
-        if coords["lat"] != 0.0 and coords["lng"] != 0.0:
-            hospital["lat"] = coords["lat"]
-            hospital["lng"] = coords["lng"]
-            hospital["accuracy"] = coords["accuracy"]
-        api_hits += 1
+        params = {"address": query, "key": GMAPS_API_KEY}
 
-        # Periodic Save
-        if api_hits > 0 and api_hits % SAVE_INTERVAL == 0:
-            save_progress(list(unique_hospitals.values()), is_final=False)
+        try:
+            resp = self.session.get(GMAPS_GEOCODE_URL, params=params, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
 
-        # Rate Limit Sleep
-        time.sleep(0.1)
+            if data["status"] == "OK":
+                res = data["results"][0]
+                loc = res["geometry"]["location"]
+                loc_type = res["geometry"]["location_type"]
 
-    # 5. FINAL SAVE
-    save_progress(list(unique_hospitals.values()), is_final=True)
+                accuracy = (
+                    "HIGH" if loc_type in ["ROOFTOP", "RANGE_INTERPOLATED"] else "LOW"
+                )
+
+                if accuracy == "LOW":
+                    logger.warning(f"Low Accuracy ({loc_type}) for: {record['name']}")
+                else:
+                    logger.info(f"High Accuracy found for: {record['name']}")
+
+                return {"lat": loc["lat"], "lng": loc["lng"], "accuracy": accuracy}
+            elif data["status"] == "ZERO_RESULTS":
+                logger.warning(f"Zero results for: {query}")
+                return {"lat": 0.0, "lng": 0.0, "accuracy": "ZeroResults"}
+            else:
+                logger.error(f"API Error ({data['status']}): {query}")
+                return {"lat": 0.0, "lng": 0.0, "accuracy": "Error"}
+
+        except Exception as e:
+            logger.error(f"Network error geocoding '{record['name']}': {e}")
+            return {"lat": 0.0, "lng": 0.0, "accuracy": "NetError"}
+
+    def run(self):
+        """Main Execution Flow"""
+        if not GMAPS_API_KEY:
+            logger.error("CRITICAL: GMAPS_API_KEY not found.")
+            return
+
+        # 1. Load State
+        self.load_existing_data()
+
+        # 2. Merge Updates
+        self.merge_sources()
+
+        # 3. Geocode Loop
+        pending_items = [
+            (uid, rec)
+            for uid, rec in self.data.items()
+            if rec.get("_needs_update") or (rec.get("lat") == 0.0)
+        ]
+
+        total = len(pending_items)
+        if total == 0:
+            logger.info("No records need geocoding.")
+            return
+
+        logger.info(f"Starting geocoding for {total} records...")
+
+        for i, (uid, record) in enumerate(pending_items):
+            result = self.fetch_geocoding(record)
+
+            # Update Record
+            record["lat"] = result["lat"]
+            record["lng"] = result["lng"]
+            record["accuracy"] = result["accuracy"]
+            record["_needs_update"] = False  # Reset flag
+
+            self.api_hits += 1
+
+            # Save periodically
+            if self.api_hits % SAVE_INTERVAL == 0:
+                self.save_to_disk(is_final=False)
+                logger.info(f"Progress: {i+1}/{total} processed...")
+
+            time.sleep(0.1)  # Rate limit
+
+        # 4. Final Save
+        self.save_to_disk(is_final=True)
+
+    def save_to_disk(self, is_final: bool = False):
+        """Saves dictionary to JSON list, removing internal flags."""
+
+        # Convert dict to list
+        output_list = list(self.data.values())
+
+        # Clean internal keys before saving
+        clean_list = []
+        for item in output_list:
+            clean_item = {k: v for k, v in item.items() if not k.startswith("_")}
+            clean_list.append(clean_item)
+
+        # Sort for consistency
+        clean_list.sort(
+            key=lambda x: (str(x.get("pincode", "999999")), x.get("name", ""))
+        )
+
+        try:
+            with open(TEMP_FILE, "w", encoding="utf-8") as f:
+                json.dump(clean_list, f, indent=4, ensure_ascii=False)
+
+            if is_final:
+                shutil.move(str(TEMP_FILE), str(OUTPUT_FILE))
+                logger.info(
+                    f"Successfully saved {len(clean_list)} records to {OUTPUT_FILE}"
+                )
+            else:
+                logger.info("Intermediate save completed.")
+        except Exception as e:
+            logger.error(f"Failed to save data: {e}")
 
 
 if __name__ == "__main__":
-    process_files()
+    pipeline = GeocodingPipeline()
+    pipeline.run()
