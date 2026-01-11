@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 import shutil
 import time
 from pathlib import Path
@@ -52,14 +53,21 @@ class GeocodingPipeline:
 
 
     def generate_unique_id(self, name: str, pin: str, city: str) -> str:
-        """Generates a stable ID for deduplication."""
-        clean_name = str(name).strip().upper()
+        """
+        Generates a robust ID by stripping non-alphanumeric characters.
+        Matches 'Sri Hospital' with 'SRI. HOSPITAL'.
+        """
+        # Remove all non-alphanumeric chars (spaces, dots, hyphens)
+        clean_name = re.sub(r'[^A-Z0-9]', '', str(name).upper())
         clean_pin = str(pin).strip()
-        clean_city = str(city).strip().upper()
-
-        # Prefer Pincode, fallback to City for suffix
-        suffix = clean_pin if clean_pin and clean_pin.lower() != "none" else clean_city
-        return f"{clean_name}_{suffix}"
+        
+        # If Pin is invalid/missing, fallback to alphanumeric City
+        if not clean_pin or len(clean_pin) < 6 or clean_pin.lower() == "nan":
+             clean_suffix = re.sub(r'[^A-Z0-9]', '', str(city).upper())
+        else:
+             clean_suffix = clean_pin
+             
+        return f"{clean_name}_{clean_suffix}"
 
     def load_existing_data(self):
         """Loads excluded.json into memory to support resuming/updating."""
@@ -112,7 +120,7 @@ class GeocodingPipeline:
                 logger.error(f"Error reading {file_path.name}: {e}")
 
     def _process_source_record(self, record: Dict, company: str):
-        # Extract fields from Source (Title Case keys)
+        # Extract fields
         src_name = record.get("Hospital Name", "")
         src_addr = record.get("Address", "")
         src_city = record.get("City", "")
@@ -124,30 +132,33 @@ class GeocodingPipeline:
         if uid in self.data:
             existing = self.data[uid]
 
-            # --- UPDATE LOGIC ---
-            # 1. Check if Address changed (Compare stripped strings)
+            # --- SMART MERGE LOGIC ---
+            # Priority 1: Preserve High Accuracy Data
+            # If we already found the rooftop, don't overwrite address just because text changed.
+            if existing.get("accuracy") == "HIGH":
+                # Just merge the company name
+                if company not in existing["excluded_by"]:
+                    existing["excluded_by"].append(company)
+                    logger.info(f"Merged {company} into existing record: {src_name}")
+                return
+
+            # Priority 2: Improve Low Accuracy Data
+            # If existing is LOW or Pending, and new address is different, try the new one.
             old_addr = str(existing.get("address", "")).strip()
             new_addr = str(src_addr).strip()
+            
+            # Simple check: update if new address is longer (likely more info) or different
+            has_address_changed = (old_addr != new_addr) and (len(new_addr) > 5)
 
-            has_address_changed = (old_addr != new_addr) and (new_addr != "")
-
-            # 2. Check if Accuracy is Low
-            is_low_accuracy = existing.get("accuracy") == "LOW"
-
-            if has_address_changed or is_low_accuracy:
-                # UPDATE INFO
-                existing["address"] = new_addr
+            if has_address_changed:
+                existing["address"] = src_addr
                 existing["city"] = src_city
                 existing["state"] = src_state
                 existing["pincode"] = src_pin
+                existing["_needs_update"] = True # Trigger re-geocoding
+                logger.info(f"Updating Low Accuracy Record: {src_name}")
 
-                # FLAG FOR RE-GEOCODING
-                existing["_needs_update"] = True
-
-                reason = "Address Changed" if has_address_changed else "Low Accuracy"
-                logger.info(f"Marked for update ({reason}): {src_name}")
-
-            # Merge Company
+            # Always merge company
             if company not in existing["excluded_by"]:
                 existing["excluded_by"].append(company)
 
@@ -163,9 +174,9 @@ class GeocodingPipeline:
                 "lat": 0.0,
                 "lng": 0.0,
                 "accuracy": "Pending",
-                "_needs_update": True,  # New records always need geocoding
+                "_needs_update": True
             }
-
+            
     def _call_gmaps(self, params: Dict) -> Dict[str, Any]:
         """Helper to execute the API call and parse accuracy."""
         try:
