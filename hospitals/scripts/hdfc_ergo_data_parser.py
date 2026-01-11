@@ -279,9 +279,13 @@ def clean_punctuation(text: str) -> str:
         return None
     # 1. Replace multiple commas/spaces (e.g. ", ," or ",,") with a single comma
     text = re.sub(r"\s*,[\s,]*", ", ", text)
-    # 2. Remove double spaces
+    # 2. Remove repeated words (4+ letters) appearing anywhere in the line
+    text = re.sub(r"\b(\w{4,})\b(?=.*\b\1\b)", "", text, flags=re.IGNORECASE)
+    # 3. Remove double spaces
     text = re.sub(r"\s+", " ", text)
-    # 3. Strip leading/trailing punctuation
+    # 4. Remove empty parentheses
+    text = re.sub(r"\( \)", "", text)
+    # 5. Strip leading/trailing punctuation
     return text.strip(" ,.-")
 
 
@@ -370,6 +374,24 @@ def normalize_records(record: Dict[str, Any]) -> Dict[str, Any]:
         raw_addr = ", ".join(values_soup)
         final_record["Address"] = clean_punctuation(raw_addr)
 
+    # Remove If we found a Pin Code (e.g. 800008) or State (e.g. BIHAR)
+    addr = final_record["Address"]
+    if addr:
+        # Scrub Pin Code
+        if final_record["Pin Code"]:
+            # Remove "800008" or "-800008" or "- 800008"
+            addr = re.sub(r"[-,\s]*" + final_record["Pin Code"], " ", addr)
+
+        # Scrub State
+        if final_record["State"]:
+            # Case-insensitive remove of State Name
+            state_pattern = re.compile(
+                r"[-,\s]*" + re.escape(final_record["State"]), re.IGNORECASE
+            )
+            addr = state_pattern.sub(" ", addr)
+
+        final_record["Address"] = addr
+
     # 6. Redundancy Cleanup (Dangling words, repeated City names)
     return cleanup_address_fields(final_record)
 
@@ -378,14 +400,12 @@ def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
     """
     Removes redundant city/state names from the address field.
     """
+
     addr = record.get("Address")
     city = record.get("City")
     state = record.get("State")
-
     if not addr:
         return record
-
-    addr = addr.strip()
 
     # Helper: Case-insensitive suffix strip
     def strip_suffix(text, suffix):
@@ -393,23 +413,34 @@ def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
             return text[: -len(suffix)]
         return text
 
-    # A. Clean State
+    # --- A. CLEAN STATE ---
     if state:
         addr = strip_suffix(addr, state)
         # Abbreviations
         abbrevs = {
-            "UTTAR PRADESH": ["U.P.", "UP"],
-            "WEST BENGAL": ["W.B.", "WB"],
-            "MADHYA PRADESH": ["M.P.", "MP"],
+            "UTTAR PRADESH": ["U.P.", "UP", "U.P"],
+            "WEST BENGAL": ["W.B.", "WB", "W.B"],
+            "MADHYA PRADESH": ["M.P.", "MP", "M.P"],
+            "MAHARASHTRA": ["MAH", "MH."],
         }
         if state.upper() in abbrevs:
             for abbr in abbrevs[state.upper()]:
                 addr = strip_suffix(addr, abbr)
 
-    # B. Clean City
+    # --- B. CLEAN CITY (Ghost Suffix Fix) ---
     if city:
+        # 1. Standard Strip
         addr = strip_suffix(addr, city)
-        # City Aliases
+
+        # 2. Fix "DARBHANGADARBHANG A" -> Strip "DARBHANG A" if City is "DARBHANGA"
+        # We try to detect if the end of the address LOOKS like the city
+
+        # Create a "spaced" version of city (e.g. "DARBHANG A")
+        if len(city) > 4:
+            spaced_city = city[:-1] + " " + city[-1]
+            addr = strip_suffix(addr, spaced_city)
+
+        # 3. Aliases
         aliases = {
             "GURUGRAM": ["GURGAON"],
             "BENGALURU": ["BANGALORE"],
@@ -417,50 +448,59 @@ def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
             "KOLKATA": ["CALCUTTA"],
             "CHENNAI": ["MADRAS"],
             "VARANASI": ["BANARAS"],
+            "TRIVANDRUM": ["THIRUVANANTHAPURAM"],
+            "COIMBATORE": ["KOVAI"],
+            "THANE": ["THANA"],
+            "DELHI": ["NCR", "NEW DELHI", "DELHI"],
+            "NAVI MUMBAI": ["NAVI-MUMBAI"],
         }
         if city.upper() in aliases:
             for alias in aliases[city.upper()]:
                 addr = strip_suffix(addr, alias)
 
+        # 4. Check for concatenated duplicate (e.g. "ROADCOIMBATORE")
         if addr.upper().endswith(city.upper()):
             addr = addr[: -len(city)]
 
-    # C. Clean Dangling Words
-    dangling = [
+    # --- C. RECURSIVE DANGLING WORD CLEANUP ---
+    dangling_words = [
         "NEW",
         "OLD",
         "GREATER",
         "NAVI",
-        "OPP",
-        "NEAR",
+        "UPPER",
+        "LOWER",
         "DIST",
         "DISTRICT",
-        "CITY",
-        "NORTH",
-        "SOUTH",
-        "EAST",
-        "WEST",
+        "NEAR",
+        "BEHIND",
+        "NR",
     ]
 
-    clean_pass = True
-    while clean_pass:
-        clean_pass = False
-        addr_upper = addr.upper()
-        for word in dangling:
-            if addr_upper.endswith(" " + word):
-                addr = addr[: -(len(word) + 1)].strip()
-                clean_pass = True
-                break
-            elif addr_upper.endswith(word):
-                addr = addr[: -(len(word))].strip()
-                clean_pass = True
-                break
-            elif addr_upper == word:
-                addr = ""
-                clean_pass = False
-                break
+    # Pre-clean punctuation before loop
+    addr = clean_punctuation(addr)
 
-    record["Address"] = clean_punctuation(addr)
+    dirty = True
+    while dirty:
+        dirty = False
+        if addr:
+            addr_upper = addr.upper()
+
+            for word in dangling_words:
+                # Check suffix " WORD"
+                if addr_upper.endswith(" " + word):
+                    addr = addr[: -(len(word) + 1)]
+                    addr = clean_punctuation(addr)  # Clean comma immediately
+                    dirty = True  # Run loop again to check for next word
+                    break
+
+                # Check exact match
+                elif addr_upper == word:
+                    addr = ""
+                    dirty = True
+                    break
+
+    record["Address"] = addr
     return record
 
 

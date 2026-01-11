@@ -50,6 +50,7 @@ class GeocodingPipeline:
         session.mount("https://", HTTPAdapter(max_retries=retries))
         return session
 
+
     def generate_unique_id(self, name: str, pin: str, city: str) -> str:
         """Generates a stable ID for deduplication."""
         clean_name = str(name).strip().upper()
@@ -165,30 +166,8 @@ class GeocodingPipeline:
                 "_needs_update": True,  # New records always need geocoding
             }
 
-    def fetch_geocoding(self, record: Dict) -> Dict[str, Any]:
-        """Queries Google Maps API."""
-        if not GMAPS_API_KEY:
-            return {"lat": 0.0, "lng": 0.0, "accuracy": "NoKey"}
-
-        # Construct Address Query
-        parts = [
-            record.get("name"),
-            record.get("address"),
-            record.get("city"),
-            record.get("state"),
-            str(record.get("pincode")) if record.get("pincode") else "",
-            "India",
-        ]
-        # Remove empty parts and duplicates
-        clean_parts = []
-        for p in parts:
-            if p and str(p).strip() not in clean_parts:
-                clean_parts.append(str(p).strip())
-
-        query = ", ".join(clean_parts)
-
-        params = {"address": query, "key": GMAPS_API_KEY}
-
+    def _call_gmaps(self, params: Dict) -> Dict[str, Any]:
+        """Helper to execute the API call and parse accuracy."""
         try:
             resp = self.session.get(GMAPS_GEOCODE_URL, params=params, timeout=10)
             resp.raise_for_status()
@@ -198,28 +177,95 @@ class GeocodingPipeline:
                 res = data["results"][0]
                 loc = res["geometry"]["location"]
                 loc_type = res["geometry"]["location_type"]
+                
+                # ROOFTOP = Precise address/building
+                # RANGE_INTERPOLATED = Precise street address
+                # GEOMETRIC_CENTER / APPROXIMATE = Low accuracy (City/State level)
+                accuracy = "HIGH" if loc_type in ["ROOFTOP", "RANGE_INTERPOLATED"] else "LOW"
 
-                accuracy = (
-                    "HIGH" if loc_type in ["ROOFTOP", "RANGE_INTERPOLATED"] else "LOW"
-                )
-
-                if accuracy == "LOW":
-                    logger.warning(f"Low Accuracy ({loc_type}) for: {record['name']}")
-                else:
-                    logger.info(f"High Accuracy found for: {record['name']}")
-
-                return {"lat": loc["lat"], "lng": loc["lng"], "accuracy": accuracy}
+                return {
+                    "lat": loc["lat"],
+                    "lng": loc["lng"],
+                    "accuracy": accuracy,
+                    "type": loc_type # Useful for debugging
+                }
             elif data["status"] == "ZERO_RESULTS":
-                logger.warning(f"Zero results for: {query}")
                 return {"lat": 0.0, "lng": 0.0, "accuracy": "ZeroResults"}
             else:
-                logger.error(f"API Error ({data['status']}): {query}")
+                logger.warning(f"API Status {data['status']} for params: {params}")
                 return {"lat": 0.0, "lng": 0.0, "accuracy": "Error"}
 
         except Exception as e:
-            logger.error(f"Network error geocoding '{record['name']}': {e}")
+            logger.error(f"Network error: {e}")
             return {"lat": 0.0, "lng": 0.0, "accuracy": "NetError"}
 
+    def fetch_geocoding(self, record: Dict) -> Dict[str, Any]:
+        """
+        Queries Google Maps with a Fallback Strategy:
+        1. Try Name + Address + Pin (Specific Business Search)
+        2. If Low Accuracy, try Address + Pin (Building Search)
+        """
+        if not GMAPS_API_KEY:
+            return {"lat": 0.0, "lng": 0.0, "accuracy": "NoKey"}
+
+        # 1. Prepare Data
+        name = record.get("name", "").strip()
+        address = record.get("address", "").strip()
+        city = record.get("city", "").strip()
+        state = record.get("state", "").strip()
+        pin = str(record.get("pincode", "")).strip()
+
+        # 2. Base Components (Restricts search to India & specific Pincode)
+        # This prevents "Gandhi Road" in Mumbai matching "Gandhi Road" in Delhi
+        components = "country:IN"
+        if pin and len(pin) == 6 and pin.isdigit():
+            components += f"|postal_code:{pin}"
+
+        base_params = {
+            "key": GMAPS_API_KEY,
+            "components": components
+        }
+
+        # --- STRATEGY 1: Business Search (Name + Address) ---
+        # Good for: Finding the exact establishment
+        parts_full = [name, address, city, state]
+        query_full = ", ".join([p for p in parts_full if p])
+        
+        params_1 = base_params.copy()
+        params_1["address"] = query_full
+        
+        result_1 = self._call_gmaps(params_1)
+
+        # If we got High Accuracy, stop here.
+        if result_1["accuracy"] == "HIGH":
+            logger.info(f"HIGH Accuracy (Business) for: {name}")
+            return result_1
+
+        # --- STRATEGY 2: Address Fallback (No Name) ---
+        # Good for: "Sharma Clinic" (Unknown to Maps) located at "Plot 4, Sector 5" (Known to Maps)
+        # We strip the name and just look for the building.
+        parts_addr = [address, city, state]
+        query_addr = ", ".join([p for p in parts_addr if p])
+
+        # Don't try if address is too short (e.g. just "New Delhi")
+        if len(query_addr) > 10 and query_addr != query_full:
+            logger.info(f"Trying Address Fallback for: {name}")
+            params_2 = base_params.copy()
+            params_2["address"] = query_addr
+            
+            result_2 = self._call_gmaps(params_2)
+
+            if result_2["accuracy"] == "HIGH":
+                logger.info(f"HIGH Accuracy found via Address Fallback!")
+                return result_2
+            
+            # If both are LOW, prefer the one that isn't GEOMETRIC_CENTER (City level) if possible
+            # or just default to result_1 (Business search) as it has more context.
+        
+        logger.warning(f"Remains LOW Accuracy: {name}")
+        return result_1
+    
+    
     def run(self):
         """Main Execution Flow"""
         if not GMAPS_API_KEY:
@@ -250,10 +296,11 @@ class GeocodingPipeline:
             result = self.fetch_geocoding(record)
 
             # Update Record
-            record["lat"] = result["lat"]
-            record["lng"] = result["lng"]
-            record["accuracy"] = result["accuracy"]
-            record["_needs_update"] = False  # Reset flag
+            if result["lat"] != 0.0 and result["lng"] != 0.0:
+                record["lat"] = result["lat"]
+                record["lng"] = result["lng"]
+                record["accuracy"] = result["accuracy"]
+                record["_needs_update"] = False  # Reset flag
 
             self.api_hits += 1
 
