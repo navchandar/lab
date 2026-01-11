@@ -32,6 +32,9 @@ DATA_DIR = PROJECT_ROOT / "data"
 SOURCE_FILE = DATA_DIR / "sources.json"
 OUTPUT_FILENAME = DATA_DIR / (COMPANY + " Excluded_Hospitals_List.json")
 
+# Ensure data directory exists
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 # --- Constants ---
 HEADERS_UA = {
     "User-Agent": (
