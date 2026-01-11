@@ -241,14 +241,14 @@
         align-items: center;
         gap: 6px;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.9);
+        cursor: pointer; box-shadow: 0 0 1px rgba(0,0,0,0.9);
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
         background: var(--input-bg);
         padding: 10px;
         color: var(--text-secondary);
         font-weight: 600;
-        font-size: 0.85rem; 
+        font-size: 0.85rem;
       }
 
       .toggle-btn:hover {
@@ -259,8 +259,8 @@
 
       .toggle-btn:hover::after {
         position: absolute;
-        bottom: -40px;
-        left: 50%;
+        bottom: -28px;
+        left: 60%;
         transform: translateX(-20%);
         opacity: 0.9;
         z-index: 2000;
@@ -1001,6 +1001,12 @@
         currentType: "network",
         currentDataset: [], // Raw data from JSON
         currentFilteredData: [], // Data after search/checkbox filters
+
+        // Lazy Loading State
+        visibleItems: [], // Items currently visible in map bounds
+        renderedCount: 0, // How many currently shown in sidebar
+        batchSize: 30, // render 30 at a time for speed
+
         markerMap: {}, // Quick lookup for markers by ID
         clickedMarker: null, // Track sticky tooltip state
       };
@@ -1018,26 +1024,26 @@
        */
       const MapManager = {
         init: () => {
-          // 1. Detect Dark Mode
+          // Detect Dark Mode
           const isDarkMode =
             window.matchMedia &&
             window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-          // 2. Tile Setup
+          // Map Tiles Setup
           const lightTiles =
             "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
           const darkTiles =
             "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
           const tilesUrl = isDarkMode ? darkTiles : lightTiles;
 
-          // 3. Map Instantiation
+          // Map Instantiation
           AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
             MAP_DEFAULTS.center,
             MAP_DEFAULTS.zoom
           );
           L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
 
-          // 4. Custom Reset Control
+          // Custom Reset button Control
           const ResetControl = L.Control.extend({
             options: { position: "bottomright" },
             onAdd: function (map) {
@@ -1062,7 +1068,7 @@
           });
           AppState.map.addControl(new ResetControl());
 
-          // 5. Layer Setup
+          // Layer Setup
           AppState.tileLayer = L.tileLayer(tilesUrl, {
             attribution: "&copy; OpenStreetMap &copy; CARTO",
             subdomains: "abcd",
@@ -1084,8 +1090,9 @@
 
           AppState.map.addLayer(AppState.markersClusterGroup);
 
-          // 6. Event Binding
+          // Event Binding
           AppState.map.on("moveend", () => UIManager.updateSidebarList(false));
+
           AppState.map.on("click", () => {
             AppState.clickedMarker = null;
             AppState.map.closePopup();
@@ -1126,7 +1133,6 @@
                 item.insurers ||
                 []
               ).join(", ");
-
               const badgeHtml = isExcluded
                 ? `<div class="badge excluded">⛔ EXCLUDED</div>`
                 : `<div class="badge network">✅ IN-NETWORK</div>`;
@@ -1191,7 +1197,7 @@
         loadDataset: async (type) => {
           AppState.currentType = type;
 
-          // 1. Immediate Reset
+          // Immediate Reset before loading new data
           DataManager.resetState();
           UIManager.updateToggleUI();
           UIManager.showLoading(
@@ -1219,8 +1225,8 @@
               !Array.isArray(AppState.currentDataset) ||
               AppState.currentDataset.length === 0
             ) {
-              console.warn("Dataset is empty");
-              AppState.currentDataset = []; // Ensure array
+              console.warn(type + " dataset is empty!");
+              AppState.currentDataset = [];
             }
 
             UIManager.generateCompanyFilters(AppState.currentDataset);
@@ -1240,11 +1246,8 @@
           const countLabel = document.getElementById("resultsCount");
           countLabel.innerText = "Data Unavailable";
           countLabel.classList.add("error");
-
           document.getElementById("hospitalList").innerHTML =
             '<li style="padding:15px;text-align:center;color:var(--text-secondary)">No data available for this category.</li>';
-
-          // Ensure filters show "None"
           UIManager.generateCompanyFilters([]);
         },
       };
@@ -1255,16 +1258,14 @@
        */
       const UIManager = {
         setupEventListeners: () => {
+          // Network Status
+          window.addEventListener("offline", () =>
+            UIManager.showToast("You seem to be offline.", true)
+          );
+          window.addEventListener("online", () =>
+            setTimeout(() => UIManager.showToast("Back online!", false), 2000)
+          );
 
-          // NETWORK STATUS CHECK
-          window.addEventListener("offline", () => {
-            showToast("You seem to offline. Map may not load.", true);
-          });
-          window.addEventListener("online", () => {
-            setTimeout(() => {
-              showToast("You are back online!", false);
-            }, 2000);
-          });
           // Search
           const searchInput = document.getElementById("searchInput");
           const searchClear = document.getElementById("searchClear");
@@ -1282,13 +1283,81 @@
             MapManager.resetView();
           });
 
-          // Modal
-          const modalOverlay = document.getElementById("genericModal");
-          // Click outside to close
-          modalOverlay.addEventListener("click", (e) => {
-            const rect = e.target.getBoundingClientRect();
-            // This check ensures we clicked the overlay (backdrop), not the content
-            if (e.target === modalOverlay) UIManager.closeModal();
+          // Modal Close
+          document
+            .getElementById("genericModal")
+            .addEventListener("click", (e) => {
+              if (e.target.id === "genericModal") UIManager.closeModal();
+            });
+
+          // --- Infinite Scroll Listener ---
+          const listContainer = document.getElementById("hospitalList");
+          listContainer.addEventListener("scroll", () => {
+            // Load next batch when user scrolls near bottom
+            if (
+              listContainer.scrollTop + listContainer.clientHeight >=
+              listContainer.scrollHeight - 100
+            ) {
+              UIManager.renderNextBatch();
+            }
+          });
+
+          // --- Event Delegation (Click) ---
+          listContainer.addEventListener("click", (e) => {
+            const li = e.target.closest(".hospital-item");
+            if (!li) return;
+
+            const id = li.dataset.id;
+            const item = AppState.visibleItems.find((x) => x._ui_id == id);
+            if (!item) return;
+
+            const marker = AppState.markerMap[item._ui_id];
+            if (marker) {
+              AppState.markersClusterGroup.zoomToShowLayer(marker, () => {
+                setTimeout(() => marker.openPopup(), 100);
+              });
+
+              if (window.innerWidth <= 768) {
+                document
+                  .getElementById("map")
+                  .scrollIntoView({ behavior: "smooth" });
+              }
+
+              document
+                .querySelectorAll(".hospital-item")
+                .forEach((el) => el.classList.remove("active"));
+              li.classList.add("active");
+            }
+          });
+
+          // --- Event Delegation (Hover) ---
+          listContainer.addEventListener("mouseover", (e) => {
+            const li = e.target.closest(".hospital-item");
+            if (!li) return;
+            const id = li.dataset.id;
+
+            const marker = AppState.markerMap[id];
+            if (marker) {
+              const visibleParent =
+                AppState.markersClusterGroup.getVisibleParent(marker);
+              if (visibleParent && visibleParent !== marker) {
+                if (visibleParent.getChildCount() < 10)
+                  visibleParent.spiderfy();
+              }
+              const icon = marker.getElement();
+              if (icon) icon.classList.add("marker-jump");
+            }
+          });
+
+          listContainer.addEventListener("mouseout", (e) => {
+            const li = e.target.closest(".hospital-item");
+            if (!li) return;
+            const id = li.dataset.id;
+            const marker = AppState.markerMap[id];
+            if (marker) {
+              const icon = marker.getElement();
+              if (icon) icon.classList.remove("marker-jump");
+            }
           });
         },
 
@@ -1302,10 +1371,8 @@
         },
 
         generateCompanyFilters: (data) => {
-          const countLabel = document.getElementById("resultsCount");
           const container = document.getElementById("insurerFilters");
           container.innerHTML = "";
-
           if (!data || data.length === 0) {
             container.innerHTML = '<span class="filter-loading">None</span>';
             return;
@@ -1328,13 +1395,11 @@
           companies.forEach((company) => {
             const wrapper = document.createElement("label");
             wrapper.className = "checkbox-item";
-
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.value = company;
             checkbox.checked = true;
             checkbox.addEventListener("change", UIManager.applyFilters);
-
             wrapper.appendChild(checkbox);
             wrapper.appendChild(document.createTextNode(company));
             container.appendChild(wrapper);
@@ -1387,54 +1452,67 @@
           UIManager.updateSidebarList(true);
         },
 
+        // --- LAZY LOADING SIDEBAR ---
         updateSidebarList: (resetScroll = false) => {
           const listContainer = document.getElementById("hospitalList");
           const countLabel = document.getElementById("resultsCount");
-          const RENDER_LIMIT = 500;
 
           if (resetScroll) listContainer.scrollTop = 0;
 
-          // Handle Empty State
+          // Filter visible items based on Map Bounds
           if (
             !AppState.currentFilteredData ||
             AppState.currentFilteredData.length === 0
           ) {
+            AppState.visibleItems = [];
+          } else {
+            const bounds = AppState.map.getBounds();
+            AppState.visibleItems = AppState.currentFilteredData.filter(
+              (item) => {
+                if (!item.lat || !item.lng) return false;
+                return bounds.contains(L.latLng(item.lat, item.lng));
+              }
+            );
+          }
+
+          // Update Counts
+          if (AppState.visibleItems.length === 0) {
             countLabel.classList.remove("error");
-            // Only show "No Hospitals" if we actually have a dataset loaded, otherwise it might be a loading state
-            if (AppState.currentDataset.length > 0) {
-              countLabel.innerText = "No Matches Found";
-            } else {
-              countLabel.innerText = "No Data Found";
-            }
+            countLabel.innerText =
+              AppState.currentDataset.length > 0
+                ? "No Matches in View"
+                : "No Data Found";
             listContainer.innerHTML = "";
             return;
           }
 
-          // Visible Bounds Filter
-          const bounds = AppState.map.getBounds();
-          const visibleItems = AppState.currentFilteredData.filter((item) => {
-            if (!item.lat || !item.lng) return false;
-            return bounds.contains(L.latLng(item.lat, item.lng));
-          });
+          countLabel.innerText = `Showing ${AppState.visibleItems.length} locations in view`;
 
-          countLabel.classList.remove("error");
-          countLabel.innerText = `Showing ${visibleItems.length} of ${AppState.currentFilteredData.length} locations`;
-
-          const zoom = AppState.map.getZoom();
+          // Reset Lazy Load State
+          AppState.renderedCount = 0;
           listContainer.innerHTML = "";
 
-          // Optimization for large datasets
-          if (zoom < 8 && visibleItems.length > RENDER_LIMIT) {
-            listContainer.innerHTML = `<li class="toolarge">Area too large (${visibleItems.length} items).<br>Zoom in to view list.</li>`;
-            return;
-          }
+          // Render Initial Batch
+          UIManager.renderNextBatch();
+        },
 
-          const itemsToRender = visibleItems.slice(0, RENDER_LIMIT);
+        renderNextBatch: () => {
+          if (AppState.renderedCount >= AppState.visibleItems.length) return;
+
+          const listContainer = document.getElementById("hospitalList");
+          const nextBatch = AppState.visibleItems.slice(
+            AppState.renderedCount,
+            AppState.renderedCount + AppState.batchSize
+          );
+
+          // DocumentFragment prevents layout thrashing
+          const fragment = document.createDocumentFragment();
           const isExcluded = AppState.currentType === "excluded";
 
-          itemsToRender.forEach((item) => {
+          nextBatch.forEach((item) => {
             const li = document.createElement("li");
             li.className = "hospital-item";
+            li.dataset.id = item._ui_id; // Store ID for delegation
 
             const companyList = (item.excluded_by || item.insurers || []).join(
               ", "
@@ -1443,77 +1521,23 @@
             const badgeClass = isExcluded ? "excluded" : "network";
 
             li.innerHTML = `
-                      <span class="h-name">${item.name}</span>
-                      <span class="h-loc">${item.city}${
+                    <span class="h-name">${item.name}</span>
+                    <span class="h-loc">${item.city}${
               item.pincode ? " - " + item.pincode : ""
             }</span>
-                      <span class="badge ${badgeClass}">${badgeLabel}: ${companyList.substring(
+                    <span class="badge ${badgeClass}">${badgeLabel}: ${companyList.substring(
               0,
               25
             )}${companyList.length > 25 ? "..." : ""}</span>
-                  `;
-
-            // Hover Effects (Jump)
-            li.addEventListener("mouseenter", () => {
-              const marker = AppState.markerMap[item._ui_id];
-              if (marker) {
-                const visibleParent =
-                  AppState.markersClusterGroup.getVisibleParent(marker);
-                if (visibleParent && visibleParent !== marker) {
-                  if (visibleParent.getChildCount() < 10)
-                    visibleParent.spiderfy();
-                }
-                setTimeout(() => {
-                  const icon = marker.getElement();
-                  if (icon) icon.classList.add("marker-jump");
-                }, 300);
-              }
-            });
-
-            li.addEventListener("mouseleave", () => {
-              const marker = AppState.markerMap[item._ui_id];
-              if (marker) {
-                const icon = marker.getElement();
-                if (icon) icon.classList.remove("marker-jump");
-              }
-            });
-
-            // Click Selection
-            li.addEventListener("click", () => {
-              const marker = AppState.markerMap[item._ui_id];
-              if (marker) {
-                AppState.markersClusterGroup.zoomToShowLayer(marker, () => {
-                  setTimeout(() => marker.openPopup(), 100);
-                });
-
-                // Mobile UX
-                if (window.innerWidth <= 768) {
-                  document
-                    .getElementById("map")
-                    .scrollIntoView({ behavior: "smooth" });
-                }
-
-                document
-                  .querySelectorAll(".hospital-item")
-                  .forEach((el) => el.classList.remove("active"));
-                li.classList.add("active");
-              }
-            });
-
-            listContainer.appendChild(li);
+                `;
+            fragment.appendChild(li);
           });
 
-          if (visibleItems.length > RENDER_LIMIT) {
-            const more = document.createElement("li");
-            more.style.padding = "15px";
-            more.style.textAlign = "center";
-            more.style.color = "var(--text-secondary)";
-            more.style.fontSize = "0.8rem";
-            more.innerText = `+ ${visibleItems.length - RENDER_LIMIT} more...`;
-            listContainer.appendChild(more);
-          }
+          listContainer.appendChild(fragment);
+          AppState.renderedCount += nextBatch.length;
         },
 
+        // --- UTILS ---
         showLoading: (show, text) => {
           const el = document.getElementById("loading");
           if (show) {
@@ -1542,14 +1566,10 @@
 
           if (typeof dialog.showModal === "function") {
             dialog.showModal();
-            document.getElementById("modalTitle").scrollIntoView({
-              behavior: "instant",
-              block: "start",
-              inline: "start",
-            });
+            document.getElementById("modalTitle").scrollIntoView();
             document.getElementById("modalTitle").focus();
           } else {
-            alert("Browser not supported. Update to latest version.");
+            alert("Browser version doesnt support Dialog windows.");
           }
         },
 
@@ -1599,7 +1619,7 @@
                       <table class="source-table">
                           <thead>
                               <tr>
-                                  <th>Company Name</th>
+                                  <th>Company</th>
                                   <th>In‑Network</th>
                                   <th>Excluded</th>
                               </tr>
@@ -1620,12 +1640,12 @@
           } catch (e) {
             document.getElementById(
               "modalBody"
-            ).innerHTML = `<p style="color:var(--danger-color)">Could not load sources list.</p>`;
+            ).innerHTML = `<p style="color:var(--danger-color)">Could not load sources.</p>`;
           }
         },
       };
 
-      // Expose functions globally for HTML onclick attributes
+      // Expose globals
       window.loadDataset = DataManager.loadDataset;
       window.openDisclaimerModal = UIManager.openDisclaimerModal;
       window.openSourcesModal = UIManager.openSourcesModal;
