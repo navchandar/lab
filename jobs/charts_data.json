@@ -69,12 +69,12 @@
       "count": 34
     },
     {
-      "label": "Tata Consultancy Services",
+      "label": "PwC India",
       "count": 31
     },
     {
-      "label": "PwC India",
-      "count": 30
+      "label": "Tata Consultancy Services",
+      "count": 31
     },
     {
       "label": "Tata Communications",
@@ -84,7 +84,7 @@
   "byLocation": [
     {
       "label": "Bengaluru, Karnataka, India",
-      "count": 1428
+      "count": 1429
     },
     {
       "label": "Hyderabad, Telangana, India",
@@ -108,7 +108,7 @@
     },
     {
       "label": "Gurugram, Haryana, India",
-      "count": 209
+      "count": 210
     },
     {
       "label": "Mumbai, Maharashtra, India",
@@ -134,11 +134,11 @@
     },
     {
       "label": "Management",
-      "count": 874
+      "count": 875
     },
     {
       "label": "DevOps/SRE",
-      "count": 427
+      "count": 428
     },
     {
       "label": "ML/AI",
@@ -561,8 +561,12 @@
       ]
     },
     "Management": {
-      "totalJobs": 874,
+      "totalJobs": 875,
       "techs": [
+        {
+          "label": "GenAI",
+          "count": 25
+        },
         {
           "label": "Azure_Cloud",
           "count": 21
@@ -622,10 +626,6 @@
         {
           "label": "Linux_Unix",
           "count": 7
-        },
-        {
-          "label": "GenAI",
-          "count": 24
         },
         {
           "label": "Swift",
@@ -1437,7 +1437,7 @@
       ]
     },
     "DevOps/SRE": {
-      "totalJobs": 427,
+      "totalJobs": 428,
       "techs": [
         {
           "label": "TypeScript",
@@ -1445,7 +1445,7 @@
         },
         {
           "label": "Python",
-          "count": 232
+          "count": 233
         },
         {
           "label": "React",
@@ -1461,7 +1461,7 @@
         },
         {
           "label": "AWS_Cloud",
-          "count": 223
+          "count": 224
         },
         {
           "label": "Azure_Cloud",
@@ -1473,7 +1473,7 @@
         },
         {
           "label": "Containerization",
-          "count": 210
+          "count": 211
         },
         {
           "label": "RDBMS",
@@ -1497,7 +1497,7 @@
         },
         {
           "label": "Compliance",
-          "count": 13
+          "count": 14
         },
         {
           "label": "Git",
@@ -1505,31 +1505,39 @@
         },
         {
           "label": "MachineLearning",
-          "count": 83
+          "count": 84
         },
         {
           "label": "IaC",
-          "count": 165
+          "count": 166
         },
         {
           "label": "CI_CD",
-          "count": 157
+          "count": 158
         },
         {
           "label": "SRE",
-          "count": 92
+          "count": 93
         },
         {
           "label": "JavaScript",
-          "count": 57
+          "count": 58
         },
         {
           "label": "Observability",
-          "count": 114
+          "count": 115
         },
         {
           "label": "Linux_Unix",
           "count": 115
+        },
+        {
+          "label": "NodeJS",
+          "count": 48
+        },
+        {
+          "label": "PerfTest",
+          "count": 5
         },
         {
           "label": "DataStreaming",
@@ -1558,10 +1566,6 @@
         {
           "label": "Agile_Tools",
           "count": 34
-        },
-        {
-          "label": "NodeJS",
-          "count": 47
         },
         {
           "label": "Windows",
@@ -1662,10 +1666,6 @@
         {
           "label": "AppSec",
           "count": 10
-        },
-        {
-          "label": "PerfTest",
-          "count": 4
         },
         {
           "label": "ETL",
@@ -2521,6 +2521,40 @@
       ]
     },
     {
+      "company": "PwC India",
+      "totalJobs": 31,
+      "distribution": [
+        {
+          "range": "0-3 Years",
+          "count": 0
+        },
+        {
+          "range": "4-6 Years",
+          "count": 18
+        },
+        {
+          "range": "7-9 Years",
+          "count": 5
+        },
+        {
+          "range": "10-12 Years",
+          "count": 5
+        },
+        {
+          "range": "13-16 Years",
+          "count": 0
+        },
+        {
+          "range": "17-20 Years",
+          "count": 0
+        },
+        {
+          "range": "21+ Years",
+          "count": 0
+        }
+      ]
+    },
+    {
       "company": "Tata Consultancy Services",
       "totalJobs": 31,
       "distribution": [
@@ -2543,40 +2577,6 @@
         {
           "range": "13-16 Years",
           "count": 2
-        },
-        {
-          "range": "17-20 Years",
-          "count": 0
-        },
-        {
-          "range": "21+ Years",
-          "count": 0
-        }
-      ]
-    },
-    {
-      "company": "PwC India",
-      "totalJobs": 30,
-      "distribution": [
-        {
-          "range": "0-3 Years",
-          "count": 0
-        },
-        {
-          "range": "4-6 Years",
-          "count": 17
-        },
-        {
-          "range": "7-9 Years",
-          "count": 5
-        },
-        {
-          "range": "10-12 Years",
-          "count": 5
-        },
-        {
-          "range": "13-16 Years",
-          "count": 0
         },
         {
           "range": "17-20 Years",
@@ -2890,5 +2890,5 @@
     "17-20 Years",
     "21+ Years"
   ],
-  "totalCount": 5001
+  "totalCount": 5003
 }
