@@ -92,22 +92,22 @@ def get_standard_header_name(raw_header: str) -> str:
 
 
 def get_source_url(company_name: str, url_key: str) -> str:
-    excluded_url = ""
+    url = ""
     try:
         if SOURCE_FILE.exists():
             with open(SOURCE_FILE, "r", encoding="utf-8") as f:
                 source_list = json.load(f)
                 for i in source_list:
                     if i.get("company") == company_name:
-                        excluded_url = i.get(url_key, "")
+                        url = i.get(url_key, "")
                         break
         else:
             logger.warning(f"Source file not found at {SOURCE_FILE}")
     except Exception as e:
         logger.error(f"Error reading JSON source file: {e}")
-    if not excluded_url:
+    if not url:
         logger.warning(f"No {url_key} found for {company_name} in sources.json")
-    return excluded_url
+    return url
 
 
 def fetch_url_content(url: str) -> Optional[bytes]:
