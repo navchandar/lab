@@ -782,8 +782,8 @@
 
       .modal-body {
         color: var(--text-secondary);
-        font-size: 0.9rem;
-        line-height: 1.2;
+        font-size: 0.8rem;
+        line-height: 1.25;
       }
 
       .modal-body h3 {
@@ -810,7 +810,7 @@
       }
 
       .modal-footer {
-          padding: 8px 24px 20px;
+          padding: 5px 25px 0px 0px;
           text-align: right;
       }
 
@@ -1388,7 +1388,7 @@
                             ${item.name}
                           </h3>
                           <p class="address">
-                              ${item.address}, ${item.city || ""}
+                              ${item.address || ""}, ${item.city || ""}
                           </p>
                           <p class="pin"><strong>PIN:</strong>
                             ${item.pincode || "N/A"}
@@ -1765,13 +1765,15 @@
             );
             const badgeLabel = isExcluded ? "Excluded By" : "In-Network";
             const badgeClass = isExcluded ? "excluded" : "network";
+            const titleText = `${item.name} ${badgeLabel}: ${companyList}`;
+            const location = `${item.city ? item.city + " - " : ""}${
+              item.pincode ? item.pincode : ""
+            }`;
 
             li.innerHTML = `
               <span class="h-name">${item.name}</span>
-              <span class="h-loc">${item.city}${
-              item.pincode ? " - " + item.pincode : ""
-            }</span>
-          <span class="badge ${badgeClass} badge-truncate" title="${companyList}">${badgeLabel}: ${companyList}</span>
+              <span class="h-loc">${location}</span>
+            <span class="badge ${badgeClass} badge-truncate" title="${titleText}">${badgeLabel}: ${companyList}</span>
           `;
             fragment.appendChild(li);
           });
@@ -1857,7 +1859,7 @@
                 </a>
               </p>
               <div class="modal-footer">
-                <button class="btn-close-modal">Understood</button>
+                <button class="btn-close-modal" onclick="closeModal()">Understood</button>
               </div>
               `;
           UIManager.openModal("Legal Disclaimer", content);
