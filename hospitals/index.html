@@ -312,6 +312,10 @@
           color: #8ab4f8 !important;
         }
 
+        .leaflet-popup-content-wrapper {
+          box-shadow: 5px 9px 25px #000;
+        }
+
         .leaflet-bottom .leaflet-control-zoom a,
         .leaflet-control-reset-btn {
           background-color: #363636 !important;
@@ -364,7 +368,7 @@
         padding: 10px 35px 10px 12px;
         width: 100%;
         color: var(--text-primary);
-        font-size: 0.9rem;
+        font-size: 0.65rem;
       }
 
       .search-box:focus {
@@ -487,14 +491,14 @@
         margin-bottom: 4px;
         color: var(--text-primary);
         font-weight: 600;
-        font-size: 0.9rem;
+        font-size: 0.75rem;
         line-height: 1.3;
       }
 
       .h-loc {
         display: block;
         color: var(--text-secondary);
-        font-size: 0.8rem;
+        font-size: 0.7rem;
       }
 
       .badge {
@@ -575,6 +579,7 @@
       /* Leaflet Customization */
       .leaflet-popup-content-wrapper {
         box-shadow: var(--shadow-md);
+        box-shadow: 5px 9px 25px #a6a6a6a6;
         border-radius: var(--radius-md);
         background: var(--popup-bg);
         padding: 0;
@@ -681,6 +686,12 @@
         padding: 2px 2px 2px 10px;
         color: var(--text-secondary);
         font-size: 0.75rem;
+      }
+
+      .nodata {
+        padding:15px;
+        color:var(--text-secondary);
+        text-align:center
       }
 
       .error {
@@ -798,6 +809,27 @@
         border-bottom: 1px solid var(--accent-color);
       }
 
+      .modal-footer {
+          padding: 8px 24px 20px;
+          text-align: right;
+      }
+
+      .btn-close-modal {
+          transition: background 0.2s;
+          cursor: pointer;
+          border: none;
+          border-radius: 4px;
+          background: #1a73e8;
+          padding: 8px 16px;
+          color: white;
+          font-weight: 500;
+          font-size: 14px;
+      }
+
+      .btn-close-modal:hover {
+          background: #1557b0;
+      }
+
       /* Sources Table */
       .source-table {
         margin-top: 15px;
@@ -859,7 +891,7 @@
       }
 
       .companylist {
-        margin-top: 8px;
+        margin-top: 4px;
         border-top: 1px solid var(--border-color);
         padding-top: 4px;
         color: var(--text-secondary);
@@ -870,12 +902,21 @@
         opacity:0.8;
         margin:4px 0;
         color:var(--text-primary);
-        font-size:0.85rem;
+        font-size:0.75rem;
       }
 
       .pin {
         margin:4px 0;
-        font-size:0.85rem;
+        font-size:0.7rem;
+      }
+
+      .badge-truncate {
+        display: inline-block;
+        vertical-align: middle;
+        max-width: 90%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       /* Mobile Responsiveness */
@@ -888,7 +929,7 @@
           border-right: none;
           border-bottom: 1px solid var(--border-color);
           width: 100%;
-          height: 36.5vh;
+          height: 35vh;
         }
 
         .sidebar-footer {
@@ -1141,7 +1182,7 @@
 
         <div class="sidebar-footer">
           <span class="footer-link" onclick="openSourcesModal()">
-            Data Source
+            Sources
           </span>
           <span class="footer-link" onclick="openDisclaimerModal()">
             Disclaimer
@@ -1155,7 +1196,7 @@
             class="spinner"
             style="width:20px; height:20px; border-width:2px; margin:0;"
           ></div>
-          <span id="map-loader-text" style="font-size:0.9rem; font-weight:600;">
+          <span id="map-loader-text" style="font-size:0.7rem; font-weight:600;">
             Updating...
           </span>
         </div>
@@ -1336,11 +1377,14 @@
               const badgeHtml = isExcluded
                 ? `<div class="badge excluded">⛔ EXCLUDED</div>`
                 : `<div class="badge network">✅ IN-NETWORK</div>`;
+              const titleList = isExcluded
+                ? `Excluded by ${companyList}`
+                : `In-Network of ${companyList}`;
 
               const popupContent = `
                       <div style="min-width:200px; font-family:inherit;">
                           ${badgeHtml}
-                          <h3 style="margin:5px 0; color:${color}; font-size:1rem;">
+                          <h3 style="margin:5px 0; color:${color};">
                             ${item.name}
                           </h3>
                           <p class="address">
@@ -1351,7 +1395,7 @@
                           </p>
                           ${
                             companyList
-                              ? `<div class="companylist">${companyList}</div>`
+                              ? `<div class="companylist" title="${titleList}">${companyList}</div>`
                               : ""
                           }
                       </div>
@@ -1447,7 +1491,7 @@
           countLabel.innerText = "Data Unavailable";
           countLabel.classList.add("error");
           document.getElementById("hospitalList").innerHTML =
-            '<li style="padding:15px;text-align:center;color:var(--text-secondary)">No data available for this category.</li>';
+            '<li class="nodata error">No data available for this category.</li>';
           UIManager.generateCompanyFilters([]);
         },
       };
@@ -1678,15 +1722,16 @@
 
           // Update Counts
           if (AppState.visibleItems.length === 0) {
-            countLabel.classList.remove("error");
             countLabel.innerText =
               AppState.currentDataset.length > 0
                 ? "No Matches in View"
                 : "No Data Found";
+            countLabel.classList.add("error");
             listContainer.innerHTML = "";
             return;
           }
 
+          countLabel.classList.remove("error");
           countLabel.innerText = `Showing ${AppState.visibleItems.length} locations in view`;
 
           // Reset Lazy Load State
@@ -1718,19 +1763,16 @@
             const companyList = (item.excluded_by || item.insurers || []).join(
               ", "
             );
-            const badgeLabel = isExcluded ? "Excluded" : "Network";
+            const badgeLabel = isExcluded ? "Excluded By" : "In-Network";
             const badgeClass = isExcluded ? "excluded" : "network";
 
             li.innerHTML = `
-                    <span class="h-name">${item.name}</span>
-                    <span class="h-loc">${item.city}${
+              <span class="h-name">${item.name}</span>
+              <span class="h-loc">${item.city}${
               item.pincode ? " - " + item.pincode : ""
             }</span>
-                    <span class="badge ${badgeClass}">${badgeLabel}: ${companyList.substring(
-              0,
-              25
-            )}${companyList.length > 25 ? "..." : ""}</span>
-                `;
+          <span class="badge ${badgeClass} badge-truncate" title="${companyList}">${badgeLabel}: ${companyList}</span>
+          `;
             fragment.appendChild(li);
           });
 
@@ -1792,13 +1834,13 @@
           const content = `
                   <h3>Informational Purpose Only:</h3>
                   <p>This repository, the associated software, and the visualized data are intended strictly for educational and informational purposes. This project is not affiliated with, endorsed by, or representative of any insurance company, regulatory body (such as IRDAI), or healthcare institution.</p>
-                  
+
                   <h3>No Warranty of Accuracy:</h3>
                   <p>While every effort is made to ensure the data is accurate, the source documents (PDFs) are subject to change without notice. The developers make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability of the data. Data latency may occur; latitude/longitude coordinates may be inaccurate; the official list on the insurer's website may differ from the data presented here.</p>
-                  
+
                   <h3>Limitation of Liability:</h3>
                   <p>In no event will the developers or contributors be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any financial loss arising from the use of this data. A decision to seek medical treatment at any specific facility is the sole responsibility of the individual.</p>
-                  
+
                   <h3>Mandatory Verification:</h3>
                   <p>Users are explicitly advised to independently verify the current status of any hospital directly with their specific insurance provider or Third Party Administrator (TPA) prior to admission. The official policy document and the insurer’s real-time confirmation serve as the final authority on insurance coverage.</p>
                   <p><strong>Always inform your insurer before admission.</strong></p>
@@ -1814,12 +1856,15 @@
                   >GitHub
                 </a>
               </p>
+              <div class="modal-footer">
+                <button class="btn-close-modal">Understood</button>
+              </div>
               `;
           UIManager.openModal("Legal Disclaimer", content);
         },
 
         openSourcesModal: async () => {
-          UIManager.openModal("Data Source", "<p>Loading sources...</p>");
+          UIManager.openModal("Data Sources", "<p>Loading sources...</p>");
           try {
             const response = await fetch(SOURCES_URL);
             if (!response.ok) throw new Error("Sources file missing");
@@ -1851,7 +1896,7 @@
           } catch (e) {
             document.getElementById(
               "modalBody"
-            ).innerHTML = `<p style="color:var(--danger-color)">Could not load sources.</p>`;
+            ).innerHTML = `<p class="error">Could not load sources.</p>`;
           }
         },
       };
