@@ -124,7 +124,9 @@ def find_pdf_link(base_url: str, html_content: bytes) -> Optional[str]:
 # --- Core Extraction (Returns List of Lists) ---
 def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[List[str]]:
     """
-    Extracts raw rows as lists, skipping header detection
+    Extracts raw rows as lists.
+    - Stops at 'Excluded Doctors'.
+    - Skips repeated/ghost headers.
     """
     all_rows = []
 
@@ -161,11 +163,25 @@ def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[List[str]]:
 
                     # Flatten formatting (remove newlines in cells)
                     clean_row = [clean_text(cell) for cell in row]
-
-                    # Detect & Skip Header Rows
-                    # (If row contains 'HOSPITAL NAME' or 'PINCODE', it's a header)
                     row_str = "".join(clean_row).upper()
+
+                    # --- 1. STOP: Doctors Section ---
+                    if "DOCTOR" in row_str and (
+                        "STATE" in row_str or "REGISTRATION" in row_str
+                    ):
+                        logger.info(
+                            f"Found 'Doctor Exclusion' table on page {i+1}. Stopping extraction."
+                        )
+                        return all_rows
+
+                    # --- 2. SKIP STANDARD HEADER ---
+                    # Checks for "Hospital Name" AND "Pincode"
                     if "HOSPITALNAME" in row_str and "PINCODE" in row_str:
+                        continue
+
+                    # --- 3. SKIP LEAKED/SPLIT HEADER ---
+                    # Checks specifically for "Address Line 1"
+                    if "ADDRESSLINE1" in row_str or "ADDRESSLINE2" in row_str:
                         continue
 
                     all_rows.append(clean_row)
@@ -225,13 +241,11 @@ def normalize_records(row: List[str], index: int) -> Dict[str, Any]:
 
     # 5. Create Final Record
     final_record = {
-        "Sr. No.": str(index),
         "Hospital Name": mapped_data.get("Hospital Name", ""),
         "Address": clean_punctuation(full_address),
         "City": clean_city,
         "State": mapped_data.get("State", ""),
         "Pin Code": mapped_data.get("Pin Code", ""),
-        "Effective Date": "",
     }
 
     return cleanup_address_fields(final_record)

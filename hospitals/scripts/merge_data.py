@@ -115,6 +115,8 @@ class GeocodingPipeline:
             return
 
         logger.info(f"Merging data from {len(source_files)} source files...")
+        # Track IDs present in the current source files
+        active_source_uids = set()
 
         for file_path in source_files:
             company_name = file_path.name.replace(
@@ -124,9 +126,27 @@ class GeocodingPipeline:
                 with open(file_path, "r", encoding="utf-8") as f:
                     source_data = json.load(f)
                 for record in source_data:
-                    self._process_source_record(record, company_name)
+                    uid = self._process_source_record(record, company_name)
+                    if uid:
+                        active_source_uids.add(uid)
             except Exception as e:
                 logger.error(f"Error reading {file_path.name}: {e}")
+
+        # --- PRUNING LOGIC ---
+        # Identify IDs in self.data that were NOT found in the current sources
+        existing_ids = list(self.data.keys())
+        removed_count = 0
+
+        for uid in existing_ids:
+            if uid not in active_source_uids:
+                # This hospital is in our DB but not in the PDFs anymore. Remove it.
+                del self.data[uid]
+                removed_count += 1
+
+        if removed_count > 0:
+            logger.info(
+                f"Pruned {removed_count} records that are no longer in source files."
+            )
 
     def _process_source_record(self, record: Dict, company: str):
         # Extract fields
@@ -146,7 +166,7 @@ class GeocodingPipeline:
                 if company not in existing["excluded_by"]:
                     existing["excluded_by"].append(company)
                     logger.info(f"Merged {company} into existing record: {src_name}")
-                return
+                return uid
 
             # Priority 2: Improve Low Accuracy Data
             # If existing is LOW or Pending, and new address is different, try the new one.
@@ -181,6 +201,7 @@ class GeocodingPipeline:
                 "accuracy": "Pending",
                 "_needs_update": True,
             }
+        return uid
 
     # --- HYBRID GEOCODING METHODS ---
     def _search_bb_places(self, query: str) -> Optional[Dict[str, Any]]:
