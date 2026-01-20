@@ -1,4 +1,4 @@
-// version=v2026.01.20
+// version=v2026.01.21
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","smart-dom-inspector","serviceability","hospitals"];
 
