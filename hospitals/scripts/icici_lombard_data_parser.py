@@ -84,7 +84,6 @@ def parse_hospital_table(soup: BeautifulSoup) -> List[Dict[str, str]]:
 
         # Mapping based on HTML structure
         record = {
-            "Sr. No.": clean_text(cols[0].get_text()),
             "Hospital Name": clean_text(cols[1].get_text()),
             "Address": clean_text(cols[2].get_text()),
             "State": clean_text(cols[3].get_text()),
@@ -218,7 +217,7 @@ def process_city(session: requests.Session, state: str, city: str) -> List[Dict]
         # "GetDelistedHospitalList?PageNumber=" + pageindex;
         # Since Page 0 is done, we iterate from 1 to total_pages - 1
         for page_num in range(1, total_pages):
-            time.sleep(0.2) 
+            time.sleep(0.3) 
             try:
                 logger.info(f"    Fetching {city} Page {page_num}...")
 
@@ -234,7 +233,7 @@ def process_city(session: requests.Session, state: str, city: str) -> List[Dict]
 
             except Exception as e:
                 logger.error(f"    Failed to fetch Page {page_num} for {city}: {e}")
-            time.sleep(0.2)  # Small delay between page requests
+            time.sleep(0.5)  # Small delay between page requests
 
         return city_data
 

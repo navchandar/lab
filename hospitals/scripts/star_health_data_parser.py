@@ -89,7 +89,7 @@ def load_pincodes() -> List[str]:
     try:
         with open(PINCODE_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-            
+
         # Extract pincodes, ensuring uniqueness
         # Assuming list of dicts like [{"pincode": 110001, ...}] or list of strings
         pincodes = set()
@@ -123,7 +123,7 @@ def get_record_count(session: requests.Session, pincode: str, category: str) -> 
         # Handle WAF blocking gracefully
         if response.status_code == 403:
             logger.warning("Access Denied (403). WAF might be blocking. Pausing...")
-            time.sleep(5)
+            time.sleep(2)
             return 0
 
         response.raise_for_status()
@@ -210,13 +210,11 @@ def main():
             for raw in raw_hospitals:
                 # Map to Desired Format
                 record = {
-                    "Sr. No.": str(global_sr_no),
                     "Hospital Name": clean_text(raw.get("hospitalName")),
                     "Address": clean_text(raw.get("address")),
                     "State": clean_text(raw.get("stateName")),
                     "City": clean_text(raw.get("cityName")),
                     "Pin Code": clean_text(raw.get("pinCode")),
-                    "Effective Date": "",  # API does not provide this
                 }
 
                 # Dedup check (Simple check to avoid duplicates if pincodes overlap regions)
@@ -238,7 +236,7 @@ def main():
                 json.dump(all_data, f, indent=4, ensure_ascii=False)
 
         # Rate Limit Delay (between pages)
-        time.sleep(random.uniform(0.5, 1.0))
+        time.sleep(random.uniform(0.1, 0.2))
 
     # 3. Save Output
     if all_data:

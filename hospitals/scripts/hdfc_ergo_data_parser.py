@@ -330,7 +330,6 @@ def normalize_records(record: Dict[str, Any]) -> Dict[str, Any]:
 
     # 3. Init Final Record
     final_record = {
-        "Sr. No.": clean_text(record.get("Sr. No.")),
         "Hospital Name": clean_text(record.get("Hospital Name")),
         "Address": None,
         "City": None,
