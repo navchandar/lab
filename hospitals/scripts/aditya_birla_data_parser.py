@@ -26,15 +26,12 @@ SCRIPT_DIR = (
 )
 PROJECT_ROOT = SCRIPT_DIR.parent
 DATA_DIR = PROJECT_ROOT / "data"
+SOURCE_FILE = DATA_DIR / "sources.json"
 OUTPUT_FILENAME = DATA_DIR / (COMPANY + " Excluded_Hospitals_List.json")
 TEMP_PDF_PATH = DATA_DIR / "aditya_birla_temp.pdf"
 
+# Ensure data directory exists
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-# --- Constants ---
-LANDING_PAGE = (
-    "https://www.adityabirlacapital.com/healthinsurance/locate-care/hospital-listing"
-)
 
 
 def clean_text(text: Any) -> str:
@@ -43,7 +40,24 @@ def clean_text(text: Any) -> str:
     return re.sub(r"\s+", " ", str(text)).strip()
 
 
-def download_pdf_via_browser() -> bool:
+def get_source_url(company_name: str, url_key: str) -> str:
+    url = ""
+    try:
+        if SOURCE_FILE.exists():
+            with open(SOURCE_FILE, "r", encoding="utf-8") as f:
+                source_list = json.load(f)
+                for i in source_list:
+                    if i.get("company") == company_name:
+                        url = i.get(url_key, "")
+                        break
+    except Exception as e:
+        logger.error(f"Error reading JSON source file: {e}")
+    if not url:
+        logger.warning(f"No {url_key} found for {company_name} in sources.json")
+    return url
+
+
+def download_pdf_via_browser(url) -> bool:
     """
     Navigates to the page, clicks the link, and captures the downloaded file.
     """
@@ -58,8 +72,8 @@ def download_pdf_via_browser() -> bool:
         page = context.new_page()
 
         try:
-            logger.info(f"Navigating to {LANDING_PAGE}")
-            page.goto(LANDING_PAGE, timeout=60000, wait_until="domcontentloaded")
+            logger.info(f"Navigating to {url}")
+            page.goto(url, timeout=60000, wait_until="domcontentloaded")
 
             # 1. Locate the Link
             # Using a robust text selector
@@ -187,11 +201,14 @@ def parse_pdf_content(pdf_bytes: bytes) -> List[Dict]:
 
 
 def main():
-    # 1. Download
-    # pdf = download_pdf_via_browser()
-    # if not pdf:
-    #     logger.error("Download failed.")
-    #     return
+    target_url = get_source_url(COMPANY, "excluded_url")
+    if not target_url:
+        return
+
+    pdf = download_pdf_via_browser(target_url)
+    if not pdf:
+        logger.error("Download failed.")
+        return
 
     # Read PDF into memory
     pdf_content = None

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -125,7 +125,8 @@
         --modal-bg: #ffffff;
         --input-bg: #f8fafc;
         --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-md:
+          0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
         --radius-sm: 6px;
         --radius-md: 8px;
 
@@ -163,7 +164,9 @@
         background: var(--bg-color);
         padding: 0;
         color: var(--text-primary);
-        font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         -webkit-font-smoothing: antialiased;
       }
 
@@ -185,7 +188,6 @@
       ::-webkit-scrollbar-thumb:hover {
         background: var(--text-secondary);
       }
-
 
       /* Layout */
       .container {
@@ -279,7 +281,6 @@
         white-space: nowrap;
       }
 
-
       .toggle-btn.active {
         border-color: var(--accent-color);
         background: color-mix(in srgb, var(--accent-color), white 90%);
@@ -294,7 +295,11 @@
 
       @media (prefers-color-scheme: dark) {
         .toggle-btn.active {
-          background: color-mix(in srgb, var(--accent-color), black 80%) !important;
+          background: color-mix(
+            in srgb,
+            var(--accent-color),
+            black 80%
+          ) !important;
         }
 
         .sidebar-footer {
@@ -313,7 +318,7 @@
         }
 
         .leaflet-popup-content-wrapper {
-          box-shadow: 5px 9px 25px #000;
+          box-shadow: 5px 9px 25px #000000a6 !important;
         }
 
         .leaflet-bottom .leaflet-control-zoom a,
@@ -326,6 +331,11 @@
         .leaflet-control-reset-btn:hover {
           background-color: #242424 !important;
           color: #dbdbdb !important;
+        }
+
+        path.leaflet-interactive {
+          stroke: #aaa !important;
+          stroke-opacity: 0.8 !important;
         }
 
         #map-loader {
@@ -360,7 +370,9 @@
       }
 
       .search-box {
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
         box-sizing: border-box;
         border: 1px solid var(--border-color);
         border-radius: var(--radius-sm);
@@ -373,7 +385,8 @@
 
       .search-box:focus {
         outline: none;
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color), transparent 85%);
+        box-shadow: 0 0 0 3px
+          color-mix(in srgb, var(--accent-color), transparent 85%);
         border-color: var(--accent-color);
       }
 
@@ -504,7 +517,7 @@
       .badge {
         display: inline-flex;
         align-items: center;
-        margin-top: 6px;
+        margin-bottom: 2px;
         border: 1px solid transparent;
         border-radius: 4px;
         padding: 2px 6px;
@@ -515,14 +528,14 @@
       }
 
       .badge.excluded {
-        border-color: color-mix(in srgb, var(--danger-color), transparent 80%);
-        background: color-mix(in srgb, var(--danger-color), transparent 90%);
+        border-color: color-mix(in srgb, var(--danger-color), transparent 50%);
+        background: color-mix(in srgb, var(--danger-color), transparent 85%);
         color: var(--danger-color);
       }
 
       .badge.network {
-        border-color: color-mix(in srgb, var(--success-color), transparent 80%);
-        background: color-mix(in srgb, var(--success-color), transparent 90%);
+        border-color: color-mix(in srgb, var(--success-color), transparent 50%);
+        background: color-mix(in srgb, var(--success-color), transparent 85%);
         color: var(--success-color);
       }
 
@@ -542,6 +555,10 @@
         font-weight: bold;
       }
 
+      path.leaflet-interactive {
+        stroke-opacity: 0.75;
+      }
+
       /* Sidebar Footer */
       .sidebar-footer {
         display: flex;
@@ -555,7 +572,9 @@
       }
 
       .footer-link {
-        transition: color 0.2s, border-bottom-color 0.2s;
+        transition:
+          color 0.2s,
+          border-bottom-color 0.2s;
         cursor: pointer;
         border-bottom: 1px solid transparent;
         color: var(--text-secondary);
@@ -578,7 +597,6 @@
 
       /* Leaflet Customization */
       .leaflet-popup-content-wrapper {
-        box-shadow: var(--shadow-md);
         box-shadow: 5px 9px 25px #a6a6a6a6;
         border-radius: var(--radius-md);
         background: var(--popup-bg);
@@ -593,7 +611,7 @@
       }
 
       .leaflet-popup-content p {
-        margin: 7px 0 !important
+        margin: 7px 0 !important;
       }
 
       .leaflet-popup-tip {
@@ -689,16 +707,16 @@
       }
 
       .nodata {
-        padding:15px;
-        color:var(--text-secondary);
-        text-align:center
+        padding: 15px;
+        color: var(--text-secondary);
+        text-align: center;
       }
 
       .error {
         color: var(--danger-color);
       }
 
-      .results-info>.error {
+      .results-info > .error {
         color: var(--danger-color);
       }
 
@@ -755,7 +773,6 @@
         color: var(--text-primary);
       }
 
-
       .modal-close {
         position: absolute;
         top: 20px;
@@ -798,7 +815,9 @@
       }
 
       .modal-body a {
-        transition: color 0.2s, border-bottom-color 0.2s;
+        transition:
+          color 0.2s,
+          border-bottom-color 0.2s;
         border-bottom: 0;
         color: var(--accent-color);
         font-weight: 500;
@@ -810,24 +829,24 @@
       }
 
       .modal-footer {
-          padding: 5px 25px 0px 0px;
-          text-align: right;
+        padding: 5px 25px 0px 0px;
+        text-align: right;
       }
 
       .btn-close-modal {
-          transition: background 0.2s;
-          cursor: pointer;
-          border: none;
-          border-radius: 4px;
-          background: #1a73e8;
-          padding: 8px 16px;
-          color: white;
-          font-weight: 500;
-          font-size: 14px;
+        transition: background 0.2s;
+        cursor: pointer;
+        border: none;
+        border-radius: 4px;
+        background: #1a73e8;
+        padding: 8px 16px;
+        color: white;
+        font-weight: 500;
+        font-size: 14px;
       }
 
       .btn-close-modal:hover {
-          background: #1557b0;
+        background: #1557b0;
       }
 
       /* Sources Table */
@@ -899,15 +918,15 @@
       }
 
       .address {
-        opacity:0.8;
-        margin:4px 0;
-        color:var(--text-primary);
-        font-size:0.75rem;
+        opacity: 0.8;
+        margin: 4px 0;
+        color: var(--text-primary);
+        font-size: 0.75rem;
       }
 
       .pin {
-        margin:4px 0;
-        font-size:0.7rem;
+        margin: 4px 0;
+        font-size: 0.7rem;
       }
 
       .badge-truncate {
@@ -1053,11 +1072,11 @@
         }
 
         .leaflet-popup-content p {
-          margin: 2px 0 !important
+          margin: 2px 0 !important;
         }
 
         .badge {
-          margin-top: 0;
+          margin: 0;
           font-size: 0.6rem;
         }
       }
@@ -1194,9 +1213,12 @@
         <div id="map-loader">
           <div
             class="spinner"
-            style="width:20px; height:20px; border-width:2px; margin:0;"
+            style="width: 20px; height: 20px; border-width: 2px; margin: 0"
           ></div>
-          <span id="map-loader-text" style="font-size:0.7rem; font-weight:600;">
+          <span
+            id="map-loader-text"
+            style="font-size: 0.7rem; font-weight: 600"
+          >
             Updating...
           </span>
         </div>
@@ -1279,7 +1301,7 @@
           // Map Instantiation
           AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
             MAP_DEFAULTS.center,
-            MAP_DEFAULTS.zoom
+            MAP_DEFAULTS.zoom,
           );
           L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
 
@@ -1289,12 +1311,12 @@
             onAdd: function (map) {
               const container = L.DomUtil.create(
                 "div",
-                "leaflet-bar leaflet-control"
+                "leaflet-bar leaflet-control",
               );
               const btn = L.DomUtil.create(
                 "a",
                 "leaflet-control-reset-btn",
-                container
+                container,
               );
               btn.href = "#";
               btn.title = "Reset View";
@@ -1446,7 +1468,7 @@
           UIManager.updateToggleUI();
           UIManager.showLoading(
             true,
-            `Loading ${CONFIG[type].label} Hospitals...`
+            `Loading ${CONFIG[type].label} Hospitals...`,
           );
 
           // Reset Sidebar & Filters immediately to "Loading" state
@@ -1504,10 +1526,10 @@
         setupEventListeners: () => {
           // Network Status
           window.addEventListener("offline", () =>
-            UIManager.showToast("You seem to be offline.", true)
+            UIManager.showToast("You seem to be offline.", true),
           );
           window.addEventListener("online", () =>
-            setTimeout(() => UIManager.showToast("Back online!", false), 2000)
+            setTimeout(() => UIManager.showToast("Back online!", false), 2000),
           );
 
           // Search
@@ -1663,7 +1685,7 @@
             .getElementById("searchInput")
             .value.toLowerCase();
           const checkboxes = document.querySelectorAll(
-            '#insurerFilters input[type="checkbox"]'
+            '#insurerFilters input[type="checkbox"]',
           );
 
           const selectedCompanies =
@@ -1689,7 +1711,7 @@
                 return itemCompanies.some((c) => selectedCompanies.includes(c));
               }
               return true;
-            }
+            },
           );
 
           MapManager.renderMarkers(AppState.currentFilteredData);
@@ -1716,7 +1738,7 @@
                 if (!item.lat || !item.lng) return false;
                 if (item.lat == 0.0 || item.lng == 0.0) return false;
                 return bounds.contains(L.latLng(item.lat, item.lng));
-              }
+              },
             );
           }
 
@@ -1748,7 +1770,7 @@
           const listContainer = document.getElementById("hospitalList");
           const nextBatch = AppState.visibleItems.slice(
             AppState.renderedCount,
-            AppState.renderedCount + AppState.batchSize
+            AppState.renderedCount + AppState.batchSize,
           );
 
           // DocumentFragment prevents layout thrashing
@@ -1761,7 +1783,7 @@
             li.dataset.id = item._ui_id; // Store ID for delegation
 
             const companyList = (item.excluded_by || item.insurers || []).join(
-              ", "
+              ", ",
             );
             const badgeLabel = isExcluded ? "Excluded By" : "In-Network";
             const badgeClass = isExcluded ? "excluded" : "network";
@@ -1809,7 +1831,7 @@
           t.className = isError ? "show error" : "show";
           setTimeout(
             () => (t.className = t.className.replace("show", "")),
-            5000
+            5000,
           );
         },
 
@@ -1896,9 +1918,8 @@
             html += `</tbody></table>`;
             document.getElementById("modalBody").innerHTML = html;
           } catch (e) {
-            document.getElementById(
-              "modalBody"
-            ).innerHTML = `<p class="error">Could not load sources.</p>`;
+            document.getElementById("modalBody").innerHTML =
+              `<p class="error">Could not load sources.</p>`;
           }
         },
       };
