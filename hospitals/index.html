@@ -206,7 +206,7 @@
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.08);
         border-right: 1px solid var(--border-color);
         background: var(--sidebar-bg);
-        width: 380px;
+        width: 410px;
       }
 
       .header {
@@ -360,7 +360,10 @@
       .controls {
         border-bottom: 1px solid var(--border-color);
         background: var(--sidebar-bg);
-        padding: 15px;
+        padding-top: 5px;
+        padding-right: 15px;
+        padding-bottom: 2px;
+        padding-left: 15px;
       }
 
       .search-wrapper {
@@ -421,8 +424,9 @@
         display: flex;
         flex-wrap: wrap;
         justify-content: start;
-        gap: 10px;
-        max-height: 70px;
+        gap: 5px;
+        margin: 0 -10px;
+        max-height: 75px;
         overflow-y: auto;
       }
 
@@ -434,7 +438,7 @@
         border: 1px solid var(--border-color);
         border-radius: 15px;
         background: var(--bg-color);
-        padding: 4px 10px;
+        padding: 2px 4px;
         color: var(--text-secondary);
         font-weight: 500;
         font-size: 0.75rem;
@@ -932,7 +936,7 @@
       .badge-truncate {
         display: inline-block;
         vertical-align: middle;
-        max-width: 90%;
+        max-width: 95%;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -948,7 +952,7 @@
           border-right: none;
           border-bottom: 1px solid var(--border-color);
           width: 100%;
-          height: 35vh;
+          max-height: 30%;
         }
 
         .sidebar-footer {
@@ -1069,6 +1073,10 @@
           border-radius: 10px;
           padding: 2px 8px;
           font-size: 0.65rem;
+        }
+
+        .leaflet-popup-content {
+          margin: 8px !important;
         }
 
         .leaflet-popup-content p {
@@ -1400,13 +1408,13 @@
                 ? `<div class="badge excluded">⛔ EXCLUDED</div>`
                 : `<div class="badge network">✅ IN-NETWORK</div>`;
               const titleList = isExcluded
-                ? `Excluded by ${companyList}`
-                : `In-Network of ${companyList}`;
+                ? `Excluded by: ${companyList}`
+                : `In-Network of: ${companyList}`;
 
               const popupContent = `
                       <div style="min-width:200px; font-family:inherit;">
                           ${badgeHtml}
-                          <h3 style="margin:5px 0; color:${color};">
+                          <h3 style="margin:3px 0; color:${color};">
                             ${item.name}
                           </h3>
                           <p class="address">
@@ -1787,7 +1795,7 @@
             );
             const badgeLabel = isExcluded ? "Excluded By" : "In-Network";
             const badgeClass = isExcluded ? "excluded" : "network";
-            const titleText = `${item.name} ${badgeLabel}: ${companyList}`;
+            const titleText = `${badgeLabel}: ${companyList}`;
             const location = `${item.city ? item.city + " - " : ""}${
               item.pincode ? item.pincode : ""
             }`;
