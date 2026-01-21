@@ -139,6 +139,19 @@
         --header-border: 1px solid var(--border-color);
       }
 
+      .checkbox-group {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 3px;
+        padding-right: 10px;
+        max-height: 75px;
+        overflow-y: auto;
+      }
+
+      .checkbox-item:has(input[type="checkbox"]:checked) {
+        color: var(--popup-text);
+      }
+
       @media (prefers-color-scheme: dark) {
         :root {
           /* Modern Slate Palette (Dark) */

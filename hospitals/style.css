@@ -269,17 +269,6 @@ body {
     text-transform: uppercase;
 }
 
-.checkbox-group {
-    /* csslint ignore:start */
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-    gap: 3px;
-    /* csslint ignore:end */
-    padding-right: 10px;
-    max-height: 75px;
-    overflow-y: auto;
-}
-
 .checkbox-item {
     display: flex;
     align-items: center;
@@ -309,13 +298,6 @@ body {
     margin-right: 6px;
     accent-color: var(--accent-color);
 }
-
-/* csslint ignore:start */
-.checkbox-item:has(input[type="checkbox"]:checked) {
-    color: var(--popup-text);
-}
-
-/* csslint ignore:end */
 
 /* Results List */
 .results-info {
@@ -741,6 +723,7 @@ dialog.native-modal[open]::backdrop {
 
 /* Sources Table */
 .source-table {
+    box-sizing: border-box;
     margin-top: 15px;
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
