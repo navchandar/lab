@@ -413,7 +413,7 @@
       /* Filters */
       .filter-label {
         display: block;
-        margin-bottom: 8px;
+        margin-bottom: 6px;
         color: var(--text-primary);
         font-weight: 600;
         font-size: 0.75rem;
@@ -422,11 +422,10 @@
       }
 
       .checkbox-group {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: start;
-        gap: 5px;
-        margin: 0 -10px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 3px;
+        padding-right: 10px;
         max-height: 75px;
         overflow-y: auto;
       }
@@ -440,18 +439,23 @@
         border-radius: 5px;
         background: var(--bg-color);
         padding: 2px 5px;
+        overflow: hidden;
         color: var(--text-secondary);
         font-weight: 500;
-        font-size: 0.8rem;
+        font-size: clamp(0.5rem, 0.25vw + 0.5rem, 1rem);
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .checkbox-item:hover {
         border-color: var(--text-secondary);
         border-radius: 10px;
+        background-color: rgba(0, 0, 0, 0.02);
         color: var(--text-primary);
       }
 
       .checkbox-item input {
+        flex-shrink: 0;
         margin-right: 6px;
         accent-color: var(--accent-color);
       }
@@ -1075,12 +1079,20 @@
           display: flex;
           flex-wrap: nowrap;
           gap: 5px;
+          padding-bottom: 5px;
           max-height: 50px;
           overflow-x: scroll;
           overflow-y: hidden;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+
+        .checkbox-group::-webkit-scrollbar {
+          display: none;
         }
 
         .checkbox-item {
+          flex: 0 0 auto;
           border: 0.5px solid var(--border-color);
           border-radius: 7px;
           padding: 5px 10px;
@@ -1678,7 +1690,12 @@
             return;
           }
 
-          companies.forEach((company) => {
+          // sort the company list alphabetically
+          const sortedCompanies = Array.from(companies).sort((a, b) =>
+            a.localeCompare(b),
+          );
+
+          sortedCompanies.forEach((company) => {
             const wrapper = document.createElement("label");
             wrapper.className = "checkbox-item";
             const checkbox = document.createElement("input");
