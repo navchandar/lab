@@ -648,12 +648,21 @@ class GeocodingPipeline:
         for i, (uid, record) in enumerate(pending_items):
             result = self.fetch_geocoding(record)
 
-            # Update Record
+            # Case 1: Geocoding Successful
             if result["lat"] != 0.0 and result["lng"] != 0.0:
                 record["lat"] = result["lat"]
                 record["lng"] = result["lng"]
                 record["accuracy"] = result["accuracy"]
-                record["_needs_update"] = False  # Reset flag
+                record["_needs_update"] = False
+
+            # Case 2: Geocoding Failed, but record is still marked "Pending"
+            if record.get("accuracy") == "Pending":
+                # If we have old coordinates, keep them but mark accuracy as Low/Manual
+                if record.get("lat") != 0.0:
+                    record["accuracy"] = "LOW"
+                else:
+                    record["accuracy"] = "Pending"
+                record["_needs_update"] = False
 
             self.api_hits += 1
 
@@ -677,7 +686,14 @@ class GeocodingPipeline:
         # Clean internal keys before saving
         clean_list = []
         for item in output_list:
+            # Remove internal keys (starting with _)
             clean_item = {k: v for k, v in item.items() if not k.startswith("_")}
+            # Alphabetic Sort for 'excluded_by'
+            if "excluded_by" in clean_item and isinstance(
+                clean_item["excluded_by"], list
+            ):
+                clean_item["excluded_by"].sort()
+
             clean_list.append(clean_item)
 
         # Sort for consistency
