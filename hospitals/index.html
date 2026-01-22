@@ -113,7 +113,7 @@
         --bg-color: #ffffff;
         --sidebar-bg: #ffffff;
         --text-primary: #1e293b;
-        --text-secondary: #a9b9d0;
+        --text-secondary: #4a5769;
         --border-color: #e2e8f0;
         --hover-bg: #d7ebff;
         --active-bg: #eff6ff;
@@ -137,6 +137,17 @@
         --header-bg: linear-gradient(135deg, #11274b 0%, #127bd3 100%);
         --header-text: #ffffff;
         --header-border: 1px solid var(--border-color);
+
+        /* LIGHT MODE CLUSTERS */
+        /* < 10 items (Spiderfiable): Blue/Indigo */
+        --cluster-bg-small: #4f46e5;
+        /* 10-100 items: Warning/Amber */
+        --cluster-bg-medium: #f59e0b;
+        /* > 100 items: Dense/Rose */
+        --cluster-bg-large: #e11d48;
+
+        --cluster-text: #ffffff;
+        --cluster-border: rgba(255, 255, 255, 0.7); /* White ring */
       }
 
       .checkbox-group {
@@ -177,6 +188,14 @@
           --header-bg: linear-gradient(135deg, #030509 0%, #002f7c 100%);
           --header-text: #dbdbdb;
           --header-border: none;
+
+          /* DARK MODE CLUSTERS (Lighter, Neon shades for visibility) */
+          --cluster-bg-small: #818cf8; /* Lighter Indigo */
+          --cluster-bg-medium: #fbbf24; /* Lighter Amber */
+          --cluster-bg-large: #fb7185; /* Lighter Rose */
+
+          --cluster-text: #0f172a; /* Dark text often reads better on neon brights */
+          --cluster-border: rgba(30, 41, 59, 0.9); /* Dark ring matches map */
         }
       }
     </style>
@@ -386,9 +405,9 @@
             iconCreateFunction: function (cluster) {
               const count = cluster.getChildCount();
               // Determine size class based on count
-              let sizeClass = "small";
-              if (count > 10) sizeClass = "medium";
-              if (count > 100) sizeClass = "large";
+              let sizeClass = "cluster-small";
+              if (count >= 10) sizeClass = "cluster-medium";
+              if (count > 100) sizeClass = "cluster-large";
 
               return L.divIcon({
                 // We put the count inside a span for easy styling
@@ -977,7 +996,7 @@
           try {
             let data;
             // Check if we already have the data in memory
-            if (_sourcesDataCache) {
+            if (AppState._sourcesDataCache) {
               data = AppState._sourcesDataCache;
             } else {
               // If not, fetch it
@@ -1015,6 +1034,7 @@
           } catch (e) {
             document.getElementById("modalBody").innerHTML =
               `<p class="error">Could not load sources.</p>`;
+            console.warn(e.message);
           }
         },
       };
