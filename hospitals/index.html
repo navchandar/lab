@@ -139,12 +139,12 @@
         --header-border: 1px solid var(--border-color);
 
         /* LIGHT MODE CLUSTERS */
-        /* < 10 items (Spiderfiable): Blue/Indigo */
-        --cluster-bg-small: #4f46e5;
-        /* 10-100 items: Warning/Amber */
-        --cluster-bg-medium: #f59e0b;
-        /* > 100 items: Dense/Rose */
-        --cluster-bg-large: #e11d48;
+        /* Small (<10): Teal/Cyan - Distinct from standard blue links/marker*/
+        --cluster-bg-small: #0891b2; /* Cyan-600 */
+        /* Medium (10-100): Amber/Orange - high visibility */
+        --cluster-bg-medium: #f59e0b; /* Amber-500 */
+        /* Large (>100): Red/Rose. Slightly desaturated to avoid eye strain */
+        --cluster-bg-large: #e11d48; /* Rose-600 */
 
         --cluster-text: #ffffff;
         --cluster-border: rgba(255, 255, 255, 0.7); /* White ring */
@@ -189,10 +189,13 @@
           --header-text: #dbdbdb;
           --header-border: none;
 
-          /* DARK MODE CLUSTERS (Lighter, Neon shades for visibility) */
-          --cluster-bg-small: #818cf8; /* Lighter Indigo */
-          --cluster-bg-medium: #fbbf24; /* Lighter Amber */
-          --cluster-bg-large: #fb7185; /* Lighter Rose */
+          /* DARK MODE CLUSTERS */
+          /* Small: A brighter Cyan/Teal  */
+          --cluster-bg-small: #22d3ee; /* Cyan-400 */
+          /* Medium: Bright Yellow/Amber */
+          --cluster-bg-medium: #fbbf24; /* Amber-400 */
+          /* Large: Bright Pink/Rose. */
+          --cluster-bg-large: #fb7185; /* Rose-400 */
 
           --cluster-text: #0f172a; /* Dark text often reads better on neon brights */
           --cluster-border: rgba(30, 41, 59, 0.9); /* Dark ring matches map */
@@ -307,11 +310,45 @@
           label: "Excluded",
         },
       };
+
+      // --- Start fetching primary data immediately ---
+      const initialNetworkFetch = fetch(CONFIG.network.url)
+        .then((response) => {
+          if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+          return response.json();
+        })
+        .catch((err) => {
+          console.error("Pre-fetch failed:", err);
+          return null; // Return null so we can handle it gracefully in loadDataset
+        });
+
       const SOURCES_URL = "data/sources.json";
+
+      // preferCanvas -> Reduces memory usage by not creating DOM nodes for map paths
       const MAP_DEFAULTS = {
         center: [22.5937, 78.9629],
         zoom: 5,
-        options: { zoomControl: false },
+        options: {
+          zoomControl: false,
+          preferCanvas: true,
+        },
+      };
+
+      /**
+       * UTILITY: DEBOUNCE
+       * Prevents the search filter from running on every single keystroke.
+       * It waits until the user stops typing for few milliseconds.
+       */
+      const debounce = (func, wait) => {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
       };
 
       /**
@@ -333,14 +370,19 @@
 
         markerMap: {}, // Quick lookup for markers by ID
         clickedMarker: null, // Track sticky tooltip state
-        _sourcesDataCache: null,
+        _sourcesDataCache: null, // Cache for sources modal
       };
 
       // --- INIT ---
       document.addEventListener("DOMContentLoaded", () => {
+        // 1. Initialize Map (Synchronous)
         MapManager.init();
-        DataManager.loadDataset("network");
+
+        // 2. Setup UI Events (Search, Toggles, Modals)
         UIManager.setupEventListeners();
+
+        // 3. Load Data (Will use the pre-fetched promise if available)
+        DataManager.loadDataset("network");
       });
 
       /**
@@ -400,26 +442,30 @@
             maxZoom: 19,
           }).addTo(AppState.map);
 
+          // Marker Cluster Configuration
           AppState.markersClusterGroup = L.markerClusterGroup({
-            // This function creates the custom HTML for the cluster icon
+            // Custom Icon Function for Modern styling
             iconCreateFunction: function (cluster) {
               const count = cluster.getChildCount();
               // Determine size class based on count
-              let sizeClass = "cluster-small";
+              let sizeClass = "cluster-small"; // Small (<10)
               if (count >= 10) sizeClass = "cluster-medium";
               if (count > 100) sizeClass = "cluster-large";
 
               return L.divIcon({
-                // We put the count inside a span for easy styling
                 html: `<span>${count}</span>`,
                 className: `modern-cluster ${sizeClass}`,
-                // Size: 40x40 is a good touch-friendly target for mobile
-                iconSize: L.point(40, 40),
+                iconSize: L.point(40, 40), // Large touch target
               });
             },
-            chunkedLoading: true,
+            // OPTIMIZATION 3: Cluster Performance Settings
+            chunkedLoading: true, // Process markers in chunks to keep UI responsive
             maxClusterRadius: 45,
+            animate: false, // Disabling animation makes clustering instant
+            animateAddingMarkers: false,
+            spiderfyOnMaxZoom: true,
             showCoverageOnHover: false,
+            removeOutsideVisibleBounds: true, // Aggressively remove off-screen markers
           });
 
           // Spiderfy logic on hover for small clusters
@@ -439,7 +485,7 @@
             AppState.map.closePopup();
           });
 
-          // Theme Listener
+          // Theme Listener for dynamic tile switching
           window
             .matchMedia("(prefers-color-scheme: dark)")
             .addEventListener("change", (e) => {
@@ -456,16 +502,19 @@
         },
 
         renderMarkers: (data) => {
+          // Clear old markers before adding new ones
           AppState.markersClusterGroup.clearLayers();
           AppState.markerMap = {};
+
           const isExcluded = AppState.currentType === "excluded";
           const color = CONFIG[AppState.currentType].color;
 
+          // Map data to Leaflet Markers
           const markers = data
             .map((item, index) => {
               if (!item.lat || !item.lng) return null;
               if (item.lat == 0.0 || item.lng == 0.0) return null;
-              item._ui_id = index;
+              item._ui_id = index; // Link marker to data index
 
               const marker = L.marker([item.lat, item.lng]);
 
@@ -522,15 +571,17 @@
             })
             .filter((m) => m !== null);
 
+          // Bulk add to cluster group (faster than adding one by one)
           AppState.markersClusterGroup.addLayers(markers);
         },
       };
 
       /**
        * MODULE: DATA MANAGER
-       * Handles fetching, parsing, and error state for data.
+       * Handles fetching, caching, parsing, and error state for data.
        */
       const DataManager = {
+        // Simple in-memory cache for datasets
         _cache: {},
 
         resetState: () => {
@@ -548,7 +599,11 @@
           DataManager.resetState();
           UIManager.updateToggleUI();
 
-          // Only show the full loading screen if we DON'T have the data cached
+          // Optimization: If we have a pending pre-fetch for 'network', use it
+          let usePreFetch = type === "network" && initialNetworkFetch !== null;
+
+          // Only show loader if we don't have cache AND we aren't using the pre-fetch
+          // (If we use pre-fetch, it might resolve instantly, but showing loader briefly is safer)
           if (!DataManager._cache[type]) {
             const msg = `Loading ${CONFIG[type].label} Hospitals...`;
             UIManager.showLoading(true, msg);
@@ -564,28 +619,40 @@
           try {
             let data;
 
-            // Check existing Cache
+            // 1. Check Cache first
             if (DataManager._cache[type]) {
               console.log(`Using cached data for: ${type}`);
               data = DataManager._cache[type];
-            } else {
-              // Fetch if not in cache
-              const response = await fetch(CONFIG[type].url);
+            }
+            // 2. Check Pre-fetch Promise (only for initial load)
+            else if (usePreFetch) {
+              console.log("Using pre-fetched network data...");
+              data = await initialNetworkFetch;
+              if (!data) throw new Error("Pre-fetch failed silently");
 
+              // Process and Cache it
+              data = DataManager._processData(data);
+              DataManager._cache[type] = data;
+            }
+            // 3. Normal Fetch (for 'Excluded' or refreshes)
+            else {
+              const response = await fetch(CONFIG[type].url);
               if (!response.ok) {
                 throw new Error(
                   `HTTP Error ${response.status}: File not found`,
                 );
               }
-
               data = await response.json();
-              // Store in cache
+
+              // Process and Cache it
+              data = DataManager._processData(data);
               DataManager._cache[type] = data;
             }
 
-            AppState.currentDataset = data;
+            // OPTIMIZATION 4: Object.freeze
+            // Hint V8 engine to keep this object immutable (reduces memory overhead)
+            AppState.currentDataset = Object.freeze(data);
 
-            // If JSON is valid but empty array
             if (
               !Array.isArray(AppState.currentDataset) ||
               AppState.currentDataset.length === 0
@@ -604,10 +671,21 @@
           }
         },
 
+        // Helper: Pre-compute search strings to speed up filtering later
+        _processData: (data) => {
+          if (!Array.isArray(data)) return [];
+          data.forEach((item) => {
+            // OPTIMIZATION 5: Pre-compute search string
+            // Instead of joining these 4 strings every time user types, we do it once here.
+            item._searchStr =
+              `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
+          });
+          return data;
+        },
+
         handleLoadError: (error) => {
           // Update all UI components to reflect error state
           UIManager.showToast(`Failed to load data: ${error.message}`, true);
-
           const countLabel = document.getElementById("resultsCount");
           countLabel.innerText = "Data Unavailable";
           countLabel.classList.add("error");
@@ -623,7 +701,7 @@
        */
       const UIManager = {
         setupEventListeners: () => {
-          // Network Status
+          // Network Status Monitoring
           window.addEventListener("offline", () =>
             UIManager.showToast("You seem to be offline.", true),
           );
@@ -631,14 +709,18 @@
             setTimeout(() => UIManager.showToast("Back online!", false), 2000),
           );
 
-          // Search
+          // Search Input Logic
           const searchInput = document.getElementById("searchInput");
           const searchClear = document.getElementById("searchClear");
 
-          searchInput.addEventListener("input", () => {
+          // OPTIMIZATION 6: Debounce Search
+          // Only run filter 300ms after user STOPS typing.
+          const debouncedFilter = debounce(() => {
             searchClear.style.display = searchInput.value ? "block" : "none";
             UIManager.applyFilters();
-          });
+          }, 300);
+
+          searchInput.addEventListener("input", debouncedFilter);
 
           searchClear.addEventListener("click", () => {
             searchInput.value = "";
@@ -673,6 +755,7 @@
             if (!li) return;
 
             const id = li.dataset.id;
+            // Lookup item using the ui_id assigned during render
             const item = AppState.visibleItems.find((x) => x._ui_id == id);
             if (!item) return;
 
@@ -695,7 +778,7 @@
             }
           });
 
-          // --- Event Delegation (Hover) ---
+          // --- Event Delegation (Hover) for Spiderfy ---
           listContainer.addEventListener("mouseover", (e) => {
             const li = e.target.closest(".hospital-item");
             if (!li) return;
@@ -705,10 +788,12 @@
             if (marker) {
               const visibleParent =
                 AppState.markersClusterGroup.getVisibleParent(marker);
+              // Spiderfy small clusters on list hover
               if (visibleParent && visibleParent !== marker) {
                 if (visibleParent.getChildCount() < 10)
                   visibleParent.spiderfy();
               }
+              // Bounce animation
               const icon = marker.getElement();
               if (icon) icon.classList.add("marker-jump");
             }
@@ -769,7 +854,8 @@
             checkbox.type = "checkbox";
             checkbox.value = company;
             checkbox.checked = true;
-            checkbox.addEventListener("change", UIManager.applyFilters);
+            // Directly trigger filter on change
+            checkbox.addEventListener("change", () => UIManager.applyFilters());
             wrapper.appendChild(checkbox);
             wrapper.appendChild(document.createTextNode(company));
             container.appendChild(wrapper);
@@ -799,14 +885,14 @@
                   .map((cb) => cb.value)
               : null;
 
+          // Filter Data
           AppState.currentFilteredData = AppState.currentDataset.filter(
             (item) => {
-              // Search Filter
-              const searchStr =
-                `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
-              if (searchText && !searchStr.includes(searchText)) return false;
+              // 1. Search (Optimized using pre-computed string)
+              if (searchText && !item._searchStr.includes(searchText))
+                return false;
 
-              // Company Filter
+              // 2. Company Filter
               const itemCompanies =
                 item.excluded_by ||
                 item.insurers ||
@@ -896,6 +982,7 @@
               item.pincode ? item.pincode : ""
             }`;
 
+            // Modern badge with ellipsis
             li.innerHTML = `
               <span class="h-name">${item.name}</span>
               <span class="h-loc">${location}</span>
@@ -912,7 +999,6 @@
         showLoading: (show, text) => {
           const mapLoader = document.getElementById("map-loader");
           const listContainer = document.getElementById("hospitalList");
-          const countLabel = document.getElementById("resultsCount");
 
           if (show) {
             // Show Map Overlay
@@ -923,6 +1009,7 @@
           } else {
             // Hide Map Overlay
             if (mapLoader) mapLoader.style.display = "none";
+            // Clear skeleton if present
             if (listContainer.querySelector(".skeleton-loader")) {
               listContainer.innerHTML = "";
             }
@@ -962,27 +1049,18 @@
           const content = `
                   <h3>Informational Purpose Only:</h3>
                   <p>This repository, the associated software, and the visualized data are intended strictly for educational and informational purposes. This project is not affiliated with, endorsed by, or representative of any insurance company, regulatory body (such as IRDAI), or healthcare institution.</p>
-
                   <h3>No Warranty of Accuracy:</h3>
                   <p>While every effort is made to ensure the data is accurate, the source documents (PDFs) are subject to change without notice. The developers make no representations or warranties of any kind, express or implied, about the completeness, accuracy, reliability, suitability, or availability of the data. Data latency may occur; latitude/longitude coordinates may be inaccurate; the official list on the insurer's website may differ from the data presented here.</p>
-
                   <h3>Limitation of Liability:</h3>
                   <p>In no event will the developers or contributors be liable for any loss or damage including without limitation, indirect or consequential loss or damage, or any financial loss arising from the use of this data. A decision to seek medical treatment at any specific facility is the sole responsibility of the individual.</p>
-
                   <h3>Mandatory Verification:</h3>
                   <p>Users are explicitly advised to independently verify the current status of any hospital directly with their specific insurance provider or Third Party Administrator (TPA) prior to admission. The official policy document and the insurer’s real-time confirmation serve as the final authority on insurance coverage.</p>
                   <p><strong>Always inform your insurer before admission.</strong></p>
                   <p>
                 License:
-                <a
-                  href="https://github.com/navchandar/lab/blob/main/LICENSE"
-                  target="_blank"
-                  >GNU GPLv3
-                </a>
+                <a href="https://github.com/navchandar/lab/blob/main/LICENSE" target="_blank">GNU GPLv3</a>
                 | Report bugs via
-                <a href="https://github.com/navchandar/lab/issues" target="_blank"
-                  >GitHub
-                </a>
+                <a href="https://github.com/navchandar/lab/issues" target="_blank">GitHub</a>
               </p>
               <div class="modal-footer">
                 <button class="btn-close-modal" onclick="closeModal()">Understood</button>
@@ -995,15 +1073,14 @@
           UIManager.openModal("Data Sources", "<p>Loading sources...</p>");
           try {
             let data;
-            // Check if we already have the data in memory
+            // Check cache first
             if (AppState._sourcesDataCache) {
               data = AppState._sourcesDataCache;
             } else {
-              // If not, fetch it
               const response = await fetch(SOURCES_URL);
               if (!response.ok) throw new Error("Sources file missing");
               data = await response.json();
-              // Save it to cache for next time
+              // Cache for future use
               AppState._sourcesDataCache = data;
             }
 
@@ -1039,7 +1116,7 @@
         },
       };
 
-      // Expose globals
+      // Expose globals for onclick handlers in HTML
       window.loadDataset = DataManager.loadDataset;
       window.openDisclaimerModal = UIManager.openDisclaimerModal;
       window.openSourcesModal = UIManager.openSourcesModal;
