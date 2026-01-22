@@ -113,7 +113,7 @@
         --bg-color: #ffffff;
         --sidebar-bg: #ffffff;
         --text-primary: #1e293b;
-        --text-secondary: #64748b;
+        --text-secondary: #a9b9d0;
         --border-color: #e2e8f0;
         --hover-bg: #d7ebff;
         --active-bg: #eff6ff;
@@ -314,6 +314,7 @@
 
         markerMap: {}, // Quick lookup for markers by ID
         clickedMarker: null, // Track sticky tooltip state
+        _sourcesDataCache: null,
       };
 
       // --- INIT ---
@@ -381,6 +382,22 @@
           }).addTo(AppState.map);
 
           AppState.markersClusterGroup = L.markerClusterGroup({
+            // This function creates the custom HTML for the cluster icon
+            iconCreateFunction: function (cluster) {
+              const count = cluster.getChildCount();
+              // Determine size class based on count
+              let sizeClass = "small";
+              if (count > 10) sizeClass = "medium";
+              if (count > 100) sizeClass = "large";
+
+              return L.divIcon({
+                // We put the count inside a span for easy styling
+                html: `<span>${count}</span>`,
+                className: `modern-cluster ${sizeClass}`,
+                // Size: 40x40 is a good touch-friendly target for mobile
+                iconSize: L.point(40, 40),
+              });
+            },
             chunkedLoading: true,
             maxClusterRadius: 45,
             showCoverageOnHover: false,
@@ -495,6 +512,8 @@
        * Handles fetching, parsing, and error state for data.
        */
       const DataManager = {
+        _cache: {},
+
         resetState: () => {
           // CRITICAL: Clear data immediately so map moves don't show stale info
           AppState.currentDataset = [];
@@ -509,10 +528,12 @@
           // Immediate Reset before loading new data
           DataManager.resetState();
           UIManager.updateToggleUI();
-          UIManager.showLoading(
-            true,
-            `Loading ${CONFIG[type].label} Hospitals...`,
-          );
+
+          // Only show the full loading screen if we DON'T have the data cached
+          if (!DataManager._cache[type]) {
+            const msg = `Loading ${CONFIG[type].label} Hospitals...`;
+            UIManager.showLoading(true, msg);
+          }
 
           // Reset Sidebar & Filters immediately to "Loading" state
           document.getElementById("hospitalList").innerHTML = "";
@@ -522,13 +543,28 @@
             '<span class="filter-loading">Loading filters...</span>';
 
           try {
-            const response = await fetch(CONFIG[type].url);
+            let data;
 
-            if (!response.ok) {
-              throw new Error(`HTTP Error ${response.status}: File not found`);
+            // Check existing Cache
+            if (DataManager._cache[type]) {
+              console.log(`Using cached data for: ${type}`);
+              data = DataManager._cache[type];
+            } else {
+              // Fetch if not in cache
+              const response = await fetch(CONFIG[type].url);
+
+              if (!response.ok) {
+                throw new Error(
+                  `HTTP Error ${response.status}: File not found`,
+                );
+              }
+
+              data = await response.json();
+              // Store in cache
+              DataManager._cache[type] = data;
             }
 
-            AppState.currentDataset = await response.json();
+            AppState.currentDataset = data;
 
             // If JSON is valid but empty array
             if (
@@ -939,10 +975,20 @@
         openSourcesModal: async () => {
           UIManager.openModal("Data Sources", "<p>Loading sources...</p>");
           try {
-            const response = await fetch(SOURCES_URL);
-            if (!response.ok) throw new Error("Sources file missing");
-            const data = await response.json();
+            let data;
+            // Check if we already have the data in memory
+            if (_sourcesDataCache) {
+              data = AppState._sourcesDataCache;
+            } else {
+              // If not, fetch it
+              const response = await fetch(SOURCES_URL);
+              if (!response.ok) throw new Error("Sources file missing");
+              data = await response.json();
+              // Save it to cache for next time
+              AppState._sourcesDataCache = data;
+            }
 
+            // Render using 'data' json
             let html = `
                       <p>The data visualized here is gathered and parsed from the following sources:</p>
                       <table class="source-table">

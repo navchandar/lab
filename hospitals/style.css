@@ -198,7 +198,8 @@ body {
     }
 
     .results-info {
-        background-image: linear-gradient(135deg, #03050982 0%, #002f7c85 100%) !important;
+        background-image: linear-gradient(135deg, #03050982 0%, #002f7c 100%) !important;
+        background-color: #191970;
         color: var(--header-text) !important;
     }
 }
@@ -208,7 +209,7 @@ body {
     border-bottom: 1px solid var(--border-color);
     background: var(--sidebar-bg);
     padding-top: 5px;
-    padding-right: 15px;
+    padding-right: 5px;
     padding-bottom: 2px;
     padding-left: 15px;
 }
@@ -216,7 +217,7 @@ body {
 .search-wrapper {
     position: relative;
     margin-bottom: 12px;
-    width: 100%;
+    width: 97%;
 }
 
 .search-box {
@@ -329,7 +330,7 @@ body {
     border-bottom: 1px solid transparent;
     border-bottom: 1px solid color-mix(in srgb, var(--border-color), transparent 60%);
     padding: 12px 15px;
-    width: 90%;
+    width: 95%;
     overflow: hidden;
 }
 
@@ -799,7 +800,7 @@ dialog.native-modal[open]::backdrop {
     opacity: 0.8;
     margin: 4px 0;
     color: var(--text-primary);
-    font-size: 0.75rem;
+    font-size: 0.8rem;
 }
 
 .pin {
@@ -918,6 +919,7 @@ dialog.native-modal[open]::backdrop {
 
     .search-wrapper {
         margin-bottom: 10px;
+        width: 97%;
     }
 
     .search-box {
@@ -943,7 +945,6 @@ dialog.native-modal[open]::backdrop {
         display: flex;
         flex-wrap: nowrap;
         gap: 5px;
-        padding-bottom: 5px;
         max-height: 50px;
         overflow-x: scroll;
         overflow-y: hidden;
@@ -1036,4 +1037,66 @@ dialog.native-modal[open]::backdrop {
 
 .marker-jump {
     animation: jump 0.4s ease-in-out;
+}
+
+/* --- Modern Cluster Icons --- */
+.modern-cluster {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000 !important;
+    /* Ensure it floats above other map elements */
+
+    /* Smooth transition for hover effects */
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s;
+    box-sizing: border-box;
+
+    /* Soft shadow for depth */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+
+    /* Create a "cutout" effect border using the page background color */
+    border: 3px solid var(--bg-color);
+
+    border-radius: 50%;
+
+    /* Use your theme's accent color */
+    background: var(--accent-color);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.85rem;
+    font-family: inherit;
+}
+
+/* Hover Effect (Desktop) */
+.modern-cluster:hover {
+    transform: scale(1.15);
+    z-index: 1001 !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Size Variants (Optional: Use opacity or different colors) */
+.modern-cluster.medium {
+    /* Slightly transparent ring effect using box-shadow */
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-color), transparent 80%);
+}
+
+.modern-cluster.large {
+    box-shadow: 0 0 0 5px color-mix(in srgb, var(--primary-color), transparent 80%);
+    background: var(--primary-color);
+}
+
+/* --- Dark Mode Specifics --- */
+@media (prefers-color-scheme: dark) {
+    .modern-cluster {
+        /* In dark mode, the shadow needs to be tighter and maybe colored */
+        box-shadow: 0 0 15px color-mix(in srgb, var(--accent-color), transparent 70%);
+        border-color: var(--sidebar-bg);
+        /* Match the dark map/sidebar background */
+    }
+
+    .modern-cluster.large {
+        background: var(--active-bg);
+        /* Use a lighter blue in dark mode for visibility */
+        color: white;
+    }
 }
