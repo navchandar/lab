@@ -541,7 +541,9 @@ async function initApp() {
 
 const lightenColor = (color, percent) => {
   // Validate hex string
-  if (!color || !color.startsWith("#")) return color;
+  if (!color || !color.startsWith("#")) {
+    return color;
+  }
   const num = parseInt(color.replace("#", ""), 16);
   const amt = Math.round(2.55 * percent);
   const R = (num >> 16) + amt;
