@@ -573,6 +573,13 @@ function generateControls(servicesList) {
   const container = document.getElementById("options-container");
   container.innerHTML = "";
 
+  // Display the control box
+  requestAnimationFrame(() => {
+    if (sidebar) {
+      sidebar.style.opacity = "1";
+    }
+  });
+
   // Get partners from the list
   servicesList.forEach((partner, index) => {
     const label = document.createElement("label");
@@ -650,6 +657,16 @@ function generateControls(servicesList) {
     });
 
     container.appendChild(label);
+
+    // Trigger the Animation with a Staggered Delay
+    // setTimeout(callback, delay) -> delay = index * 50ms
+    let timeOut = 50;
+    if (window.innerWidth <= 600) {
+      timeOut = 5;
+    }
+    setTimeout(() => {
+      label.classList.add("visible");
+    }, index * timeOut);
   });
 
   // --- EVENT LISTENER: Handle Key Presses ---
@@ -673,13 +690,6 @@ function generateControls(servicesList) {
     });
     window.hasServiceShortcuts = true;
   }
-
-  // Display the control box
-  requestAnimationFrame(() => {
-    if (sidebar) {
-      sidebar.style.opacity = "1";
-    }
-  });
 }
 
 // --- MEMORY MANAGEMENT HELPER ---
