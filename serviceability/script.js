@@ -390,7 +390,7 @@ function initsidebar() {
           e.stopPropagation();
           collapseSheet();
         },
-        { passive: true }
+        { passive: true },
       );
     }
   }
@@ -446,7 +446,7 @@ async function initApp() {
         ) {
           showToast(`${savedService.toUpperCase()} is not available`, true);
           console.warn(
-            `${savedService} is not available in ${availableServices}`
+            `${savedService} is not available in ${availableServices}`,
           );
         }
         // Select the first available item
@@ -539,6 +539,27 @@ async function initApp() {
   }
 }
 
+const lightenColor = (color, percent) => {
+  // Validate hex string
+  if (!color || !color.startsWith("#")) return color;
+  const num = parseInt(color.replace("#", ""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = ((num >> 8) & 0x00ff) + amt;
+  const B = (num & 0x0000ff) + amt;
+  return (
+    "#" +
+    (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    )
+      .toString(16)
+      .slice(1)
+  );
+};
+
 // Function to Generate HTML
 function generateControls(servicesList) {
   if (!servicesList || servicesList.length === 0) {
@@ -559,8 +580,17 @@ function generateControls(servicesList) {
     const isChecked = isDefault ? "checked" : "";
 
     // Get color for this partner (Default green if missing)
-    const color = brandColors[partner] || "#2ecc71";
-    label.style.setProperty("--brand-color", color);
+    const baseColor = brandColors[partner] || "#2ecc71";
+
+    // Generate Gradient Colors (Base -> Lighter)
+    const lighterColor = lightenColor(baseColor, 30); // Lighten by ~30%
+    const gradient = `linear-gradient(135deg, ${baseColor}, ${lighterColor})`;
+
+    // Set CSS Variables
+    label.style.setProperty("--brand-color", baseColor);
+    label.style.setProperty("--brand-gradient", gradient);
+    // Add hex alpha for background (15 = ~8% opacity)
+    label.style.setProperty("--brand-bg-faint", baseColor + "15");
 
     // --- Add the Visual Hint ---
     // Only generate the keyboard shortcut hint span if a key exists
@@ -632,7 +662,7 @@ function generateControls(servicesList) {
       const key = e.key.toLowerCase();
       // Conditionally select the corresponding radio button
       const targetInput = container.querySelector(
-        `input[data-shortcut="${key}"]`
+        `input[data-shortcut="${key}"]`,
       );
       // Trigger the 'change' event logic automatically
       if (targetInput) {
@@ -884,15 +914,19 @@ function updateMapLayer() {
       return;
     }
 
+    // Ensure layerObj exists AND has the setOpacity method
+    if (!layerObj || typeof layerObj.setOpacity !== "function") {
+      console.error("setOverlay received invalid layer:", layerObj);
+      return;
+    }
+
     // Switch image layers and lock interactions
     isLayerSwitching = true;
     const oldOverlay = currentOverlay;
     const newOverlay = layerObj;
 
     // Ensure layer is initially invisible before adding
-    if (newOverlay) {
-      newOverlay.setOpacity(0);
-    }
+    newOverlay.setOpacity(0);
 
     // Add to Map (If not already there)
     if (!map.hasLayer(newOverlay)) {
@@ -1040,7 +1074,12 @@ function updateMapLayer() {
       showToast(`High-res map unavailable.`, true);
     }
     // Try to load PNG
-    setOverlay(pngUrl);
+    const pngOverlay = L.imageOverlay(pngUrl, mapBounds, {
+      opacity: 0,
+      className: "smooth-layer",
+      interactive: false,
+    });
+    setOverlay(pngOverlay);
   }
 }
 
@@ -1103,7 +1142,7 @@ function updateUIColors(color, selectedInput) {
 
   // Update Legend "Serviceable" Dot
   const legendDot = document.querySelector(
-    "div.legend-item:nth-child(1) > span"
+    "div.legend-item:nth-child(1) > span",
   );
   if (legendDot) {
     legendDot.style.backgroundColor = color;

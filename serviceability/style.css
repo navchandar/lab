@@ -124,6 +124,7 @@ body {
     left: 0;
     z-index: 1;
     transition: height 0.2s ease;
+    background: var(--brand-gradient);
     background-color: var(--brand-color);
     width: 100%;
     height: 1px;
@@ -136,6 +137,7 @@ body {
     left: 0;
     z-index: 2;
     transition: width 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+    background: var(--brand-gradient);
     background-color: var(--brand-color);
     width: 0%;
     height: 4px;
@@ -198,7 +200,7 @@ body {
     color: #3c4043;
     font-weight: 500;
     font-size: 15px;
-    letter-spacing: 0.25px;
+    letter-spacing: 0.5px;
     text-transform: capitalize;
 }
 
@@ -216,12 +218,14 @@ body {
 
 /* Active/Checked State - Material Selection Style */
 .radio-card input:checked~.card-content {
-    border-color: #1a73e8;
-    background-color: #e8f0fe;
+    box-shadow: inset 0 0 0 1px var(--brand-bg-faint);
+    border-color: var(--brand-color);
+    background-color: var(--brand-bg-faint);
 }
 
 .radio-card input:checked~.card-content .service-name {
     color: #1967d2;
+    font-weight: 700;
     text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.2), 0px 0px 1px rgba(0, 0, 0, 0.1);
 }
 
@@ -805,11 +809,12 @@ body {
     }
 
     .radio-card input:checked~.card-content {
-        border-color: #8ab4f8;
-        background-color: rgba(138, 180, 248, 0.1);
+        border-color: var(--brand-color);
+        background-color: var(--brand-bg-faint);
     }
 
     .radio-card input:checked~.card-content .service-name {
+        filter: brightness(1.1);
         color: #8ab4f8;
         text-shadow: 1px 1px 8px rgb(0 0 0 / 60%), 0 0 4px rgb(0 0 0 / 40%);
     }
