@@ -62,7 +62,7 @@ function normalizeLocation(location) {
     location = location
       .replace(
         /\s*,?\s*(usa|united states|india|canada|uk|australia|germany|france|italy|spain|uae|singapore|china|japan|brazil|mexico)\s*$/i,
-        ""
+        "",
       )
       .trim();
   }
@@ -133,7 +133,7 @@ function convertToLocalTime(utcDateString) {
     const get = (type) => parts.find((p) => p.type === type)?.value || "";
 
     const formatted = `${get("year")}-${get("month")}-${get("day")} ${get(
-      "hour"
+      "hour",
     )}:${get("minute")} ${get("timeZoneName")}`;
     return formatted.trim();
   } catch {
@@ -221,7 +221,7 @@ function getRelativeTimeDisplay(gmtDateString) {
   // 2. Calculate Difference in Minutes
   // Get time in milliseconds, find the absolute difference, and convert to minutes.
   const diffMinutes = Math.floor(
-    (now.getTime() - pastDate.getTime()) / (1000 * 60)
+    (now.getTime() - pastDate.getTime()) / (1000 * 60),
   );
 
   // 3. Handle Time Ranges
@@ -445,18 +445,24 @@ function hideSpinner() {
   }, 500);
 
   // --- Step 2: Show Filters ---
-  setTimeout(() => {
-    filters.style.display = "flex";
-  }, 500 + baseDelay * 1);
+  setTimeout(
+    () => {
+      filters.style.display = "flex";
+    },
+    500 + baseDelay * 1,
+  );
 
   // --- Steps 3: Show DataTables Rows ---
   // Apply a dynamic delay for sequential showing
   rows.forEach((row, index) => {
-    setTimeout(() => {
-      // Append '!important' to the inline style value.
-      // This forces the inline style to win over the external CSS '!important' rule.
-      row.style.setProperty("display", "flex", "important");
-    }, 500 + baseDelay * (2 + index));
+    setTimeout(
+      () => {
+        // Append '!important' to the inline style value.
+        // This forces the inline style to win over the external CSS '!important' rule.
+        row.style.setProperty("display", "flex", "important");
+      },
+      500 + baseDelay * (2 + index),
+    );
   });
 }
 
@@ -579,7 +585,7 @@ async function fetchWithProgressAndDecompress(url, isGzip) {
 
   // Combine chunks (now fully downloaded and decompressed/collected)
   const allChunks = new Uint8Array(
-    chunks.reduce((acc, chunk) => acc + chunk.length, 0)
+    chunks.reduce((acc, chunk) => acc + chunk.length, 0),
   );
   let offset = 0;
   for (const chunk of chunks) {
@@ -610,7 +616,7 @@ async function fetchJobsData() {
       // return await fetchAndDecompressGzip(gzipUrl);
     } catch (e) {
       console.warn(
-        `GZIP fetch/decompression failed. Falling back to JSON. Error: ${e.message}`
+        `GZIP fetch/decompression failed. Falling back to JSON. Error: ${e.message}`,
       );
     }
   }
@@ -622,7 +628,7 @@ async function fetchJobsData() {
     // return await response.json();
   } catch (jsonError) {
     throw new Error(
-      `Failed to fetch job data (GZIP failed/unsupported, JSON failed): ${jsonError.message}`
+      `Failed to fetch job data (GZIP failed/unsupported, JSON failed): ${jsonError.message}`,
     );
   }
 }
@@ -742,7 +748,7 @@ function createStandardOptions(config) {
             return getBorderColor(
               Array.isArray(color)
                 ? color[context.dataIndex]
-                : color || commonTextColor
+                : color || commonTextColor,
             );
           }
           const color = Array.isArray(dataset.backgroundColor)
@@ -848,7 +854,7 @@ function prepareSimpleHorizontalChart(key, dataSet) {
   };
 
   const backgroundColors = counts.map(
-    (_, i) => GEN_COLORS[i % GEN_COLORS.length].bg
+    (_, i) => GEN_COLORS[i % GEN_COLORS.length].bg,
   );
 
   const data = {
@@ -880,7 +886,7 @@ function prepareRoleTypeChart(dataSet) {
   const counts = dataSet.map((item) => item.count);
 
   const backgroundColors = labels.map(
-    (label) => (ROLE_COLORS[label] || ROLE_COLORS["Default"]).bg
+    (label) => (ROLE_COLORS[label] || ROLE_COLORS["Default"]).bg,
   );
 
   const data = {
@@ -949,7 +955,7 @@ function prepareDailyJobCountChart(dataSet) {
     new Date(item.date).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
-    })
+    }),
   );
 
   const datasets = [
@@ -1019,7 +1025,7 @@ function prepareTechRoleBubbleChart(roleDataMap) {
   });
 
   const yAxisLabels = Array.from(relevantTechs).sort(
-    (a, b) => techWeightedScore[b] - techWeightedScore[a]
+    (a, b) => techWeightedScore[b] - techWeightedScore[a],
   );
 
   // 3) Build Bubble Points with LOCAL SCALING
@@ -1137,7 +1143,7 @@ function drawChart(key) {
     case "companyVsExperience":
       chartConfig = prepareStackedExperienceChart(
         dataSet,
-        globalChartData.experienceRanges
+        globalChartData.experienceRanges,
       );
       break;
     case "dailyJobCounts":
@@ -1459,6 +1465,41 @@ function limitTippyHeight(instance, boundaryElementId) {
   // Update Tippy/Popper.js to update its position
   instance.popperInstance.update();
 }
+
+function stickyTableHeader() {
+  // Target the THs directly
+  const headers = dataTable.querySelectorAll("th");
+
+  window.addEventListener("scroll", function () {
+    const tableRect = table.getBoundingClientRect();
+    const headerHeight = headers[0].offsetHeight;
+
+    // Calculate how far the table top is from the top of the viewport
+    // If negative, it means we have scrolled past the top of the table
+    let offset = 0;
+
+    if (tableRect.top < 0) {
+      // We are scrolling inside the table.
+      // The offset is the positive version of tableRect.top
+      offset = Math.abs(tableRect.top);
+
+      // Keep header inside table bounds
+      const maxOffset = table.offsetHeight - headerHeight;
+      if (offset > maxOffset) {
+        offset = maxOffset;
+      }
+    }
+
+    // Apply the 'push' to keep headers visible
+    // Using requestAnimationFrame for better performance
+    requestAnimationFrame(() => {
+      headers.forEach((th) => {
+        th.style.transform = `translateY(${offset}px)`;
+      });
+    });
+  });
+}
+
 /**
  * Initializes Tippy on all currently visible job title cells.
  */
@@ -1510,6 +1551,7 @@ async function main() {
 
   // Initialize Jobs table
   initializeJobsTable();
+  stickyTableHeader();
 
   // Initialize Select2 on the dropdowns
   setupSelectDropdowns();
@@ -1576,7 +1618,7 @@ async function main() {
         allJobs,
         currentCompanyFilters,
         currentLocationFilters,
-        currentExperienceFilter
+        currentExperienceFilter,
       );
 
       if (initialLoadComplete) {
@@ -1648,7 +1690,7 @@ async function main() {
     jobs,
     selectedCompanies = [],
     selectedLocations = [],
-    selectedExperience = ""
+    selectedExperience = "",
   ) {
     // Clear the existing data
     jobsTable.clear();
@@ -1686,10 +1728,10 @@ async function main() {
     // Populate filters based on ALL jobs ---
     // Extract unique company and location names
     const companies = [...new Set(jobs.map((j) => j.company))].sort((a, b) =>
-      a.toLowerCase().localeCompare(b.toLowerCase())
+      a.toLowerCase().localeCompare(b.toLowerCase()),
     );
     const locations = [...new Set(jobs.map((j) => j.normalizedLocation))].sort(
-      (a, b) => a.toLowerCase().localeCompare(b.toLowerCase())
+      (a, b) => a.toLowerCase().localeCompare(b.toLowerCase()),
     );
 
     // Extract unique experience years
@@ -1763,7 +1805,7 @@ async function main() {
 
       // Compare strings to strings for correct selection
       $el.append(
-        new Option(val, val, false, selectedArr.includes(String(val)))
+        new Option(val, val, false, selectedArr.includes(String(val))),
       );
     });
 
@@ -1834,10 +1876,10 @@ async function main() {
     // --- Update Company Dropdown ---
     // Only consider jobs that pass the Location and YoE filters (and global search)
     const companyJobs = searchedJobs.filter((j) =>
-      passesAllOtherFilters(j, "company")
+      passesAllOtherFilters(j, "company"),
     );
     const companies = Array.from(
-      new Set(companyJobs.map((j) => j.company))
+      new Set(companyJobs.map((j) => j.company)),
     ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     // Crucially, we only update the options if there is no selection in the filter itself
@@ -1860,10 +1902,10 @@ async function main() {
     // --- Update Location Dropdown ---
     // Only consider jobs that pass the Company and YoE filters (and global search)
     const locationJobs = searchedJobs.filter((j) =>
-      passesAllOtherFilters(j, "location")
+      passesAllOtherFilters(j, "location"),
     );
     const locations = Array.from(
-      new Set(locationJobs.map((j) => j.normalizedLocation))
+      new Set(locationJobs.map((j) => j.normalizedLocation)),
     ).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
 
     if (selectedLocations.length === 0) {
@@ -1873,7 +1915,7 @@ async function main() {
     // --- Update Experience Dropdown ---
     // Only consider jobs that pass the Company and Location filters (and global search)
     const experienceJobs = searchedJobs.filter((j) =>
-      passesAllOtherFilters(j, "experience")
+      passesAllOtherFilters(j, "experience"),
     );
     const experienceSet = new Set();
     experienceJobs.forEach((job) => {
@@ -1890,7 +1932,7 @@ async function main() {
       populateFilter(
         "#experienceFilter",
         sortedExp,
-        asArray(selectedExperience)
+        asArray(selectedExperience),
       );
     }
 
