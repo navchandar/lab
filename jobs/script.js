@@ -1471,7 +1471,7 @@ function stickyTableHeader() {
   const headers = dataTable.querySelectorAll("th");
 
   window.addEventListener("scroll", function () {
-    const tableRect = table.getBoundingClientRect();
+    const tableRect = dataTable.getBoundingClientRect();
     const headerHeight = headers[0].offsetHeight;
 
     // Calculate how far the table top is from the top of the viewport
@@ -1484,7 +1484,7 @@ function stickyTableHeader() {
       offset = Math.abs(tableRect.top);
 
       // Keep header inside table bounds
-      const maxOffset = table.offsetHeight - headerHeight;
+      const maxOffset = dataTable.offsetHeight - headerHeight;
       if (offset > maxOffset) {
         offset = maxOffset;
       }
