@@ -16,6 +16,7 @@ FINAL_OUTPUT = DATA_DIR / OUTPUT_FILENAME
 
 
 def load_json(filepath) -> list:
+    """Reads a JSON file and returns a list."""
     if not filepath.exists():
         return []
     try:
@@ -24,6 +25,31 @@ def load_json(filepath) -> list:
     except Exception as e:
         print(f"Error reading {filepath.name}: {e}")
     return []
+
+
+def sort_and_save_json(filepath: Path, data_list: list):
+    """
+    Sorts the list by 'pin' and saves it to the specified filepath.
+    Reusable for both input files and the final merged file.
+    """
+    if not data_list:
+        return
+
+    # 1. Sort the list in-place by the 'pin' key
+    try:
+        # Try numeric sort first
+        data_list.sort(key=lambda x: int(x["pin"]) if str(x["pin"]).isdigit() else x["pin"])
+    except Exception as e:
+        print(f"Failed to sort {filepath.name} numerically, falling back to string sort. ({e})")
+        data_list.sort(key=lambda x: x["pin"])
+
+    # 2. Save to disk
+    try:
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(data_list, f, indent=2)
+        print(f"Saved: {filepath.name}")
+    except Exception as e:
+        print(f"Failed to save {filepath.name}: {e}")
 
 
 def main():
@@ -53,13 +79,19 @@ def main():
     if not files_to_merge:
         print("No new 'availability_*.json' files found to merge.")
     else:
-        print(f"Found {len(files_to_merge)} files to merge:")
-        for f in files_to_merge:
-            print(f"  - {f.name}")
+        print(f"Found {len(files_to_merge)} files to process:")
 
+    # --- Process each input file ---
     for filepath in files_to_merge:
         data = load_json(filepath)
 
+        if not data:
+            continue
+
+        # Sort and save the input file itself before merging
+        sort_and_save_json(filepath, data)
+
+        # Merge Logic
         for entry in data:
             pin = entry.get("pin")
             if not pin:
@@ -73,27 +105,14 @@ def main():
             new_partners = entry.get("partners", {})
             merged_map[pin]["partners"].update(new_partners)
 
-    # 4. Convert map back to list
+    # --- Convert map back to list ---
     final_list = list(merged_map.values())
 
-    # Sorts the list in-place by the 'pin' key.
-    print("Sorting data by Pincode...")
-    try:
-        final_list.sort(key=lambda x: int(x["pin"]) if x["pin"].isdigit() else x["pin"])
-    except Exception as e:
-        print(f"Failed to sort numerically, trying string sort. ({e})")
-        final_list.sort(key=lambda x: x["pin"])
+    # --- Final Sort and Save ---
+    print(f"--- Saving Merged File ({len(final_list)} records) ---")
+    sort_and_save_json(FINAL_OUTPUT, final_list)
 
-    # 5. Save final output
-    try:
-        with open(FINAL_OUTPUT, "w", encoding="utf-8") as f:
-            json.dump(final_list, f, indent=2)
-
-        print(
-            f"✅ Successfully merged {len(final_list)} locations into {OUTPUT_FILENAME}"
-        )
-    except Exception as e:
-        print(f"❌ Failed to save output: {e}")
+    print("Merge Process Complete.")
 
 
 if __name__ == "__main__":

@@ -94,10 +94,10 @@ def check_pincode(session, lat, lng, pin):
         if response.status_code == 200:
             # Double check cookies for 'hub-ids' or 'current-city-id'
             cookies = response.cookies.get_dict()
-            logger.info(cookies)
+            # logger.info(cookies)
             try:
                 data = response.json()
-                logger.info(data)
+                # logger.info(data)
                 if "Unable to fetch" in data.get("exception", ""):
                     return 0
                 if "Error" in data.get("statusMessage", ""):
