@@ -39,6 +39,8 @@ GMAPS_GEOCODE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 GMAPS_FIND_PLACE_URL = (
     "https://maps.googleapis.com/maps/api/place/findplacefromtext/json"
 )
+GMAPS_PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json"
+
 BB_AUTOCOMPLETE_URL = "https://www.bigbasket.com/places/v1/places/autocomplete/"
 SAVE_INTERVAL = 10  # Save every N API calls
 
@@ -76,10 +78,9 @@ class GeocodingPipeline:
             clean_suffix = re.sub(r"[^A-Z0-9]", "", str(city).upper())
         else:
             clean_suffix = clean_pin
-
         return f"{clean_name}_{clean_suffix}"
 
-    # --- DATA LOADING ---
+    # --- DATA LOADING & MERGING ---
     def load_existing_data(self):
         """Loads excluded.json into memory to support resuming/updating."""
         if not OUTPUT_FILE.exists():
@@ -89,7 +90,6 @@ class GeocodingPipeline:
         try:
             with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
                 raw_list = json.load(f)
-
             for item in raw_list:
                 # Reconstruct ID to map back to dictionary
                 uid = self.generate_unique_id(
@@ -98,7 +98,6 @@ class GeocodingPipeline:
                 self.data[uid] = item
                 # Ensure internal flag is False by default
                 self.data[uid]["_needs_update"] = False
-
             logger.info(f"Loaded {len(self.data)} existing records.")
         except Exception as e:
             logger.error(f"Failed to load existing data: {e}")
@@ -136,13 +135,11 @@ class GeocodingPipeline:
         # Identify IDs in self.data that were NOT found in the current sources
         existing_ids = list(self.data.keys())
         removed_count = 0
-
         for uid in existing_ids:
             if uid not in active_source_uids:
                 # This hospital is in our DB but not in the PDFs anymore. Remove it.
                 del self.data[uid]
                 removed_count += 1
-
         if removed_count > 0:
             logger.info(
                 f"Pruned {removed_count} records that are no longer in source files."
@@ -203,7 +200,41 @@ class GeocodingPipeline:
             }
         return uid
 
-    # --- HYBRID GEOCODING METHODS ---
+    # --- HELPER: GOOGLE PLACE DETAILS ---
+    def _fetch_gmaps_place_details(self, place_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Fetches Lat/Lng directly from Google using a Place ID.
+        This is more accurate and cheaper/same cost as Geocoding.
+        """
+        if not GMAPS_API_KEY:
+            return None
+
+        params = {
+            "place_id": place_id,
+            "key": GMAPS_API_KEY,
+            # CRITICAL: Only fetch geometry to keep API costs low
+            "fields": "geometry",
+        }
+
+        try:
+            resp = self.session.get(GMAPS_PLACE_DETAILS_URL, params=params, timeout=10)
+            data = resp.json()
+            if data.get("status") == "OK":
+                loc = (
+                    data["results"]["geometry"]["location"]
+                    if "results" in data
+                    else data["result"]["geometry"]["location"]
+                )
+                return {
+                    "lat": loc["lat"],
+                    "lng": loc["lng"],
+                    "accuracy": "HIGH",
+                    "place_id": place_id,  # Store ID for future reference
+                }
+        except Exception as e:
+            logger.warning(f"Place Details API failed: {e}")
+        return None
+
     def _search_bb_places(self, query: str) -> Optional[Dict[str, Any]]:
         """
         Uses fresh UUID for every request to mimic unique user session.
@@ -245,19 +276,19 @@ class GeocodingPipeline:
         params = {"address": query, "key": GMAPS_API_KEY}
         try:
             resp = self.session.get(GMAPS_GEOCODE_URL, params=params, timeout=10)
-            resp.raise_for_status()
-            data = resp.json()
-            if data["status"] == "OK":
-                loc = data["results"][0]["geometry"]["location"]
-                bias_str = f"circle:20000@{loc['lat']},{loc['lng']}"
-                self.city_bounds_cache[key] = bias_str
-                return bias_str
+            if resp.status_code == 200:
+                data = resp.json()
+                if data["status"] == "OK":
+                    loc = data["results"][0]["geometry"]["location"]
+                    bias_str = f"circle:20000@{loc['lat']},{loc['lng']}"
+                    self.city_bounds_cache[key] = bias_str
+                    return bias_str
         except Exception:
             pass
-
         self.city_bounds_cache[key] = None
         return None
 
+    # --- GEOCODING MAIN LOGIC ---
     def fetch_geocoding(self, record: Dict) -> Dict[str, Any]:
         """
         Queries Google Maps with a Fallback Strategy:
@@ -322,7 +353,6 @@ class GeocodingPipeline:
                                 "pharmacy",
                             ]
                         )
-
                         if is_health:
                             loc = candidate["geometry"]["location"]
                             logger.info(f"HIGH Accuracy (Places): {name}")
@@ -338,9 +368,20 @@ class GeocodingPipeline:
         # --- STRATEGY B: BB AutoComplete API ---
         bb_query = f"{name}, {city}"
         bb_result = self._search_bb_places(bb_query)
+        full_address = None
+
         if bb_result:
-            full_address = bb_result["description"]
-            logger.info(f"BB Match: {full_address}")
+            # 1. Try to use Place ID first
+            place_id = bb_result.get("place_id")
+            if place_id:
+                details_result = self._fetch_gmaps_place_details(place_id)
+                if details_result:
+                    logger.info(f"HIGH Accuracy (BB PlaceID): {name}")
+                    return details_result
+
+            # 2. Fallback to using description text if ID failed or missing
+            full_address = bb_result.get("description")
+            logger.info(f"BB Text Match: {full_address}")
             accuracy = "HIGH"
         else:
             logger.info(f"BB No Match. Using Raw Address.")
@@ -359,7 +400,9 @@ class GeocodingPipeline:
             "components": comps,
         }
         best_result = {"lat": 0.0, "lng": 0.0, "accuracy": "Pending"}
+
         try:
+            # Attempt 1: Geocode the address string
             resp = self.session.get(GMAPS_GEOCODE_URL, params=geo_params)
             data = resp.json()
 
@@ -380,9 +423,8 @@ class GeocodingPipeline:
                     "accuracy": accuracy,
                 }
 
-            # 3. Attempt 2: Name + Address (Only runs if Attempt 1 failed or was LOW accuracy)
-            address_w_name = f"{name}, {full_address}"
-            geo_params["address"] = address_w_name
+            # Attempt 2: Append name to address
+            geo_params["address"] = f"{name}, {full_address}"
             resp = self.session.get(GMAPS_GEOCODE_URL, params=geo_params)
             data = resp.json()
 
@@ -410,7 +452,6 @@ class GeocodingPipeline:
         return {"lat": 0.0, "lng": 0.0, "accuracy": "Failed"}
 
     # --- DEDUPLICATION HELPERS ---
-
     def _normalize_for_match(self, text: str) -> str:
         """Normalizes hospital names for fuzzy comparison."""
         if not text:
@@ -450,17 +491,14 @@ class GeocodingPipeline:
             "pvt",
             "ltd",
         ]
-
         for word in noise_words:
             text = text.replace(word, "")
-
         return re.sub(r"[^a-z0-9]", "", text)
 
     def _calculate_similarity(self, name_a: str, name_b: str) -> float:
         """Returns a score (0.0 - 1.0) representing name similarity."""
         norm_a = self._normalize_for_match(name_a)
         norm_b = self._normalize_for_match(name_b)
-
         if not norm_a or not norm_b:
             return 0.0
 
@@ -476,7 +514,6 @@ class GeocodingPipeline:
         if len(norm_a) > 4 and len(norm_b) > 4:
             if norm_a in norm_b or norm_b in norm_a:
                 containment_bonus = 0.2
-
         return ratio + containment_bonus
 
     def _merge_record_data(self, primary: Dict[str, Any], secondary: Dict[str, Any]):
@@ -523,10 +560,8 @@ class GeocodingPipeline:
             if record.get("lat", 0.0) != 0.0:
                 key = (round(record["lat"], 5), round(record["lng"], 5))
                 coord_groups[key].append(uid)
-
         merged_count = 0
         to_delete = set()
-
         for uids in coord_groups.values():
             if len(uids) < 2:
                 continue
@@ -544,7 +579,6 @@ class GeocodingPipeline:
         # Apply deletions
         for uid in to_delete:
             del self.data[uid]
-
         return merged_count
 
     def _deduplicate_text_fallback(self) -> int:
@@ -552,7 +586,6 @@ class GeocodingPipeline:
         # Bucket valid records by Pincode for faster lookup
         pincode_buckets = defaultdict(list)
         lost_records = []
-
         for uid, record in self.data.items():
             pin = str(record.get("pincode", "")).strip()
             if len(pin) < 6:
@@ -562,14 +595,11 @@ class GeocodingPipeline:
                 pincode_buckets[pin].append(uid)
             else:
                 lost_records.append(uid)
-
         merged_count = 0
         to_delete = set()
-
         for lost_id in lost_records:
             lost_rec = self.data[lost_id]
             pin = str(lost_rec.get("pincode", "")).strip()
-
             candidates = pincode_buckets.get(pin, [])
             if not candidates:
                 continue
@@ -577,7 +607,6 @@ class GeocodingPipeline:
             # Find best match in the same pincode
             best_match_id = None
             best_score = 0.0
-
             for cand_id in candidates:
                 score = self._calculate_similarity(
                     lost_rec["name"], self.data[cand_id]["name"]
@@ -585,7 +614,6 @@ class GeocodingPipeline:
                 if score > 0.85 and score > best_score:
                     best_score = score
                     best_match_id = cand_id
-
             if best_match_id:
                 self._merge_record_data(self.data[best_match_id], lost_rec)
                 logger.info(
@@ -597,19 +625,15 @@ class GeocodingPipeline:
         # Apply deletions
         for uid in to_delete:
             del self.data[uid]
-
         return merged_count
 
     def deduplicate_data(self):
         """Orchestrates the deduplication process."""
         logger.info("Starting Deduplication...")
-
         count_spatial = self._deduplicate_spatial()
         logger.info(f"Spatial Pass: Merged {count_spatial} records.")
-
         count_text = self._deduplicate_text_fallback()
         logger.info(f"Text Fallback Pass: Merged {count_text} records.")
-
         total = count_spatial + count_text
         logger.info(f"Deduplication Complete. Total Merged: {total}")
 
@@ -634,7 +658,6 @@ class GeocodingPipeline:
             or (rec.get("lat") == 0.0)
             or (rec.get("accuracy") == "Pending")
         ]
-
         total = len(pending_items)
         if total == 0:
             logger.info("No records need geocoding.")
@@ -644,7 +667,6 @@ class GeocodingPipeline:
             return
 
         logger.info(f"Starting geocoding for {total} records...")
-
         for i, (uid, record) in enumerate(pending_items):
             result = self.fetch_geocoding(record)
 
@@ -663,7 +685,6 @@ class GeocodingPipeline:
                 else:
                     record["accuracy"] = "Pending"
                 record["_needs_update"] = False
-
             self.api_hits += 1
 
             # Save periodically
@@ -693,7 +714,6 @@ class GeocodingPipeline:
                 clean_item["excluded_by"], list
             ):
                 clean_item["excluded_by"].sort()
-
             clean_list.append(clean_item)
 
         # Sort for consistency
@@ -711,11 +731,9 @@ class GeocodingPipeline:
             return (is_invalid, pin, name)
 
         clean_list.sort(key=get_sort_key)
-
         try:
             with open(TEMP_FILE, "w", encoding="utf-8") as f:
                 json.dump(clean_list, f, indent=4, ensure_ascii=False)
-
             if is_final:
                 shutil.move(str(TEMP_FILE), str(OUTPUT_FILE))
                 logger.info(f"Saved {len(clean_list)} records to {OUTPUT_FILE}")
