@@ -143,6 +143,20 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
 }
 
+.approx-location {
+    margin-top: 4px;
+    color: var(--danger-color);
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.accurate-location {
+    margin-top: 4px;
+    color: var(--success-color);
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
 @media (prefers-color-scheme: dark) {
     .toggle-btn.active {
         background: color-mix(in srgb,

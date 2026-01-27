@@ -531,6 +531,19 @@
                 ? `Excluded by: ${companyList}`
                 : `In-Network of: ${companyList}`;
 
+              // Add Accuracy Warning if approximate
+              const isAccurate = item.accuracy === "HIGH";
+              const isMedium = item.accuracy === "LOW";
+              const isApprox = !isAccurate && !isMedium;
+              let accuracyHtml = "";
+              if (isAccurate) {
+                accuracyHtml = `<div class="accurate-location"> Location Accuracy: High </div>`;
+              } else if (isMedium) {
+                accuracyHtml = `<div class="accurate-location"> Location Accuracy: Medium </div>`;
+              } else {
+                accuracyHtml = `<div class="approx-location"> Location Accuracy: Low </div>`;
+              }
+
               const popupContent = `
                       <div style="min-width:200px; font-family:inherit;">
                           ${badgeHtml}
@@ -543,6 +556,7 @@
                           <p class="pin"><strong>PIN:</strong>
                             ${item.pincode || "N/A"}
                           </p>
+                          ${accuracyHtml}
                           ${
                             companyList
                               ? `<div class="companylist" title="${titleList}">${companyList}</div>`

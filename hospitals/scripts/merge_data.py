@@ -50,9 +50,9 @@ class GeocodingPipeline:
         self.data: Dict[str, Dict[str, Any]] = {}
         self.session = self._init_session()
         self.api_hits = 0
-        self.city_bounds_cache: Dict[str, str] = {}
         # Flag to disable place search if API key fails
         self.places_api_enabled = True
+        self.city_coords_cache: Dict[str, Dict[str, float]] = {}
 
     def _init_session(self) -> requests.Session:
         """Configures a resilient HTTP session."""
@@ -147,11 +147,21 @@ class GeocodingPipeline:
 
     def _process_source_record(self, record: Dict, company: str):
         # Extract fields
-        src_name = record.get("Hospital Name", "")
-        src_addr = record.get("Address", "")
-        src_city = record.get("City", "")
-        src_state = record.get("State", "")
-        src_pin = record.get("Pin Code", "")
+        src_name = (
+            record.get("Hospital Name", "") if record.get("Hospital Name") else ""
+        )
+        src_addr = record.get("Address", "") if record.get("Address") else ""
+        src_city = record.get("City", "") if record.get("City") else ""
+        src_state = record.get("State", "") if record.get("State") else ""
+        src_pin = record.get("Pin Code", "") if record.get("Pin Code") else ""
+        # Skip invalid records
+        if src_name is None or str(src_name).strip() == "":
+            return None
+        if (
+            str(src_name).strip() == "Hospital Name"
+            or str(src_pin).strip() == "Pincode"
+        ):
+            return None
 
         uid = self.generate_unique_id(src_name, src_pin, src_city)
 
@@ -179,7 +189,7 @@ class GeocodingPipeline:
                 existing["state"] = src_state
                 existing["pincode"] = src_pin
                 existing["_needs_update"] = True  # Trigger re-geocoding
-                logger.info(f"Updating Low Accuracy Record: {src_name}")
+                logger.info(f"Updating Record (Address Change): {src_name}")
 
             # Always merge company
             if company not in existing["excluded_by"]:
@@ -199,6 +209,32 @@ class GeocodingPipeline:
                 "_needs_update": True,
             }
         return uid
+
+    # --- GEOCODING HELPERS ---
+    def _get_city_coordinates(self, city: str, state: str) -> Dict[str, float]:
+        key = f"{city}|{state}".lower()
+        if key in self.city_coords_cache:
+            return self.city_coords_cache[key]
+
+        # Construct query
+        query = f"{city}, {state}, India"
+        params = {"address": query, "key": GMAPS_API_KEY}
+
+        try:
+            resp = self.session.get(GMAPS_GEOCODE_URL, params=params, timeout=10)
+            data = resp.json()
+            if data["status"] == "OK":
+                loc = data["results"][0]["geometry"]["location"]
+                result = {"lat": loc["lat"], "lng": loc["lng"]}
+                self.city_coords_cache[key] = result
+                logger.info(f"Cached City Coords for {city}: {result}")
+                return result
+        except Exception as e:
+            logger.warning(f"City Geocode failed for {city}: {e}")
+
+        # Cache failure as None, Don't retry request for same location
+        self.city_coords_cache[key] = None
+        return None
 
     # --- HELPER: GOOGLE PLACE DETAILS ---
     def _fetch_gmaps_place_details(self, place_id: str) -> Optional[Dict[str, Any]]:
@@ -268,24 +304,11 @@ class GeocodingPipeline:
 
     def _get_city_location_bias(self, city: str, state: str) -> Optional[str]:
         """Fetches City lat/lng for search biasing."""
-        key = f"{city}|{state}"
-        if key in self.city_bounds_cache:
-            return self.city_bounds_cache[key]
-
-        query = f"{city}, {state}, India"
-        params = {"address": query, "key": GMAPS_API_KEY}
-        try:
-            resp = self.session.get(GMAPS_GEOCODE_URL, params=params, timeout=10)
-            if resp.status_code == 200:
-                data = resp.json()
-                if data["status"] == "OK":
-                    loc = data["results"][0]["geometry"]["location"]
-                    bias_str = f"circle:20000@{loc['lat']},{loc['lng']}"
-                    self.city_bounds_cache[key] = bias_str
-                    return bias_str
-        except Exception:
-            pass
-        self.city_bounds_cache[key] = None
+        # Reuse the city coord logic to get a bias circle
+        loc = self._get_city_coordinates(city, state)
+        if loc:
+            bias_str = f"circle:20000@{loc['lat']},{loc['lng']}"
+            return bias_str
         return None
 
     # --- GEOCODING MAIN LOGIC ---
@@ -367,26 +390,29 @@ class GeocodingPipeline:
 
         # --- STRATEGY B: BB AutoComplete API ---
         bb_query = f"{name}, {city}"
-        bb_result = self._search_bb_places(bb_query)
         full_address = None
+        try:
+            if bb_result := self._search_bb_places(bb_query):
+                # 1. Try to use Place ID first
+                place_id = bb_result.get("place_id")
+                if place_id:
+                    details_result = self._fetch_gmaps_place_details(place_id)
+                    if details_result:
+                        accuracy = "HIGH"
+                        logger.info(f"HIGH Accuracy (BB PlaceID): {name}")
+                        return details_result
 
-        if bb_result:
-            # 1. Try to use Place ID first
-            place_id = bb_result.get("place_id")
-            if place_id:
-                details_result = self._fetch_gmaps_place_details(place_id)
-                if details_result:
-                    logger.info(f"HIGH Accuracy (BB PlaceID): {name}")
-                    return details_result
-
-            # 2. Fallback to using description text if ID failed or missing
-            full_address = bb_result.get("description")
-            logger.info(f"BB Text Match: {full_address}")
-            accuracy = "HIGH"
-        else:
-            logger.info(f"BB No Match. Using Raw Address.")
+                # 2. Fallback to using description text if ID failed or missing
+                full_address = bb_result.get("description")
+                logger.info(f"BB Text Match: {full_address}")
+                accuracy = "HIGH"
+            else:
+                logger.info(f"BB No Match. Using Raw Address.")
+                full_address = f"{address}, {city}, {state}"
+                accuracy = "LOW"
+        except Exception as e:
+            logger.error(f"BB Autocomplete failed: {e}")
             full_address = f"{address}, {city}, {state}"
-            accuracy = "LOW"
 
         # --- STRATEGY C: GEOCODING API (Fallback) ---
         comps = "country:IN"
@@ -449,7 +475,24 @@ class GeocodingPipeline:
         except Exception as e:
             logger.error(f"Geocoding API failed: {e}")
 
-        return {"lat": 0.0, "lng": 0.0, "accuracy": "Failed"}
+        # --- STRATEGY D: CITY LOCATION FALLBACK ---
+        if best_result["accuracy"] == "Pending" or (best_result["lat"] == 0.0):
+            logger.info(f"Fallback to City Center for: {name}")
+            city_loc = self._get_city_coordinates(city, state)
+            if city_loc:
+                return {
+                    "lat": city_loc["lat"],
+                    "lng": city_loc["lng"],
+                    "accuracy": "APPROXIMATE",
+                }
+
+        # If we have a LOW result (street level but not building), return it
+        if best_result["lat"] != 0.0 and best_result["lng"] != 0.0:
+            logger.info(f"LOW Accuracy: {name}")
+            return best_result
+
+        # If everything else fails, return 0.0
+        return {"lat": 0.0, "lng": 0.0, "accuracy": "Pending"}
 
     # --- DEDUPLICATION HELPERS ---
     def _normalize_for_match(self, text: str) -> str:
@@ -530,8 +573,8 @@ class GeocodingPipeline:
         primary["excluded_by"] = list(combined_insurers)
 
         # 2. Smart Address Merge (Keep Longest)
-        addr_p = str(primary.get("address", "")).strip()
-        addr_s = str(secondary.get("address", "")).strip()
+        addr_p = self._normalize_for_match(str(primary.get("address", "")).strip())
+        addr_s = self._normalize_for_match(str(secondary.get("address", "")).strip())
         if len(addr_s) > len(addr_p):
             primary["address"] = secondary["address"]
 
@@ -546,20 +589,28 @@ class GeocodingPipeline:
         Priority: Accuracy (High>Medium>Low) -> Name Length (Longer is better)
         """
         rec = self.data[uid]
-        accuracy_map = {"HIGH": 3, "MEDIUM": 2, "LOW": 1}
+        accuracy_map = {
+            "HIGH": 3,
+            "MEDIUM": 2,
+            "LOW": 1,
+            "APPROXIMATE": 0,
+            "Pending": 0,
+        }
         acc_score = accuracy_map.get(rec.get("accuracy"), 0)
         return (acc_score, len(rec.get("name", "")))
 
     # --- DEDUPLICATION PASSES ---
-
     def _deduplicate_spatial(self) -> int:
         """Pass 1: Merge records sharing exact Lat/Lng coordinates."""
         # Group by coordinates upto 5 digits match (rounded to ~1.1m precision)
         coord_groups = defaultdict(list)
         for uid, record in self.data.items():
-            if record.get("lat", 0.0) != 0.0:
+            rank_found = self._get_record_rank_score(uid)[0] > 0
+            loc_found = record.get("lat", 0.0) != 0.0 and record.get("lng", 0.0) != 0.0
+            if rank_found and loc_found:
                 key = (round(record["lat"], 5), round(record["lng"], 5))
                 coord_groups[key].append(uid)
+
         merged_count = 0
         to_delete = set()
         for uids in coord_groups.values():
@@ -581,50 +632,69 @@ class GeocodingPipeline:
             del self.data[uid]
         return merged_count
 
-    def _deduplicate_text_fallback(self) -> int:
+    def _deduplicate_with_text(self) -> int:
         """Pass 2: Rescue 'Lost' records (Lat 0.0) by matching them to 'Found' records."""
-        # Bucket valid records by Pincode for faster lookup
-        pincode_buckets = defaultdict(list)
-        lost_records = []
+        # 1. BUCKETING
+        # Masters: Records with good location data (HIGH/LOW)
+        # Candidates: Records with bad/generic location data (APPROXIMATE/Pending/Failed)
+        pincode_masters = defaultdict(list)
+        candidates_to_merge = []
+
         for uid, record in self.data.items():
             pin = str(record.get("pincode", "")).strip()
             if len(pin) < 6:
                 continue  # Skip invalid pins
 
-            if record.get("lat", 0.0) != 0.0:
-                pincode_buckets[pin].append(uid)
+            # If specific location (HIGH/LOW) serves as a Master record
+            if record.get("accuracy") in ["HIGH", "LOW"]:
+                pincode_masters[pin].append(uid)
             else:
-                lost_records.append(uid)
+                # If it's APPROXIMATE (City Center) or Pending, try to merge it into a Master
+                candidates_to_merge.append(uid)
+
         merged_count = 0
         to_delete = set()
-        for lost_id in lost_records:
-            lost_rec = self.data[lost_id]
-            pin = str(lost_rec.get("pincode", "")).strip()
-            candidates = pincode_buckets.get(pin, [])
-            if not candidates:
+
+        # 2. MATCHING
+        for candidate_id in candidates_to_merge:
+            candidate_rec = self.data[candidate_id]
+            pin = str(candidate_rec.get("pincode", "")).strip()
+
+            # Get potential masters in the same Pincode
+            potential_masters = pincode_masters.get(pin, [])
+            if not potential_masters:
                 continue
 
-            # Find best match in the same pincode
-            best_match_id = None
+            best_master_id = None
             best_score = 0.0
-            for cand_id in candidates:
+
+            for master_id in potential_masters:
+                # Compare Names
                 score = self._calculate_similarity(
-                    lost_rec["name"], self.data[cand_id]["name"]
+                    candidate_rec["name"], self.data[master_id]["name"]
                 )
+
+                # High threshold (85%) to ensure we don't merge distinct hospitals
                 if score > 0.85 and score > best_score:
                     best_score = score
-                    best_match_id = cand_id
-            if best_match_id:
-                self._merge_record_data(self.data[best_match_id], lost_rec)
+                    best_master_id = master_id
+
+            if best_master_id:
+                # Merge Candidate data INTO Master data
+                master_rec = self.data[best_master_id]
+                self._merge_record_data(master_rec, candidate_rec)
+
                 logger.info(
-                    f"Text Match: Merged '{lost_rec['name']}' -> '{self.data[best_match_id]['name']}'"
+                    f"Text Match: Merged '{candidate_rec['name']}' ({candidate_rec['accuracy']}) -> '{master_rec['name']}' ({master_rec['accuracy']})"
                 )
-                to_delete.add(lost_id)
+
+                to_delete.add(candidate_id)
                 merged_count += 1
 
-        # Apply deletions
+        # 3. CLEANUP - Apply deletions
         for uid in to_delete:
             del self.data[uid]
+
         return merged_count
 
     def deduplicate_data(self):
@@ -632,7 +702,7 @@ class GeocodingPipeline:
         logger.info("Starting Deduplication...")
         count_spatial = self._deduplicate_spatial()
         logger.info(f"Spatial Pass: Merged {count_spatial} records.")
-        count_text = self._deduplicate_text_fallback()
+        count_text = self._deduplicate_with_text()
         logger.info(f"Text Fallback Pass: Merged {count_text} records.")
         total = count_spatial + count_text
         logger.info(f"Deduplication Complete. Total Merged: {total}")
@@ -683,6 +753,11 @@ class GeocodingPipeline:
                 if record.get("lat") != 0.0:
                     record["accuracy"] = "LOW"
                 else:
+                    record["accuracy"] = "Pending"
+                record["_needs_update"] = False
+
+            if record.get("accuracy") not in ["HIGH", "LOW"]:
+                if record.get("lat") == 0.0 or record.get("lng") == 0.0:
                     record["accuracy"] = "Pending"
                 record["_needs_update"] = False
             self.api_hits += 1
