@@ -112,6 +112,16 @@ body {
     color: var(--text-primary);
 }
 
+/* Flex container for the header row inside popup */
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
 .toggle-btn:hover::after {
     position: absolute;
     bottom: -28px;
@@ -143,19 +153,86 @@ body {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
 }
 
-.approx-location {
-    margin-top: 4px;
-    color: var(--danger-color);
-    font-weight: 600;
-    font-size: 0.75rem;
+/* Container for the icon */
+.accuracy-icon {
+    display: inline-flex;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.2s ease;
+    cursor: help;
+    margin-left: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    background: white;
+    width: 28px;
+    height: 28px;
 }
 
-.accurate-location {
-    margin-top: 4px;
-    color: var(--success-color);
-    font-weight: 600;
-    font-size: 0.75rem;
+.accuracy-icon svg {
+    width: 18px;
+    /* Slightly larger for detail */
+    height: 18px;
 }
+
+/* --- COLOR VARIANTS --- */
+/* High: HOSPITAL Icon (Blue) */
+.acc-high {
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    /* Light Blue */
+    color: #2563eb;
+    /* Royal Blue */
+}
+
+/* Medium: PIN Icon (Green) */
+.acc-medium {
+    border: 1px solid #bbf7d0;
+    background: #f0fdf4;
+    /* Light Green */
+    color: #16a34a;
+    /* Vibrant Green */
+}
+
+/* Low: BASE Icon (Red) */
+.acc-low {
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    /* Light Red */
+    color: #dc2626;
+    /* Danger Red */
+}
+
+/* Hover Effect */
+.accuracy-icon:hover {
+    transform: scale(1.15);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* Tooltip Styling*/
+.accuracy-icon::after {
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    z-index: 9999;
+    transition: opacity 0.2s;
+    border-radius: 6px;
+    background: #1e293b;
+    padding: 6px 12px;
+    pointer-events: none;
+    content: attr(data-tooltip);
+    color: white;
+    font-weight: 500;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.accuracy-icon:hover::after {
+    opacity: 1;
+}
+
 
 @media (prefers-color-scheme: dark) {
     .toggle-btn.active {
@@ -218,6 +295,34 @@ body {
         background-color: #191970;
         color: var(--header-text) !important;
     }
+
+    .modern-cluster.cluster-small {
+        color: #0f172a;
+    }
+
+    .acc-high {
+        border-color: #4ade80;
+        background: #052e16;
+        color: #4ade80;
+    }
+
+    .acc-medium {
+        border-color: #fb923c;
+        background: #431407;
+        color: #fb923c;
+    }
+
+    .acc-low {
+        border-color: #f87171;
+        background: #450a0a;
+        color: #f87171;
+    }
+
+    .accuracy-icon::after {
+        background: rgba(255, 255, 255, 0.95);
+        color: #0f172a;
+    }
+
 }
 
 /* Controls */
@@ -1114,11 +1219,4 @@ dialog.native-modal[open]::backdrop {
 .modern-cluster:hover {
     z-index: 1001 !important;
     box-shadow: 0 8px 15px rgba(0, 0, 0, 0.35);
-}
-
-
-@media (prefers-color-scheme: dark) {
-    .modern-cluster.cluster-small {
-        color: #0f172a;
-    }
 }
