@@ -212,8 +212,8 @@ body {
 /* Tooltip Styling*/
 .accuracy-icon::after {
     position: absolute;
-    bottom: 125%;
-    left: 50%;
+    bottom: 5%;
+    left: 0;
     transform: translateX(-50%);
     opacity: 0;
     z-index: 9999;
@@ -319,7 +319,7 @@ body {
     }
 
     .accuracy-icon::after {
-        background: rgba(255, 255, 255, 0.95);
+        background: #d8d8d8eb;
         color: #0f172a;
     }
 
