@@ -280,7 +280,9 @@ async def main():
                 if result:
                     pin = result["pin"]
                     status = result["status"]
-
+                    if status is None or not isinstance(status, int):
+                        logger.error(f"   -> Invalid status for {pin}: {status}")
+                        continue
                     if pin in output_map:
                         if "partners" not in output_map[pin]:
                             output_map[pin]["partners"] = {}

@@ -82,7 +82,7 @@ class MapConfig:
             "myntra": "#F41CB2",  # Myntra Shocking Pink
             "myntra m-now": "#F41CB2",
             "bigbasket": "#84C225",  # Bigbasket Green
-            "bigbasket bbnow": "#84C225", 
+            "bigbasket bbnow": "#84C225",
             "zomato": "#E23744",  # Zomato Red
             "blinkit": "#F8CB46",  # Blinkit Yellow
             "swiggy": "#FC8019",  # Swiggy Orange
@@ -211,7 +211,13 @@ class MapRenderer:
             for loc in self.data.locations:
                 pin = loc["pin"]
                 partners = self.data.availability.get(pin, {})
-                if partners.get(service, 0) >= 1:
+                available = partners.get(service, 0)
+                if available is None or not isinstance(available, int):
+                    logger.warning(
+                        f"   -> Invalid value for {pin} in {service}: {available}"
+                    )
+                    continue
+                if available >= 1:
                     count += 1
             service_counts[service] = count
             logger.info(f"   -> {service}: {count} points")
@@ -273,8 +279,13 @@ class MapRenderer:
 
             # TODO: handle diff between quick commerce and standard delivery
             # status == 1 (QC) and status == 2 (STD)
-            service_availability = partners.get(service)
-            if service_availability and service_availability >= 1:
+            available = partners.get(service)
+            if available is None or not isinstance(available, int):
+                logger.warning(
+                    f"   -> Invalid value for {pin} in {service}: {available}"
+                )
+                continue
+            if available and available >= 1:
                 lat = loc["lat"]
                 lng = loc["lng"]
                 # --- Project the points ---
@@ -418,7 +429,13 @@ class MapRenderer:
         for loc in self.data.locations:
             pin = loc["pin"]
             partners = self.data.availability.get(pin, {})
-            if partners.get(service, 0) >= 1:
+            available = partners.get(service)
+            if available is None or not isinstance(available, int):
+                logger.warning(
+                    f"   -> Invalid value for {pin} in {service}: {available}"
+                )
+                continue
+            if available >= 1:
                 # Precision 4 is ~11 meters, plenty for a dot map. Saves text space.
                 lat = round(loc["lat"], 4)
                 lng = round(loc["lng"], 4)
