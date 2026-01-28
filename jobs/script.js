@@ -1417,52 +1417,48 @@ function setupDisclaimer() {
 }
 
 /**
- * Limits the Tippy popover's height to not exceed the height of a parent element
+ * Limits the Tippy popover's height to not exceed the height
  * * @param {object} instance - The Tippy instance object provided by the onShow hook.
- * @param {string} boundaryElementId - The ID of the element (the container) to limit
  */
-function limitTippyHeight(instance, boundaryElementId) {
+function limitTippyHeight(instance) {
   // Get Elements and Dimensions
-  const boundaryElement = document.getElementById(boundaryElementId);
-  const tippyBox = instance?.popper?.querySelector(".tippy-box");
+  const tippyBox = instance.popper.querySelector(".tippy-box");
+  const tippyContent = instance.popper.querySelector(".tippy-content");
 
-  if (!boundaryElement || !tippyBox) {
+  if (!tippyBox || !tippyContent) {
     console.warn("Tippy box element not found.");
     return;
   }
 
-  const boundaryRect = boundaryElement.getBoundingClientRect();
-  const tdRect = instance.reference.getBoundingClientRect();
-  const currentPlacement = instance.popper.getAttribute("data-placement");
-  if (!currentPlacement) {
-    return;
-  }
+  // Get the position of the cell being hovered
+  const rect = instance.reference.getBoundingClientRect();
 
-  let availableHeight = 0;
-  // Calculate Max Height based on Placement
-  if (currentPlacement.startsWith("bottom")) {
-    // Placed at the BOTTOM (expands downwards)
-    // Limit is: (Boundary Bottom) - (Cell Bottom)
-    availableHeight = boundaryRect.bottom - tdRect.bottom - 20;
-  } else if (currentPlacement.startsWith("top")) {
-    // Placed at the TOP (expands upwards)
-    // Limit is: (Cell Top) - (Boundary Top)
-    availableHeight = tdRect.top - 20;
+  // Use the actual browser window height as the ultimate boundary
+  const viewportHeight = window.innerHeight;
+  const padding = 20; // Safety gap from screen edges
+  let maxHeight = 0;
+
+  // Determine current placement
+  const placement = instance.popper.getAttribute("data-placement");
+
+  if (placement.startsWith("bottom")) {
+    // If showing below: Screen Bottom - Cell Bottom
+    maxHeight = viewportHeight - rect.bottom - padding;
   } else {
-    return;
+    // If showing above: Cell Top - Screen Top
+    maxHeight = rect.top - padding;
   }
 
-  // Cap the height and force a scrollbar inside the tooltip
-  const safeMaxHeight = Math.max(100, availableHeight);
-  tippyBox.style.maxHeight = `${safeMaxHeight}px`;
-  tippyBox.style.overflowY = "auto";
+  // Ensure a minimum height so it's not tiny
+  const safeMax = Math.max(maxHeight, 100);
 
-  // Apply Styles to the .tippy-box (which contains .tippy-content)
-  tippyBox.style.maxHeight = `${safeMaxHeight}px`;
-  tippyBox.style.overflowY = "auto";
+  // Apply styles directly to the box and content
+  tippyBox.style.maxHeight = `${safeMax}px`;
+  tippyBox.style.display = "flex";
+  tippyBox.style.flexDirection = "column";
 
-  // Update Tippy/Popper.js to update its position
-  instance.popperInstance.update();
+  tippyContent.style.overflowY = "auto";
+  tippyContent.style.maxHeight = "100%";
 }
 
 function stickyTableHeader() {
@@ -1536,21 +1532,12 @@ function initializeTippyOnVisibleRows() {
       placement: "bottom",
       trigger: isMobile ? "click" : "mouseenter",
       hideOnClick: true,
-      // Keep Tippy inside the table container
-      appendTo: document.querySelector(".table-container"),
-      // Ensure it flips when it hits the container boundaries
-      popperOptions: {
-        modifiers: [
-          {
-            name: "preventOverflow",
-            options: {
-              boundary: document.querySelector(".table-container"),
-            },
-          },
-        ],
-      },
+      flip: true,
+      flipBehavior: ["bottom", "top"],
+      // Keep Tippy inside the body
+      appendTo: document.body,
       // Pass the necessary variables to the onShow hook
-      onShow: (i) => limitTippyHeight(i, "jobTable"),
+      onShow: (i) => limitTippyHeight(i),
     });
   });
 }

@@ -220,10 +220,6 @@ div.dt-container select.dt-input {
     background: linear-gradient(135deg, #D32F2F 0%, #E53935 100%);
 }
 
-.tippy-box {
-    word-break: break-word;
-}
-
 /* Select2 Tag Styling */
 .select2-selection__choice {
     margin-top: 4px;
@@ -278,8 +274,8 @@ div.dt-container select.dt-input {
     position: relative;
     margin: auto;
     max-width: 1200px;
-    overflow-x: auto;
-    overflow-y: visible;
+    overflow: hidden;
+    overflow-anchor: none;
 }
 
 #jobTable {
@@ -315,7 +311,6 @@ div.dt-container select.dt-input {
     font-weight: 500;
 }
 
-
 #jobTable th:hover {
     background-color: #eeeeee;
 }
@@ -324,6 +319,31 @@ div.dt-container select.dt-input {
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     background-color: #e3f2fd;
+}
+
+
+.tippy-box {
+    word-break: break-word;
+}
+
+/* Prevent the tooltip root from affecting page dimensions */
+[data-tippy-root] {
+    max-height: 100%;
+    pointer-events: none;
+}
+
+[data-tippy-root] div {
+    pointer-events: auto;
+}
+
+/* Make the scrollbar inside the tooltip look better */
+.tippy-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tippy-content::-webkit-scrollbar-thumb {
+    border-radius: 3px;
+    background: #888;
 }
 
 .dt-empty {
