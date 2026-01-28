@@ -557,17 +557,17 @@
               let accClass, accIcon, accText;
 
               if (item.accuracy === "HIGH") {
-                accClass = "acc-high"; // Blue Hospital
+                accClass = "acc-high"; // Green Hospital Icon
                 accIconHtml = ICONS.HIGH;
-                accText = "High Accuracy Location";
+                accText = "High Accuracy";
               } else if (item.accuracy === "LOW") {
-                accClass = "acc-medium"; // Green Pin
+                accClass = "acc-medium"; // Greenish Pin
                 accIconHtml = ICONS.MEDIUM;
-                accText = "Medium Accuracy Location";
+                accText = "Moderate Accuracy";
               } else {
-                accClass = "acc-low";
+                accClass = "acc-low"; // Redish Pin
                 accIconHtml = ICONS.LOW;
-                accText = "Low Accuracy Location";
+                accText = "Low Accuracy";
               }
 
               const accuracyHtml = `<div class="accuracy-icon ${accClass}"

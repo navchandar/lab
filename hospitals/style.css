@@ -159,49 +159,42 @@ body {
     position: relative;
     justify-content: center;
     align-items: center;
-    transition: all 0.2s ease;
+    transition: all 0.1s ease;
     cursor: help;
     margin-right: 20px;
     margin-left: auto;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-radius: 50%;
+    border-radius: 20%;
     background: white;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
 }
 
 .accuracy-icon svg {
-    width: 18px;
-    /* Slightly larger for detail */
-    height: 18px;
+    width: 14px;
+    height: 14px;
 }
 
 /* --- COLOR VARIANTS --- */
 /* High: HOSPITAL Icon (Blue) */
 .acc-high {
-    border: 1px solid #bfdbfe;
-    background: #eff6ff;
-    /* Light Blue */
-    color: #2563eb;
-    /* Royal Blue */
+    border-color: color-mix(in srgb, var(--success-color), transparent 50%);
+    background: color-mix(in srgb, var(--success-color), transparent 85%);
+    color: var(--success-color);
 }
 
 /* Medium: PIN Icon (Green) */
 .acc-medium {
-    border: 1px solid #bbf7d0;
-    background: #f0fdf4;
-    /* Light Green */
-    color: #3da061;
-    /* Vibrant Green */
+    border-color: color-mix(in srgb, var(--success-color), var(--danger-color) 75%);
+    background: color-mix(in srgb, var(--success-color), transparent 85%);
+    color: color-mix(in srgb, var(--success-color), var(--danger-color) 60%);
 }
 
 /* Low: BASE Icon (Red) */
 .acc-low {
-    border: 1px solid #fecaca;
-    background: #fef2f2;
-    /* Light Red */
-    color: #dc2626;
-    /* Danger Red */
+    border-color: color-mix(in srgb, var(--danger-color), transparent 50%);
+    background: color-mix(in srgb, var(--danger-color), transparent 85%);
+    color: var(--danger-color);
 }
 
 /* Hover Effect */
@@ -217,7 +210,7 @@ body {
     left: 0;
     transform: translateX(-50%);
     opacity: 0;
-    z-index: 9999;
+    z-index: 4999;
     transition: opacity 0.2s;
     border-radius: 6px;
     background: #1e293b;
@@ -299,24 +292,6 @@ body {
 
     .modern-cluster.cluster-small {
         color: #0f172a;
-    }
-
-    .acc-high {
-        border-color: #4ade80;
-        background: #052e16;
-        color: #4ade80;
-    }
-
-    .acc-medium {
-        border-color: #fb923c;
-        background: #431407;
-        color: #fb923c;
-    }
-
-    .acc-low {
-        border-color: #f87171;
-        background: #450a0a;
-        color: #f87171;
     }
 
     .accuracy-icon::after {
@@ -404,7 +379,7 @@ body {
     overflow: hidden;
     color: var(--text-secondary);
     font-weight: 500;
-    font-size: clamp(0.5rem, 0.25vw + 0.5rem, 1rem);
+    font-size: clamp(0.5rem, 0.35vw + 0.5rem, 1rem);
     text-overflow: ellipsis;
     white-space: nowrap;
 }
@@ -600,7 +575,8 @@ path.leaflet-interactive {
 }
 
 .leaflet-container a.leaflet-popup-close-button {
-    padding: 8px;
+    z-index: 5000;
+    padding: 5px;
     color: var(--text-secondary);
     font-size: 16px;
 }
