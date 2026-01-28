@@ -272,10 +272,10 @@ div.dt-container select.dt-input {
 
 .table-container {
     position: relative;
+    contain: paint;
     margin: auto;
     max-width: 1200px;
-    overflow: hidden;
-    overflow-anchor: none;
+    overflow-x: auto;
 }
 
 #jobTable {

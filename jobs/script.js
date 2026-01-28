@@ -1422,8 +1422,9 @@ function setupDisclaimer() {
  */
 function limitTippyHeight(instance) {
   // Get Elements and Dimensions
-  const tippyBox = instance.popper.querySelector(".tippy-box");
-  const tippyContent = instance.popper.querySelector(".tippy-content");
+  const popper = instance.popper;
+  const tippyBox = popper.querySelector(".tippy-box");
+  const tippyContent = popper.querySelector(".tippy-content");
 
   if (!tippyBox || !tippyContent) {
     console.warn("Tippy box element not found.");
@@ -1439,7 +1440,7 @@ function limitTippyHeight(instance) {
   let maxHeight = 0;
 
   // Determine current placement
-  const placement = instance.popper.getAttribute("data-placement");
+  const placement = instance.props.placement || "bottom";
 
   if (placement.startsWith("bottom")) {
     // If showing below: Screen Bottom - Cell Bottom
@@ -1533,11 +1534,12 @@ function initializeTippyOnVisibleRows() {
       trigger: isMobile ? "click" : "mouseenter",
       hideOnClick: true,
       flip: true,
+      boundary: 'viewport',
       flipBehavior: ["bottom", "top"],
       // Keep Tippy inside the body
-      appendTo: document.body,
-      // Pass the necessary variables to the onShow hook
-      onShow: (i) => limitTippyHeight(i),
+      appendTo: () => document.body,
+      // Pass the necessary variables to the onMount
+      onMount: (i) => limitTippyHeight(i),
     });
   });
 }
