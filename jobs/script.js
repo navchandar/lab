@@ -1568,6 +1568,7 @@ async function main() {
         // "Only send the file if the hash is different from this"
         headers.append("If-None-Match", lastETag);
       }
+
       const headResponse = await get(url, {
         method: "GET",
         headers: headers,
@@ -1575,14 +1576,14 @@ async function main() {
       });
 
       // Handle 304 Not Modified
-      if (response.status === 304) {
+      if (headResponse.status === 304) {
         console.log("Content identical via ETag hash. No changes");
         closeErrorToast();
         return;
       }
 
       // Update the stored ETag for the next loop
-      lastETag = response.headers.get("ETag");
+      lastETag = headResponse.headers.get("ETag");
 
       // Preserve Current Filters BEFORE fetching/populating
       // We only read from the DOM if the initial load is complete
