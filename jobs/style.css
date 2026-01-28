@@ -220,6 +220,10 @@ div.dt-container select.dt-input {
     background: linear-gradient(135deg, #D32F2F 0%, #E53935 100%);
 }
 
+.tippy-box {
+    word-break: break-word;
+}
+
 /* Select2 Tag Styling */
 .select2-selection__choice {
     margin-top: 4px;
@@ -271,9 +275,11 @@ div.dt-container select.dt-input {
 }
 
 .table-container {
+    position: relative;
     margin: auto;
     max-width: 1200px;
     overflow-x: auto;
+    overflow-y: visible;
 }
 
 #jobTable {

@@ -1443,20 +1443,19 @@ function limitTippyHeight(instance, boundaryElementId) {
   if (currentPlacement.startsWith("bottom")) {
     // Placed at the BOTTOM (expands downwards)
     // Limit is: (Boundary Bottom) - (Cell Bottom)
-    availableHeight = boundaryRect.bottom - tdRect.bottom;
+    availableHeight = boundaryRect.bottom - tdRect.bottom - 20;
   } else if (currentPlacement.startsWith("top")) {
     // Placed at the TOP (expands upwards)
     // Limit is: (Cell Top) - (Boundary Top)
-    availableHeight = tdRect.top - boundaryRect.top;
+    availableHeight = tdRect.top - 20;
   } else {
     return;
   }
 
-  const paddingBuffer = 15;
-  const finalMaxHeight = availableHeight - paddingBuffer;
-
-  // Use Math.max to ensure the height is never set below a useful minimum
-  const safeMaxHeight = Math.max(50, finalMaxHeight);
+  // Cap the height and force a scrollbar inside the tooltip
+  const safeMaxHeight = Math.max(100, availableHeight);
+  tippyBox.style.maxHeight = `${safeMaxHeight}px`;
+  tippyBox.style.overflowY = "auto";
 
   // Apply Styles to the .tippy-box (which contains .tippy-content)
   tippyBox.style.maxHeight = `${safeMaxHeight}px`;
@@ -1537,6 +1536,19 @@ function initializeTippyOnVisibleRows() {
       placement: "bottom",
       trigger: isMobile ? "click" : "mouseenter",
       hideOnClick: true,
+      // Keep Tippy inside the table container
+      appendTo: document.querySelector(".table-container"),
+      // Ensure it flips when it hits the container boundaries
+      popperOptions: {
+        modifiers: [
+          {
+            name: "preventOverflow",
+            options: {
+              boundary: document.querySelector(".table-container"),
+            },
+          },
+        ],
+      },
       // Pass the necessary variables to the onShow hook
       onShow: (i) => limitTippyHeight(i, "jobTable"),
     });
