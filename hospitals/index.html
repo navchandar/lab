@@ -895,8 +895,11 @@
           );
 
           sortedCompanies.forEach((company) => {
+            // label wrapper
             const wrapper = document.createElement("label");
             wrapper.className = "checkbox-item";
+            wrapper.title = `${company} Insurance Company`;
+            // checkbox input within label
             const checkbox = document.createElement("input");
             checkbox.type = "checkbox";
             checkbox.value = company;

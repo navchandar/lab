@@ -584,6 +584,7 @@ function generateControls(servicesList) {
   servicesList.forEach((partner, index) => {
     const label = document.createElement("label");
     label.className = "radio-card";
+    label.title = capitalize(partner);
     // Default to first item checked, UNLESS URL overrides it later in initApp
     const isDefault = index === 0;
     const isChecked = isDefault ? "checked" : "";
