@@ -4,7 +4,6 @@ import { ROLE_TYPE_COLOR_PALETTE as ROLE_COLORS } from "./constants.js";
 
 // Global variable to hold all jobs
 let allJobs = [];
-let lastModified = null;
 let lastAddedOn = null;
 let initialLoadComplete = false;
 let notificationPermission = "default";
@@ -22,6 +21,7 @@ let currentChartInstance = null; // Store the Chart.js instance
 // --- Initialize an empty DataTable ---
 // We initialize it once with configuration, then add data later
 let jobsTable = null;
+let lastETag = null;
 
 // --- Function to safely initialize DataTable ---
 function initializeJobsTable() {
@@ -1563,17 +1563,26 @@ async function main() {
     closeErrorToast();
 
     try {
+      const headers = new Headers();
+      if (lastETag) {
+        // "Only send the file if the hash is different from this"
+        headers.append("If-None-Match", lastETag);
+      }
       const headResponse = await get(url, {
-        method: "HEAD",
+        method: "GET",
+        headers: headers,
         cache: "no-store",
       });
 
-      const newModified = headResponse.headers.get("Last-Modified");
-      if (lastModified && newModified && newModified === lastModified) {
-        console.log("No changes in jobs.json");
+      // Handle 304 Not Modified
+      if (response.status === 304) {
+        console.log("Content identical via ETag hash. No changes");
         closeErrorToast();
         return;
       }
+
+      // Update the stored ETag for the next loop
+      lastETag = response.headers.get("ETag");
 
       // Preserve Current Filters BEFORE fetching/populating
       // We only read from the DOM if the initial load is complete
@@ -1586,9 +1595,6 @@ async function main() {
         currentLocationFilters = $("#locationFilter").val() || [];
         currentExperienceFilter = $("#experienceFilter").val() || "";
       }
-
-      // Update stored value
-      lastModified = newModified;
 
       // Fetch and update table
       const resp = await fetchJobsData();
