@@ -1560,17 +1560,18 @@ async function main() {
   // --- Load Data using Fetch API ---
   async function loadJobs() {
     const url = `jobs.json?nocache=${Date.now()}`;
-    closeErrorToast();
 
     try {
+      closeErrorToast();
+
+      // Only send the file if the hash is different
       const headers = new Headers();
       if (lastETag) {
-        // "Only send the file if the hash is different from this"
         headers.append("If-None-Match", lastETag);
       }
 
-      const headResponse = await get(url, {
-        method: "GET",
+      const headResponse = await fetch(url, {
+        method: "HEAD",
         headers: headers,
         cache: "no-store",
       });
