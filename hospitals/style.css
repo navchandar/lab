@@ -206,14 +206,14 @@ body {
 /* Tooltip Styling*/
 .accuracy-icon::after {
     position: absolute;
-    bottom: 5%;
-    left: 0;
+    bottom: -0.5em;
+    left: -2em;
     transform: translateX(-50%);
     opacity: 0;
     z-index: 4999;
     transition: opacity 0.2s;
     border-radius: 6px;
-    background: #1e293b;
+    background: #1e293bdb;
     padding: 6px 12px;
     pointer-events: none;
     content: attr(data-tooltip);

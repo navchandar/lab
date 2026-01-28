@@ -678,6 +678,11 @@ function generateControls(servicesList) {
         return;
       }
 
+      // Allow browser shortcuts like Ctrl+R, Cmd+L to pass through
+      if (e.ctrlKey || e.metaKey || e.altKey) {
+        return;
+      }
+
       const key = e.key.toLowerCase();
       // Conditionally select the corresponding radio button
       const targetInput = container.querySelector(
