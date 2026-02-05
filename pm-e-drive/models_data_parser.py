@@ -39,6 +39,18 @@ LIMITS = {
     "E-CART": 800,
 }
 
+# Engineering-based Chassis + Motor weight ratios (as % of GVW)
+# L1: light, L5: Heavy commercial grade steel
+CHASSIS_RATIOS = {
+    "L1": 0.28,
+    "L2": 0.32,
+    "L5": 0.42,
+    "L5M": 0.42,
+    "L5N": 0.45,
+    "E-RICKSHAW": 0.38,
+    "E-CART": 0.40,
+}
+
 
 class DataUtils:
 
@@ -100,10 +112,14 @@ class DataUtils:
         battery_kg = (battery_kwh * 1000) / (density if density > 0 else 150)
         item["battery_weight_kg"] = round(battery_kg, 2)
 
-        # Chassis estimate: 35% of max GVW is usually the structural weight
-        est_chassis_weight = max_gvw * 0.35
+        # Get specific Chassis Ratio for the category
+        ratio = CHASSIS_RATIOS.get(cat, 0.35)
+        # Chassis estimate: Approx percent of max GVW is the structural weight
+        est_chassis_weight = max_gvw * ratio
         # Final Payload = GVW - Kerb Weight which is (Chassis + Battery)
-        payload = max_gvw - (est_chassis_weight + battery_kg)
+        kerb_weight = est_chassis_weight + battery_kg
+        # Less 5% from GVW because vehicles are rarely operated at 100% mechanical stress
+        payload = (max_gvw * 0.95) - kerb_weight
         item["payload_kg"] = round(payload, 2)
 
         return item
@@ -152,6 +168,8 @@ class EV_DATA_PARSER:
             # find all tr but not tr within other tr
             rows = body.find_all("tr", recursive=False)
             logger.info(f"Found {len(rows)} rows to process.")
+
+            models_found = {}
             for row in rows:
                 cells = row.find_all("td")
                 if not cells:
@@ -159,7 +177,16 @@ class EV_DATA_PARSER:
 
                 model_entry = self.get_row_data(cells, soup)
                 if model_entry:
-                    self.data.append(model_entry)
+                    # Create a Deduplication Key (Name + Range + Battery + Speed)
+                    dedup_key = (
+                        model_entry["name"],
+                        model_entry.get("range_km", 0),
+                        model_entry.get("battery_kwh", 0),
+                        model_entry.get("max_speed_kmh", 0),
+                    )
+                    if dedup_key not in models_found:
+                        models_found[dedup_key] = model_entry
+                        self.data.append(model_entry)
 
         except Exception as e:
             # Get the traceback object
