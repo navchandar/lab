@@ -17,6 +17,7 @@ const IGNORED_DIRS = [
   "smart-dom-inspector",
   "serviceability",
   "hospitals",
+  "pm-e-drive",
 ];
 const IGNORED_FILES = [
   "build-pwa.js",
@@ -100,7 +101,7 @@ function generateIndexHtml() {
   const potentialAppDirs = fs
     .readdirSync(ROOT_DIR, { withFileTypes: true })
     .filter(
-      (dirent) => dirent.isDirectory() && !IGNORED_DIRS.includes(dirent.name)
+      (dirent) => dirent.isDirectory() && !IGNORED_DIRS.includes(dirent.name),
     );
 
   // Filter directories to only include those with 'index.html'
@@ -218,7 +219,7 @@ function generateServiceWorker() {
     new Set([
       ...staticFiles.map(normalizePath),
       ...allAppFiles.map(normalizePath),
-    ])
+    ]),
   )
     .filter((file) => file && file.trim() !== "")
     .map((file) => `'${file}'`);

@@ -1,0 +1,237 @@
+import json
+import logging
+import sys
+
+import requests
+from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util import Retry
+
+# --- Configuration & Logging Setup ---
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
+
+#  CMVR mapping
+CATEGORY_MAP = {
+    "L1": "Electric 2W: Max Speed ≤ 45 km/h, Power ≤ 0.5 kW",
+    "L2": "Electric 2W: Max Speed > 45 km/h, Power > 0.5 kW",
+    "L5": "Electric 3W: Max Speed > 25 km/h. Includes Auto-Rickshaw & Goods Carrier",
+    "L5M": "Electric 3W: Passenger Carrier (Auto-Rickshaw)",
+    "L5N": "Electric 3W: Goods/Cargo Carrier",
+    "E-RICKSHAW": "Special 3W: Max Speed 25 km/h, Power ≤ 2 kW",
+    "E-RICKSHAW & E-CART": "Special 3W: Max Speed 25 km/h, Power ≤ 2 kW",
+    "E-CART": "Special 3W: Goods Carrier, Max Speed 25 km/h",
+}
+
+# Max CMVR GVW legal limits in India (Total Weight Allowed)
+LIMITS = {
+    "L1": 250,
+    "L2": 350,
+    "L5": 1500,
+    "L5M": 1500,
+    "L5N": 1600,
+    "E-Rickshaw": 750,
+    "E-RICKSHAW & E-CART": 775,
+    "E-CART": 800,
+}
+
+
+class DataUtils:
+
+    @staticmethod
+    def get_category_info(cat_code):
+        cat_code = str(cat_code).upper().strip()
+        return CATEGORY_MAP.get(cat_code, "Other")
+
+    @staticmethod
+    def get_float(val) -> float:
+        """Converts messy strings to float. Returns 0.0 if invalid."""
+        if not val or str(val).strip().lower() in ["na", "-", "", "none"]:
+            return 0.0
+        try:
+            # Remove units like 'km', 'kg' and commas
+            clean_val = "".join(c for c in str(val) if c.isdigit() or c == ".")
+            return float(clean_val)
+        except ValueError:
+            return 0.0
+
+    @staticmethod
+    def calculate_metrics(item):
+        """
+        Calculates economy and performance metrics for real world conditions
+        Calculates load capacity based on CMVR limits and battery weight.
+        """
+        # 1. Basic Variables
+        unit_cost = 8  # (Assuming average ₹8 per kWh in India)
+        reported_range = item.get("range_km", 0)
+        battery_kwh = item.get("battery_kwh", 0)
+        efficiency = item.get("efficiency_reported_kwh_100km", 0)
+        density = item.get("battery_density_wh_kg", 150)
+        cat = str(item.get("category", "L1")).upper().strip()
+
+        # We use a 0.8 factor (20% reduction) due to "usable" capacity and real-world conditions
+        # But If battery is high-tech (high density), it performs better.
+        # And If it's a slow vehicle (L1), it loses less energy.
+        base_factor = 0.82  # Start at 82%
+        if density >= 200:  # Tech bonus
+            base_factor += 0.03
+        if cat == "L1":  # Slow speed efficiency bonus
+            base_factor += 0.05
+
+        # --- 2. Estimated Real World Range ---
+        # Calculation: (Total Energy / Energy used per 100km) * 100 * Safety Factor
+        if efficiency > 0:
+            item["cost_per_100km_inr"] = round(efficiency * unit_cost, 2)
+            real_range = (battery_kwh / efficiency) * 100 * base_factor
+            item["est_real_world_range_km"] = round(real_range, 1)
+        else:
+            # If efficiency is missing, assume 25% reduction from ARAI reported range
+            item["est_real_world_range_km"] = round(reported_range * 0.75, 1)
+
+        # --- 3. Payload Calculation ---
+        # Category Limits (GVW)
+        max_gvw = LIMITS.get(cat, 300)
+
+        # Calculate Battery Weight
+        battery_kg = (battery_kwh * 1000) / (density if density > 0 else 150)
+        item["battery_weight_kg"] = round(battery_kg, 2)
+
+        # Chassis estimate: 35% of max GVW is usually the structural weight
+        est_chassis_weight = max_gvw * 0.35
+        # Final Payload = GVW - Kerb Weight which is (Chassis + Battery)
+        payload = max_gvw - (est_chassis_weight + battery_kg)
+        item["payload_kg"] = round(payload, 2)
+
+        return item
+
+
+class EV_DATA_PARSER:
+    def __init__(self):
+        self.url = "https://pmedrive.heavyindustries.gov.in/models"
+        self.domain = "https://pmedrive.heavyindustries.gov.in"
+        self.data = []
+        self.headers = {
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "accept-language": "en-US,en;q=0.9",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+            "upgrade-insecure-requests": "1",
+            "referer": "https://www.google.com/",
+        }
+        # --- Retry Logic Configuration ---
+        self.session = requests.Session()
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=2,  # Wait between tries
+            status_forcelist=[429, 500, 502, 503, 504],  # Retry on these errors
+            raise_on_status=False,
+        )
+        adapter = HTTPAdapter(max_retries=retry_strategy)
+        self.session.mount("http://", adapter)
+        self.session.mount("https://", adapter)
+
+    def fetch_data(self):
+        try:
+            logger.info(f"Loading {self.domain}")
+            self.session.get(self.domain, headers=self.headers, timeout=30)
+            token = self.session.cookies.get("XSRF-TOKEN")
+            self.headers["X-XSRF-TOKEN"] = token
+            self.headers["Referer"] = self.domain
+
+            logger.info(f"Loading {self.url}")
+            res = self.session.get(self.url, headers=self.headers, timeout=30)
+            logger.info(f"Response status code {res.status_code}")
+            res.raise_for_status()
+            soup = BeautifulSoup(res.text, "html.parser")
+            table = soup.find("table", id="export-button")
+            logger.info(f"Table found: {table is not None}")
+            body = table.find("tbody")
+            # find all tr but not tr within other tr
+            rows = body.find_all("tr", recursive=False)
+            logger.info(f"Found {len(rows)} rows to process.")
+            for row in rows:
+                cells = row.find_all("td")
+                if not cells:
+                    continue
+
+                model_entry = self.get_row_data(cells, soup)
+                if model_entry:
+                    self.data.append(model_entry)
+
+        except Exception as e:
+            # Get the traceback object
+            _, _, exc_traceback = sys.exc_info()
+            # Extract the line number from the traceback object
+            line = exc_traceback.tb_lineno
+            logger.error(f"Error on {line=}: {e}")
+        finally:
+            if self.data:
+                with open("data.json", "w") as f:
+                    json.dump(self.data, f, indent=4)
+
+    def get_row_data(self, cells, soup):
+        model_entry = None
+        try:
+            category_code = cells[5].text.strip().upper()
+            category_desc = DataUtils.get_category_info(category_code)
+            # type is e-2W or e-3W
+            type_code = cells[4].text.upper().strip().replace("E-", "")
+            # Basic Mapping
+            model_entry = {
+                "oem": cells[1].text.strip(),
+                "name": cells[2].text.strip(),
+                "type": type_code,
+                "category": category_code,
+                "category_desc": category_desc,
+                "status": cells[8].text.strip(),
+            }
+
+            # Find the hidden modal for this row
+            btn = cells[9].find("button")
+            if btn:
+                modal_id = btn.get("data-target", "").replace("#", "")
+                modal = soup.find("div", id=modal_id)
+                if modal:
+                    for tr in modal.find_all("tr"):
+                        cells = tr.find_all("td")
+                        if len(cells) == 2:
+                            label = cells[0].text.lower().strip()
+                            val = cells[1].text.strip()
+                            logger.info(f"{model_entry['name']} - {label}: {val}")
+                            # Map every useful label found in your logs
+                            if "range" in label:
+                                model_entry["range_km"] = DataUtils.get_float(val)
+                            elif "speed" in label:
+                                model_entry["max_speed_kmh"] = DataUtils.get_float(val)
+                            elif "acceleration" in label:
+                                model_entry["acceleration_ms2"] = DataUtils.get_float(
+                                    val
+                                )
+                            elif "energy consumption" in label:
+                                model_entry["efficiency_reported_kwh_100km"] = (
+                                    DataUtils.get_float(val)
+                                )
+                            elif "capacity" in label:
+                                model_entry["battery_kwh"] = DataUtils.get_float(val)
+                            elif "density" in label:
+                                model_entry["battery_density_wh_kg"] = (
+                                    DataUtils.get_float(val)
+                                )
+                            elif "valid from" in label:
+                                model_entry["valid_from"] = val
+                            elif "valid upto" in label:
+                                model_entry["valid_upto"] = val
+
+            # Add estimated payload calculations and real-world range
+            model_entry = DataUtils.calculate_metrics(model_entry)
+
+        except Exception as e:
+            logger.error(f"Error processing model entry: {e}")
+        return model_entry
+
+
+if __name__ == "__main__":
+    EV_DATA_PARSER().fetch_data()

@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>PM E-DRIVE - EV Comparison</title>
+    <meta
+      name="description"
+      content="Compare range, efficiency, max speed, and payload capacity of electric vehicles in India."
+    />
+    <meta
+      name="keywords"
+      content="EV comparison India, Ather, Chetak, iQube, PM E-DRIVE data"
+    />
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+      rel="stylesheet"
+    />
+
+    <style type="text/tailwindcss">
+      /* Modern Dark Mode Palette */
+      @theme {
+        --color-slate-950: #020617;
+        --color-slate-900: #0f172a;
+        --color-slate-800: #1e293b;
+      }
+
+      [v-cloak] {
+        display: none;
+      }
+
+      /* Fix for dark mode dropdown text visibility */
+      select option {
+        @apply bg-white text-slate-900 dark:bg-slate-800 dark:text-white;
+      }
+
+      .chart-container {
+        position: relative;
+        width: 100%;
+        height: 320px;
+      }
+
+      /* Smooth Toast Animation */
+      .toast-enter-active,
+      .toast-leave-active {
+        transition: all 0.4s ease;
+      }
+      .toast-enter-from,
+      .toast-leave-to {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+    </style>
+  </head>
+
+  <body
+    class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300"
+  >
+    <div id="app" v-cloak>
+      <transition-group
+        name="toast"
+        tag="div"
+        class="fixed top-20 right-4 z-50 space-y-2 pointer-events-none"
+      >
+        <div
+          v-for="t in toasts"
+          :key="t.id"
+          class="pointer-events-auto px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 border-l-4"
+          :class="t.type === 'error' ? 'bg-red-600 border-red-800 text-white' : 'bg-green-600 border-green-800 text-white'"
+        >
+          <i
+            class="fas"
+            :class="t.type === 'error' ? 'fa-circle-xmark' : 'fa-check-circle'"
+          ></i>
+          <span class="font-bold text-sm">{{ t.message }}</span>
+        </div>
+      </transition-group>
+
+      <header
+        class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40"
+      >
+        <div
+          class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30"
+            >
+              <i class="fas fa-bolt-lightning text-xl"></i>
+            </div>
+            <h1 class="text-xl font-black tracking-tight uppercase">
+              EV<span class="text-blue-600">Compare</span>
+            </h1>
+          </div>
+          <button
+            @click="showDisclaimer = true"
+            class="text-xs font-bold text-slate-400 hover:text-blue-500 uppercase tracking-widest border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full transition-all"
+          >
+            Disclaimer
+          </button>
+        </div>
+      </header>
+
+      <main class="max-w-7xl mx-auto px-4 py-8">
+        <section class="mb-12">
+          <h2
+            class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
+          >
+            <i class="fas fa-crown text-amber-500"></i> Market Leaders
+          </h2>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div
+              v-for="(leader, key) in topThree"
+              :key="key"
+              class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-500 relative overflow-hidden group"
+            >
+              <div
+                class="absolute -right-4 -bottom-4 text-6xl text-slate-100 dark:text-slate-800 transition-transform group-hover:scale-110 group-hover:-rotate-12"
+              >
+                <i :class="leader.icon"></i>
+              </div>
+              <p
+                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
+              >
+                {{ leader.label }}
+              </p>
+              <h3 class="text-lg font-bold mb-2 truncate pr-8">
+                {{ leader.data?.name || 'Loading...' }}
+              </h3>
+              <p class="text-3xl font-black text-blue-600 dark:text-blue-400">
+                {{ leader.value }}<span
+                  class="text-xs font-bold text-slate-400 ml-1"
+                  >{{ leader.unit }}</span
+                >
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section
+          class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mb-12"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <label
+                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                >1. Vehicle Type</label
+              >
+              <select
+                v-model="filterType"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
+              >
+                <option value="ALL">All Electric Vehicles</option>
+                <option value="2W">🛵 2-Wheelers</option>
+                <option value="3W">🛺 3-Wheelers</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                >2. Brand (OEM)</label
+              >
+              <select
+                v-model="filterOEM"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
+              >
+                <option value="ALL">All Manufacturers</option>
+                <option v-for="oem in sortedOEMs" :key="oem" :value="oem">
+                  {{oem}}
+                </option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <label
+                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                >3. Model Search</label
+              >
+              <div class="relative">
+                <i
+                  class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                ></i>
+                <input
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="Search by name..."
+                  class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 pl-12 outline-none focus:border-blue-500 transition-all font-bold"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div class="lg:col-span-8 space-y-6">
+            <div class="flex justify-between items-end mb-4">
+              <h2 class="text-2xl font-black italic">
+                {{ filteredModels.length }} Models
+                <span class="text-blue-600 font-normal">Found</span>
+              </h2>
+              <p
+                class="text-xs font-bold text-slate-400 uppercase tracking-tighter"
+              >
+                Compare up to 3
+              </p>
+            </div>
+
+            <div
+              v-for="m in filteredModels"
+              :key="m.name"
+              @click="toggleComparison(m)"
+              class="group bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform active:scale-[0.98]"
+              :class="isSelected(m) ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-transparent shadow-sm hover:border-slate-300 dark:hover:border-slate-700'"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3 mb-2">
+                    <span
+                      class="px-2 py-1 rounded-md text-[10px] font-black bg-blue-600/10 text-blue-600 uppercase"
+                      >{{ m.category }}</span
+                    >
+                    <h4
+                      class="font-black text-xl group-hover:text-blue-500 transition-colors"
+                    >
+                      {{ m.name }}
+                    </h4>
+                  </div>
+                  <p
+                    class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"
+                  >
+                    {{ m.oem }}
+                  </p>
+                  <div class="flex flex-wrap gap-4">
+                    <div
+                      class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold"
+                    >
+                      <i class="fas fa-battery-half text-emerald-500 mr-2"></i>
+                      {{m.range_km}}km Range
+                    </div>
+                    <div
+                      class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold"
+                    >
+                      <i class="fas fa-bolt text-amber-500 mr-2"></i>
+                      {{m.battery_kwh}}kWh
+                    </div>
+                  </div>
+                </div>
+                <div class="ml-4">
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all"
+                    :class="isSelected(m) ? 'bg-blue-600 border-blue-600 text-white rotate-0' : 'border-slate-200 text-slate-300 group-hover:border-blue-500 group-hover:text-blue-500'"
+                  >
+                    <i
+                      class="fas"
+                      :class="isSelected(m) ? 'fa-check' : 'fa-plus'"
+                    ></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="lg:col-span-4">
+            <div
+              class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 sticky top-28 overflow-hidden"
+            >
+              <div class="flex items-center justify-between mb-8">
+                <h3 class="font-black text-2xl tracking-tighter">
+                  Specs <span class="text-blue-600 font-normal">Vault</span>
+                </h3>
+                <span
+                  class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full font-black"
+                  >{{selectedModels.length}}/3</span
+                >
+              </div>
+
+              <div
+                v-if="selectedModels.length === 0"
+                class="text-center py-16 text-slate-400 space-y-4"
+              >
+                <div class="text-6xl opacity-10">
+                  <i class="fas fa-columns"></i>
+                </div>
+                <p class="text-sm font-bold uppercase tracking-widest">
+                  Select models to<br />generate analysis
+                </p>
+              </div>
+
+              <div
+                v-else
+                class="space-y-8 animate-in fade-in slide-in-from-bottom-4"
+              >
+                <div class="chart-container">
+                  <canvas id="compareChart"></canvas>
+                </div>
+
+                <div class="space-y-3">
+                  <div
+                    v-for="m in selectedModels"
+                    :key="m.name"
+                    class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50"
+                  >
+                    <div class="flex justify-between items-center mb-3">
+                      <span class="font-black text-sm truncate max-w-[70%]"
+                        >{{m.name}}</span
+                      >
+                      <button
+                        @click="toggleComparison(m)"
+                        class="text-red-500 hover:bg-red-50 dark:hover:bg-red-950 px-2 py-1 rounded text-[10px] font-black uppercase"
+                      >
+                        Drop
+                      </button>
+                    </div>
+                    <div
+                      class="grid grid-cols-2 gap-4 text-[11px] font-bold text-slate-400"
+                    >
+                      <div class="flex flex-col">
+                        <span>Real Range</span>
+                        <span class="text-slate-900 dark:text-white text-sm"
+                          >{{m.est_real_world_range_km}}km</span
+                        >
+                      </div>
+                      <div class="flex flex-col">
+                        <span>Running Cost</span>
+                        <span class="text-slate-900 dark:text-white text-sm"
+                          >₹{{m.cost_per_100km_inr}}</span
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer
+        class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 mt-24"
+      >
+        <div
+          class="max-w-7xl mx-auto px-4 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-8"
+        >
+          <div class="space-y-4">
+            <div
+              class="flex items-center gap-2 justify-center md:justify-start"
+            >
+              <i class="fas fa-database text-blue-600"></i>
+              <span class="font-black uppercase text-sm tracking-widest"
+                >Verified Data Source</span
+              >
+            </div>
+            <p class="text-xs text-slate-500 max-w-sm">
+              All technical specifications are parsed from the official
+              <a
+                href="https://pmedrive.heavyindustries.gov.in/models"
+                target="_blank"
+                class="text-blue-500 underline"
+                >PM E-DRIVE Portal</a
+              >.
+            </p>
+          </div>
+          <div
+            class="text-xs text-slate-400 font-bold uppercase tracking-widest space-y-2 text-center md:text-right"
+          >
+            <p>© 2026 Naveenchandar - Built for Transparency</p>
+            <p class="opacity-50">v1.2.0 | Stable Production Build</p>
+          </div>
+        </div>
+      </footer>
+
+      <div
+        v-if="showDisclaimer"
+        class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      >
+        <div
+          class="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
+          @click="showDisclaimer = false"
+        ></div>
+        <div
+          class="bg-white dark:bg-slate-900 p-8 rounded-[40px] max-w-lg w-full shadow-2xl relative z-10 border border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300"
+        >
+          <h3 class="text-3xl font-black tracking-tighter mb-6 italic">
+            Data <span class="text-blue-600">Policy</span>
+          </h3>
+          <ul class="space-y-6 mb-8">
+            <li class="flex gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex-shrink-0 flex items-center justify-center text-blue-600"
+              >
+                <i class="fas fa-info"></i>
+              </div>
+              <p class="text-xs font-bold text-slate-500">
+                Data is derived via automated scraping. While we check for
+                accuracy daily, variations in official listings may occur.
+              </p>
+            </li>
+            <li class="flex gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex-shrink-0 flex items-center justify-center text-blue-600"
+              >
+                <i class="fas fa-calculator"></i>
+              </div>
+              <p class="text-xs font-bold text-slate-500">
+                <strong>Real World Range:</strong> Calculated using an adaptive
+                safety multiplier (0.82-0.87) to prevent range anxiety.
+              </p>
+            </li>
+          </ul>
+          <button
+            @click="showDisclaimer = false"
+            class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-600/30 active:scale-95 transition-all"
+          >
+            I Accept Terms
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const { createApp, ref, computed, watch, onMounted } = Vue;
+
+      createApp({
+        setup() {
+          const vehicles = ref([]);
+          const filterType = ref("ALL");
+          const filterOEM = ref("ALL");
+          const searchQuery = ref("");
+          const selectedModels = ref([]);
+          const showDisclaimer = ref(false);
+          const toasts = ref([]);
+          let chart = null;
+
+          // --- Exception Handling & Error Toast ---
+          function addToast(message, type = "error") {
+            const id = Date.now();
+            toasts.value.push({ id, message, type });
+            setTimeout(() => {
+              toasts.value = toasts.value.filter((t) => t.id !== id);
+            }, 5000);
+          }
+
+          async function initializeApp() {
+            try {
+              const response = await fetch("data.json");
+              if (!response.ok) throw new Error("Database not found");
+              const data = await response.json();
+              if (!data || data.length === 0)
+                throw new Error("Invalid database format");
+              vehicles.value = data;
+              addToast("EV Database Updated Successfully", "success");
+            } catch (e) {
+              addToast(`Connection Error: ${e.message}`);
+              console.error("[EV_APP_ERROR]", e);
+            }
+          }
+
+          onMounted(initializeApp);
+
+          const sortedOEMs = computed(() => {
+            let list = vehicles.value;
+            if (filterType.value !== "ALL")
+              list = list.filter((v) => v.type === filterType.value);
+            return [...new Set(list.map((v) => v.oem))].sort();
+          });
+
+          const filteredModels = computed(() => {
+            return vehicles.value.filter((v) => {
+              const typeMatch =
+                filterType.value === "ALL" || v.type === filterType.value;
+              const oemMatch =
+                filterOEM.value === "ALL" || v.oem === filterOEM.value;
+              const searchMatch = v.name
+                .toLowerCase()
+                .includes(searchQuery.value.toLowerCase());
+              return typeMatch && oemMatch && searchMatch;
+            });
+          });
+
+          const topThree = computed(() => {
+            if (vehicles.value.length === 0) return {};
+            const list = filteredModels.value;
+            return {
+              range: {
+                label: "Long Range",
+                unit: "km",
+                icon: "fa-solid fa-map-location-dot",
+                data: [...list].sort(
+                  (a, b) =>
+                    b.est_real_world_range_km - a.est_real_world_range_km,
+                )[0],
+                value: [...list].sort(
+                  (a, b) =>
+                    b.est_real_world_range_km - a.est_real_world_range_km,
+                )[0]?.est_real_world_range_km,
+              },
+              economy: {
+                label: "Economy",
+                unit: "₹/100km",
+                icon: "fa-solid fa-piggy-bank",
+                data: [...list].sort(
+                  (a, b) => a.cost_per_100km_inr - b.cost_per_100km_inr,
+                )[0],
+                value: [...list].sort(
+                  (a, b) => a.cost_per_100km_inr - b.cost_per_100km_inr,
+                )[0]?.cost_per_100km_inr,
+              },
+              load: {
+                label: "Payload",
+                unit: "kg",
+                icon: "fa-solid fa-truck-ramp-box",
+                data: [...list].sort((a, b) => b.payload_kg - a.payload_kg)[0],
+                value: [...list].sort((a, b) => b.payload_kg - a.payload_kg)[0]
+                  ?.payload_kg,
+              },
+            };
+          });
+
+          function toggleComparison(m) {
+            const idx = selectedModels.value.findIndex(
+              (item) => item.name === m.name,
+            );
+            if (idx > -1) selectedModels.value.splice(idx, 1);
+            else if (selectedModels.value.length < 3)
+              selectedModels.value.push(m);
+            else addToast("Maximum 3 models allowed for comparison");
+          }
+
+          function isSelected(m) {
+            return selectedModels.value.some((item) => item.name === m.name);
+          }
+
+          watch(
+            selectedModels,
+            (models) => {
+              const ctx = document.getElementById("compareChart");
+              if (!ctx) return;
+              if (chart) chart.destroy();
+              if (models.length === 0) return;
+
+              const isDark = window.matchMedia(
+                "(prefers-color-scheme: dark)",
+              ).matches;
+
+              chart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                  labels: models.map((m) => m.name.split(" ")[0]),
+                  datasets: [
+                    {
+                      label: "Real Range (km)",
+                      data: models.map((m) => m.est_real_world_range_km),
+                      backgroundColor: "#3b82f6",
+                      borderRadius: 12,
+                    },
+                  ],
+                },
+                options: {
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      padding: 12,
+                      backgroundColor: isDark ? "#1e293b" : "#ffffff",
+                      titleColor: isDark ? "#ffffff" : "#0f172a",
+                      bodyColor: isDark ? "#94a3b8" : "#475569",
+                      borderWidth: 1,
+                      borderColor: "#3b82f6",
+                    },
+                  },
+                  scales: {
+                    y: {
+                      grid: { display: false },
+                      ticks: { font: { weight: "bold" } },
+                    },
+                    x: {
+                      grid: { display: false },
+                      ticks: { font: { weight: "bold" } },
+                    },
+                  },
+                },
+              });
+            },
+            { deep: true },
+          );
+
+          return {
+            vehicles,
+            filterType,
+            filterOEM,
+            searchQuery,
+            filteredModels,
+            selectedModels,
+            toggleComparison,
+            isSelected,
+            topThree,
+            sortedOEMs,
+            showDisclaimer,
+            toasts,
+          };
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
