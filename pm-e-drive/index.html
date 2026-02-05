@@ -107,6 +107,59 @@
       </header>
 
       <main class="max-w-7xl mx-auto px-4 py-8">
+        <section
+          class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mb-12"
+        >
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <label
+                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                >Vehicle Type</label
+              >
+              <select
+                v-model="filterType"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
+              >
+                <option value="ALL">All Electric Vehicles</option>
+                <option value="2W">🛵 2-Wheelers</option>
+                <option value="3W">🛺 3-Wheelers</option>
+              </select>
+            </div>
+            <div>
+              <label
+                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                >Brand (OEM)</label
+              >
+              <select
+                v-model="filterOEM"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
+              >
+                <option value="ALL">All Manufacturers</option>
+                <option v-for="oem in sortedOEMs" :key="oem" :value="oem">
+                  {{oem}}
+                </option>
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <label
+                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                >Model Search</label
+              >
+              <div class="relative">
+                <i
+                  class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                ></i>
+                <input
+                  type="text"
+                  v-model="searchQuery"
+                  placeholder="Search by name..."
+                  class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 pl-12 outline-none focus:border-blue-500 transition-all font-bold"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section class="mb-12">
           <h2
             class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
@@ -138,59 +191,6 @@
                   >{{ leader.unit }}</span
                 >
               </p>
-            </div>
-          </div>
-        </section>
-
-        <section
-          class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mb-12"
-        >
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <label
-                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
-                >1. Vehicle Type</label
-              >
-              <select
-                v-model="filterType"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
-              >
-                <option value="ALL">All Electric Vehicles</option>
-                <option value="2W">🛵 2-Wheelers</option>
-                <option value="3W">🛺 3-Wheelers</option>
-              </select>
-            </div>
-            <div>
-              <label
-                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
-                >2. Brand (OEM)</label
-              >
-              <select
-                v-model="filterOEM"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
-              >
-                <option value="ALL">All Manufacturers</option>
-                <option v-for="oem in sortedOEMs" :key="oem" :value="oem">
-                  {{oem}}
-                </option>
-              </select>
-            </div>
-            <div class="md:col-span-2">
-              <label
-                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
-                >3. Model Search</label
-              >
-              <div class="relative">
-                <i
-                  class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                ></i>
-                <input
-                  type="text"
-                  v-model="searchQuery"
-                  placeholder="Search by name..."
-                  class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 pl-12 outline-none focus:border-blue-500 transition-all font-bold"
-                />
-              </div>
             </div>
           </div>
         </section>
@@ -447,14 +447,14 @@
           async function initializeApp() {
             try {
               const response = await fetch("data.json");
-              if (!response.ok) throw new Error("Database not found");
+              if (!response.ok) throw new Error("EV Data not found");
               const data = await response.json();
               if (!data || data.length === 0)
-                throw new Error("Invalid database format");
+                throw new Error("Invalid EV Data format");
               vehicles.value = data;
-              addToast("EV Database Updated Successfully", "success");
+              addToast("EV Data loaded Successfully", "success");
             } catch (e) {
-              addToast(`Connection Error: ${e.message}`);
+              addToast(`Failed to load EV Data: ${e.message}`);
               console.error("[EV_APP_ERROR]", e);
             }
           }
