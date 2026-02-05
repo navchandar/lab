@@ -1,9 +1,8 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth">
+<html lang="en" class="scroll-smooth h-full">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>PM E-DRIVE - EV Comparison</title>
     <meta
       name="description"
@@ -23,20 +22,35 @@
     />
 
     <style type="text/tailwindcss">
-      /* Modern Dark Mode Palette */
       @theme {
-        --color-slate-950: #020617;
-        --color-slate-900: #0f172a;
-        --color-slate-800: #1e293b;
+        --color-midnight: #020617;
+        --color-panel: #0f172a;
+        --color-accent: #3b82f6;
       }
 
       [v-cloak] {
         display: none;
       }
 
-      /* Fix for dark mode dropdown text visibility */
+      /* Dark Mode Select */
       select option {
         @apply bg-white text-slate-900 dark:bg-slate-800 dark:text-white;
+      }
+
+      /* Themed Loading Animation */
+      .loader-pulse {
+        animation: pulse-truck 1.5s infinite ease-in-out;
+      }
+      @keyframes pulse-truck {
+        0%,
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.1);
+          opacity: 0.5;
+        }
       }
 
       .chart-container {
@@ -45,94 +59,116 @@
         height: 320px;
       }
 
-      /* Smooth Toast Animation */
+      /* Transitions */
+      .fade-enter-active,
+      .fade-leave-active {
+        transition: opacity 0.3s ease;
+      }
+      .fade-enter-from,
+      .fade-leave-to {
+        opacity: 0;
+      }
+
       .toast-enter-active,
       .toast-leave-active {
-        transition: all 0.4s ease;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
       .toast-enter-from,
       .toast-leave-to {
-        transform: translateY(-20px);
+        transform: translateX(100%);
         opacity: 0;
       }
     </style>
   </head>
 
   <body
-    class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300"
+    class="bg-slate-50 dark:bg-midnight text-slate-900 dark:text-slate-100 transition-colors duration-300 flex flex-col min-h-full"
   >
-    <div id="app" v-cloak>
+    <div id="app" v-cloak class="flex flex-col flex-grow">
+      <div
+        v-if="loading"
+        class="fixed inset-0 z-[100] bg-white dark:bg-midnight flex flex-col items-center justify-center"
+      >
+        <div class="loader-pulse text-blue-600 mb-4">
+          <i class="fas fa-truck-fast text-6xl"></i>
+        </div>
+        <p class="font-black uppercase tracking-widest text-slate-400">
+          Loading data...
+        </p>
+      </div>
+
       <transition-group
         name="toast"
         tag="div"
-        class="fixed top-20 right-4 z-50 space-y-2 pointer-events-none"
+        class="fixed top-6 right-4 z-50 space-y-3 pointer-events-none"
       >
         <div
           v-for="t in toasts"
           :key="t.id"
-          class="pointer-events-auto px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 border-l-4"
-          :class="t.type === 'error' ? 'bg-red-600 border-red-800 text-white' : 'bg-green-600 border-green-800 text-white'"
+          class="pointer-events-auto px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border-l-4 bg-white dark:bg-slate-800"
+          :class="t.type === 'error' ? 'border-red-500' : 'border-emerald-500'"
         >
           <i
-            class="fas"
-            :class="t.type === 'error' ? 'fa-circle-xmark' : 'fa-check-circle'"
+            class="fas text-xl"
+            :class="t.type === 'error' ? 'fa-circle-exmark text-red-500' : 'fa-circle-check text-emerald-500'"
           ></i>
-          <span class="font-bold text-sm">{{ t.message }}</span>
+          <span class="font-bold text-sm dark:text-white">{{ t.message }}</span>
         </div>
       </transition-group>
 
       <header
-        class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40"
+        class="bg-white/80 dark:bg-panel/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40"
       >
         <div
           class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center"
         >
           <div class="flex items-center gap-3">
             <div
-              class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30"
+              class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/40"
             >
               <i class="fas fa-bolt-lightning text-xl"></i>
             </div>
-            <h1 class="text-xl font-black tracking-tight uppercase">
+            <h1 class="text-xl font-black tracking-tighter uppercase">
               EV<span class="text-blue-600">Compare</span>
             </h1>
           </div>
           <button
             @click="showDisclaimer = true"
-            class="text-xs font-bold text-slate-400 hover:text-blue-500 uppercase tracking-widest border border-slate-200 dark:border-slate-800 px-3 py-1.5 rounded-full transition-all"
+            class="text-[10px] font-black text-slate-400 hover:text-blue-500 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-full transition-all uppercase tracking-widest"
           >
-            Disclaimer
+            Legal Info
           </button>
         </div>
       </header>
 
-      <main class="max-w-7xl mx-auto px-4 py-8">
+      <main class="max-w-7xl mx-auto px-4 py-10 w-full flex-grow">
         <section
-          class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mb-12"
+          class="bg-white dark:bg-panel p-8 rounded-[32px] shadow-sm border border-slate-200 dark:border-slate-800 mb-12"
         >
           <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
               <label
-                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
-                >Vehicle Type</label
+                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block"
+                >Vehicle Category</label
               >
               <select
                 v-model="filterType"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
+                @change="resetFilters"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 outline-none focus:border-blue-500 transition-all font-bold"
               >
-                <option value="ALL">All Electric Vehicles</option>
+                <option value="ALL">All EV Categories</option>
                 <option value="2W">🛵 2-Wheelers</option>
                 <option value="3W">🛺 3-Wheelers</option>
               </select>
             </div>
             <div>
               <label
-                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block"
                 >Brand (OEM)</label
               >
               <select
                 v-model="filterOEM"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 outline-none focus:border-blue-500 transition-all font-bold cursor-pointer"
+                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 outline-none focus:border-blue-500 transition-all font-bold"
               >
                 <option value="ALL">All Manufacturers</option>
                 <option v-for="oem in sortedOEMs" :key="oem" :value="oem">
@@ -142,52 +178,47 @@
             </div>
             <div class="md:col-span-2">
               <label
-                class="text-[10px] font-black text-slate-400 uppercase mb-3 block"
+                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block"
                 >Model Search</label
               >
               <div class="relative">
                 <i
-                  class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
                 ></i>
                 <input
                   type="text"
                   v-model="searchQuery"
-                  placeholder="Search by name..."
-                  class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-xl p-3 pl-12 outline-none focus:border-blue-500 transition-all font-bold"
+                  placeholder="Search by model name..."
+                  class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 pl-14 outline-none focus:border-blue-500 transition-all font-bold"
                 />
               </div>
             </div>
           </div>
         </section>
 
-        <section class="mb-12">
-          <h2
-            class="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2"
-          >
-            <i class="fas fa-crown text-amber-500"></i> Market Leaders
-          </h2>
+        <section class="mb-16">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div
               v-for="(leader, key) in topThree"
               :key="key"
-              class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-500 relative overflow-hidden group"
+              class="p-8 rounded-[32px] bg-white dark:bg-panel border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
             >
               <div
-                class="absolute -right-4 -bottom-4 text-6xl text-slate-100 dark:text-slate-800 transition-transform group-hover:scale-110 group-hover:-rotate-12"
+                class="absolute -right-4 -bottom-4 text-7xl text-slate-100 dark:text-slate-800/50 group-hover:scale-110 transition-transform"
               >
                 <i :class="leader.icon"></i>
               </div>
               <p
-                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
+                class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2"
               >
                 {{ leader.label }}
               </p>
-              <h3 class="text-lg font-bold mb-2 truncate pr-8">
-                {{ leader.data?.name || 'Loading...' }}
+              <h3 class="text-xl font-black mb-4 truncate pr-10">
+                {{ leader.data?.name || '---' }}
               </h3>
-              <p class="text-3xl font-black text-blue-600 dark:text-blue-400">
-                {{ leader.value }}<span
-                  class="text-xs font-bold text-slate-400 ml-1"
+              <p class="text-4xl font-black">
+                {{ Math.round(leader.value) }}
+                <span class="text-xl text-slate-400 font-medium ml-1"
                   >{{ leader.unit }}</span
                 >
               </p>
@@ -195,140 +226,135 @@
           </div>
         </section>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          <div class="lg:col-span-8 space-y-6">
-            <div class="flex justify-between items-end mb-4">
-              <h2 class="text-2xl font-black italic">
-                {{ filteredModels.length }} Models
-                <span class="text-blue-600 font-normal">Found</span>
-              </h2>
-              <p
-                class="text-xs font-bold text-slate-400 uppercase tracking-tighter"
-              >
-                Compare up to 3
-              </p>
-            </div>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+          <div class="lg:col-span-7 space-y-4">
+            <h2 class="text-3xl font-black tracking-tighter mb-8 italic">
+              Available <span class="text-blue-600 font-normal">Models</span>
+            </h2>
 
             <div
               v-for="m in filteredModels"
               :key="m.name"
               @click="toggleComparison(m)"
-              class="group bg-white dark:bg-slate-900 p-5 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform active:scale-[0.98]"
-              :class="isSelected(m) ? 'border-blue-500 ring-4 ring-blue-500/10' : 'border-transparent shadow-sm hover:border-slate-300 dark:hover:border-slate-700'"
+              class="group bg-white dark:bg-panel p-6 rounded-3xl border-2 cursor-pointer transition-all duration-300 flex items-center justify-between"
+              :class="isSelected(m) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' : 'border-transparent shadow-sm hover:border-slate-300 dark:hover:border-slate-800'"
             >
-              <div class="flex items-center justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-2">
-                    <span
-                      class="px-2 py-1 rounded-md text-[10px] font-black bg-blue-600/10 text-blue-600 uppercase"
-                      >{{ m.category }}</span
-                    >
-                    <h4
-                      class="font-black text-xl group-hover:text-blue-500 transition-colors"
-                    >
-                      {{ m.name }}
-                    </h4>
-                  </div>
-                  <p
-                    class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4"
+              <div class="flex-1">
+                <div class="flex items-center gap-3 mb-2">
+                  <span
+                    class="px-3 py-1 rounded-full text-[9px] font-black bg-blue-600 text-white uppercase"
+                    >{{ m.category }}</span
                   >
-                    {{ m.oem }}
-                  </p>
-                  <div class="flex flex-wrap gap-4">
-                    <div
-                      class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold"
-                    >
-                      <i class="fas fa-battery-half text-emerald-500 mr-2"></i>
-                      {{m.range_km}}km Range
-                    </div>
-                    <div
-                      class="px-3 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 text-xs font-bold"
-                    >
-                      <i class="fas fa-bolt text-amber-500 mr-2"></i>
-                      {{m.battery_kwh}}kWh
-                    </div>
-                  </div>
+                  <h4 class="font-black text-xl">{{ m.name }}</h4>
                 </div>
-                <div class="ml-4">
-                  <div
-                    class="w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all"
-                    :class="isSelected(m) ? 'bg-blue-600 border-blue-600 text-white rotate-0' : 'border-slate-200 text-slate-300 group-hover:border-blue-500 group-hover:text-blue-500'"
+                <p class="text-xs font-bold text-slate-400 uppercase mb-4">
+                  {{ m.oem }}
+                </p>
+                <div
+                  class="flex gap-6 text-[11px] font-black text-slate-500 uppercase"
+                >
+                  <span class="flex items-center gap-2"
+                    ><i class="fas fa-road text-blue-500"></i>
+                    {{Math.round(m.range_km)}}km</span
                   >
-                    <i
-                      class="fas"
-                      :class="isSelected(m) ? 'fa-check' : 'fa-plus'"
-                    ></i>
-                  </div>
+                  <span class="flex items-center gap-2"
+                    ><i class="fas fa-bolt text-amber-500"></i>
+                    {{Math.round(m.battery_kwh)}}kWh</span
+                  >
+                  <span class="flex items-center gap-2"
+                    ><i class="fas fa-gauge-high text-red-500"></i>
+                    {{Math.round(m.max_speed_kmh)}}km/h</span
+                  >
                 </div>
+              </div>
+              <div
+                class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500"
+                :class="isSelected(m) ? 'bg-blue-600 text-white rotate-90 scale-110' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600'"
+              >
+                <i
+                  class="fas"
+                  :class="isSelected(m) ? 'fa-check' : 'fa-plus'"
+                ></i>
               </div>
             </div>
           </div>
 
-          <aside class="lg:col-span-4">
+          <aside class="lg:col-span-5">
             <div
-              class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 sticky top-28 overflow-hidden"
+              class="bg-white dark:bg-panel p-8 rounded-[40px] shadow-2xl border border-slate-200 dark:border-slate-800 sticky top-28 overflow-hidden"
             >
-              <div class="flex items-center justify-between mb-8">
-                <h3 class="font-black text-2xl tracking-tighter">
-                  Specs <span class="text-blue-600 font-normal">Vault</span>
+              <div class="flex items-center justify-between mb-10">
+                <h3 class="font-black text-2xl italic tracking-tighter">
+                  Compare <span class="text-blue-600 font-normal">Vault</span>
                 </h3>
                 <span
-                  class="bg-blue-600 text-white text-[10px] px-2 py-1 rounded-full font-black"
-                  >{{selectedModels.length}}/3</span
+                  class="bg-slate-900 dark:bg-white dark:text-midnight text-white text-[10px] px-3 py-1.5 rounded-full font-black"
+                  >{{selectedModels.length}} / 3</span
                 >
               </div>
 
               <div
                 v-if="selectedModels.length === 0"
-                class="text-center py-16 text-slate-400 space-y-4"
+                class="text-center py-20 opacity-20"
               >
-                <div class="text-6xl opacity-10">
-                  <i class="fas fa-columns"></i>
-                </div>
-                <p class="text-sm font-bold uppercase tracking-widest">
-                  Select models to<br />generate analysis
+                <i class="fas fa-clone text-7xl mb-6"></i>
+                <p class="font-black uppercase tracking-[0.2em] text-sm">
+                  Select to Analyze
                 </p>
               </div>
 
-              <div
-                v-else
-                class="space-y-8 animate-in fade-in slide-in-from-bottom-4"
-              >
+              <div v-else class="space-y-10">
                 <div class="chart-container">
                   <canvas id="compareChart"></canvas>
                 </div>
 
-                <div class="space-y-3">
+                <div class="grid grid-cols-1 gap-4">
                   <div
                     v-for="m in selectedModels"
                     :key="m.name"
-                    class="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50"
+                    class="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700"
                   >
-                    <div class="flex justify-between items-center mb-3">
-                      <span class="font-black text-sm truncate max-w-[70%]"
-                        >{{m.name}}</span
-                      >
+                    <div class="flex justify-between items-start mb-6">
+                      <h5 class="font-black text-sm leading-tight max-w-[70%]">
+                        {{m.name}}
+                      </h5>
                       <button
                         @click="toggleComparison(m)"
-                        class="text-red-500 hover:bg-red-50 dark:hover:bg-red-950 px-2 py-1 rounded text-[10px] font-black uppercase"
+                        class="text-red-500 text-[10px] font-black uppercase hover:underline"
                       >
-                        Drop
+                        Remove
                       </button>
                     </div>
-                    <div
-                      class="grid grid-cols-2 gap-4 text-[11px] font-bold text-slate-400"
-                    >
-                      <div class="flex flex-col">
-                        <span>Real Range</span>
-                        <span class="text-slate-900 dark:text-white text-sm"
-                          >{{m.est_real_world_range_km}}km</span
+                    <div class="grid grid-cols-2 gap-y-4">
+                      <div>
+                        <p
+                          class="text-[9px] font-black text-slate-400 uppercase mb-1"
                         >
+                          Real Range
+                        </p>
+                        <p class="text-lg font-black">
+                          {{Math.round(m.est_real_world_range_km)}} km
+                        </p>
                       </div>
-                      <div class="flex flex-col">
-                        <span>Running Cost</span>
-                        <span class="text-slate-900 dark:text-white text-sm"
-                          >₹{{m.cost_per_100km_inr}}</span
+                      <div>
+                        <p
+                          class="text-[9px] font-black text-slate-400 uppercase mb-1"
                         >
+                          Cost/100km
+                        </p>
+                        <p class="text-lg font-black text-emerald-500">
+                          ₹{{Math.round(m.cost_per_100km_inr)}}
+                        </p>
+                      </div>
+                      <div>
+                        <p
+                          class="text-[9px] font-black text-slate-400 uppercase mb-1"
+                        >
+                          Payload
+                        </p>
+                        <p class="text-lg font-black text-blue-500">
+                          {{Math.round(m.payload_kg)}} kg
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -340,85 +366,79 @@
       </main>
 
       <footer
-        class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 mt-24"
+        class="bg-white dark:bg-panel border-t border-slate-200 dark:border-slate-800 py-10"
       >
         <div
-          class="max-w-7xl mx-auto px-4 text-center md:text-left flex flex-col md:flex-row justify-between items-center gap-8"
+          class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left"
         >
-          <div class="space-y-4">
-            <div
-              class="flex items-center gap-2 justify-center md:justify-start"
+          <div class="space-y-2">
+            <p
+              class="text-[10px] font-black text-blue-600 uppercase tracking-widest"
             >
-              <i class="fas fa-database text-blue-600"></i>
-              <span class="font-black uppercase text-sm tracking-widest"
-                >Verified Data Source</span
-              >
-            </div>
-            <p class="text-xs text-slate-500 max-w-sm">
-              All technical specifications are parsed from the official
+              Data Source
+            </p>
+            <p class="text-xs text-slate-500">
+              All technical specifications fetched periodically from the
+              official
               <a
-                href="https://pmedrive.heavyindustries.gov.in/models"
+                href="https://pmedrive.heavyindustries.gov.in"
                 target="_blank"
-                class="text-blue-500 underline"
+                class="underline hover:text-blue-600"
                 >PM E-DRIVE Portal</a
               >.
             </p>
           </div>
-          <div
-            class="text-xs text-slate-400 font-bold uppercase tracking-widest space-y-2 text-center md:text-right"
-          >
-            <p>© 2026 Naveenchandar - Built for Transparency</p>
-            <p class="opacity-50">v1.2.0 | Stable Production Build</p>
-          </div>
+          <p class="text-[10px] font-bold text-slate-400 uppercase">
+            © 2026 Naveenchandar | Built with Vue & Tailwind
+          </p>
         </div>
       </footer>
 
-      <div
-        v-if="showDisclaimer"
-        class="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      >
+      <transition name="fade">
         <div
-          class="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
-          @click="showDisclaimer = false"
-        ></div>
-        <div
-          class="bg-white dark:bg-slate-900 p-8 rounded-[40px] max-w-lg w-full shadow-2xl relative z-10 border border-slate-100 dark:border-slate-800 animate-in zoom-in duration-300"
+          v-if="showDisclaimer"
+          class="fixed inset-0 z-[100] flex items-center justify-center p-4"
         >
-          <h3 class="text-3xl font-black tracking-tighter mb-6 italic">
-            Data <span class="text-blue-600">Policy</span>
-          </h3>
-          <ul class="space-y-6 mb-8">
-            <li class="flex gap-4">
-              <div
-                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex-shrink-0 flex items-center justify-center text-blue-600"
-              >
-                <i class="fas fa-info"></i>
-              </div>
-              <p class="text-xs font-bold text-slate-500">
-                Data is derived via automated scraping. While we check for
-                accuracy daily, variations in official listings may occur.
-              </p>
-            </li>
-            <li class="flex gap-4">
-              <div
-                class="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex-shrink-0 flex items-center justify-center text-blue-600"
-              >
-                <i class="fas fa-calculator"></i>
-              </div>
-              <p class="text-xs font-bold text-slate-500">
-                <strong>Real World Range:</strong> Calculated using an adaptive
-                safety multiplier (0.82-0.87) to prevent range anxiety.
-              </p>
-            </li>
-          </ul>
-          <button
+          <div
+            class="absolute inset-0 bg-slate-950/90 backdrop-blur-xl"
             @click="showDisclaimer = false"
-            class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-blue-600/30 active:scale-95 transition-all"
+          ></div>
+          <div
+            class="bg-white dark:bg-slate-900 p-10 rounded-[48px] max-w-lg w-full shadow-2xl relative z-10 border border-slate-100 dark:border-slate-800"
           >
-            I Accept Terms
-          </button>
+            <h3 class="text-4xl font-black tracking-tighter mb-8 italic">
+              Legal <span class="text-blue-600 font-normal">Notice</span>
+            </h3>
+            <div
+              class="space-y-6 text-sm font-bold text-slate-500 dark:text-slate-400 mb-10 leading-relaxed"
+            >
+              <p>
+                • <strong>Accuracy Warning:</strong> This data is aggregated
+                periodically via automated scraping. Government portals update
+                frequently; always verify with official sources and OEM
+                brochures before purchasing.
+              </p>
+              <p>
+                • <strong>Calculated Metrics:</strong> Real-world range and
+                payload are estimates based on standard physics models. Actual
+                performance varies by terrain, weather, traffic and road
+                conditions.
+              </p>
+              <p>
+                • <strong>No Liability:</strong> We provide this tool for
+                comparison and information purposes only and are not responsible
+                for financial decisions made based on these numbers.
+              </p>
+            </div>
+            <button
+              @click="showDisclaimer = false"
+              class="w-full bg-blue-600 text-white py-5 rounded-[24px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/40 active:scale-95 transition-all"
+            >
+              I Understand
+            </button>
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
 
     <script>
@@ -427,6 +447,7 @@
       createApp({
         setup() {
           const vehicles = ref([]);
+          const loading = ref(true);
           const filterType = ref("ALL");
           const filterOEM = ref("ALL");
           const searchQuery = ref("");
@@ -435,31 +456,42 @@
           const toasts = ref([]);
           let chart = null;
 
-          // --- Exception Handling & Error Toast ---
           function addToast(message, type = "error") {
             const id = Date.now();
             toasts.value.push({ id, message, type });
-            setTimeout(() => {
-              toasts.value = toasts.value.filter((t) => t.id !== id);
-            }, 5000);
+            setTimeout(
+              () => (toasts.value = toasts.value.filter((t) => t.id !== id)),
+              5000,
+            );
           }
+
+          // Close modal on ESC key
+          onMounted(() => {
+            window.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") showDisclaimer.value = false;
+            });
+            initializeApp();
+          });
 
           async function initializeApp() {
             try {
               const response = await fetch("data.json");
-              if (!response.ok) throw new Error("EV Data not found");
-              const data = await response.json();
-              if (!data || data.length === 0)
-                throw new Error("Invalid EV Data format");
-              vehicles.value = data;
+              if (!response.ok) throw new Error("Data Source Not Found");
+              vehicles.value = await response.json();
               addToast("EV Data loaded Successfully", "success");
             } catch (e) {
               addToast(`Failed to load EV Data: ${e.message}`);
-              console.error("[EV_APP_ERROR]", e);
+            } finally {
+              loading.value = false;
             }
           }
 
-          onMounted(initializeApp);
+          // Cascading reset
+          function resetFilters() {
+            filterOEM.value = "ALL";
+            searchQuery.value = "";
+            selectedModels.value = [];
+          }
 
           const sortedOEMs = computed(() => {
             let list = vehicles.value;
@@ -483,11 +515,13 @@
 
           const topThree = computed(() => {
             if (vehicles.value.length === 0) return {};
-            const list = filteredModels.value;
+            const list = filteredModels.value.length
+              ? filteredModels.value
+              : vehicles.value;
             return {
               range: {
                 label: "Long Range",
-                unit: "km",
+                unit: "KM",
                 icon: "fa-solid fa-map-location-dot",
                 data: [...list].sort(
                   (a, b) =>
@@ -499,9 +533,9 @@
                 )[0]?.est_real_world_range_km,
               },
               economy: {
-                label: "Economy",
-                unit: "₹/100km",
-                icon: "fa-solid fa-piggy-bank",
+                label: "Budget King",
+                unit: "₹",
+                icon: "fa-solid fa-indian-rupee-sign",
                 data: [...list].sort(
                   (a, b) => a.cost_per_100km_inr - b.cost_per_100km_inr,
                 )[0],
@@ -510,8 +544,8 @@
                 )[0]?.cost_per_100km_inr,
               },
               load: {
-                label: "Payload",
-                unit: "kg",
+                label: "Max Payload",
+                unit: "KG",
                 icon: "fa-solid fa-truck-ramp-box",
                 data: [...list].sort((a, b) => b.payload_kg - a.payload_kg)[0],
                 value: [...list].sort((a, b) => b.payload_kg - a.payload_kg)[0]
@@ -527,7 +561,7 @@
             if (idx > -1) selectedModels.value.splice(idx, 1);
             else if (selectedModels.value.length < 3)
               selectedModels.value.push(m);
-            else addToast("Maximum 3 models allowed for comparison");
+            else addToast("Comparison limit reached (Max 3)");
           }
 
           function isSelected(m) {
@@ -552,10 +586,10 @@
                   labels: models.map((m) => m.name.split(" ")[0]),
                   datasets: [
                     {
-                      label: "Real Range (km)",
+                      label: "Real World Range (km)",
                       data: models.map((m) => m.est_real_world_range_km),
                       backgroundColor: "#3b82f6",
-                      borderRadius: 12,
+                      borderRadius: 16,
                     },
                   ],
                 },
@@ -565,17 +599,18 @@
                   plugins: {
                     legend: { display: false },
                     tooltip: {
-                      padding: 12,
+                      padding: 16,
                       backgroundColor: isDark ? "#1e293b" : "#ffffff",
                       titleColor: isDark ? "#ffffff" : "#0f172a",
                       bodyColor: isDark ? "#94a3b8" : "#475569",
                       borderWidth: 1,
                       borderColor: "#3b82f6",
+                      cornerRadius: 12,
                     },
                   },
                   scales: {
                     y: {
-                      grid: { display: false },
+                      grid: { color: isDark ? "#1e293b" : "#f1f5f9" },
                       ticks: { font: { weight: "bold" } },
                     },
                     x: {
@@ -591,6 +626,7 @@
 
           return {
             vehicles,
+            loading,
             filterType,
             filterOEM,
             searchQuery,
@@ -602,6 +638,7 @@
             sortedOEMs,
             showDisclaimer,
             toasts,
+            resetFilters,
           };
         },
       }).mount("#app");
