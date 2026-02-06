@@ -105,23 +105,52 @@ class DataUtils:
             item["est_real_world_range_km"] = round(reported_range * 0.75, 1)
 
         # --- 3. Payload Calculation ---
-        # Category Limits (GVW)
-        max_gvw = LIMITS.get(cat, 300)
+        # 1. Density Clamping: Prevents 'Magic' lightweight batteries
+        density = max(100, min(density, 180))
+        # 2. Maximum GVW Lookup
+        max_gvw = item.get("gvw_kg") or LIMITS.get(cat, 350)
 
-        # Calculate Battery Weight
-        battery_kg = (battery_kwh * 1000) / (density if density > 0 else 150)
+        # 3. Practical Multipliers (Design Envelope)
+        PRACTICAL_MULTIPLIERS = {
+            "L1": 0.45, "L2": 0.43, "L5": 0.50,
+            "L5M": 0.48, "L5N": 0.52, "E-RICKSHAW": 0.48,
+            "E-RICKSHAW & E-CART": 0.48, "E-CART": 0.50
+        }
+        multiplier = PRACTICAL_MULTIPLIERS.get(cat, 0.45)
+
+        # 4. Battery Weight Calculation
+        battery_kg = (battery_kwh * 1000) / density
         item["battery_weight_kg"] = round(battery_kg, 2)
 
-        # Get specific Chassis Ratio for the category
-        ratio = CHASSIS_RATIOS.get(cat, 0.35)
-        # Chassis estimate: Approx percent of max GVW is the structural weight
-        est_chassis_weight = max_gvw * ratio
-        # Final Payload = GVW - Kerb Weight which is (Chassis + Battery)
-        kerb_weight = est_chassis_weight + battery_kg
-        # Less 5% from GVW because vehicles are rarely operated at 100% mechanical stress
-        payload = (max_gvw * 0.95) - kerb_weight
-        item["payload_kg"] = round(payload, 2)
+        # 5. Baseline Context
+        BASELINE_BATT_KG = {
+            "L1": 9, "L2": 14, "L5": 45, "L5M": 45, "L5N": 55,
+            "E-RICKSHAW": 40, "E-CART": 55
+        }
+        baseline = BASELINE_BATT_KG.get(cat, 14)
 
+        # 6. Nonlinear Penalty Logic
+        if "L1" in cat or "L2" in cat:
+            excess = max(0, battery_kg - baseline)
+            mild = min(excess, 5) * 0.35   # Slight reduction for minor weight increase
+            harsh = max(0, excess - 5) * 0.75 # Heavy reduction for oversized packs
+            battery_penalty = mild + harsh
+        else:
+            # 3W: Linear/Lower penalty due to robust commercial chassis
+            excess = max(0, battery_kg - baseline)
+            battery_penalty = excess * 0.20
+
+        # 7. Final Payload Synthesis
+        base_practical_capacity = max_gvw * multiplier
+        payload = base_practical_capacity - battery_penalty
+
+        # 8. Legal Cap (If actual Kerb Weight is scraped)
+        kerb = item.get("kerb_weight_kg")
+        if kerb:
+            legal_payload = max_gvw - kerb
+            payload = min(payload, legal_payload)
+
+        item["payload_kg"] = round(max(0, payload), 2)
         return item
 
 
