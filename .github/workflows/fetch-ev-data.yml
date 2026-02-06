@@ -1,0 +1,44 @@
+name: Fetch EV Data
+
+on:
+  schedule:
+    # Runs at 00:00 UTC every Sunday
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "ev-data-update"
+  cancel-in-progress: false
+
+jobs:
+  fetch_ev_data:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./pm-e-drive
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run Script
+        run: python models_data_parser.py
+
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "build: updated EV data"
+          # Target .json files inside /pm-e-drive
+          file_pattern: "pm-e-drive/data.json"
