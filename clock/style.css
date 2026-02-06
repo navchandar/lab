@@ -53,8 +53,14 @@ p {
     border-radius: 50%;
     background: var(--clock-bg);
     background-image: var(--clock-bgimg);
-    width: 280px;
-    height: 280px;
+    /* Set a default fallback size */
+    --clock-size: 280px;
+    /* Force 1:1 aspect ratio to keep it circular */
+    aspect-ratio: 1 / 1;
+    /* Use responsive units with max-width */
+    width: 90%;
+    max-width: 350px;
+    height: auto;
 }
 
 .hand {
@@ -145,11 +151,14 @@ p {
 .number {
     display: block;
     position: absolute;
+    /* Ensures text center aligns with coordinate */
     transform: translate(-50%, -50%);
     cursor: pointer;
-    padding: 10px;
+    padding: 0;
+    /* Remove padding to ensure precise positioning */
     font-weight: bold;
-    font-size: 1.4rem;
+    /* Font size is 10% of the clock's diameter */
+    font-size: calc(var(--clock-size) * 0.1);
     text-shadow: 0px 1px 1px var(--text-shadow);
 }
 
@@ -158,16 +167,16 @@ p {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-120px);
+    transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(calc(var(--clock-size) * -0.42));
     transform-origin: center center;
     cursor: pointer;
     box-sizing: content-box;
     border-radius: 1px;
     background: var(--text);
-    background-clip: content-box;
-    padding: 10px;
-    width: 4px;
-    height: 15px;
+    padding: 0;
+    /* Scale dimensions based on clock size */
+    width: calc(var(--clock-size) * 0.015);
+    height: calc(var(--clock-size) * 0.05);
 }
 
 /* Digital input */
@@ -269,12 +278,6 @@ input[type="time"] {
         height: 100px
     }
 
-    .tick {
-        transform: translate(-50%, -50%) rotate(var(--rotation, 0deg)) translateY(-100px);
-        width: 2px;
-        height: 10px;
-    }
-
     .tooltip {
         bottom: -35px;
         left: -280px;
@@ -288,12 +291,6 @@ input[type="time"] {
 
     .clock-area {
         margin: 0;
-    }
-
-    .clock {
-        margin: 20px 0 20px 0;
-        width: 230px;
-        height: 230px;
     }
 
 }

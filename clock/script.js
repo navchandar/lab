@@ -117,6 +117,7 @@ let intervalID = null;
       this._createClockFace();
       this._attachEventListeners();
       this._animateToCurrentTime();
+      this._setupResponsiveScaling();
     }
 
     /**
@@ -254,7 +255,7 @@ let intervalID = null;
       const roundedTotal = Math.round(totalMinutes);
       const minutes = u.mod(roundedTotal, 60);
       const hours24 = Math.floor(
-        u.mod(roundedTotal, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+        u.mod(roundedTotal, CONSTANTS.MINUTES_IN_24_HOURS) / 60,
       );
 
       // Convert 24-hour format to 12-hour format for display
@@ -279,21 +280,31 @@ let intervalID = null;
     }
 
     /**
-     * Creates and positions the 1-12 numbers around the clock face.
+     * Creates and positions the 1-12 numbers using percentages.
+     * Center is 50%, Radius is ~40% of the container.
      */
     _createClockNumbers() {
-      const { CLOCK_CENTER_COORD, CLOCK_FACE_RADIUS } = CONSTANTS;
+      // Radius as a percentage of the container size (leaving padding)
+      const RADIUS_PERCENT = 40;
+      const CENTER_PERCENT = 50;
+
       for (let i = 1; i <= 12; i++) {
-        const angle = i * CONSTANTS.DEGREES_PER_HOUR - 90; // Adjust for 12 at top
-        const x =
-          CLOCK_CENTER_COORD + CLOCK_FACE_RADIUS * Math.cos(u.degToRad(angle));
-        const y =
-          CLOCK_CENTER_COORD + CLOCK_FACE_RADIUS * Math.sin(u.degToRad(angle));
+        const angle = i * CONSTANTS.DEGREES_PER_HOUR - 90;
+
+        // Calculate position in percentages
+        const x = CENTER_PERCENT + RADIUS_PERCENT * Math.cos(u.degToRad(angle));
+        const y = CENTER_PERCENT + RADIUS_PERCENT * Math.sin(u.degToRad(angle));
 
         const numEl = document.createElement("div");
         numEl.className = "number";
-        numEl.style.left = `${x}px`;
-        numEl.style.top = `${y}px`;
+
+        // Apply percentage positions
+        numEl.style.left = `${x}%`;
+        numEl.style.top = `${y}%`;
+
+        // Center the element on its coordinate
+        numEl.style.transform = "translate(-50%, -50%)";
+
         numEl.textContent = i;
         numEl.dataset.value = i;
         this.elements.clock.appendChild(numEl);
@@ -312,6 +323,22 @@ let intervalID = null;
         tickEl.style.setProperty("--rotation", `${rotation}deg`);
         this.elements.clock.appendChild(tickEl);
       }
+    }
+
+    /**
+     * Observes the clock container size and updates a CSS variable
+     * to scale fonts and elements dynamically.
+     */
+    _setupResponsiveScaling() {
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+          const { width } = entry.contentRect;
+          // Set a CSS variable '--clock-size' equal to the width in pixels
+          this.elements.clock.style.setProperty("--clock-size", `${width}px`);
+        }
+      });
+
+      resizeObserver.observe(this.elements.clock);
     }
 
     // --- Event Listener Setup ---
@@ -335,21 +362,21 @@ let intervalID = null;
       // Drag listeners for hands
       this.elements.hourHand.addEventListener(
         "pointerdown",
-        this._onPointerDown
+        this._onPointerDown,
       );
       this.elements.minuteHand.addEventListener(
         "pointerdown",
-        this._onPointerDown
+        this._onPointerDown,
       );
 
       // Hand selection listeners
       this.elements.hourHand.addEventListener(
         "click",
-        () => (this.state.selectedHand = "hour")
+        () => (this.state.selectedHand = "hour"),
       );
       this.elements.minuteHand.addEventListener(
         "click",
-        () => (this.state.selectedHand = "minute")
+        () => (this.state.selectedHand = "minute"),
       );
 
       // Click listeners for numbers and ticks on the clock face
@@ -383,7 +410,7 @@ let intervalID = null;
 
       const rounded = Math.round(this.state.totalMinutes);
       let hours = Math.floor(
-        u.mod(rounded, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+        u.mod(rounded, CONSTANTS.MINUTES_IN_24_HOURS) / 60,
       );
       let minutes = u.mod(rounded, 60);
 
@@ -448,7 +475,7 @@ let intervalID = null;
           // 'hour'
           if (this.config.hourDragMode === "snap") {
             const hourSteps = Math.round(
-              this.state.cumulativeRotation / CONSTANTS.DEGREES_PER_HOUR
+              this.state.cumulativeRotation / CONSTANTS.DEGREES_PER_HOUR,
             );
             deltaMinutes = hourSteps * 60;
           } else {
@@ -539,7 +566,7 @@ let intervalID = null;
         // Convert to 24-hour format based on current time
         const currentMinutes = Math.round(this.state.totalMinutes);
         const currentHours = Math.floor(
-          u.mod(currentMinutes, CONSTANTS.MINUTES_IN_24_HOURS) / 60
+          u.mod(currentMinutes, CONSTANTS.MINUTES_IN_24_HOURS) / 60,
         );
         const isAm = currentHours < 12;
         const h12 = keyNum % 12;
@@ -753,7 +780,7 @@ let intervalID = null;
     // Ensure all required elements are found before initializing
     if (!clockEl || !hourHandEl || !minuteHandEl || !timeInputEl) {
       console.error(
-        "One or more required clock elements are missing from the DOM."
+        "One or more required clock elements are missing from the DOM.",
       );
       return;
     }
