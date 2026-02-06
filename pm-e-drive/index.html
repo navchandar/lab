@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth h-full">
+<html lang="en" class="h-full">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -27,9 +27,11 @@
         --color-panel: #0f172a;
         --color-accent: #3b82f6;
       }
-
       [v-cloak] {
         display: none;
+      }
+      body {
+        @apply antialiased text-[12px] flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-midnight;
       }
 
       /* Dark Mode Select */
@@ -53,11 +55,24 @@
         }
       }
 
-      .chart-container {
+      .mini-chart {
         position: relative;
         width: 100%;
-        height: 320px;
+        height: 180px;
       }
+      .compact-scrollbar::-webkit-scrollbar {
+        width: 4px;
+      }
+      .compact-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-slate-300 dark:bg-slate-700 rounded-full;
+      }
+
+      .winner-card {
+        @apply ring-2 ring-emerald-500 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400;
+      }
+      .main-content {
+        height: calc(100vh - 84px);
+      } /* Header + Footer offset */
 
       /* Transitions */
       .fade-enter-active,
@@ -81,10 +96,8 @@
     </style>
   </head>
 
-  <body
-    class="bg-slate-50 dark:bg-midnight text-slate-900 dark:text-slate-100 transition-colors duration-300 flex flex-col min-h-full"
-  >
-    <div id="app" v-cloak class="flex flex-col flex-grow">
+  <body class="dark:text-slate-200">
+    <div id="app" v-cloak class="flex flex-col h-full">
       <div
         v-if="loading"
         class="fixed inset-0 z-[100] bg-white dark:bg-midnight flex flex-col items-center justify-center"
@@ -117,322 +130,241 @@
       </transition-group>
 
       <header
-        class="bg-white/80 dark:bg-panel/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40"
+        class="flex-shrink-0 bg-white/90 dark:bg-panel/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 p-2 px-4 flex items-center justify-between z-50"
       >
-        <div
-          class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center"
-        >
-          <div class="flex items-center gap-3">
-            <div
-              class="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/40"
-            >
-              <i class="fas fa-bolt-lightning text-xl"></i>
-            </div>
-            <h1 class="text-xl font-black tracking-tighter uppercase">
-              EV<span class="text-blue-600">Compare</span>
-            </h1>
-          </div>
-          <button
-            @click="showDisclaimer = true"
-            class="text-[10px] font-black text-slate-400 hover:text-blue-500 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-full transition-all uppercase tracking-widest"
+        <div class="flex items-center gap-2">
+          <i class="fas fa-bolt-lightning text-blue-600"></i>
+          <h1 class="font-black uppercase tracking-tighter">
+            EV <span class="text-blue-600">Compare</span>
+          </h1>
+        </div>
+        <div class="flex items-center gap-2 flex-grow justify-end">
+          <select
+            v-model="filterType"
+            @change="resetFilters"
+            class="bg-slate-100 dark:bg-slate-800 rounded px-2 py-1 font-bold border-none outline-none min-w-[100px]"
           >
-            Disclaimers
-          </button>
+            <option value="ALL">All EV Types</option>
+            <option value="2W">🛵 2-Wheeler</option>
+            <option value="3W">🛺 3-Wheelers</option>
+          </select>
+
+          <select
+            v-model="filterOEM"
+            class="bg-slate-100 dark:bg-slate-800 rounded px-2 py-1 font-bold border-none outline-none min-w-[200px] md:min-w-[250px] max-w-[300px]"
+          >
+            <option value="ALL">All Brands</option>
+            <option v-for="oem in uniqueOEMs" :key="oem" :value="oem">
+              {{oem}}
+            </option>
+          </select>
+
+          <input
+            type="text"
+            v-model="searchQuery"
+            placeholder="Search models..."
+            class="bg-slate-100 dark:bg-slate-800 rounded px-2 py-1 w-24 md:w-40 outline-none"
+          />
         </div>
       </header>
 
-      <main class="max-w-7xl mx-auto px-4 py-10 w-full flex-grow">
-        <section
-          class="bg-white dark:bg-panel p-8 rounded-[32px] shadow-sm border border-slate-200 dark:border-slate-800 mb-12"
+      <div class="flex flex-grow overflow-hidden main-content">
+        <aside
+          class="w-44 md:w-60 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-panel/50 flex flex-col"
         >
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <label
-                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block"
-                >Vehicle Category</label
-              >
-              <select
-                v-model="filterType"
-                @change="resetFilters"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 outline-none focus:border-blue-500 transition-all font-bold"
-              >
-                <option value="ALL">All EV Categories</option>
-                <option value="2W">🛵 2-Wheelers</option>
-                <option value="3W">🛺 3-Wheelers</option>
-              </select>
-            </div>
-            <div>
-              <label
-                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block"
-                >Brand (OEM)</label
-              >
-              <select
-                v-model="filterOEM"
-                class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 outline-none focus:border-blue-500 transition-all font-bold"
-              >
-                <option value="ALL">All Manufacturers</option>
-                <option v-for="oem in sortedOEMs" :key="oem" :value="oem">
-                  {{oem}}
-                </option>
-              </select>
-            </div>
-            <div class="md:col-span-2">
-              <label
-                class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 block"
-                >Model Search</label
-              >
-              <div class="relative">
-                <i
-                  class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-slate-400"
-                ></i>
-                <input
-                  type="text"
-                  v-model="searchQuery"
-                  placeholder="Search by model name..."
-                  class="w-full bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl p-4 pl-14 outline-none focus:border-blue-500 transition-all font-bold"
-                />
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="mb-16">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div
-              v-for="(leader, key) in topThree"
-              :key="key"
-              class="p-8 rounded-[32px] bg-white dark:bg-panel border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group hover:-translate-y-1 transition-all duration-300"
+          <div
+            class="p-2 border-b dark:border-slate-800 flex justify-between items-center text-[9px] font-black uppercase tracking-widest opacity-60"
+          >
+            <span>{{ filteredModels.length }} Models</span>
+            <button
+              @click="selectedModels = []"
+              v-if="selectedModels.length"
+              class="text-blue-600"
             >
-              <div
-                class="absolute -right-4 -bottom-4 text-7xl text-slate-100 dark:text-slate-800/50 group-hover:scale-110 transition-transform"
-              >
-                <i :class="leader.icon"></i>
-              </div>
-              <p
-                class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em] mb-2"
-              >
-                {{ leader.label }}
-              </p>
-              <h3 class="text-xl font-black mb-4 truncate pr-10">
-                {{ leader.data?.name || '---' }}
-              </h3>
-              <p class="text-4xl font-black">
-                {{ Math.round(leader.value) }}
-                <span class="text-xl text-slate-400 font-medium ml-1"
-                  >{{ leader.unit }}</span
-                >
-              </p>
-            </div>
+              Clear
+            </button>
           </div>
-        </section>
-
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          <div class="lg:col-span-7 space-y-4">
-            <h2 class="text-3xl font-black tracking-tighter mb-8 italic">
-              Available <span class="text-blue-600 font-normal">Models</span>
-            </h2>
-
+          <div
+            class="flex-grow overflow-y-auto compact-scrollbar p-1 space-y-1"
+          >
             <div
               v-for="m in filteredModels"
               :key="m.name"
               @click="toggleComparison(m)"
-              class="group bg-white dark:bg-panel p-6 rounded-3xl border-2 cursor-pointer transition-all duration-300 flex items-center justify-between"
-              :class="isSelected(m) ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/10' : 'border-transparent shadow-sm hover:border-slate-300 dark:hover:border-slate-800'"
+              class="p-2 rounded-lg cursor-pointer transition-all border flex items-center justify-between group"
+              :class="isSelected(m) ? 'bg-blue-600 text-white border-blue-600 shadow-lg' : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'"
             >
-              <div class="flex-1">
-                <div class="flex items-center gap-3 mb-2">
-                  <span
-                    class="px-3 py-1 rounded-full text-[9px] font-black bg-blue-600 text-white uppercase"
-                    >{{ m.category }}</span
-                  >
-                  <h4 class="font-black text-xl">{{ m.name }}</h4>
-                </div>
-                <p class="text-xs font-bold text-slate-400 uppercase mb-4">
+              <div class="truncate mr-2">
+                <p class="font-bold truncate">{{ m.name }}</p>
+                <p class="text-[8px] opacity-70 uppercase truncate">
                   {{ m.oem }}
                 </p>
-                <div
-                  class="flex gap-6 text-[11px] font-black text-slate-500 uppercase"
-                >
-                  <span class="flex items-center gap-2"
-                    ><i class="fas fa-road text-blue-500"></i>
-                    {{Math.round(m.range_km)}}km</span
-                  >
-                  <span class="flex items-center gap-2"
-                    ><i class="fas fa-bolt text-amber-500"></i>
-                    {{Math.round(m.battery_kwh)}}kWh</span
-                  >
-                  <span class="flex items-center gap-2"
-                    ><i class="fas fa-gauge-high text-red-500"></i>
-                    {{Math.round(m.max_speed_kmh)}}km/h</span
-                  >
-                </div>
               </div>
-              <div
-                class="w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500"
-                :class="isSelected(m) ? 'bg-blue-600 text-white rotate-90 scale-110' : 'bg-slate-100 dark:bg-slate-800 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600'"
-              >
-                <i
-                  class="fas"
-                  :class="isSelected(m) ? 'fa-check' : 'fa-plus'"
-                ></i>
-              </div>
+              <i
+                class="fas fa-check-circle text-[10px]"
+                :class="isSelected(m) ? 'opacity-100' : 'opacity-0'"
+              ></i>
             </div>
           </div>
+        </aside>
 
-          <aside class="lg:col-span-5">
-            <div
-              class="bg-white dark:bg-panel p-8 rounded-[40px] shadow-2xl border border-slate-200 dark:border-slate-800 sticky top-28 overflow-hidden"
-            >
-              <div class="flex items-center justify-between mb-10">
-                <h3 class="font-black text-2xl italic tracking-tighter">
-                  Compare <span class="text-blue-600 font-normal">Vault</span>
-                </h3>
-                <span
-                  class="bg-slate-900 dark:bg-white dark:text-midnight text-white text-[10px] px-3 py-1.5 rounded-full font-black"
-                  >{{selectedModels.length}} / 3</span
-                >
-              </div>
+        <main class="flex-grow overflow-y-auto p-4 md:p-6 compact-scrollbar">
+          <div
+            v-if="selectedModels.length === 0"
+            class="h-full flex flex-col items-center justify-center opacity-20 grayscale"
+          >
+            <i class="fas fa-chart-simple text-6xl mb-4"></i>
+            <p class="font-black uppercase tracking-widest text-[10px]">
+              Select models to generate benchmark
+            </p>
+          </div>
 
+          <div
+            v-else
+            class="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500"
+          >
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div
-                v-if="selectedModels.length === 0"
-                class="text-center py-20 opacity-20"
+                v-for="chart in chartConfigs"
+                :key="chart.id"
+                class="bg-white dark:bg-panel p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm transition-hover hover:shadow-lg"
               >
-                <i class="fas fa-clone text-7xl mb-6"></i>
-                <p class="font-black uppercase tracking-[0.2em] text-sm">
-                  Select to Analyze
-                </p>
-              </div>
-
-              <div v-else class="space-y-10">
-                <div class="chart-container">
-                  <canvas id="compareChart"></canvas>
-                </div>
-
-                <div class="grid grid-cols-1 gap-4">
-                  <div
-                    v-for="m in selectedModels"
-                    :key="m.name"
-                    class="p-6 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700"
+                <div class="flex justify-between items-center mb-4">
+                  <h4
+                    class="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400"
                   >
-                    <div class="flex justify-between items-start mb-6">
-                      <h5 class="font-black text-sm leading-tight max-w-[70%]">
-                        {{m.name}}
-                      </h5>
-                      <button
-                        @click="toggleComparison(m)"
-                        class="text-red-500 text-[10px] font-black uppercase hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-y-4">
-                      <div>
-                        <p
-                          class="text-[9px] font-black text-slate-400 uppercase mb-1"
-                        >
-                          Real Range
-                        </p>
-                        <p class="text-lg font-black">
-                          {{Math.round(m.est_real_world_range_km)}} km
-                        </p>
-                      </div>
-                      <div>
-                        <p
-                          class="text-[9px] font-black text-slate-400 uppercase mb-1"
-                        >
-                          Cost/100km
-                        </p>
-                        <p class="text-lg font-black text-emerald-500">
-                          ₹{{Math.round(m.cost_per_100km_inr)}}
-                        </p>
-                      </div>
-                      <div>
-                        <p
-                          class="text-[9px] font-black text-slate-400 uppercase mb-1"
-                        >
-                          Payload
-                        </p>
-                        <p class="text-lg font-black text-blue-500">
-                          {{Math.round(m.payload_kg)}} kg
-                        </p>
-                      </div>
-                    </div>
+                    {{ chart.label }}
+                  </h4>
+                  <span
+                    class="text-[10px] font-mono text-blue-500 font-bold px-2 py-0.5 bg-blue-500/10 rounded"
+                    >{{ chart.unit }}</span
+                  >
+                </div>
+                <div class="mini-chart">
+                  <canvas :id="chart.id"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pb-12">
+              <div
+                v-for="m in selectedModels"
+                :key="m.name"
+                class="bg-white dark:bg-panel p-6 rounded-[32px] border-2 transition-all"
+                :class="isSelected(m) ? 'border-blue-500/20 shadow-xl' : 'border-transparent'"
+              >
+                <div class="flex justify-between items-start mb-6">
+                  <h5 class="font-black text-sm leading-tight max-w-[80%]">
+                    {{ m.name }}
+                  </h5>
+                  <button
+                    @click="toggleComparison(m)"
+                    class="text-slate-300 hover:text-red-500"
+                  >
+                    <i class="fas fa-times-circle text-lg"></i>
+                  </button>
+                </div>
+                <div class="space-y-2">
+                  <div
+                    v-for="spec in comparisonSpecs"
+                    :key="spec.key"
+                    class="flex justify-between items-center p-2.5 rounded-xl transition-colors"
+                    :class="isBest(m, spec.key) ? 'winner-card' : 'bg-slate-50 dark:bg-slate-800/40'"
+                  >
+                    <span class="text-[10px] font-bold uppercase opacity-50"
+                      >{{ spec.label }}</span
+                    >
+                    <span class="font-black flex items-center gap-1.5">
+                      <i
+                        v-if="isBest(m, spec.key)"
+                        class="fas fa-crown text-[9px]"
+                      ></i>
+                      {{ Math.round(m[spec.key]) }}{{ spec.suffix }}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
-          </aside>
-        </div>
-      </main>
+          </div>
+        </main>
+      </div>
 
       <footer
-        class="bg-white dark:bg-panel border-t border-slate-200 dark:border-slate-800 py-10"
+        class="flex-shrink-0 bg-white dark:bg-panel border-t border-slate-200 dark:border-slate-800 h-10 px-4 flex items-center justify-between z-50 shadow-2xl"
       >
-        <div
-          class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6 text-center md:text-left"
-        >
-          <div class="space-y-2">
-            <p
-              class="text-[10px] font-black text-blue-600 uppercase tracking-widest"
-            >
-              Data Source
-            </p>
-            <p class="text-xs text-slate-500">
-              All technical specifications fetched periodically from the
-              official
-              <a
-                href="https://pmedrive.heavyindustries.gov.in"
-                target="_blank"
-                class="underline hover:text-blue-600"
-                >PM E-DRIVE Portal</a
-              >.
-            </p>
-          </div>
-          <p class="text-[10px] font-bold text-slate-400 uppercase">
-            © 2026 Naveenchandar | Built with Vue & Tailwind
-          </p>
+        <div class="flex gap-4 text-[9px] font-black uppercase tracking-widest">
+          <a
+            href="https://pmedrive.heavyindustries.gov.in"
+            target="_blank"
+            class="text-slate-400 hover:text-blue-500"
+            >Official Data Portal</a
+          >
+          <a
+            href="https://github.com/navchandar/lab/tree/main/pm-e-drive"
+            target="_blank"
+            class="text-slate-400 hover:text-blue-500"
+            ><i class="fab fa-github mr-1"></i> Hosted on GitHub</a
+          >
+          <button
+            @click="showDisclaimer = true"
+            class="text-blue-500 hover:underline"
+          >
+            Disclaimer
+          </button>
         </div>
+        <p class="text-[9px] font-bold text-slate-400">
+          Copyright &copy;
+          <script>
+            document.write(new Date().getFullYear());
+          </script>
+          Naveenchandar
+        </p>
       </footer>
 
       <transition name="fade">
         <div
           v-if="showDisclaimer"
-          class="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          class="fixed inset-0 z-[120] flex items-center justify-center p-4"
         >
           <div
-            class="absolute inset-0 bg-slate-950/90 backdrop-blur-xl"
+            class="absolute inset-0 bg-slate-950/90 backdrop-blur-sm"
             @click="showDisclaimer = false"
           ></div>
           <div
-            class="bg-white dark:bg-slate-900 p-10 rounded-[48px] max-w-lg w-full shadow-2xl relative z-10 border border-slate-100 dark:border-slate-800"
+            class="bg-white dark:bg-panel p-8 rounded-[40px] max-w-lg w-full relative z-10 border dark:border-slate-800 shadow-2xl"
           >
-            <h3 class="text-4xl font-black tracking-tighter mb-8 italic">
-              Legal <span class="text-blue-600 font-normal">Notice</span>
+            <h3 class="text-3xl font-black italic tracking-tighter mb-6">
+              Disclaimer
             </h3>
             <div
-              class="space-y-6 text-sm font-bold text-slate-500 dark:text-slate-400 mb-10 leading-relaxed"
+              class="text-[12px] space-y-5 text-slate-500 dark:text-slate-400 mb-10 leading-relaxed font-medium"
             >
               <p>
-                • <strong>Accuracy Warning:</strong> This data is aggregated
-                periodically via automated scraping. Government portals update
-                frequently; always verify with official sources and OEM
-                brochures before purchasing.
+                • <strong>Source Data:</strong> This dashboard uses gathers
+                aggregate data from the PM E-DRIVE portal. Specifications and
+                eligibility status are subject to change without notice.
               </p>
               <p>
-                • <strong>Calculated Metrics:</strong> Real-world range and
-                payload are estimates based on standard physics models. Actual
-                performance varies by terrain, weather, traffic and road
-                conditions.
+                • <strong>No Warranty:</strong> While we strive for accuracy,
+                users should verify critical information (like subsidy validity
+                and range) with official manufacturer documentation before
+                making financial decisions.
               </p>
               <p>
                 • <strong>No Liability:</strong> We provide this tool for
                 comparison and information purposes only and are not responsible
                 for financial decisions made based on these numbers.
               </p>
+              <p>
+                • <strong>Metrics Estimations:</strong> Calculated metrics
+                (Payload, Real Range, Running Cost) are theoretical models based
+                on real world assumptions. Actual results will vary based on
+                terrain, weather, road and driving conditions.
+              </p>
             </div>
             <button
               @click="showDisclaimer = false"
-              class="w-full bg-blue-600 text-white py-5 rounded-[24px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-600/40 active:scale-95 transition-all"
+              class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-xs active:scale-95 transition-all"
             >
               I Understand
             </button>
@@ -442,7 +374,7 @@
     </div>
 
     <script>
-      const { createApp, ref, computed, watch, onMounted } = Vue;
+      const { createApp, ref, computed, watch, onMounted, nextTick } = Vue;
 
       createApp({
         setup() {
@@ -454,8 +386,7 @@
           const selectedModels = ref([]);
           const showDisclaimer = ref(false);
           const toasts = ref([]);
-          let chart = null;
-
+          const chartInstances = {};
           function addToast(message, type = "error") {
             const id = Date.now();
             toasts.value.push({ id, message, type });
@@ -465,35 +396,74 @@
             );
           }
 
-          // Close modal on ESC key
-          onMounted(() => {
-            window.addEventListener("keydown", (e) => {
-              if (e.key === "Escape") showDisclaimer.value = false;
-            });
-            initializeApp();
-          });
+          const chartConfigs = [
+            {
+              id: "rangeChart",
+              key: "est_real_world_range_km",
+              label: "Real Range",
+              unit: "KM",
+              color: "#3b82f6",
+            },
+            {
+              id: "speedChart",
+              key: "max_speed_kmh",
+              label: "Max Speed",
+              unit: "KM/H",
+              color: "#ef4444",
+            },
+            {
+              id: "payloadChart",
+              key: "payload_kg",
+              label: "Payload",
+              unit: "KG",
+              color: "#10b981",
+            },
+          ];
 
-          async function initializeApp() {
+          const comparisonSpecs = [
+            {
+              key: "est_real_world_range_km",
+              label: "Real Range",
+              suffix: " km",
+            },
+            { key: "max_speed_kmh", label: "Top Speed", suffix: " km/h" },
+            { key: "payload_kg", label: "Payload", suffix: " kg" },
+            { key: "battery_kwh", label: "Battery Cap.", suffix: " kWh" },
+            {
+              key: "cost_per_100km_inr",
+              label: "Running Cost",
+              suffix: " ₹",
+              reverse: true,
+            },
+          ];
+
+          onMounted(async () => {
             try {
-              const response = await fetch("data.json");
-              if (!response.ok) throw new Error("Data Source Not Found");
-              vehicles.value = await response.json();
-              addToast("EV Data loaded Successfully", "success");
+              const res = await fetch("data.json");
+              if (!res.ok) throw new Error("Data Source Not Found");
+              vehicles.value = await res.json();
             } catch (e) {
               addToast(`Failed to load EV Data: ${e.message}`);
             } finally {
               loading.value = false;
             }
+
+            window.addEventListener("keydown", (e) => {
+              if (e.key === "Escape") showDisclaimer.value = false;
+            });
+          });
+
+          function resetSelection() {
+            selectedModels.value = []; // Automatically clear charts when filters change
           }
 
-          // Cascading reset
           function resetFilters() {
             filterOEM.value = "ALL";
             searchQuery.value = "";
-            selectedModels.value = [];
+            resetSelection();
           }
 
-          const sortedOEMs = computed(() => {
+          const uniqueOEMs = computed(() => {
             let list = vehicles.value;
             if (filterType.value !== "ALL")
               list = list.filter((v) => v.type === filterType.value);
@@ -513,132 +483,102 @@
             });
           });
 
-          const topThree = computed(() => {
-            if (vehicles.value.length === 0) return {};
-            const list = filteredModels.value.length
-              ? filteredModels.value
-              : vehicles.value;
-            return {
-              range: {
-                label: "Long Range",
-                unit: "KM",
-                icon: "fa-solid fa-map-location-dot",
-                data: [...list].sort(
-                  (a, b) =>
-                    b.est_real_world_range_km - a.est_real_world_range_km,
-                )[0],
-                value: [...list].sort(
-                  (a, b) =>
-                    b.est_real_world_range_km - a.est_real_world_range_km,
-                )[0]?.est_real_world_range_km,
-              },
-              economy: {
-                label: "Budget King",
-                unit: "₹",
-                icon: "fa-solid fa-indian-rupee-sign",
-                data: [...list].sort(
-                  (a, b) => a.cost_per_100km_inr - b.cost_per_100km_inr,
-                )[0],
-                value: [...list].sort(
-                  (a, b) => a.cost_per_100km_inr - b.cost_per_100km_inr,
-                )[0]?.cost_per_100km_inr,
-              },
-              load: {
-                label: "Max Payload",
-                unit: "KG",
-                icon: "fa-solid fa-truck-ramp-box",
-                data: [...list].sort((a, b) => b.payload_kg - a.payload_kg)[0],
-                value: [...list].sort((a, b) => b.payload_kg - a.payload_kg)[0]
-                  ?.payload_kg,
-              },
-            };
-          });
-
           function toggleComparison(m) {
             const idx = selectedModels.value.findIndex(
-              (item) => item.name === m.name,
+              (x) => x.name === m.name,
             );
             if (idx > -1) selectedModels.value.splice(idx, 1);
             else if (selectedModels.value.length < 3)
               selectedModels.value.push(m);
-            else addToast("Comparison limit reached (Max 3)");
           }
 
           function isSelected(m) {
-            return selectedModels.value.some((item) => item.name === m.name);
+            return selectedModels.value.some((x) => x.name === m.name);
+          }
+
+          function isBest(m, key) {
+            if (selectedModels.value.length < 2) return false;
+            const spec = comparisonSpecs.find((s) => s.key === key);
+            const vals = selectedModels.value.map((x) => x[key]);
+            const target = spec.reverse ? Math.min(...vals) : Math.max(...vals);
+            return m[key] === target;
           }
 
           watch(
             selectedModels,
-            (models) => {
-              const ctx = document.getElementById("compareChart");
-              if (!ctx) return;
-              if (chart) chart.destroy();
-              if (models.length === 0) return;
-
+            async (newModels) => {
+              await nextTick();
               const isDark = window.matchMedia(
                 "(prefers-color-scheme: dark)",
               ).matches;
 
-              chart = new Chart(ctx, {
-                type: "bar",
-                data: {
-                  labels: models.map((m) => m.name.split(" ")[0]),
-                  datasets: [
-                    {
-                      label: "Real World Range (km)",
-                      data: models.map((m) => m.est_real_world_range_km),
-                      backgroundColor: "#3b82f6",
-                      borderRadius: 16,
+              chartConfigs.forEach((conf) => {
+                const ctx = document.getElementById(conf.id);
+                if (!ctx) return;
+                if (chartInstances[conf.id]) chartInstances[conf.id].destroy();
+                if (newModels.length === 0) return;
+
+                chartInstances[conf.id] = new Chart(ctx, {
+                  type: "bar",
+                  data: {
+                    labels: newModels.map((m) => m.name),
+                    datasets: [
+                      {
+                        data: newModels.map((m) => Math.round(m[conf.key])),
+                        backgroundColor: conf.color,
+                        borderRadius: 8,
+                        barThickness: 30,
+                      },
+                    ],
+                  },
+                  options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                      legend: { display: false },
+                      tooltip: {
+                        callbacks: {
+                          label: (ctx) => ` ${ctx.parsed.y} ${conf.unit}`,
+                        },
+                      },
                     },
-                  ],
-                },
-                options: {
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      padding: 16,
-                      backgroundColor: isDark ? "#1e293b" : "#ffffff",
-                      titleColor: isDark ? "#ffffff" : "#0f172a",
-                      bodyColor: isDark ? "#94a3b8" : "#475569",
-                      borderWidth: 1,
-                      borderColor: "#3b82f6",
-                      cornerRadius: 12,
+                    scales: {
+                      y: {
+                        grid: { color: isDark ? "#1e293b" : "#f1f5f9" },
+                        ticks: {
+                          font: { size: 9, weight: "bold" },
+                          callback: (val) => val + " " + conf.unit,
+                        },
+                      },
+                      x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 8, weight: "bold" } },
+                      },
                     },
                   },
-                  scales: {
-                    y: {
-                      grid: { color: isDark ? "#1e293b" : "#f1f5f9" },
-                      ticks: { font: { weight: "bold" } },
-                    },
-                    x: {
-                      grid: { display: false },
-                      ticks: { font: { weight: "bold" } },
-                    },
-                  },
-                },
+                });
               });
             },
             { deep: true },
           );
 
           return {
-            vehicles,
             loading,
             filterType,
             filterOEM,
             searchQuery,
             filteredModels,
             selectedModels,
+            uniqueOEMs,
+            showDisclaimer,
             toggleComparison,
             isSelected,
-            topThree,
-            sortedOEMs,
-            showDisclaimer,
+            isBest,
+            chartConfigs,
+            comparisonSpecs,
             toasts,
             resetFilters,
+            resetSelection,
           };
         },
       }).mount("#app");

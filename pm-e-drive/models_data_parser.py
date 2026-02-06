@@ -177,12 +177,12 @@ class EV_DATA_PARSER:
 
                 model_entry = self.get_row_data(cells, soup)
                 if model_entry:
-                    # Create a Deduplication Key (Name + Range + Battery + Speed)
+                    # Create a Deduplication Key
                     dedup_key = (
+                        model_entry["oem"],
                         model_entry["name"],
-                        model_entry.get("range_km", 0),
-                        model_entry.get("battery_kwh", 0),
-                        model_entry.get("max_speed_kmh", 0),
+                        model_entry.get("type", ""),
+                        model_entry.get("category", ""),
                     )
                     if dedup_key not in models_found:
                         models_found[dedup_key] = model_entry
