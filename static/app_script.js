@@ -7,6 +7,7 @@ const sidebar = document.getElementById("sidebar");
 const hamburger = document.getElementById("hamburger-menu");
 const header = document.querySelector("body header");
 const iframe = document.getElementById("appFrame");
+let appLinks = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeAppUI();
@@ -130,7 +131,7 @@ function setupUpdateNotification() {
 
 function updateThemeColorFromIframe() {
   const iframe = document.getElementById("appFrame");
-  if (!iframe) {
+  if (!iframe || !iframe.contentWindow) {
     console.error("Iframe not found.");
     return;
   }
@@ -142,6 +143,10 @@ function updateThemeColorFromIframe() {
     // Get the computed background-color style of the iframe's body
     // Note: We use getComputedStyle to get the *actual* applied style
     const iframeBody = iframeDocument.body;
+    if (!iframeBody) {
+      console.error("Iframe body not found.");
+      return;
+    }
     const computedStyle = window.getComputedStyle(iframeBody);
     const backgroundColor = computedStyle
       .getPropertyValue("background-color")
@@ -173,7 +178,7 @@ function updateThemeColorFromIframe() {
   } catch (e) {
     console.error(
       "Error accessing iframe content. Check for Same-Origin restrictions.",
-      e
+      e,
     );
   }
 }
@@ -192,6 +197,7 @@ function monitorIframeBackgroundColor() {
   iframe.dataset.themeSyncInit = "1";
 
   // Schedule update AFTER iframe click handlers complete (next tick)
+  // Optimization: Use requestAnimationFrame for UI updates instead of setTimeout
   const scheduleUpdate = (() => {
     let scheduled = false;
     return () => {
@@ -199,10 +205,10 @@ function monitorIframeBackgroundColor() {
         return;
       }
       scheduled = true;
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         scheduled = false;
         updateThemeColorFromIframe();
-      }, 0);
+      });
     };
   })();
 
@@ -219,6 +225,10 @@ function monitorIframeBackgroundColor() {
 
       const doc = iframe.contentWindow.document;
       const body = doc.body;
+      if (!body) {
+        return;
+      }
+
       body.addEventListener("click", collapseSidebar);
 
       // Watch for style/class changes on the body
@@ -248,7 +258,7 @@ function monitorIframeBackgroundColor() {
     } catch (e) {
       console.error(
         "Cannot set up MutationObserver due to Same-Origin Policy.",
-        e
+        e,
       );
     }
   };
@@ -276,7 +286,12 @@ function samePath(a, b) {
   if (!a || !b) {
     return false;
   }
+  if (a === b) {
+    return true;
+  }
+
   try {
+    // Only parse if strings differ
     return (
       new URL(a, window.location.origin).pathname ===
       new URL(b, window.location.origin).pathname
@@ -328,7 +343,9 @@ function getNormalizedHashPath() {
  */
 function handlePopState() {
   const iframe = document.getElementById("appFrame");
-  const links = document.querySelectorAll("#app-links li a");
+  if (!appLinks) {
+    appLinks = document.querySelectorAll("#app-links li a");
+  }
   let targetSrc = null;
 
   // The browser has already updated the URL and hash when popstate fires.
@@ -338,14 +355,14 @@ function handlePopState() {
   if (!targetSrc) {
     iframe.setAttribute("src", "");
     uncollapseSidebar();
-    links.forEach((l) => l.parentElement.classList.remove("active"));
+    appLinks.forEach((l) => l.parentElement.classList.remove("active"));
     return;
   }
 
   if (!samePath(iframe.getAttribute("src") || "", targetSrc)) {
     safeSetIframeSrc(targetSrc);
     const activeKey = targetSrc.replace(BASE_PATH, "").replace(/^\//, "");
-    links.forEach((l) => {
+    appLinks.forEach((l) => {
       const linkHref = l.getAttribute("href");
       // Use toCanonicalRoute on the link's href to get the comparable key
       const linkCanonicalRoute = toCanonicalRoute(linkHref) || "";
@@ -445,7 +462,7 @@ function updateHamburger() {
 
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
-  const links = document.querySelectorAll("#app-links li a");
+  appLinks = document.querySelectorAll("#app-links li a");
 
   window.addEventListener("hashchange", handlePopState);
 
@@ -460,7 +477,7 @@ function initializeAppUI() {
     console.error("Iframe failed to load:", iframe.getAttribute("src"));
   });
 
-  links.forEach((link) => {
+  appLinks.forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       collapseSidebar();
@@ -482,8 +499,8 @@ function initializeAppUI() {
         window.location.hash = newHash;
       }
 
-      links.forEach((l) => l.parentElement.classList.remove("active"));
-      link.parentElement.classList.add("active");
+      appLinks.forEach((l) => l.parentElement.classList.remove("active"));
+      appLinks.parentElement.classList.add("active");
 
       setTimeout(() => {
         iframe.focus();
@@ -518,11 +535,11 @@ function initializeAppUI() {
       return;
     }
     // Check for the specific command to toggle the sidebar
-    if (event.data && event.data.command === "toggleSidebar") {
+    if (event.data?.command === "toggleSidebar") {
       event.preventDefault();
       toggleHamburgerMenu();
     }
-    if (event.data && event.data.command === "collapseSidebar") {
+    if (event.data?.command === "collapseSidebar") {
       event.preventDefault();
       collapseSidebar();
     }
