@@ -17,13 +17,17 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    display: flex;
+    flex-direction: column;
 }
 
 /* --- Main Layout --- */
 #app-container {
     display: flex;
+    position: relative;
+    flex: 1;
     width: 100vw;
-    height: 100vh;
+    height: auto;
     overflow: hidden;
 }
 
@@ -85,8 +89,16 @@ header {
     text-align: center;
 }
 
+.sidebar-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
 .sidebar-info {
     padding: 0 1em 1em 3em;
+    padding-bottom: 6em;
     color: #555555cc;
     font-size: 0.9em;
 }
@@ -109,8 +121,10 @@ header {
 #app-links {
     flex-grow: 1;
     padding: 0.5rem 0;
-    padding-bottom: 25em;
+    padding-bottom: 1rem;
     overflow-y: auto;
+    scrollbar-color: #dee2e6 transparent;
+    scrollbar-width: thin;
     list-style: none;
 }
 
@@ -226,12 +240,18 @@ header {
 }
 
 .version-label {
-    margin: 0;
-    border-top: 1px solid #444;
-    padding: 2em 1em 1em 3.5em;
-    font-size: 0.85em;
-    text-wrap: nowrap;
+    margin: 0 3em;
+    text-align: left;
 }
+
+.version-label,
+.sidebar-info {
+    flex-shrink: 0;
+    z-index: 1;
+    background-color: inherit;
+    font-size: small;
+}
+
 
 /* --- Mobile & Overlay View --- */
 @media (max-width: 768px) {
@@ -241,7 +261,7 @@ header {
     }
 
     #app-links {
-        padding-bottom: 5em;
+        padding-bottom: 2em;
     }
 
     #sidebar {
