@@ -278,7 +278,7 @@
                         v-if="isBest(m, spec.key)"
                         class="fas fa-crown text-[9px]"
                       ></i>
-                      {{ Math.round(m[spec.key]) }}{{ spec.suffix }}
+                      {{ m[spec.key] }}{{ spec.suffix }}
                     </span>
                   </div>
                 </div>
@@ -400,14 +400,14 @@
             {
               id: "speedChart",
               key: "max_speed_kmh",
-              label: "Max Speed",
+              label: "Top Speed",
               unit: "KM/H",
               gradient: { start: "#ef4444", end: "#b91c1c" },
             }, // Red
             {
               id: "payloadChart",
               key: "payload_kg",
-              label: "Payload",
+              label: "Payload Capacity",
               unit: "KG",
               gradient: { start: "#10b981", end: "#047857" },
             }, // Green
@@ -420,11 +420,11 @@
               suffix: " km",
             },
             { key: "max_speed_kmh", label: "Top Speed", suffix: " km/h" },
-            { key: "payload_kg", label: "Payload", suffix: " kg" },
-            { key: "battery_kwh", label: "Battery Cap.", suffix: " kWh" },
+            { key: "payload_kg", label: "Payload Capacity", suffix: " kg" },
+            { key: "battery_kwh", label: "Battery Capactiy", suffix: " kWh" },
             {
               key: "cost_per_100km_inr",
-              label: "Running Cost",
+              label: "Running Cost (per 100km)",
               suffix: " ₹",
               reverse: true,
             },
@@ -599,7 +599,7 @@
                     }),
                     datasets: [
                       {
-                        data: newModels.map((m) => Math.round(m[conf.key])),
+                        data: newModels.map((m) => m[conf.key]),
                         backgroundColor: gradient,
                         borderRadius: 6,
                         barThickness: 30,
