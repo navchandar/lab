@@ -172,7 +172,7 @@
           class="w-44 md:w-60 flex-shrink-0 border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-panel/50 flex flex-col"
         >
           <div
-            class="p-2 border-b dark:border-slate-800 flex justify-between items-center text-[9px] font-black uppercase tracking-widest opacity-60"
+            class="p-2 border-b dark:border-slate-800 flex justify-between items-center text-[10px] font-black uppercase tracking-widest opacity-60"
           >
             <span>{{ filteredModels.length }} Models</span>
             <button
@@ -190,11 +190,19 @@
               v-for="m in filteredModels"
               :key="m.name"
               @click="toggleComparison(m)"
-              class="p-2 rounded-lg cursor-pointer transition-all border flex items-center justify-between group"
+              class="p-2 rounded-lg cursor-pointer transition-all border flex items-center justify-between group relative"
               :class="isSelected(m) ? 'bg-blue-600 text-white border-blue-600 shadow-lg' : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'"
             >
               <div class="truncate mr-2">
-                <p class="font-bold truncate">{{ formatText(m.name) }}</p>
+                <div class="flex items-center gap-1">
+                  <i
+                    v-if="m.is_best_in_oem"
+                    class="fas fa-star text-[5px] text-amber-400"
+                    title="Top Ranked from this Brand"
+                  >
+                  </i>
+                  <p class="font-bold truncate">{{ formatText(m.name) }}</p>
+                </div>
                 <p class="text-[8px] opacity-70 uppercase truncate">
                   {{ formatText(m.oem) }}
                 </p>
@@ -419,14 +427,48 @@
               label: "Real Range",
               suffix: " km",
             },
-            { key: "max_speed_kmh", label: "Top Speed", suffix: " km/h" },
-            { key: "payload_kg", label: "Payload Capacity", suffix: " kg" },
-            { key: "battery_kwh", label: "Battery Capactiy", suffix: " kWh" },
             {
               key: "cost_per_100km_inr",
-              label: "Running Cost (per 100km)",
+              label: "Running Cost",
               suffix: " ₹",
               reverse: true,
+            },
+            {
+              key: "max_speed_kmh",
+              label: "Top Speed",
+              suffix: " km/h",
+            },
+            {
+              key: "acceleration_ms2",
+              label: "Acceleration",
+              suffix: " m/s²",
+            },
+            {
+              key: "payload_kg",
+              label: "Payload Capacity",
+              suffix: " kg",
+            },
+            {
+              key: "battery_kwh",
+              label: "Battery Capacity",
+              suffix: " kWh",
+            },
+            {
+              key: "efficiency_reported_kwh_100km",
+              label: "Efficiency",
+              suffix: " kWh/100km",
+              reverse: true,
+            },
+            {
+              key: "battery_weight_kg",
+              label: "Battery Weight",
+              suffix: " kg",
+              reverse: true,
+            },
+            {
+              key: "battery_density_wh_kg",
+              label: "Energy Density",
+              suffix: " Wh/kg",
             },
           ];
 

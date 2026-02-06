@@ -125,6 +125,17 @@ class DataUtils:
         return item
 
 
+    @staticmethod
+    def calculate_score(item):
+        """Calculates a normalized score (0-100) for ranking."""
+        # We weigh Range (45%), Efficiency/Cost (25%), and Payload (30%)
+        r_score = (item.get("est_real_world_range_km", 0) / 160) * 45  # Benchmark 160km
+        c_score = (1 - (item.get("cost_per_100km_inr", 0) / 40)) * 25 # Lower cost is better
+        p_score = (item.get("payload_kg", 0) / 250) * 30              # Benchmark 250kg
+        
+        return round(max(r_score + c_score + p_score, 0), 2)
+
+        
 class EV_DATA_PARSER:
     def __init__(self):
         self.url = "https://pmedrive.heavyindustries.gov.in/models"
@@ -187,6 +198,22 @@ class EV_DATA_PARSER:
                     if dedup_key not in models_found:
                         models_found[dedup_key] = model_entry
                         self.data.append(model_entry)
+
+
+            for item in self.data:
+                item["rank_score"] = DataUtils.calculate_score(item)
+                item["is_best_in_oem"] = False
+
+            # Identify the winner for each OEM + Type (2W or 3W)
+            oem_groups = {}
+            for item in self.data:
+                key = (item["oem"], item["type"])
+                if key not in oem_groups or item["rank_score"] > oem_groups[key]["rank_score"]:
+                    oem_groups[key] = item
+            
+            # 3. Mark the winners
+            for winner in oem_groups.values():
+                winner["is_best_in_oem"] = True
 
         except Exception as e:
             # Get the traceback object
