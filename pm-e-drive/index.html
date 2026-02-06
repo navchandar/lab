@@ -113,7 +113,7 @@
       <transition-group
         name="toast"
         tag="div"
-        class="fixed top-6 right-4 z-50 space-y-3 pointer-events-none"
+        class="fixed top-6 right-4 z-52 space-y-3 pointer-events-none"
       >
         <div
           v-for="t in toasts"
@@ -141,7 +141,6 @@
         <div class="flex items-center gap-2 flex-grow justify-end">
           <select
             v-model="filterType"
-            @change="resetFilters"
             class="bg-slate-100 dark:bg-slate-800 rounded px-2 py-1 font-bold border-none outline-none min-w-[100px]"
           >
             <option value="ALL">All EV Types</option>
@@ -155,7 +154,7 @@
           >
             <option value="ALL">All Brands</option>
             <option v-for="oem in uniqueOEMs" :key="oem" :value="oem">
-              {{oem}}
+              {{ formatText(oem) }}
             </option>
           </select>
 
@@ -195,9 +194,9 @@
               :class="isSelected(m) ? 'bg-blue-600 text-white border-blue-600 shadow-lg' : 'border-transparent hover:bg-slate-100 dark:hover:bg-slate-800'"
             >
               <div class="truncate mr-2">
-                <p class="font-bold truncate">{{ m.name }}</p>
+                <p class="font-bold truncate">{{ formatText(m.name) }}</p>
                 <p class="text-[8px] opacity-70 uppercase truncate">
-                  {{ m.oem }}
+                  {{ formatText(m.oem) }}
                 </p>
               </div>
               <i
@@ -255,7 +254,7 @@
               >
                 <div class="flex justify-between items-start mb-6">
                   <h5 class="font-black text-sm leading-tight max-w-[80%]">
-                    {{ m.name }}
+                    {{ formatText(m.name) }}
                   </h5>
                   <button
                     @click="toggleComparison(m)"
@@ -340,9 +339,9 @@
               class="text-[12px] space-y-5 text-slate-500 dark:text-slate-400 mb-10 leading-relaxed font-medium"
             >
               <p>
-                • <strong>Source Data:</strong> This dashboard uses gathers
-                aggregate data from the PM E-DRIVE portal. Specifications and
-                eligibility status are subject to change without notice.
+                • <strong>Source Data:</strong> This dashboard gathers aggregate
+                data from the PM E-DRIVE portal. Specifications and eligibility
+                status are subject to change without notice.
               </p>
               <p>
                 • <strong>No Warranty:</strong> While we strive for accuracy,
@@ -378,6 +377,7 @@
 
       createApp({
         setup() {
+          // --- State ---
           const vehicles = ref([]);
           const loading = ref(true);
           const filterType = ref("ALL");
@@ -387,37 +387,30 @@
           const showDisclaimer = ref(false);
           const toasts = ref([]);
           const chartInstances = {};
-          function addToast(message, type = "error") {
-            const id = Date.now();
-            toasts.value.push({ id, message, type });
-            setTimeout(
-              () => (toasts.value = toasts.value.filter((t) => t.id !== id)),
-              5000,
-            );
-          }
 
+          // --- Colors & Configuration ---
           const chartConfigs = [
             {
               id: "rangeChart",
               key: "est_real_world_range_km",
               label: "Real Range",
               unit: "KM",
-              color: "#3b82f6",
-            },
+              gradient: { start: "#3b82f6", end: "#1d4ed8" },
+            }, // Blue
             {
               id: "speedChart",
               key: "max_speed_kmh",
               label: "Max Speed",
               unit: "KM/H",
-              color: "#ef4444",
-            },
+              gradient: { start: "#ef4444", end: "#b91c1c" },
+            }, // Red
             {
               id: "payloadChart",
               key: "payload_kg",
               label: "Payload",
               unit: "KG",
-              color: "#10b981",
-            },
+              gradient: { start: "#10b981", end: "#047857" },
+            }, // Green
           ];
 
           const comparisonSpecs = [
@@ -437,59 +430,115 @@
             },
           ];
 
+          // --- Helpers ---
+          function addToast(message, type = "error") {
+            const id = Date.now();
+            toasts.value.push({ id, message, type });
+            setTimeout(
+              () => (toasts.value = toasts.value.filter((t) => t.id !== id)),
+              4000,
+            );
+          }
+
+          // --- Text Normalizer (Title Case + Acronyms) ---
+          function formatText(str) {
+            if (!str) return "";
+            // List of words to keep UPPERCASE
+            const acronyms = [
+              "TVS",
+              "BMW",
+              "KTM",
+              "L1",
+              "L2",
+              "L5",
+              "EV",
+              "LR",
+              "HR",
+              "ST",
+              "EX",
+              "S1",
+              "PRO",
+              "MAX",
+              "NX",
+              "G1",
+            ];
+
+            return str
+              .toLowerCase()
+              .split(" ")
+              .map((word) => {
+                const upper = word.toUpperCase();
+                // If it's a known acronym or contains numbers (e.g., 450X), keep uppercase
+                if (acronyms.includes(upper) || /\d/.test(word)) return upper;
+                // Otherwise Title Case
+                return word.charAt(0).toUpperCase() + word.slice(1);
+              })
+              .join(" ");
+          }
+
           onMounted(async () => {
             try {
               const res = await fetch("data.json");
-              if (!res.ok) throw new Error("Data Source Not Found");
+              if (!res.ok) throw new Error("Data source not found");
               vehicles.value = await res.json();
             } catch (e) {
-              addToast(`Failed to load EV Data: ${e.message}`);
+              addToast(`Failed to load data: ${e.message}`);
             } finally {
               loading.value = false;
             }
-
             window.addEventListener("keydown", (e) => {
               if (e.key === "Escape") showDisclaimer.value = false;
             });
           });
 
-          function resetSelection() {
-            selectedModels.value = []; // Automatically clear charts when filters change
-          }
+          // --- Computed Properties ---
 
-          function resetFilters() {
-            filterOEM.value = "ALL";
-            searchQuery.value = "";
-            resetSelection();
-          }
-
+          // 1. Available OEMs based on Category
           const uniqueOEMs = computed(() => {
             let list = vehicles.value;
-            if (filterType.value !== "ALL")
+            // If specific category is selected, filter the OEM list
+            if (filterType.value !== "ALL") {
               list = list.filter((v) => v.type === filterType.value);
+            }
             return [...new Set(list.map((v) => v.oem))].sort();
           });
 
+          // 2. Filtered Models based on all inputs
           const filteredModels = computed(() => {
+            const query = searchQuery.value.toLowerCase();
             return vehicles.value.filter((v) => {
               const typeMatch =
                 filterType.value === "ALL" || v.type === filterType.value;
               const oemMatch =
                 filterOEM.value === "ALL" || v.oem === filterOEM.value;
-              const searchMatch = v.name
-                .toLowerCase()
-                .includes(searchQuery.value.toLowerCase());
+              const searchMatch =
+                !query || v.name.toLowerCase().includes(query);
               return typeMatch && oemMatch && searchMatch;
             });
           });
+
+          // --- Interaction Logic for Category Change
+          // Logic: Update OEM list AND reset OEM selection to ALL.
+          watch(filterType, () => {
+            filterOEM.value = "ALL"; // Always reset OEM when Category changes
+            selectedModels.value = []; // Clear charts
+          });
+
+          // --- Selection Methods ---
 
           function toggleComparison(m) {
             const idx = selectedModels.value.findIndex(
               (x) => x.name === m.name,
             );
-            if (idx > -1) selectedModels.value.splice(idx, 1);
-            else if (selectedModels.value.length < 3)
-              selectedModels.value.push(m);
+            if (idx > -1) {
+              selectedModels.value.splice(idx, 1);
+            } else {
+              if (selectedModels.value.length < 3) {
+                selectedModels.value.push(m);
+              } else {
+                addToast("Max 3 models selected", "warning");
+              }
+            }
           }
 
           function isSelected(m) {
@@ -504,6 +553,8 @@
             return m[key] === target;
           }
 
+          // --- Chart Engine ---
+
           watch(
             selectedModels,
             async (newModels) => {
@@ -511,32 +562,66 @@
               const isDark = window.matchMedia(
                 "(prefers-color-scheme: dark)",
               ).matches;
+              const gridColor = isDark ? "#1e293b" : "#f1f5f9";
+              const textColor = isDark ? "#94a3b8" : "#64748b";
 
               chartConfigs.forEach((conf) => {
                 const ctx = document.getElementById(conf.id);
-                if (!ctx) return;
-                if (chartInstances[conf.id]) chartInstances[conf.id].destroy();
-                if (newModels.length === 0) return;
+                if (!ctx) {
+                  return;
+                }
+
+                // Clean up old chart
+                if (chartInstances[conf.id]) {
+                  chartInstances[conf.id].destroy();
+                  delete chartInstances[conf.id];
+                }
+
+                if (!ctx || newModels.length === 0) {
+                  return;
+                }
+
+                // Create Gradient
+                const canvasCtx = ctx.getContext("2d");
+                const gradient = canvasCtx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, conf.gradient.start);
+                gradient.addColorStop(1, conf.gradient.end);
 
                 chartInstances[conf.id] = new Chart(ctx, {
                   type: "bar",
                   data: {
-                    labels: newModels.map((m) => m.name),
+                    labels: newModels.map((m) => {
+                      // Smart Label Truncation for small charts
+                      const formatted = formatText(m.name);
+                      return formatted.length > 15
+                        ? formatted.substring(0, 12) + "..."
+                        : formatted;
+                    }),
                     datasets: [
                       {
                         data: newModels.map((m) => Math.round(m[conf.key])),
-                        backgroundColor: conf.color,
-                        borderRadius: 8,
+                        backgroundColor: gradient,
+                        borderRadius: 6,
                         barThickness: 30,
+                        maxBarThickness: 60,
+                        hoverBackgroundColor: conf.gradient.start,
                       },
                     ],
                   },
                   options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: { duration: 500, easing: "easeOutQuart" },
                     plugins: {
                       legend: { display: false },
                       tooltip: {
+                        backgroundColor: isDark ? "#0f172a" : "#ffffff",
+                        titleColor: isDark ? "#fff" : "#000",
+                        bodyColor: isDark ? "#cbd5e1" : "#334155",
+                        borderColor: conf.gradient.start,
+                        borderWidth: 1,
+                        padding: 10,
+                        titleFont: { size: 12, weight: "bold" },
                         callbacks: {
                           label: (ctx) => ` ${ctx.parsed.y} ${conf.unit}`,
                         },
@@ -544,15 +629,20 @@
                     },
                     scales: {
                       y: {
-                        grid: { color: isDark ? "#1e293b" : "#f1f5f9" },
+                        grid: { color: gridColor },
                         ticks: {
-                          font: { size: 9, weight: "bold" },
+                          font: { size: 10, weight: "bold" },
+                          color: textColor,
                           callback: (val) => val + " " + conf.unit,
                         },
+                        beginAtZero: true,
                       },
                       x: {
                         grid: { display: false },
-                        ticks: { font: { size: 8, weight: "bold" } },
+                        ticks: {
+                          font: { size: 9, weight: "bold" },
+                          color: textColor,
+                        },
                       },
                     },
                   },
@@ -571,14 +661,13 @@
             selectedModels,
             uniqueOEMs,
             showDisclaimer,
+            toasts,
             toggleComparison,
             isSelected,
             isBest,
             chartConfigs,
             comparisonSpecs,
-            toasts,
-            resetFilters,
-            resetSelection,
+            formatText,
           };
         },
       }).mount("#app");
