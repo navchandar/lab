@@ -463,6 +463,9 @@ function updateHamburger() {
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
   appLinks = document.querySelectorAll("#app-links li a");
+  if (!appLinks) {
+    console.warn("App links not found in the sidebar!");
+  }
 
   window.addEventListener("hashchange", handlePopState);
 
@@ -500,7 +503,7 @@ function initializeAppUI() {
       }
 
       appLinks.forEach((l) => l.parentElement.classList.remove("active"));
-      appLinks.parentElement.classList.add("active");
+      link.parentElement.classList.add("active");
 
       setTimeout(() => {
         iframe.focus();
