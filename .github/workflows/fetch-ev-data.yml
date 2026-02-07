@@ -30,8 +30,14 @@ jobs:
         with:
           python-version: "3.9"
 
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libspatialindex-dev
+          sudo apt-get install -y libjpeg-dev zlib1g-dev libwebp-dev libtiff-dev pkg-config
+
       - name: Install dependencies
-        run: pip install requests beautifulsoup4
+        run: pip install requests beautifulsoup4 Pillow
 
       - name: Run Script
         run: python models_data_parser.py
@@ -40,5 +46,5 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "build: updated EV data"
-          # Target .json files inside /pm-e-drive
-          file_pattern: "pm-e-drive/data.json"
+          # Target .json and image files inside /pm-e-drive
+          file_pattern: "pm-e-drive/data.json pm-e-drive/images/*.jpg"

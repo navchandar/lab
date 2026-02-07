@@ -1,3 +1,5 @@
+import os
+import re
 import json
 import logging
 import sys
@@ -6,6 +8,8 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from PIL import Image, ImageOps
+from io import BytesIO
 
 # --- Configuration & Logging Setup ---
 logging.basicConfig(
@@ -50,6 +54,9 @@ CHASSIS_RATIOS = {
     "E-RICKSHAW": 0.38,
     "E-CART": 0.40,
 }
+
+# Standard size (4:3 ratio is common)
+TARGET_SIZE = (800, 600)
 
 
 class DataUtils:
@@ -170,6 +177,7 @@ class EV_DATA_PARSER:
         self.url = "https://pmedrive.heavyindustries.gov.in/models"
         self.domain = "https://pmedrive.heavyindustries.gov.in"
         self.data = []
+        self.image_dir = "images"
         self.headers = {
             "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
             "accept-language": "en-US,en;q=0.9",
@@ -177,6 +185,9 @@ class EV_DATA_PARSER:
             "upgrade-insecure-requests": "1",
             "referer": "https://www.google.com/",
         }
+        # Create images directory
+        os.makedirs(self.image_dir, exist_ok=True)
+
         # --- Retry Logic Configuration ---
         self.session = requests.Session()
         retry_strategy = Retry(
@@ -188,6 +199,79 @@ class EV_DATA_PARSER:
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("http://", adapter)
         self.session.mount("https://", adapter)
+
+    def sanitize_filename(self, text):
+        """Converts strings to safe filenames."""
+        return re.sub(r'[^\w\-]', '_', text.strip().lower())
+
+    def process_and_save_image(self, image_content, filepath):
+        """
+        Validates, resizes with aspect ratio, pads with black frame,
+        and compresses the image.
+        """
+        try:
+            # 1. Validation: Try to open and verify the image
+            img = Image.open(BytesIO(image_content))
+            img.verify() # Checks for corruption
+            
+            # Re-open because verify() closes the file pointer
+            img = Image.open(BytesIO(image_content))
+            img = img.convert("RGB") # Ensure no transparency issues with JPEGs
+
+            # 2. Resize & Pad (Letterboxing)
+            # This maintains aspect ratio and adds black bars to reach TARGET_SIZE
+            img.thumbnail(TARGET_SIZE, Image.Resampling.LANCZOS)
+            
+            # Create a black background
+            new_img = Image.new("RGB", TARGET_SIZE, (0, 0, 0))
+            # Center the original image on the black background
+            upper_left = (
+                (TARGET_SIZE[0] - img.size[0]) // 2,
+                (TARGET_SIZE[1] - img.size[1]) // 2
+            )
+            new_img.paste(img, upper_left)
+
+            # 3. Compress and Save
+            # optimize=True reduces file size without losing quality
+            new_img.save(filepath, "JPEG", optimize=True, quality=75)
+            return True
+        except Exception as e:
+            logging.error(f"Image processing failed: {e}")
+            return False
+
+    def download_image(self, item):
+        """Downloads vehicle image if it doesn't already exist."""
+        image_url = item.get("temp_image_url")
+        if not image_url or image_url == "":
+            return None
+
+        # Generate filename based on dedup key logic
+        # format: oem_name_type_category.jpg
+        safe_oem = self.sanitize_filename(item['oem'])
+        safe_name = self.sanitize_filename(item['name'])
+        filename = f"{safe_oem}_{safe_name}_{item['type']}_{item['category']}.jpg"
+        filepath = os.path.join(self.image_dir, filename)
+
+        # Skip if already exists
+        if os.path.exists(filepath):
+            logger.info(f"Image already exists, skipping: {filename}")
+            return filename
+
+        try:
+            logger.info(f"Downloading image for {item['name']}...")
+            res = self.session.get(image_url, headers=self.headers, timeout=20)
+            res.raise_for_status()
+            # Process before saving
+            success = self.process_and_save_image(res.content, filepath)
+            if success:
+                logger.info(f"File saved : {filepath}")
+                return filename
+            else:
+                logger.error(f"File save failed: {filepath}")
+        except Exception as e:
+            logger.error(f"Failed to download image for {item['name']}: {e}")
+        return None
+
 
     def fetch_data(self):
         try:
@@ -216,20 +300,44 @@ class EV_DATA_PARSER:
                     continue
 
                 model_entry = self.get_row_data(cells, soup)
-                if model_entry:
-                    # Create a Deduplication Key
-                    dedup_key = (
-                        model_entry["oem"],
-                        model_entry["name"],
-                        model_entry.get("type", ""),
-                        model_entry.get("category", ""),
-                    )
-                    if dedup_key not in models_found:
+                if not model_entry:
+                    continue
+
+                # Create a Deduplication Key
+                dedup_key = (
+                    model_entry["oem"],
+                    model_entry["name"],
+                    model_entry.get("type", ""),
+                    model_entry.get("category", ""),
+                )
+                if dedup_key not in models_found:
+                    models_found[dedup_key] = model_entry
+                else:
+                    # Keep the one with better battery or range
+                    existing = models_found[dedup_key]
+                    
+                    new_batt = model_entry.get("battery_kwh", 0)
+                    old_batt = existing.get("battery_kwh", 0)
+                    
+                    new_range = model_entry.get("range_km", 0)
+                    old_range = existing.get("range_km", 0)
+
+                    # If the new model is better, replace the old one
+                    if new_batt > old_batt or (new_batt == old_batt and new_range > old_range):
                         models_found[dedup_key] = model_entry
-                        self.data.append(model_entry)
 
+            # Move dictionary values to our main data list
+            self.data = list(models_found.values())
 
+            # Image processing and final ranking
             for item in self.data:
+                # Handle Image Download
+                filename = self.download_image(item)
+                item["image"] = filename if filename else ""
+                # Remove the raw URL to keep JSON clean
+                item.pop("temp_image_url", None)
+
+                # Calculate Ranking
                 item["rank_score"] = DataUtils.calculate_score(item)
                 item["is_best_in_oem"] = False
 
@@ -240,7 +348,7 @@ class EV_DATA_PARSER:
                 if key not in oem_groups or item["rank_score"] > oem_groups[key]["rank_score"]:
                     oem_groups[key] = item
             
-            # 3. Mark the winners
+            # Mark the winners based on ranking
             for winner in oem_groups.values():
                 winner["is_best_in_oem"] = True
 
@@ -270,6 +378,7 @@ class EV_DATA_PARSER:
                 "category": category_code,
                 "category_desc": category_desc,
                 "status": cells[8].text.strip(),
+                "temp_image_url": None # Placeholder
             }
 
             # Find the hidden modal for this row
@@ -277,39 +386,46 @@ class EV_DATA_PARSER:
             if btn:
                 modal_id = btn.get("data-target", "").replace("#", "")
                 modal = soup.find("div", id=modal_id)
-                if modal:
-                    for tr in modal.find_all("tr"):
-                        cells = tr.find_all("td")
-                        if len(cells) == 2:
-                            label = cells[0].text.lower().strip()
-                            val = cells[1].text.strip()
-                            logger.info(f"{model_entry['name']} - {label}: {val}")
-                            # Map every useful label found in your logs
-                            if "range" in label:
-                                model_entry["range_km"] = DataUtils.get_float(val)
-                            elif "speed" in label:
-                                model_entry["max_speed_kmh"] = DataUtils.get_float(val)
-                            elif "acceleration" in label:
-                                model_entry["acceleration_ms2"] = DataUtils.get_float(
-                                    val
-                                )
-                            elif "energy consumption" in label:
-                                model_entry["efficiency_reported_kwh_100km"] = (
-                                    DataUtils.get_float(val)
-                                )
-                            elif "capacity" in label:
-                                model_entry["battery_kwh"] = DataUtils.get_float(val)
-                            elif "density" in label:
-                                model_entry["battery_density_wh_kg"] = (
-                                    DataUtils.get_float(val)
-                                )
-                            elif "valid from" in label:
-                                model_entry["valid_from"] = val
-                            elif "valid upto" in label:
-                                model_entry["valid_upto"] = val
+                if not modal:
+                    return model_entry
+
+                # EXTRACT IMAGE URL HERE
+                img_link = modal.find("a", class_="btn-info")
+                if img_link and "image" in img_link.text.lower():
+                    model_entry["temp_image_url"] = img_link.get("href")
+                    
+                for tr in modal.find_all("tr"):
+                    cells = tr.find_all("td")
+                    if len(cells) == 2:
+                        label = cells[0].text.lower().strip()
+                        val = cells[1].text.strip()
+                        logger.info(f"{model_entry['name']} - {label}: {val}")
+                        # Map every useful label found in your logs
+                        if "range" in label:
+                            model_entry["range_km"] = DataUtils.get_float(val)
+                        elif "speed" in label:
+                            model_entry["max_speed_kmh"] = DataUtils.get_float(val)
+                        elif "acceleration" in label:
+                            model_entry["acceleration_ms2"] = DataUtils.get_float(
+                                val
+                            )
+                        elif "energy consumption" in label:
+                            model_entry["efficiency_reported_kwh_100km"] = (
+                                DataUtils.get_float(val)
+                            )
+                        elif "capacity" in label:
+                            model_entry["battery_kwh"] = DataUtils.get_float(val)
+                        elif "density" in label:
+                            model_entry["battery_density_wh_kg"] = (
+                                DataUtils.get_float(val)
+                            )
+                        elif "valid from" in label:
+                            model_entry["valid_from"] = val
+                        elif "valid upto" in label:
+                            model_entry["valid_upto"] = val
 
             # Add estimated payload calculations and real-world range
-            model_entry = DataUtils.calculate_metrics(model_entry)
+            return DataUtils.calculate_metrics(model_entry)
 
         except Exception as e:
             logger.error(f"Error processing model entry: {e}")
