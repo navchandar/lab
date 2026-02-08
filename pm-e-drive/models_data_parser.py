@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ImageFilter
 from io import BytesIO
 
 # --- Configuration & Logging Setup ---
@@ -206,38 +206,55 @@ class EV_DATA_PARSER:
 
     def process_and_save_image(self, image_content, filepath):
         """
-        Validates, resizes with aspect ratio, pads with black frame,
-        and compresses the image.
+        Validates image. Creates a standardized image by using a blurred, 
+        zoomed-in version of the original as the background, and placing 
+        the sharp, resized original in the center.
         """
         try:
-            # 1. Validation: Try to open and verify the image
-            img = Image.open(BytesIO(image_content))
-            img.verify() # Checks for corruption
-            
-            # Re-open because verify() closes the file pointer
-            img = Image.open(BytesIO(image_content))
-            img = img.convert("RGB") # Ensure no transparency issues with JPEGs
+            # Validation - open and verify the image
+            img_stream = BytesIO(image_content)
+            original_img = Image.open(img_stream)
+            original_img.verify() # Verify integrity
 
-            # 2. Resize & Pad (Letterboxing)
-            # This maintains aspect ratio and adds black bars to reach TARGET_SIZE
-            img.thumbnail(TARGET_SIZE, Image.Resampling.LANCZOS)
-            
-            # Create a black background
-            new_img = Image.new("RGB", TARGET_SIZE, (0, 0, 0))
-            # Center the original image on the black background
-            upper_left = (
-                (TARGET_SIZE[0] - img.size[0]) // 2,
-                (TARGET_SIZE[1] - img.size[1]) // 2
-            )
-            new_img.paste(img, upper_left)
+            # Re-open stream after verify, convert to RGB (handles PNGs/palette images)
+            img_stream.seek(0)
+            original_img = Image.open(img_stream).convert("RGB")
 
-            # 3. Compress and Save
-            # optimize=True reduces file size without losing quality
-            new_img.save(filepath, "JPEG", optimize=True, quality=75)
+            # --- Create Background Layer (Blurred & Zoomed) ---
+            # ImageOps.fit resizes and centers crop to fill dimensions completely
+            background = ImageOps.fit(original_img, TARGET_SIZE, method=Image.Resampling.LANCZOS)
+            # Apply heavy blur (adjust radius=30 up or down for more/less blur)
+            background = background.filter(ImageFilter.GaussianBlur(radius=30))
+            # Darken background slightly to make foreground pop
+            background = ImageEnhance.Brightness(background).enhance(0.8)
+
+            # --- Create Foreground Layer (Sharp & Fitted) ---
+            foreground = original_img.copy()
+            # thumbnail resizes to fit WITHIN dimensions, maintaining aspect ratio
+            foreground.thumbnail(TARGET_SIZE, Image.Resampling.LANCZOS)
+
+            # --- Combine Layers ---
+            # Calculate center position
+            bg_w, bg_h = background.size
+            fg_w, fg_h = foreground.size
+            offset_x = (bg_w - fg_w) // 2
+            offset_y = (bg_h - fg_h) // 2
+
+            # Paste foreground onto blurred background (using the background as canvas)
+            background.paste(foreground, (offset_x, offset_y))
+
+            # Compress and Save resulting image
+            # optimize=True reduces file size significantly
+            background.save(filepath, "JPEG", optimize=True, quality=80)
             return True
         except Exception as e:
-            logging.error(f"Image processing failed: {e}")
+            _, _, exc_traceback = sys.exc_info()
+            # Extract the line number from the traceback object
+            line = exc_traceback.tb_lineno
+            logger.error(f"Image processing failed for {filepath}")
+            logger.error(f"Error on {line=}: {e}")
             return False
+
 
     def download_image(self, item):
         """Downloads vehicle image if it doesn't already exist."""
