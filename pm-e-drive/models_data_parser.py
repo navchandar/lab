@@ -8,7 +8,7 @@ import requests
 from bs4 import BeautifulSoup
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from PIL import Image, ImageOps, ImageFilter
+from PIL import Image, ImageOps, ImageFilter, ImageEnhance
 from io import BytesIO
 
 # --- Configuration & Logging Setup ---
