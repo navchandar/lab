@@ -53,15 +53,10 @@ jobs:
           <head>
             <meta charset="UTF-8">
             <title>Lab Project Gallery</title>
-            <style>
-              body { font-family: -apple-system, sans-serif; background: #f9f9f9; padding: 40px; color: #333; }
-              .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
-              .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.2s; }
-              .card:hover { transform: translateY(-5px); }
-              .card img { width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; display: block; border-bottom: 1px solid #eee; }
-              .card-content { padding: 15px; }
-              h3 { margin: 0 0 10px; text-transform: capitalize; font-size: 18px; }
-              a { text-decoration: none; color: #2563eb; font-weight: 600; font-size: 14px; }
+            <style>:root{--bg-color:#f9f9f9;--card-bg:#ffffff;--text-main:#333333;--text-muted:#666666;--accent:#2563eb;--border:#eeeeee;--shadow:rgba(0, 0, 0, 0.08)}
+            @media (prefers-color-scheme:dark){:root{--bg-color:#121212;--card-bg:#1e1e1e;--text-main:#f0f0f0;--text-muted:#aaaaaa;--accent:#60a5fa;--border:#333333;--shadow:rgba(0, 0, 0, 0.4)}}
+            body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg-color);color:var(--text-main);margin:0;padding:20px;line-height:1.5}h1{text-align:center;margin:40px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 320px),1fr));gap:25px;max-width:1200px;margin:0 auto}.card{background:var(--card-bg);border-radius:12px;overflow:hidden;box-shadow:0 4px 15px var(--shadow);transition:transform 0.2s,box-shadow 0.2s;border:1px solid var(--border)}.card:hover{transform:translateY(-5px);box-shadow:0 8px 25px var(--shadow)}.card img{width:100%;aspect-ratio:1200 / 630;object-fit:cover;display:block;border-bottom:1px solid var(--border)}.card-content{padding:20px}h3{margin:0 0 10px;font-size:1.1rem;letter-spacing:.5px;color:var(--text-main)}.links-container{display:flex;flex-direction:column;gap:8px}a{text-decoration:none;color:var(--accent);font-weight:600;font-size:14px;transition:opacity 0.2s}a:hover{opacity:.8}
+            @media (max-width:600px){body{padding:15px}h1{font-size:1.5rem;margin:20px 0}}
             </style>
           </head>
           <body>
@@ -75,17 +70,18 @@ jobs:
             # We need to strip the leading "./"
             clean_path=${img_path#./}
             folder_name=$(dirname "$clean_path")
-            
+            UPPER_NAME=$(echo "$folder_name" | tr '[:lower:]' '[:upper:]')
+
             # IMPROVED PATH LOGIC: 
-            # Since gallery is in /config, we MUST go up one level (../) 
-            # to reach the root, then into the folder.
+            # Since gallery is in /config, we MUST go up one level (../) to go to root, then into the folder.
             FINAL_REL_IMG_PATH="../$clean_path"
             LIVE_URL="${{ env.BASE_URL }}/$folder_name/"
             
             echo "    <div class='card'>" >> ${{ env.GALLERY_PATH }}
-            echo "      <img src='$FINAL_REL_IMG_PATH' alt='$folder_name'>" >> ${{ env.GALLERY_PATH }}
-            echo "      <div class='card-content'><h3>$folder_name</h3><a href='$LIVE_URL' target='_blank'>Visit Live Page →</a></div>" >> ${{ env.GALLERY_PATH }}
-            echo "    </div>" >> ${{ env.GALLERY_PATH }}
+            echo "      <a href='$FINAL_REL_IMG_PATH' target='_blank'>" >> ${{ env.GALLERY_PATH }}
+            echo "      <img src='$FINAL_REL_IMG_PATH' alt='$UPPER_NAME preview'></a>" >> ${{ env.GALLERY_PATH }}
+            echo "      <div class='card-content'><h3>$UPPER_NAME</h3>" >> ${{ env.GALLERY_PATH }}
+            echo "      <a href='$LIVE_URL' target='_blank'>Visit Live Page : $UPPER_NAME →</a></div></div>" >> ${{ env.GALLERY_PATH }}
           done
 
           echo "  </div></body></html>" >> ${{ env.GALLERY_PATH }}
