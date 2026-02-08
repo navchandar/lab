@@ -1,0 +1,109 @@
+name: Generate Previews
+on:
+  schedule:
+    # Runs at 09:00 every Sunday
+    - cron: "0 9 * * 0"
+  workflow_dispatch:
+
+env:
+  GALLERY_PATH: "config/gallery.html"
+  BASE_URL: "https://navchandar.github.io/lab"
+
+permissions:
+  contents: write
+
+jobs:
+  shot-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install shot-scraper
+          shot-scraper install
+
+      - name: Generate Previews
+        run: |
+          # Find directories containing index.html
+          find . -maxdepth 2 -name "index.html" -not -path "./index.html" -not -path "*/.*" | while read -r html_file; do
+            # Get folder name (e.g., 'alphabet')
+            dir=$(dirname "$html_file")
+            folder_name=${dir#./}
+
+            # Construct the Live URL
+            LIVE_URL="${{ env.BASE_URL }}/$folder_name/"
+            
+            echo "Capturing screenshot for: $LIVE_URL"
+            shot-scraper "$LIVE_URL" -o "$dir/preview.png" --width 1200 --height 630 --wait 5000
+          done
+
+      - name: Create Gallery Page
+        run: |
+          mkdir -p $(dirname ${{ env.GALLERY_PATH }})
+
+          cat <<EOF > ${{ env.GALLERY_PATH }}
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <title>Lab Project Gallery</title>
+            <style>
+              body { font-family: -apple-system, sans-serif; background: #f9f9f9; padding: 40px; color: #333; }
+              .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
+              .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.2s; }
+              .card:hover { transform: translateY(-5px); }
+              .card img { width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; display: block; border-bottom: 1px solid #eee; }
+              .card-content { padding: 15px; }
+              h3 { margin: 0 0 10px; text-transform: capitalize; font-size: 18px; }
+              a { text-decoration: none; color: #2563eb; font-weight: 600; font-size: 14px; }
+            </style>
+          </head>
+          <body>
+            <h1 style="text-align:center">Lab Project Gallery</h1>
+            <div class="grid">
+          EOF
+
+          # Search for previews and build relative paths
+          find . -maxdepth 2 -name "preview.png" -not -path "./preview.png" | sort | while read -r img_path; do
+            # img_path looks like "./alphabet/preview.png"
+            # We need to strip the leading "./"
+            clean_path=${img_path#./}
+            folder_name=$(dirname "$clean_path")
+            
+            # IMPROVED PATH LOGIC: 
+            # Since gallery is in /config, we MUST go up one level (../) 
+            # to reach the root, then into the folder.
+            FINAL_REL_IMG_PATH="../$clean_path"
+            LIVE_URL="${{ env.BASE_URL }}/$folder_name/"
+            
+            echo "    <div class='card'>" >> ${{ env.GALLERY_PATH }}
+            echo "      <img src='$FINAL_REL_IMG_PATH' alt='$folder_name'>" >> ${{ env.GALLERY_PATH }}
+            echo "      <div class='card-content'><h3>$folder_name</h3><a href='$LIVE_URL' target='_blank'>Visit Live Page →</a></div>" >> ${{ env.GALLERY_PATH }}
+            echo "    </div>" >> ${{ env.GALLERY_PATH }}
+          done
+
+          echo "  </div></body></html>" >> ${{ env.GALLERY_PATH }}
+
+      - name: Commit and push
+        run: |-
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage all generated previews and the gallery
+          git add "**/preview.png" "${{ env.GALLERY_PATH }}"
+
+          # Only commit if there are actually changes staged
+          if ! git diff --cached --quiet; then
+            timestamp=$(date -u)
+            git commit -m "Weekly Live Preview Update: ${timestamp}"
+            git pull --rebase origin main
+            git push origin main
+          else
+            echo "No changes detected. Skipping commit."
+          fi
