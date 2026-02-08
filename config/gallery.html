@@ -3,66 +3,73 @@
 <head>
   <meta charset="UTF-8">
   <title>Lab Project Gallery</title>
-  <style>
-    body { font-family: -apple-system, sans-serif; background: #f9f9f9; padding: 40px; color: #333; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; max-width: 1200px; margin: 0 auto; }
-    .card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.08); transition: transform 0.2s; }
-    .card:hover { transform: translateY(-5px); }
-    .card img { width: 100%; aspect-ratio: 1200 / 630; object-fit: cover; display: block; border-bottom: 1px solid #eee; }
-    .card-content { padding: 15px; }
-    h3 { margin: 0 0 10px; text-transform: capitalize; font-size: 18px; }
-    a { text-decoration: none; color: #2563eb; font-weight: 600; font-size: 14px; }
+  <style>:root{--bg-color:#f9f9f9;--card-bg:#ffffff;--text-main:#333333;--text-muted:#666666;--accent:#2563eb;--border:#eeeeee;--shadow:rgba(0, 0, 0, 0.08)}
+  @media (prefers-color-scheme:dark){:root{--bg-color:#121212;--card-bg:#1e1e1e;--text-main:#f0f0f0;--text-muted:#aaaaaa;--accent:#60a5fa;--border:#333333;--shadow:rgba(0, 0, 0, 0.4)}}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg-color);color:var(--text-main);margin:0;padding:20px;line-height:1.5}h1{text-align:center;margin:40px 0}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%, 320px),1fr));gap:25px;max-width:1200px;margin:0 auto}.card{background:var(--card-bg);border-radius:12px;overflow:hidden;box-shadow:0 4px 15px var(--shadow);transition:transform 0.2s,box-shadow 0.2s;border:1px solid var(--border)}.card:hover{transform:translateY(-5px);box-shadow:0 8px 25px var(--shadow)}.card img{width:100%;aspect-ratio:1200 / 630;object-fit:cover;display:block;border-bottom:1px solid var(--border)}.card-content{padding:20px}h3{margin:0 0 10px;font-size:1.1rem;letter-spacing:.5px;color:var(--text-main)}.links-container{display:flex;flex-direction:column;gap:8px}a{text-decoration:none;color:var(--accent);font-weight:600;font-size:14px;transition:opacity 0.2s}a:hover{opacity:.8}
+  @media (max-width:600px){body{padding:15px}h1{font-size:1.5rem;margin:20px 0}}
   </style>
 </head>
 <body>
   <h1 style="text-align:center">Lab Project Gallery</h1>
   <div class="grid">
     <div class='card'>
-      <img src='../alphabet/preview.png' alt='alphabet'>
-      <div class='card-content'><h3>alphabet</h3><a href='https://navchandar.github.io/lab/alphabet/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../alphabet/preview.png' target='_blank'>
+      <img src='../alphabet/preview.png' alt='ALPHABET preview'></a>
+      <div class='card-content'><h3>ALPHABET</h3>
+      <a href='https://navchandar.github.io/lab/alphabet/' target='_blank'>Visit Live Page : ALPHABET →</a></div></div>
     <div class='card'>
-      <img src='../animals/preview.png' alt='animals'>
-      <div class='card-content'><h3>animals</h3><a href='https://navchandar.github.io/lab/animals/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../animals/preview.png' target='_blank'>
+      <img src='../animals/preview.png' alt='ANIMALS preview'></a>
+      <div class='card-content'><h3>ANIMALS</h3>
+      <a href='https://navchandar.github.io/lab/animals/' target='_blank'>Visit Live Page : ANIMALS →</a></div></div>
     <div class='card'>
-      <img src='../clock/preview.png' alt='clock'>
-      <div class='card-content'><h3>clock</h3><a href='https://navchandar.github.io/lab/clock/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../clock/preview.png' target='_blank'>
+      <img src='../clock/preview.png' alt='CLOCK preview'></a>
+      <div class='card-content'><h3>CLOCK</h3>
+      <a href='https://navchandar.github.io/lab/clock/' target='_blank'>Visit Live Page : CLOCK →</a></div></div>
     <div class='card'>
-      <img src='../color/preview.png' alt='color'>
-      <div class='card-content'><h3>color</h3><a href='https://navchandar.github.io/lab/color/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../color/preview.png' target='_blank'>
+      <img src='../color/preview.png' alt='COLOR preview'></a>
+      <div class='card-content'><h3>COLOR</h3>
+      <a href='https://navchandar.github.io/lab/color/' target='_blank'>Visit Live Page : COLOR →</a></div></div>
     <div class='card'>
-      <img src='../hospitals/preview.png' alt='hospitals'>
-      <div class='card-content'><h3>hospitals</h3><a href='https://navchandar.github.io/lab/hospitals/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../hospitals/preview.png' target='_blank'>
+      <img src='../hospitals/preview.png' alt='HOSPITALS preview'></a>
+      <div class='card-content'><h3>HOSPITALS</h3>
+      <a href='https://navchandar.github.io/lab/hospitals/' target='_blank'>Visit Live Page : HOSPITALS →</a></div></div>
     <div class='card'>
-      <img src='../ip/preview.png' alt='ip'>
-      <div class='card-content'><h3>ip</h3><a href='https://navchandar.github.io/lab/ip/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../ip/preview.png' target='_blank'>
+      <img src='../ip/preview.png' alt='IP preview'></a>
+      <div class='card-content'><h3>IP</h3>
+      <a href='https://navchandar.github.io/lab/ip/' target='_blank'>Visit Live Page : IP →</a></div></div>
     <div class='card'>
-      <img src='../jobs/preview.png' alt='jobs'>
-      <div class='card-content'><h3>jobs</h3><a href='https://navchandar.github.io/lab/jobs/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../jobs/preview.png' target='_blank'>
+      <img src='../jobs/preview.png' alt='JOBS preview'></a>
+      <div class='card-content'><h3>JOBS</h3>
+      <a href='https://navchandar.github.io/lab/jobs/' target='_blank'>Visit Live Page : JOBS →</a></div></div>
     <div class='card'>
-      <img src='../number/preview.png' alt='number'>
-      <div class='card-content'><h3>number</h3><a href='https://navchandar.github.io/lab/number/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../number/preview.png' target='_blank'>
+      <img src='../number/preview.png' alt='NUMBER preview'></a>
+      <div class='card-content'><h3>NUMBER</h3>
+      <a href='https://navchandar.github.io/lab/number/' target='_blank'>Visit Live Page : NUMBER →</a></div></div>
     <div class='card'>
-      <img src='../pm-e-drive/preview.png' alt='pm-e-drive'>
-      <div class='card-content'><h3>pm-e-drive</h3><a href='https://navchandar.github.io/lab/pm-e-drive/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../pm-e-drive/preview.png' target='_blank'>
+      <img src='../pm-e-drive/preview.png' alt='PM-E-DRIVE preview'></a>
+      <div class='card-content'><h3>PM-E-DRIVE</h3>
+      <a href='https://navchandar.github.io/lab/pm-e-drive/' target='_blank'>Visit Live Page : PM-E-DRIVE →</a></div></div>
     <div class='card'>
-      <img src='../serviceability/preview.png' alt='serviceability'>
-      <div class='card-content'><h3>serviceability</h3><a href='https://navchandar.github.io/lab/serviceability/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../serviceability/preview.png' target='_blank'>
+      <img src='../serviceability/preview.png' alt='SERVICEABILITY preview'></a>
+      <div class='card-content'><h3>SERVICEABILITY</h3>
+      <a href='https://navchandar.github.io/lab/serviceability/' target='_blank'>Visit Live Page : SERVICEABILITY →</a></div></div>
     <div class='card'>
-      <img src='../shapes/preview.png' alt='shapes'>
-      <div class='card-content'><h3>shapes</h3><a href='https://navchandar.github.io/lab/shapes/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../shapes/preview.png' target='_blank'>
+      <img src='../shapes/preview.png' alt='SHAPES preview'></a>
+      <div class='card-content'><h3>SHAPES</h3>
+      <a href='https://navchandar.github.io/lab/shapes/' target='_blank'>Visit Live Page : SHAPES →</a></div></div>
     <div class='card'>
-      <img src='../smart-dom-inspector/preview.png' alt='smart-dom-inspector'>
-      <div class='card-content'><h3>smart-dom-inspector</h3><a href='https://navchandar.github.io/lab/smart-dom-inspector/' target='_blank'>Visit Live Page →</a></div>
-    </div>
+      <a href='../smart-dom-inspector/preview.png' target='_blank'>
+      <img src='../smart-dom-inspector/preview.png' alt='SMART-DOM-INSPECTOR preview'></a>
+      <div class='card-content'><h3>SMART-DOM-INSPECTOR</h3>
+      <a href='https://navchandar.github.io/lab/smart-dom-inspector/' target='_blank'>Visit Live Page : SMART-DOM-INSPECTOR →</a></div></div>
   </div></body></html>
