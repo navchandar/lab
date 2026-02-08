@@ -310,10 +310,10 @@
                 </div>
 
                 <div
-                  v-if="m.image"
                   class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800"
                 >
                   <div
+                    v-if="m.image"
                     class="relative group cursor-zoom-in overflow-hidden rounded-2xl bg-slate-50 dark:bg-slate-900 shadow-inner aspect-[4/3] flex items-center justify-center"
                     @click="zoomedImage = m.image"
                   >
@@ -321,8 +321,8 @@
                       :src="'images/' + m.image"
                       :alt="m.name"
                       class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      @error="m.image = null"
                     />
-
                     <div
                       class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                     >
@@ -332,6 +332,20 @@
                         <i class="fas fa-magnifying-glass-plus text-xl"></i>
                       </div>
                     </div>
+                  </div>
+
+                  <div
+                    v-else
+                    class="rounded-2xl bg-slate-100/50 dark:bg-slate-800/30 aspect-[4/3] flex flex-col items-center justify-center border-2 border-dashed border-slate-200 dark:border-slate-700 select-none"
+                  >
+                    <i
+                      class="fas fa-image text-slate-300 dark:text-slate-600 text-3xl mb-2"
+                    ></i>
+                    <span
+                      class="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500"
+                    >
+                      Image Not Found
+                    </span>
                   </div>
                 </div>
 
