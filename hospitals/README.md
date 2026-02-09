@@ -12,30 +12,41 @@ In emergency situations, proximity is often the primary factor in selecting a fa
 For individuals traveling or moving to new locations, this tool facilitates preliminary checks of local healthcare infrastructure.
 
 
-### In-Network Hospitals
+### Cashless / In-Network Hospitals
 
-These hospitals have a direct contract with your insurance company and integrated into the insurer's direct settlement network.
+These hospitals have a formal agreement with your insurer. The insurance company pays the hospital directly for covered treatments, meaning you pay little to nothing upfront. This is the standard, hassle-free option for most medical needs.
 
-Policyholders are typically eligible for Cashless Treatment, wherein the insurer settles bills directly with the hospital. This minimizes the policyholder's immediate out-of-pocket expenses.
+### Preferred Provider Network (PPN)
 
+A subset of the In-Network list, usually for public sector insurers (GIPSA). These hospitals have agreed to specific "package rates" for common planned surgeries (like cataracts or kidney stones). Insurers strongly encourage you to use them for these specific procedures to ensure full claim approval.
 
 ### Out-of-Network Hospitals
 
-These hospitals don't have a special contract with your insurer.
+Hospitals without a direct contract with your insurer. You can still get treated here, but you must pay the full bill yourself first and file for reimbursement later. The insurer will only refund you up to their "reasonable and customary" limit, often leaving you with a partial loss.
 
-Treatment is generally permissible; however, the financial burden initially falls on the policyholder. Claims must be filed for Reimbursement post-treatment. 
+### Missing Middle Hospitals:
 
-Note: While initiatives such as "Cashless Everywhere" aim to bridge this gap, they remain subject to conditional approvals and specific administrative protocols.
+Small nursing homes, clinics, or family-run hospitals (typically <50 beds) that are often geographically convenient but historically lacked the digital systems for cashless claims. While technically "Out-of-Network," new industry initiatives like "Cashless Everywhere" are trying to allow cashless claims here with strict pre-approval.
 
+### Excluded / Banned Hospitals:
 
-### Excluded Hospitals (The "Banned List")
+Hospitals explicitly blacklisted by insurers due to fraud, overcharging, or non-compliance. Insurance will pay ₹0 here. Any claim originating from these facilities is automatically rejected, and you bear 100% of the financial burden.
 
-These hospitals are blacklisted and explicitly flagged by the insurer or regulatory bodies. Claims originating from excluded providers are summarily rejected and the policyholder bears 100% of the cost.
+## Comparison
+
+|Category             |Payment Mode         |Your Actions                                                                      |
+|---------------------|---------------------|----------------------------------------------------------------------------------|
+|Cashless / In-Network|Direct Settlement    |Safe. Walk in, show insurance card & identifications, pay almost zero.            |
+|Preferred (PPN)      |Direct Settlement    |Similar to In-Network. Best for Standard surgeries or treatments.                 |
+|Missing Middle       |Reimbursement        |Convenient and Good for minor issues; check with Insurance company for approval.  |
+|Out-of-Network       |Reimbursement        |Pay First. You pay 100%, claim later; check with Insurance company for approval.  |
+|Excluded / Banned    |Rejected             |Avoid. You pay 100%; insurance pays nothing.                                      |
+
 
 
 ## Tech Stack
 
- - Frontend: HTML5, CSS3, JavaScript, Leaflet.js
+ - Frontend: HTML5, CSS3, JavaScript, Leaflet.js, OpenStreetMap
 
 
 ### Maintained By: <a style="display:inline-block;" href="https://navchandar.github.io/">Naveenchandar</a>
