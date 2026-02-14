@@ -1,3 +1,5 @@
+import * as utils from "../static/utils.js";
+
 const input = document.getElementById("big-input");
 
 // Handles the UI state
@@ -47,6 +49,11 @@ input.addEventListener("keydown", (e) => {
   // Block Arrow Keys
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.code)) {
     e.preventDefault();
+  }
+  // Handle sidebar in iframe
+  if (["Equal"].includes(e.code)) {
+    event.preventDefault();
+    utils.handleSidebar();
   }
 });
 
