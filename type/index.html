@@ -13,6 +13,13 @@
       href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjIyIi8+PHJlY3QgeD0iMjgiIHk9IjEyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzBmMCIvPjwvc3ZnPg=="
     />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@700&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
       :root {
         --bg-color: #ffffff;
@@ -41,31 +48,52 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-          Arial, sans-serif;
       }
 
+      /* Font Stack: Lexend first, Comic Sans as reliable backup */
       #big-input {
+        /* Prepare for animation */
+        transform-origin: center;
+        will-change: transform;
         outline: none;
         border: none;
         background: transparent;
         width: 100%;
         height: 100%;
         color: var(--text-color);
-
-        /* Default: Caret is visible and blinking */
         caret-color: var(--caret-color);
-        font-weight: bold;
-        font-size: 40vh; /* Responsive font size based on viewport height */
+        font-weight: 700;
+        font-size: 40vh;
+        font-family:
+          "Lexend", "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif;
         text-align: center;
         text-transform: uppercase;
       }
 
-      /* Class to hide caret when character exists */
       #big-input.hide-caret {
         caret-color: transparent;
-        text-shadow: 0 0 0 var(--text-color); /* Ensures text remains visible even if some browsers mess with transparent colors */
+        text-shadow: 0 0 0 var(--text-color);
+      }
+
+      /* The "Juice" Animation */
+      @keyframes popIn {
+        0% {
+          transform: scale(0.5);
+          opacity: 0;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* Class we will toggle via JS to trigger animation */
+      .animate-pop {
+        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
     </style>
   </head>
@@ -82,7 +110,7 @@
     <script>
       const input = document.getElementById("big-input");
 
-      // 1. Force Focus Logic
+      // --- Focus Logic ---
       const forceFocus = () => {
         // Check if element is already focused to avoid loop firing
         if (document.activeElement !== input) {
@@ -103,29 +131,35 @@
       // Focus if user clicks anywhere on the background
       document.addEventListener("click", forceFocus);
 
-      // 2. Caret & Input Logic
-      const handleInput = () => {
+      // --- Input & Animation Logic ---
+      input.addEventListener("input", (e) => {
         let val = input.value;
 
-        // Logic: Take last character only
+        // 1. Logic: Take last character only
         if (val.length > 1) {
           val = val.slice(-1);
         }
 
-        // Validation: Letters/Numbers only
+        // 2. Validation: Letters/Numbers only
         val = val.replace(/[^a-zA-Z0-9]/g, "");
         input.value = val;
 
-        // Toggle Caret: If length > 0, hide caret. Else show it.
+        // 3. Toggle Caret & Trigger Animation
         if (val.length > 0) {
           input.classList.add("hide-caret");
+
+          // TRIGGER ANIMATION "REFLOW"
+          // We remove the class, force the browser to calculate layout, then re-add it.
+          input.classList.remove("animate-pop");
+          void input.offsetWidth; // forces the reflow
+          input.classList.add("animate-pop");
         } else {
           input.classList.remove("hide-caret");
+          input.classList.remove("animate-pop");
         }
-      };
+      });
 
-      input.addEventListener("input", handleInput);
-
+      // Prevent cursor movement with arrow keys
       // Handle arrow keys
       input.addEventListener("keydown", (e) => {
         if (
