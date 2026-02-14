@@ -7,17 +7,24 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <title>Type Text</title>
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjIyIi8+PHJlY3QgeD0iMjgiIHk9IjEyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzBmMCIvPjwvc3ZnPg=="
+    />
+
     <style>
       :root {
         --bg-color: #ffffff;
         --text-color: #121212;
+        --caret-color: #121212;
       }
 
-      /* Dark Mode Support */
       @media (prefers-color-scheme: dark) {
         :root {
           --bg-color: #121212;
           --text-color: #e0e0e0;
+          --caret-color: #e0e0e0;
         }
       }
 
@@ -26,12 +33,14 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        /* Ensure taps anywhere focus the input */
+        cursor: text;
         margin: 0;
         background-color: var(--bg-color);
         padding: 0;
         width: 100%;
         height: 100%;
-        overflow: hidden; /* Prevent scrolling on mobile */
+        overflow: hidden;
         font-family:
           -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
           Arial, sans-serif;
@@ -44,16 +53,19 @@
         width: 100%;
         height: 100%;
         color: var(--text-color);
-        caret-color: transparent; /* Hides the blinking cursor */
+
+        /* Default: Caret is visible and blinking */
+        caret-color: var(--caret-color);
         font-weight: bold;
         font-size: 40vh; /* Responsive font size based on viewport height */
         text-align: center;
-        text-transform: uppercase; /* Optional: forces uppercase for cleaner look */
+        text-transform: uppercase;
       }
 
-      /* Remove mobile tap highlight */
-      #big-input:focus {
-        outline: none;
+      /* Class to hide caret when character exists */
+      #big-input.hide-caret {
+        caret-color: transparent;
+        text-shadow: 0 0 0 var(--text-color); /* Ensures text remains visible even if some browsers mess with transparent colors */
       }
     </style>
   </head>
@@ -64,31 +76,57 @@
       autocomplete="off"
       spellcheck="false"
       inputmode="text"
+      autofocus
     />
 
     <script>
       const input = document.getElementById("big-input");
 
-      // Ensure focus is always on the input
-      document.addEventListener("click", () => input.focus());
-      input.focus();
+      // 1. Force Focus Logic
+      const forceFocus = () => {
+        // Check if element is already focused to avoid loop firing
+        if (document.activeElement !== input) {
+          input.focus();
+        }
+      };
 
-      input.addEventListener("input", (e) => {
+      // Focus immediately
+      forceFocus();
+
+      // Re-focus whenever focus is lost
+      input.addEventListener("blur", () => {
+        // Small timeout allows browser UI interaction (like clicking address bar)
+        // if absolutely necessary, but pulls focus back quickly.
+        setTimeout(forceFocus, 10);
+      });
+
+      // Focus if user clicks anywhere on the background
+      document.addEventListener("click", forceFocus);
+
+      // 2. Caret & Input Logic
+      const handleInput = () => {
         let val = input.value;
 
-        // Logic: If there is more than 1 character, take the LAST one typed.
+        // Logic: Take last character only
         if (val.length > 1) {
           val = val.slice(-1);
         }
 
-        // Validation: Keep only Letters and Numbers (remove symbols/emoji)
-        // If you want to allow symbols, remove the .replace line below
+        // Validation: Letters/Numbers only
         val = val.replace(/[^a-zA-Z0-9]/g, "");
-
         input.value = val;
-      });
 
-      // Prevent default behavior for arrow keys to avoid cursor movement issues
+        // Toggle Caret: If length > 0, hide caret. Else show it.
+        if (val.length > 0) {
+          input.classList.add("hide-caret");
+        } else {
+          input.classList.remove("hide-caret");
+        }
+      };
+
+      input.addEventListener("input", handleInput);
+
+      // Handle arrow keys
       input.addEventListener("keydown", (e) => {
         if (
           ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) >
