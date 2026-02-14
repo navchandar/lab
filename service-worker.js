@@ -167,7 +167,8 @@ const urlsToCache = [
   'static/settings.css',
   'static/speech_helper.js',
   'static/utils.js',
-  'type/index.html'
+  'type/index.html',
+  'type/script.js'
 ];
 
 const ALLOWED_CDN_HOSTS = new Set([
