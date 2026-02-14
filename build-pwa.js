@@ -177,7 +177,7 @@ ${appLinks}
       <main><iframe name="appFrame" title="App Frame" id="appFrame"></iframe></main>
     </div>
 
-    <script src="./static/app_script.js"></script>
+    <script type="module" src="./static/app_script.js"></script>
 
 </body>
 </html>`;

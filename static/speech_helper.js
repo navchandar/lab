@@ -7,6 +7,16 @@
  * - Provides speak, pause, resume, cancel controls
  */
 export const TTS = () => {
+  // ---------------------------------------------------------
+  // CHECK FOR SHARED PARENT INSTANCE
+  // ---------------------------------------------------------
+  // If we are inside an iframe (window.parent !== window)
+  // AND the parent has a ready-to-use TTS instance, use it
+  if (window.parent && window.parent !== window && window.parent.SHARED_TTS) {
+    console.log("Using shared TTS instance from parent");
+    return window.parent.SHARED_TTS;
+  }
+
   // ---------------------------
   // Feature detection
   // ---------------------------
@@ -17,7 +27,7 @@ export const TTS = () => {
       "SpeechSynthesisUtterance" in window;
     if (!supported) {
       console.warn(
-        "[TTS] Web Speech Synthesis API not supported in this browser/device."
+        "[TTS] Web Speech Synthesis API not supported in this browser/device.",
       );
     }
     return supported;
@@ -154,14 +164,14 @@ export const TTS = () => {
   function findPreferredVoice(
     voices,
     locale,
-    preferredVendors = ["Google", "Microsoft", "Apple"]
+    preferredVendors = ["Google", "Microsoft", "Apple"],
   ) {
     if (!Array.isArray(voices) || voices.length === 0) {
       return null;
     }
     const normLocale = normalizeLangTag(locale);
     const inLocale = voices.filter((v) =>
-      sameLangOrPrefixMatch(v.lang, normLocale)
+      sameLangOrPrefixMatch(v.lang, normLocale),
     );
 
     // Rank by vendor and "quality" keywords when possible
@@ -194,7 +204,8 @@ export const TTS = () => {
   function findFallbackVoice(voices, locale) {
     const normLocale = normalizeLangTag(locale);
     const exact = voices.find(
-      (v) => normalizeLangTag(v.lang).toLowerCase() === normLocale.toLowerCase()
+      (v) =>
+        normalizeLangTag(v.lang).toLowerCase() === normLocale.toLowerCase(),
     );
     if (exact) {
       return exact;
@@ -204,7 +215,7 @@ export const TTS = () => {
     const byPrefix = voices.find((v) =>
       normalizeLangTag(v.lang)
         .toLowerCase()
-        .startsWith(prefix + "-")
+        .startsWith(prefix + "-"),
     );
     if (byPrefix) {
       return byPrefix;
@@ -217,12 +228,27 @@ export const TTS = () => {
   // Text helpers
   // ---------------------------
   function getElementFromInput(elOrSelector) {
-    if (typeof elOrSelector === "string") {
-      return document.querySelector(elOrSelector);
-    }
+    // If Input is a DOM node, use it directly
     if (elOrSelector && elOrSelector.nodeType === 1) {
       return elOrSelector;
     }
+    // If Input is string selector, get the element
+    if (typeof elOrSelector === "string") {
+      // Try finding it in the CURRENT document (Parent) first
+      let el = document.querySelector(elOrSelector);
+      if (el) {
+        return el;
+      }
+      // If not found, check if we have an IFRAME and look inside it
+      const iframe = document.querySelector("iframe");
+      if (iframe && iframe.contentDocument) {
+        el = iframe.contentDocument.querySelector(elOrSelector);
+        if (el) {
+          return el;
+        }
+      }
+    }
+
     return null;
   }
 
@@ -365,7 +391,7 @@ export const TTS = () => {
       voice = allVoices.find((v) => v.name === forceVoiceName);
       if (!voice) {
         console.warn(
-          `[TTS] forceVoiceName "${forceVoiceName}" not found. Continuing with selection logic.`
+          `[TTS] forceVoiceName "${forceVoiceName}" not found. Continuing with selection logic.`,
         );
       }
     }
@@ -448,7 +474,7 @@ export const TTS = () => {
       window.speechSynthesis.speak(new SpeechSynthesisUtterance(" "));
     } catch {
       console.error(
-        "[TTS] Web Speech Synthesis API not supported in this browser/device."
+        "[TTS] Web Speech Synthesis API not supported in this browser/device.",
       );
     }
   }

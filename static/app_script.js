@@ -1,3 +1,14 @@
+import { TTS } from "./static/speech_helper.js";
+
+// Initialize TTS at the top level
+window.SHARED_TTS = TTS();
+
+// Start loading voices immediately so they are ready
+if (window.SHARED_TTS.unlockSpeech) {
+  window.SHARED_TTS.unlockSpeech();
+}
+
+// Constants
 const BASE_PATH = "/lab/";
 const swPath = `${BASE_PATH}service-worker.js`;
 let iframeBodyObserver = null;
