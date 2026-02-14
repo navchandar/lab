@@ -1,4 +1,4 @@
-// version=v2026.02.10
+// version=v2026.02.14
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","smart-dom-inspector","serviceability","hospitals","pm-e-drive"];
 
@@ -166,7 +166,8 @@ const urlsToCache = [
   'static/images/sparrow_5.jpg',
   'static/settings.css',
   'static/speech_helper.js',
-  'static/utils.js'
+  'static/utils.js',
+  'type/index.html'
 ];
 
 const ALLOWED_CDN_HOSTS = new Set([
