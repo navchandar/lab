@@ -1,4 +1,4 @@
-import { TTS } from "./static/speech_helper.js";
+import { TTS } from "./speech_helper.js";
 
 // Initialize TTS at the top level
 window.SHARED_TTS = TTS();
