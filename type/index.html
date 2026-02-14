@@ -13,6 +13,40 @@
       href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA2NCA2NCI+PHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMjIyIi8+PHJlY3QgeD0iMjgiIHk9IjEyIiB3aWR0aD0iOCIgaGVpZ2h0PSI0MCIgZmlsbD0iIzBmMCIvPjwvc3ZnPg=="
     />
 
+    <link rel="canonical" href="https://navchandar.github.io/lab/type/" />
+
+    <meta
+      name="description"
+      content="A place to type and view just one character at a time!"
+    />
+    <meta
+      name="keywords"
+      content="language learning, kids learning, alphabet, english letters, numbers, typing, interactive, JavaScript, mobile-friendly, kid-friendly"
+    />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+    <meta
+      property="article:author"
+      content="https://www.linkedin.com/in/naveenchandar"
+    />
+
+    <meta name="title" property="og:title" content="Type Text" />
+    <meta
+      name="description"
+      property="og:description"
+      content="A place to type and view just one character at a time!"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/type/" />
+    <meta
+      name="image"
+      property="og:image"
+      content="https://navchandar.github.io/lab/type/preview.png"
+    />
+
+    <meta name="theme-color" content="#4e4e4e" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -58,8 +92,8 @@
         outline: none;
         border: none;
         background: transparent;
-        width: 100%;
-        height: 100%;
+        width: 90vw;
+        height: 60vh;
         color: var(--text-color);
         caret-color: var(--caret-color);
         font-weight: 700;
@@ -75,7 +109,7 @@
         text-shadow: 0 0 0 var(--text-color);
       }
 
-      /* The "Juice" Animation */
+      /* The "jump" Animation */
       @keyframes popIn {
         0% {
           transform: scale(0.5);
@@ -91,9 +125,15 @@
         }
       }
 
-      /* Class we will toggle via JS to trigger animation */
+      /* toggle via JS to trigger animation */
       .animate-pop {
-        animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+
+      @media (max-width: 768px) {
+        #big-input {
+          margin-bottom: 10rem;
+        }
       }
     </style>
   </head>
@@ -107,68 +147,6 @@
       autofocus
     />
 
-    <script>
-      const input = document.getElementById("big-input");
-
-      // --- Focus Logic ---
-      const forceFocus = () => {
-        // Check if element is already focused to avoid loop firing
-        if (document.activeElement !== input) {
-          input.focus();
-        }
-      };
-
-      // Focus immediately
-      forceFocus();
-
-      // Re-focus whenever focus is lost
-      input.addEventListener("blur", () => {
-        // Small timeout allows browser UI interaction (like clicking address bar)
-        // if absolutely necessary, but pulls focus back quickly.
-        setTimeout(forceFocus, 10);
-      });
-
-      // Focus if user clicks anywhere on the background
-      document.addEventListener("click", forceFocus);
-
-      // --- Input & Animation Logic ---
-      input.addEventListener("input", (e) => {
-        let val = input.value;
-
-        // 1. Logic: Take last character only
-        if (val.length > 1) {
-          val = val.slice(-1);
-        }
-
-        // 2. Validation: Letters/Numbers only
-        val = val.replace(/[^a-zA-Z0-9]/g, "");
-        input.value = val;
-
-        // 3. Toggle Caret & Trigger Animation
-        if (val.length > 0) {
-          input.classList.add("hide-caret");
-
-          // TRIGGER ANIMATION "REFLOW"
-          // We remove the class, force the browser to calculate layout, then re-add it.
-          input.classList.remove("animate-pop");
-          void input.offsetWidth; // forces the reflow
-          input.classList.add("animate-pop");
-        } else {
-          input.classList.remove("hide-caret");
-          input.classList.remove("animate-pop");
-        }
-      });
-
-      // Prevent cursor movement with arrow keys
-      // Handle arrow keys
-      input.addEventListener("keydown", (e) => {
-        if (
-          ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].indexOf(e.code) >
-          -1
-        ) {
-          e.preventDefault();
-        }
-      });
-    </script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>
