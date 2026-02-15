@@ -18,7 +18,7 @@ import {
 // --- DOM elements ---
 const iframe = document.getElementById("renderFrame");
 const checkboxes = document.querySelectorAll(
-  ".render-options input[type='checkbox']"
+  ".render-options input[type='checkbox']",
 );
 
 // --- localStorage key for options ---
@@ -148,7 +148,7 @@ function testLocator(elementId, button) {
         doc,
         null,
         XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-        null
+        null,
       );
       foundCount = result.snapshotLength;
       element = foundCount ? result.snapshotItem(0) : null;
@@ -200,7 +200,10 @@ function testLocator(elementId, button) {
         // Scroll inside the iframe so the element becomes visible
         scrollElementInIframe(element, doc, iframe);
         // Highlight after scrolling to ensure the outline is visible
-        highlightElement(element, iframe, { mode: "once", durationMs: 3000 });
+        highlightElement(element, iframe, {
+          mode: "once",
+          durationMs: 3000,
+        });
       }
     } catch (e) {
       console.error(e);
@@ -223,7 +226,7 @@ function updateButtons() {
     try {
       copyButton.dataset.originalText = copyButton.textContent;
       copyButton.addEventListener("click", () =>
-        copyToClipboard(inputId, copyButton)
+        copyToClipboard(inputId, copyButton),
       );
     } catch (e) {
       console.error(e);
@@ -305,7 +308,7 @@ function sanitizeHTML(htmlString, opts = {}) {
 
     // Normalize the disallowed property names (lowercase + hyphenated).
     const blockedProps = new Set(
-      disallowedInlineProps.map((p) => String(p).trim().toLowerCase())
+      disallowedInlineProps.map((p) => String(p).trim().toLowerCase()),
     );
 
     // ---- Build a DOM container safely ----
@@ -363,7 +366,7 @@ function sanitizeHTML(htmlString, opts = {}) {
           root,
           NodeFilter.SHOW_ELEMENT,
           null,
-          false
+          false,
         );
         // Recursively handle nested shadow roots
         while (walker.nextNode()) {
@@ -388,7 +391,7 @@ function sanitizeHTML(htmlString, opts = {}) {
         const style = el.style;
         // Collect property names first to avoid index shift during removal.
         const propNames = Array.from({ length: style.length }, (_, i) =>
-          style.item(i)
+          style.item(i),
         );
 
         propNames.forEach((prop) => {
@@ -425,7 +428,7 @@ function sanitizeHTML(htmlString, opts = {}) {
         // Delimiters include start-of-text, ;, {, or whitespace, to avoid accidental partial matches.
         return new RegExp(
           `(^|[;{\\s])${escapeRegExp(prop)}\\s*:\\s*[^;}{]+;?`,
-          "gi"
+          "gi",
         );
       });
 
@@ -520,7 +523,7 @@ function sanitizeHTML(htmlString, opts = {}) {
           const vh = Number.isFinite(h) ? h : 20;
           svg.setAttribute(
             "viewBox",
-            `0 0 ${Math.round(vw)} ${Math.round(vh)}`
+            `0 0 ${Math.round(vw)} ${Math.round(vh)}`,
           );
         }
 
@@ -646,7 +649,7 @@ function getXPath(el, options = {}) {
         if (result) {
           console.log(
             `XPath found using element's attribute [${key}]:`,
-            result
+            result,
           );
           return result;
         }
@@ -661,13 +664,13 @@ function getXPath(el, options = {}) {
         }
 
         const urlContainsXpath = `//${tag}[contains(@${key}, ${xpathString(
-          part
+          part,
         )})]`;
         const resultUrlContains = testCandidate(urlContainsXpath);
         if (resultUrlContains) {
           console.log(
             `XPath found using partial URL in [${key}]:`,
-            resultUrlContains
+            resultUrlContains,
           );
           return resultUrlContains;
         }
@@ -686,13 +689,13 @@ function getXPath(el, options = {}) {
 
         // Apply starts-with only to the first part
         const startsWithXpath = `//${tag}[starts-with(@${key}, ${xpathString(
-          firstPart
+          firstPart,
         )})]`;
         const resultStartsWith = testCandidate(startsWithXpath);
         if (resultStartsWith) {
           console.log(
             `XPath found using starts-with [${key}]:`,
-            resultStartsWith
+            resultStartsWith,
           );
           return resultStartsWith;
         }
@@ -700,7 +703,7 @@ function getXPath(el, options = {}) {
         // Apply contains to all parts
         for (const part of cleanedParts) {
           const containsXpath = `//${tag}[contains(@${key}, ${xpathString(
-            part
+            part,
           )})]`;
           const resultContains = testCandidate(containsXpath);
           if (resultContains) {
@@ -734,7 +737,7 @@ function getXPath(el, options = {}) {
       if (result) {
         console.log(
           `XPath found using relative path from an ancestor with ID [${parentId}]:`,
-          result
+          result,
         );
         return result;
       }
@@ -743,7 +746,7 @@ function getXPath(el, options = {}) {
 
     // **Priority 2: Parent with other stable attributes**
     const parentAttrs = stableAttrPairs(parent, cfg).filter(
-      ([key]) => key !== "id"
+      ([key]) => key !== "id",
     );
     if (parentAttrs.length > 0) {
       const parentTag = getTagOf(parent) || "*";
@@ -754,7 +757,7 @@ function getXPath(el, options = {}) {
         if (result) {
           console.log(
             `XPath found using relative path from an ancestor with attribute [${key}]:`,
-            result
+            result,
           );
           return result;
         }
@@ -779,13 +782,13 @@ function getXPath(el, options = {}) {
     ) {
       const tag = getTagOf(el) || "*";
       const textXpath = `//${tag}[normalize-space(text())=${xpathString(
-        cleanedText
+        cleanedText,
       )}]`;
       const resultText = testCandidate(textXpath);
       if (resultText) {
         console.log(
           `XPath found using normalize-space [${cleanedText}]:`,
-          resultText
+          resultText,
         );
         return resultText;
       }
@@ -798,12 +801,12 @@ function getXPath(el, options = {}) {
       el,
       doc,
       cfg,
-      testCandidate
+      testCandidate,
     );
     if (scoped) {
       console.log(
         "Found scoped XPath using closest repeating ancestor:",
-        scoped
+        scoped,
       );
       return scoped;
     }
@@ -811,7 +814,7 @@ function getXPath(el, options = {}) {
 
   // Priority 5 Fallback: optimized absolute (existing behavior)
   console.log(
-    "No stable unique locator found. Falling back to optimized absolute XPath generation..."
+    "No stable unique locator found. Falling back to optimized absolute XPath generation...",
   );
   const buildOptimizedAbsolute = (node) => {
     let segments = [];
@@ -919,7 +922,7 @@ function findClosestRepeatingAncestor(el, doc, cfg) {
         const sameTagInDoc = doc.getElementsByTagName(tag).length;
         const sibSameTag = cur.parentElement
           ? Array.from(cur.parentElement.children).filter(
-              (n) => n.tagName && n.tagName.toLowerCase() === tag
+              (n) => n.tagName && n.tagName.toLowerCase() === tag,
             ).length
           : 0;
 
@@ -989,7 +992,7 @@ function buildAnchorForAncestor(node, doc, cfg, testCandidate) {
       const firstPart = cleanedParts[0];
 
       const startsWithXpath = `//${tag}[starts-with(@${key}, ${xpathString(
-        firstPart
+        firstPart,
       )})]`;
       const resultStartsWith = testCandidate(startsWithXpath);
       if (resultStartsWith) {
@@ -998,7 +1001,7 @@ function buildAnchorForAncestor(node, doc, cfg, testCandidate) {
 
       for (const part of cleanedParts) {
         const containsXpath = `//${tag}[contains(@${key}, ${xpathString(
-          part
+          part,
         )})]`;
         const resultContains = testCandidate(containsXpath);
         if (resultContains) {
@@ -1491,7 +1494,7 @@ function highlightDuplicates(locator, doc, clickedElement, type) {
         doc,
         null,
         XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-        null
+        null,
       );
       for (let i = 0; i < xpathResult.snapshotLength; i++) {
         matches.push(xpathResult.snapshotItem(i));
@@ -1587,7 +1590,7 @@ function updateSelectors(element) {
     doc,
     null,
     XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-    null
+    null,
   );
   if (xpathResult.snapshotLength === 1) {
     xpathEl.value = xpathSelector;
@@ -1597,7 +1600,7 @@ function updateSelectors(element) {
     highlightDuplicates(xpathSelector, doc, element, "XPATH");
     // Adjust XPath to match the specific element
     const index = Array.from({ length: xpathResult.snapshotLength }, (_, i) =>
-      xpathResult.snapshotItem(i)
+      xpathResult.snapshotItem(i),
     ).indexOf(element);
 
     xpathSelector = `(${xpathSelector})[${index + 1}]`;

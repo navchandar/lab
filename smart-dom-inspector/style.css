@@ -46,19 +46,27 @@ header {
 }
 
 .render-options {
-    margin: 5px auto;
+    display: flex;
+    margin: 1px auto;
+    width: 98%;
 }
 
 .render-options label {
     display: inline;
-    margin: 0 10px;
+    cursor: pointer;
+    margin: 0 5px;
 }
 
 input[type='checkbox'] {
     vertical-align: middle;
     zoom: 1;
     cursor: pointer;
-    accent-color: #10b981;
+    margin: -3px 5px 5px 0px !important;
+    accent-color: #10b981 !important;
+    -ms-transform: scale(1.25) !important;
+    -webkit-transform: scale(1.25) !important;
+    -o-transform: scale(1.25) !important;
+    -moz-transform: scale(1.25) !important;
 }
 
 iframe {
@@ -106,7 +114,7 @@ footer p {
     display: grid;
     align-items: center;
     gap: 10%;
-    margin-top: 50px;
+    margin-top: 1vw;
     padding: 0 20px;
 }
 
@@ -312,9 +320,10 @@ footer p {
     #selectorInfo {
         display: grid;
         align-items: center;
-        margin: 10px;
-        padding-top: 125px;
-        padding-bottom: 30px;
+        gap: 5%;
+        margin: 2px;
+        padding: 5px 10px;
+        padding-bottom: 10px;
     }
 
     .locator-row input {
@@ -345,7 +354,7 @@ footer p {
     }
 
     footer {
-        margin-top: 5rem;
+        margin-top: 4rem;
     }
 
     .modal-content {

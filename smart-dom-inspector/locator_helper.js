@@ -81,14 +81,15 @@ export const AttributeWhitelist = [
   "data-qe-id",
   // Accessibility & semantics (stable, user-facing)
   "aria-label",
-  "aria-labelledby",
-  "aria-describedby",
   "role",
   "name",
   "placeholder",
+  "aria-labelledby",
+  "aria-describedby",
   "title",
   "alt",
   // Lowest-priority fallbacks (use sparingly)
+  "value",
   "type",
   "href",
   "id",
@@ -251,7 +252,7 @@ export function XpathMatch(xpath, el, doc) {
       doc,
       null,
       XPathResult.FIRST_ORDERED_NODE_TYPE,
-      null
+      null,
     );
     return result.singleNodeValue === el;
   } catch {
@@ -271,7 +272,7 @@ export function evaluateXpath(xpath, doc) {
       doc,
       null,
       XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,
-      null
+      null,
     );
     const nodes = [];
     for (let i = 0; i < result.snapshotLength; i++) {
@@ -347,12 +348,12 @@ export const isUnique = (locator, d, type = "XPATH") => {
     if (type === "XPATH") {
       count = countXpathElems(locator, d);
       console.log(
-        `Checking uniqueness for XPath: ${locator} → Count: ${count}`
+        `Checking uniqueness for XPath: ${locator} → Count: ${count}`,
       );
     } else if (type === "CSS") {
       count = countCssElems(locator, d);
       console.log(
-        `Checking uniqueness for Selector: ${locator} → Count: ${count}`
+        `Checking uniqueness for Selector: ${locator} → Count: ${count}`,
       );
     } else if (type === "ID") {
       count = countCssElems(`#${locator}`, d);
@@ -383,7 +384,11 @@ export function scrollElementInIframe(el, doc, iframe, opts = {}) {
   try {
     // 1) Scroll the iframe element into view in the parent page .
     if (iframe && typeof iframe.scrollIntoView === "function") {
-      iframe.scrollIntoView({ behavior, block: "nearest", inline: "nearest" });
+      iframe.scrollIntoView({
+        behavior,
+        block: "nearest",
+        inline: "nearest",
+      });
     }
 
     // 2) Scroll the target element into view inside the iframe.
