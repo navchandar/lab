@@ -1153,16 +1153,33 @@
                           </thead>
                           <tbody>
                   `;
+
+            // --- Updated Row Rendering ---
             data.forEach((row) => {
-              const makeLink = (url) =>
-                url ? `<a href="${url}" target="_blank">Link</a>` : "-";
+              // Helper: Generates "Link (123)" or "-"
+              const makeCell = (url, count) => {
+                if (!url) {
+                  return "-";
+                }
+
+                // Format count: Use locale string for commas (e.g., 1,200) or (-) if undefined/null
+                const countDisplay =
+                  count !== undefined && count !== null
+                    ? `(${count.toLocaleString()})`
+                    : "(-)";
+
+                return `<a href="${url}" target="_blank">Link</a> <span class="count-badge">${countDisplay}</span>`;
+              };
+
               html += `<tr>
-                          <td>${row.company}</td>
-                          <td>${makeLink(row.network_url)}</td>
-                          <td>${makeLink(row.excluded_url)}</td>
+                          <td><strong>${row.company}</strong></td>
+                          <td>${makeCell(row.network_url, row.network_count)}</td>
+                          <td>${makeCell(row.excluded_url, row.excluded_count)}</td>
                       </tr>`;
             });
+
             html += `</tbody></table>`;
+
             document.getElementById("modalBody").innerHTML = html;
           } catch (e) {
             document.getElementById("modalBody").innerHTML =

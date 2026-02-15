@@ -32,6 +32,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 DATA_DIR = PROJECT_ROOT / "data"
 OUTPUT_FILE = DATA_DIR / "excluded.json"
 TEMP_FILE = DATA_DIR / "excluded_processing.tmp.json"
+SOURCES_FILE = DATA_DIR / "sources.json"
 
 # API Config
 GMAPS_API_KEY = os.getenv("GMAPS_API_KEY")
@@ -707,6 +708,80 @@ class GeocodingPipeline:
         total = count_spatial + count_text
         logger.info(f"Deduplication Complete. Total Merged: {total}")
 
+    def enrich_source_metadata(self):
+        """
+        Updates sources.json with counts of Excluded and Network hospitals.
+        Matches files in data/ directory to companies in sources.json.
+        """
+        if not SOURCES_FILE.exists():
+            logger.warning("sources.json not found. Skipping metadata enrichment.")
+            return
+
+        try:
+            with open(SOURCES_FILE, "r", encoding="utf-8") as f:
+                sources = json.load(f)
+
+            updated = False
+            for source in sources:
+                company = source.get("company")
+                if not company:
+                    continue
+
+                # 1. Count Excluded Hospitals
+                excluded_file = DATA_DIR / f"{company} Excluded_Hospitals_List.json"
+                if excluded_file.exists():
+                    try:
+                        with open(excluded_file, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                            count = len(data)
+                            if (
+                                source.get("excluded_count")
+                                and source.get("excluded_count") != count
+                            ):
+                                source["excluded_count"] = count
+                                updated = True
+                            if not "excluded_count" in source.keys():
+                                source["excluded_count"] = count
+                                updated = True
+                            logger.info(f"{company} Excluded Count: {count}")
+
+                    except Exception as e:
+                        logger.error(f"Error reading {excluded_file.name}: {e}")
+                else:
+                    logger.error(f"No excluded file found for {company}.")
+
+                # 2. Count Network Hospitals (Future proofing)
+                network_file = DATA_DIR / f"{company} Network_Hospitals_List.json"
+                if network_file.exists():
+                    try:
+                        with open(network_file, "r", encoding="utf-8") as f:
+                            data = json.load(f)
+                            count = len(data)
+                            if (
+                                source.get("network_count")
+                                and source.get("network_count") != count
+                            ):
+                                source["network_count"] = count
+                                updated = True
+                            if not "network_count" in source.keys():
+                                source["network_count"] = count
+                                updated = True
+                            logger.info(f"{company} Network Count: {count}")
+                    except Exception as e:
+                        logger.error(f"Error reading {network_file.name}: {e}")
+                else:
+                    logger.error(f"No network file found for {company}.")
+
+            if updated:
+                with open(SOURCES_FILE, "w", encoding="utf-8") as f:
+                    json.dump(sources, f, indent=4, ensure_ascii=False)
+                logger.info("Successfully updated sources.json with hospital counts.")
+            else:
+                logger.info("No changes needed in sources.json.")
+
+        except Exception as e:
+            logger.error(f"Failed to enrich source metadata: {e}")
+
     # --- RUNNER ---
     def run(self):
         """Main Execution Flow"""
@@ -734,6 +809,7 @@ class GeocodingPipeline:
             # Even if no geocoding is needed, try to deduplicate
             self.deduplicate_data()
             self.save_to_disk(is_final=True)
+            self.enrich_source_metadata()
             return
 
         logger.info(f"Starting geocoding for {total} records...")
@@ -772,6 +848,7 @@ class GeocodingPipeline:
         # Clean up duplicates and save the data
         self.deduplicate_data()
         self.save_to_disk(is_final=True)
+        self.enrich_source_metadata()
 
     def save_to_disk(self, is_final: bool = False):
         """Saves dictionary to JSON list, removing internal flags."""
