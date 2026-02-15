@@ -236,7 +236,7 @@ def main():
                 json.dump(all_data, f, indent=4, ensure_ascii=False)
 
         # Rate Limit Delay (between pages)
-        time.sleep(random.uniform(0.1, 0.2))
+        time.sleep(random.uniform(0.01, 0.1))
 
     # 3. Save Output
     if all_data:

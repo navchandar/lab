@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
-import pandas as pd
 import pdfplumber
 import requests
 from bs4 import BeautifulSoup
@@ -47,9 +46,24 @@ HEADERS_UA = {
 # --- Header Normalization Map ---
 # Standardized Names for Values to extract found in PDFs (case-insensitive).
 HEADER_ALIASES = {
-    "Sr. No.": ["SR. NO.", "SR NO", "S.NO.", "SL. NO.", "SER. NO."],
+    "Sr. No.": [
+        "SR. NO.",
+        "SR.",
+        "SR.\nNO.",
+        "SR NO",
+        "S.NO.",
+        "SL. NO.",
+        "SER. NO.",
+        "Sr. No.",
+        "S No",
+        "S. No",
+        "Sr\nNo",
+    ],
     "Hospital Name": [
+        "HOSPITAL",
         "HOSPITAL NAME",
+        "HOSPITAL\nNAME",
+        "HOSPITALS NAME",
         "PROVIDER NAME",
         "NAME OF HOSPITAL",
         "NAME OF THE PROVIDER",
@@ -58,9 +72,19 @@ HEADER_ALIASES = {
     "Address": ["ADDRESS", "HOSPITAL ADDRESS", "ADDRESS OF THE HOSPITAL"],
     "City": ["CITY", "CITY NAME", "DISTRICT", "TOWN"],
     "State": ["STATE"],
-    "Pin Code": ["PIN", "PIN CODE", "PINCODE", "ZIP", "ZIP CODE"],
+    "Pin Code": [
+        "PIN",
+        "PIN CODE",
+        "PINCODE",
+        "ZIP",
+        "ZIP CODE",
+        "POSTAL CODE",
+        "Pin\nCode",
+    ],
     "Effective Date": [
+        "Effective",
         "EFFECTIVE DATE",
+        "EFFECTIVE\nDATE",
         "DATE OF EXCLUSION",
         "DATE",
         "WEF",
@@ -79,16 +103,32 @@ def clean_text(text: Any) -> str:
 def get_standard_header_name(raw_header: str) -> str:
     """
     Maps a raw header name (e.g., 'PROVIDER NAME') to a standard key (e.g., 'Hospital Name').
+    Removes non-alphanumeric characters to match headers
+    to map even if they have different punctuation (e.g. 'S.No' vs 'Sr No' vs 'S_No').
     Returns the raw header (normalized) if no alias matches.
     """
-    clean_header = clean_text(raw_header).upper()
+    if not raw_header:
+        return f"Extra_Col"
 
+    # Normalize input: "Provider_Name" -> "PROVIDERNAME"
+    clean_input = re.sub(r"[^A-Z0-9]", "", str(raw_header).upper())
+
+    # Check against normalized aliases
     for standard_key, aliases in HEADER_ALIASES.items():
-        if clean_header in aliases:
+        # Normalize alias list: ["PROVIDER NAME"] -> ["PROVIDERNAME"]
+        norm_aliases = [re.sub(r"[^A-Z0-9]", "", a.upper()) for a in aliases]
+
+        if clean_input in norm_aliases:
             return standard_key
 
+    # Special Case: 'SNO' often appears for Sr. No.
+    if clean_input in ["SNO", "SRNO", "SLNO", "SR.", "SR"]:
+        return "Sr. No."
+
+    # Fallback
+    clean_header = clean_text(raw_header).upper().strip()
     # If no match found, return a generic cleaned version
-    return clean_header.title() if clean_header else "Unknown_Col"
+    return clean_header.title() if clean_header else "Extra_Col"
 
 
 def get_source_url(company_name: str, url_key: str) -> str:
@@ -154,9 +194,6 @@ def find_pdf_link(
         return None
 
 
-# --- Core PDF Processing ---
-
-
 def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
     """
     Extracts data using dynamic header mapping.
@@ -201,6 +238,7 @@ def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
                         data = table
 
                 # --- Row Extraction ---
+                print(data[0]) 
                 for row in data:
                     if not any(row):  # Skip completely empty rows
                         continue
@@ -233,6 +271,18 @@ def merge_fragmented_rows(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]
     """
     merged_data = []
     last_valid_row = None
+    if not raw_data:
+        return merged_data
+
+    # Check if we have the expected key
+    first_row_keys = raw_data[0].keys()
+    if "Sr. No." not in first_row_keys:
+        logger.error(
+            f"CRITICAL: Key 'Sr. No.' not found in extracted data. Available keys: {list(first_row_keys)}"
+        )
+        # Optional: Try to auto-detect the ID column (the first column)
+        # serial_key = list(first_row_keys)[0]
+        return []
 
     for row in raw_data:
         # Get Sr. No. using the Standard Key
@@ -272,6 +322,34 @@ def fix_detached_last_letter(text: str) -> str:
     # Pattern: Word (3+ chars) + Space + Single Letter (End of string)
     # e.g. "NAGA R" -> "NAGAR"
     return re.sub(r"([A-Za-z]{3,})\s+([A-Za-z])$", r"\1\2", text)
+
+
+def fix_broken_city_names(text: str) -> str:
+    """
+    Fixes split city names.
+    Examples handled:
+    'AHMEDABA D' -> 'AHMEDABAD' (1 char)
+    'MUZAFFARP UR' -> 'MUZAFFARPUR' (2 chars)
+    'ATCHUTAPU RAM' -> 'ATCHUTAPURAM' (Common Suffixes)
+    """
+    if not text:
+        return None
+    text = text.strip()
+
+    # 1. Merge specific Indian suffixes often split by OCR spaces
+    # Matches: RAM, REDDY, PATNAM, ANAM, GARH, PUR, BAD, NAGAR, PET
+    suffixes = r"(?:RAM|REDDY|PATNAM|ANAM|GARH|PUR|BAD|NAGAR|PETA?)"
+    text = re.sub(
+        r"([A-Za-z]{3,})\s+(" + suffixes + r")$", r"\1\2", text, flags=re.IGNORECASE
+    )
+
+    # 2. Merge "Word + 1-4 letters" at the end of the string
+    # We ensure the first part is at least 3 chars to avoid merging valid separate words like "NEW UK"
+    text = re.sub(
+        r"([A-Za-z]{3,})\s+([A-Za-z]{1,4})$", r"\1\2", text, flags=re.IGNORECASE
+    )
+
+    return text
 
 
 def clean_punctuation(text: str) -> str:
@@ -365,11 +443,13 @@ def normalize_records(record: Dict[str, Any]) -> Dict[str, Any]:
     # Apply fix_detached_last_letter immediately when popping values
     if values_soup:
         raw_state = values_soup.pop(-1)
-        final_record["State"] = fix_detached_last_letter(raw_state)
+        final_record["State"] = fix_broken_city_names(
+            fix_detached_last_letter(raw_state)
+        )
 
     if values_soup:
         raw_city = values_soup.pop(-1)
-        final_record["City"] = fix_detached_last_letter(raw_city)
+        final_record["City"] = fix_broken_city_names(fix_detached_last_letter(raw_city))
 
     if values_soup:
         # Everything remaining is Address
@@ -441,6 +521,12 @@ def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
         if len(city) > 4:
             spaced_city = city[:-1] + " " + city[-1]
             addr = strip_suffix(addr, spaced_city)
+            spaced_city = city[:-2] + " " + city[-2]
+            addr = strip_suffix(addr, spaced_city)
+            spaced_city = city[:-3] + " " + city[-3]
+            addr = strip_suffix(addr, spaced_city)
+        if addr.upper().endswith(city.upper()):
+            addr = addr[: -len(city)]
 
         # 3. Aliases
         aliases = {
@@ -506,7 +592,7 @@ def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
     return record
 
 
-def main():
+def get_excluded_hospitals_data():
     target_url = get_source_url(COMPANY, "excluded_url")
     if not target_url:
         logger.error(f"No excluded_url found for {COMPANY} in sources.json")
@@ -547,6 +633,15 @@ def main():
         )
     except Exception as e:
         logger.error(f"Error saving JSON: {e}")
+
+
+def get_network_hospitals_data():
+    pass
+
+
+def main():
+    get_excluded_hospitals_data()
+    get_network_hospitals_data()
 
 
 if __name__ == "__main__":
