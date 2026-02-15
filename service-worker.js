@@ -168,6 +168,7 @@ const urlsToCache = [
   'static/speech_helper.js',
   'static/utils.js',
   'type/index.html',
+  'type/preview.png',
   'type/script.js'
 ];
 
