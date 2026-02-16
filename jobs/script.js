@@ -1114,6 +1114,12 @@ function prepareTechRoleBubbleChart(roleDataMap) {
 // ==========================================
 
 function drawChart(key) {
+  // Guard against empty or null keys
+  if (!key) {
+    console.warn("drawChart called without a valid key.");
+    return;
+  }
+
   // Validate Data
   if (!globalChartData || !globalChartData[key]) {
     console.error(`Error: Data for key "${key}" not found.`);
@@ -1206,7 +1212,12 @@ async function renderCharts() {
         await loadChartData();
       }
       if (chartLoadStatus === "loaded") {
-        drawChart(elements.selector.value);
+        const selectedKey = elements.selector.value || "byRoleType";
+        // Update the dropdown UI to match the default
+        if (!elements.selector.value) {
+          elements.selector.value = selectedKey;
+        }
+        drawChart(selectedKey);
       }
     } else {
       // --- Switching back to Table View ---
@@ -1534,7 +1545,7 @@ function initializeTippyOnVisibleRows() {
       trigger: isMobile ? "click" : "mouseenter",
       hideOnClick: true,
       flip: true,
-      boundary: 'viewport',
+      boundary: "viewport",
       flipBehavior: ["bottom", "top"],
       // Keep Tippy inside the body
       appendTo: () => document.body,
@@ -2084,6 +2095,7 @@ async function main() {
   await loadJobs();
 
   // Setup the chart view components
+  await loadChartData();
   await renderCharts();
   // Setup the simplified history handling (hash listener)
   setupHashListener();
