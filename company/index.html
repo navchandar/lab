@@ -129,7 +129,7 @@
       }
 
       table.dataTable tbody td:nth-child(1) {
-        max-width: 300px;
+        max-width: 400px;
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -191,7 +191,7 @@
       .emp-filter-wrapper select {
         backdrop-filter: blur(5px);
         cursor: pointer;
-        margin-left: 17vw;
+        margin-left: 15vw;
         outline: none;
         border: 1px solid var(--glass-border) !important;
         border-radius: 8px;
@@ -231,10 +231,6 @@
           padding: 12px;
         }
 
-        table.dataTable thead {
-          display: none;
-        }
-
         .emp-filter-wrapper select {
           margin-left: 0;
           width: 100%;
@@ -242,6 +238,10 @@
 
         .top-wrapper {
           justify-content: center;
+        }
+
+        table.dataTable tbody td:nth-child(1) {
+          max-width: 200px;
         }
       }
     </style>
