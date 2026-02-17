@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -65,7 +65,7 @@
       <div
         class="page-loader-progress"
         id="pageProgress"
-        style="width: 0%;"
+        style="width: 0%"
       ></div>
     </div>
 
@@ -74,7 +74,7 @@
     </header>
 
     <main>
-      <div id="filters" style="display: none;">
+      <div id="filters" style="display: none">
         <label for="companyFilter" title="Filter Jobs based on Company Name"
           >Company:</label
         >
@@ -104,11 +104,11 @@
           id="loadingSpinner"
           role="status"
           aria-label="Loading the data"
-          style="display: flex;"
+          style="display: flex"
         >
           <div class="spinner"></div>
         </div>
-        <table id="jobTable" class="display" style="width: 100%;">
+        <table id="jobTable" class="display" style="width: 100%">
           <thead>
             <tr>
               <th>Job Title</th>
@@ -116,6 +116,7 @@
               <th>Location</th>
               <th>Type</th>
               <th>YoE</th>
+              <th>Employees</th>
               <th>Date Posted</th>
             </tr>
           </thead>
@@ -128,7 +129,7 @@
         <button id="ip-toast-close" class="ip-toast-close">&times;</button>
       </div>
 
-      <div id="chart-view" style="display: none;">
+      <div id="chart-view" style="display: none">
         <h2>Recent Job Posts Distribution Analysis</h2>
         <button id="closeChartView" class="chart-view-close-btn">
           &larr; Back to Listings

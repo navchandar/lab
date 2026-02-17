@@ -1731,13 +1731,20 @@ async function main() {
       let roleType = job.classification.roleType;
       let roleTypeLink = `<a href="#" class="search-role-type">#${roleType}</a>`;
       let jobTitleLink = `<a href="${job.url}" ${props} class="job-title-link" ${descriptionAttr}>${job.title}</a>`;
-
+      let websiteLink = job.companyWebsite;
+      let companyLink = "";
+      if (websiteLink && websiteLink !== "-") {
+        companyLink = `<a href="${websiteLink}" ${props} class="job-title-link">${job.company}</a>`;
+      } else {
+        companyLink = job.company;
+      }
       return [
         jobTitleLink,
-        job.company,
+        companyLink,
         job.location,
         roleType === "—" ? roleType : roleTypeLink,
         job.yoe,
+        job.employeeCount,
         job.datePosted,
       ];
     });
