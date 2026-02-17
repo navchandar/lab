@@ -43,6 +43,9 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 [![Deployment Status](https://github.com/navchandar/lab/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/navchandar/lab/actions/workflows/pages/pages-build-deployment)
 
 [![Fetch Jobs](https://github.com/navchandar/lab/actions/workflows/fetch-jobs.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/fetch-jobs.yml)
+[![Fetch Company](https://github.com/navchandar/lab/actions/workflows/fetch-company.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/fetch-company.yml)
+
+
 [![Generate Maps](https://github.com/navchandar/lab/actions/workflows/generate-maps.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/generate-maps.yml)
 [![Fetch EV Data](https://github.com/navchandar/lab/actions/workflows/fetch-ev-data.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/fetch-ev-data.yml)
 

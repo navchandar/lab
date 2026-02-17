@@ -1,0 +1,49 @@
+name: Fetch Company Data
+
+on:
+  schedule:
+    # Runs at 18:00 UTC (11:30 PM IST) every Monday
+    - cron: "0 18 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "company-data-update"
+  cancel-in-progress: false
+
+jobs:
+  fetch_company_data:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./company
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install beautifulsoup4 curl_cffi
+
+      - name: Run Script
+        run: python company_data_parser.py
+
+      - name: Git Pull Latest Changes
+        run: git pull origin ${{ github.ref_name }}
+
+      - name: Commit and push if changed
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "build: updated company data"
+          # Ensure it picks up the JSON file inside the company folder
+          file_pattern: "company/company_data.json"
