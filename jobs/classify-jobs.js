@@ -491,7 +491,9 @@ function buildCompanyLookup() {
 
     companyData.forEach((co) => {
       // Index by name (lowercase)
-      if (co.name) lookup.set(co.name.toLowerCase(), co);
+      if (co.name) {
+        lookup.set(co.name.toLowerCase(), co);
+      }
 
       // Index by LinkedIn URL (if present, cleaned of query params)
       if (co.linkedin) {
@@ -531,7 +533,6 @@ function mergeCompanyData(jobs, lookup) {
         employeeCount: "-",
       };
     }
-    return job;
   });
 }
 
