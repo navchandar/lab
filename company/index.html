@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🏭 Company Data</title>
+    <meta
+      name="description"
+      content="A curated dashboard of company insights, employee counts, and website links."
+    />
+    <meta name="author" content="Naveenchandar" />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+    />
+
+    <style>
+      :root {
+        --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        --title-gradient: linear-gradient(to right, #30daec, #db28c8);
+        --glass-bg: rgba(255, 255, 255, 0.05);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --accent-color: #38bdf8;
+        --text-main: #f1f5f9;
+        --text-muted: #94a3b8;
+        --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        /* Adding variable for consistent borders in table cells */
+        --row-border: rgba(255, 255, 255, 0.05);
+      }
+
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          --title-gradient: linear-gradient(to right, #3b82f6, #9333ea);
+          --glass-bg: rgba(255, 255, 255, 0.7);
+          --glass-border: rgba(0, 0, 0, 0.1);
+          /* Darker border for light mode */
+          --accent-color: #2563eb;
+          --text-main: #1e293b;
+          --text-muted: #475569;
+          --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+          --row-border: rgba(0, 0, 0, 0.05);
+        }
+      }
+
+      * {
+        transition:
+          background 0.3s ease,
+          color 0.3s ease,
+          border 0.3s ease;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-gradient);
+        background-attachment: fixed;
+        padding: 20px;
+        min-height: 100vh;
+        color: var(--text-main);
+        font-family: "Inter", sans-serif;
+      }
+
+      header {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      h1 {
+        background: var(--title-gradient);
+        font-weight: 600;
+        font-size: 2.5rem;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -1px;
+      }
+
+      .container {
+        flex-grow: 1;
+        margin: 0 auto;
+        width: 100%;
+        max-width: 1200px;
+      }
+
+      .table-card {
+        backdrop-filter: blur(12px);
+        background: var(--glass-bg);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: var(--card-shadow);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 24px;
+        overflow-x: auto;
+      }
+
+      table.dataTable {
+        border: none !important;
+        border-collapse: collapse !important;
+        width: 100% !important;
+        color: var(--text-main) !important;
+      }
+
+      table.dataTable thead th {
+        border-bottom: 1px solid var(--glass-border) !important;
+        background: rgba(150, 150, 150, 0.03);
+        padding: 15px !important;
+        color: var(--accent-color);
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        text-align: left;
+        text-transform: uppercase;
+      }
+
+      table.dataTable tbody td {
+        border-bottom: 1px solid var(--row-border) !important;
+        padding: 15px !important;
+        font-size: 0.9rem;
+      }
+
+      table.dataTable tbody td:nth-child(1) {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      table.dataTable tbody tr {
+        background: transparent !important;
+      }
+
+      table.dataTable tbody tr:hover {
+        transform: scale(1.002);
+        background: rgba(150, 150, 150, 0.08) !important;
+      }
+
+      a {
+        transition: opacity 0.2s;
+        color: var(--accent-color);
+        text-decoration: none;
+      }
+
+      a:hover {
+        opacity: 0.8;
+        text-decoration: underline;
+      }
+
+      /* FIX: Input field now uses var for text color */
+      .dataTables_filter input {
+        margin-bottom: 20px;
+        outline: none;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 8px !important;
+        background: var(--glass-bg) !important;
+        padding: 8px 12px !important;
+        color: var(--text-main) !important;
+      }
+
+      .dataTables_length select {
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 6px !important;
+        background: var(--glass-bg) !important;
+        padding: 2px 5px;
+        color: var(--text-main) !important;
+      }
+
+      .dataTables_info,
+      .dataTables_paginate {
+        margin-top: 20px !important;
+        color: var(--text-muted) !important;
+      }
+
+      /* FIX: Paginate button text color fixed */
+      .paginate_button {
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 8px !important;
+        background: var(--glass-bg) !important;
+        color: var(--text-main) !important;
+      }
+
+      .emp-filter-wrapper select {
+        backdrop-filter: blur(5px);
+        cursor: pointer;
+        margin-left: 17vw;
+        outline: none;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 8px;
+        background: var(--glass-bg) !important;
+        padding: 6px 12px;
+        color: var(--text-main) !important;
+        font-size: 0.9rem;
+      }
+
+      .emp-filter-wrapper select:hover {
+        background: rgba(150, 150, 150, 0.1) !important;
+      }
+
+      .top-wrapper {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      footer {
+        padding: 10px 5px 0px 5px;
+        color: var(--text-muted);
+        line-height: 1.8;
+        text-align: center;
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          display: none;
+          font-size: 1.8rem;
+        }
+
+        .table-card {
+          padding: 12px;
+        }
+
+        table.dataTable thead {
+          display: none;
+        }
+
+        .emp-filter-wrapper select {
+          margin-left: 0;
+          width: 100%;
+        }
+
+        .top-wrapper {
+          justify-content: center;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>Company Data</h1>
+    </header>
+
+    <div class="container">
+      <div class="table-card">
+        <table id="companyTable" class="responsive nowrap">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>Employees</th>
+              <th>Company Website</th>
+              <th>LinkedIn</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        Powered by
+        <a
+          href="https://github.com/navchandar/lab/company"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          GitHub
+        </a>
+        | Copyright &copy; <span id="year"></span> Naveenchandar.<br />
+        <small>
+          This work is licensed under the
+          <a
+            href="https://github.com/navchandar/lab/blob/main/LICENSE"
+            target="_blank"
+            rel="noopener noreferrer license"
+          >
+            GNU GPLv3 </a
+          >.
+        </small>
+      </p>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+
+    <script>
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      async function loadData() {
+        try {
+          const response = await fetch("company_data.json");
+          const data = await response.json();
+          const tableBody = document.getElementById("tableBody");
+
+          // Track unique employee counts for the filter dropdown
+          const empCountOptions = new Set();
+
+          data.forEach((item) => {
+            // Data Quality Gate: Ignore row if BOTH critical fields are missing
+            if (!item.employee_count && !item.website) {
+              return;
+            }
+
+            const row = document.createElement("tr");
+            const updateDate = item.last_updated
+              ? new Date(item.last_updated).toLocaleDateString()
+              : "-";
+            const empCount = item.employee_count ?? "-";
+
+            if (item.employee_count) {
+              empCountOptions.add(item.employee_count);
+            }
+
+            const domain = item.website
+              ? new URL(item.website).hostname.replace("www.", "")
+              : "-";
+            const website = item.website
+              ? `<a href="${item.website}" target="_blank">${domain}</a>`
+              : "-";
+            const linkedin_link = item.linkedin
+              ? item.linkedin.split("?")[0]
+              : "#";
+
+            const linkedin = item.linkedin
+              ? `<a href="${linkedin_link}" target="_blank" title="LinkedIn Profile">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                        <path fill="#0077b5" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                    </svg>
+                   </a>`
+              : "-";
+
+            row.innerHTML = `
+                <td title="${item.name}"><strong>${item.name}</strong></td>
+                <td>${empCount}</td>
+                <td>${website}</td>
+                <td>${linkedin}</td>
+                <td>${updateDate}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+
+          // Initialize DataTable
+          const table = $("#companyTable").DataTable({
+            responsive: true,
+            pageLength: 10,
+            order: [],
+            dom: '<"top-wrapper"lf>rtip', // Custom DOM layout to group length and filter
+            language: {
+              search: "_INPUT_",
+              searchPlaceholder: "Search companies...",
+            },
+            initComplete: function () {
+              // Create the filter container
+              const filterContainer = $(
+                '<div class="emp-filter-wrapper"></div>',
+              ).css({
+                display: "inline-block",
+                "margin-left": "20px",
+                "vertical-align": "middle",
+              });
+
+              const select = $(
+                '<select id="empFilter"><option value="">All Values</option></select>',
+              )
+                .appendTo(filterContainer)
+                .on("change", function () {
+                  const val = $.fn.dataTable.util.escapeRegex($(this).val());
+                  // Search specifically in Column 1 (Employees)
+                  table
+                    .column(1)
+                    .search(val ? "^" + val + "$" : "", true, false)
+                    .draw();
+                });
+
+              // Sort the options logically (1-10 before 11-50)
+              const sortedOptions = Array.from(empCountOptions).sort((a, b) => {
+                const getVal = (s) =>
+                  parseInt(s.toString().split("-")[0].replace(/\D/g, "")) || 0;
+                return getVal(a) - getVal(b);
+              });
+
+              sortedOptions.forEach((opt) => {
+                select.append(`<option value="${opt}">${opt}</option>`);
+              });
+
+              // Append next to the "Show X entries" label
+              $(".dataTables_length").append(filterContainer);
+            },
+          });
+        } catch (error) {
+          console.error("Error loading JSON data:", error);
+        }
+      }
+
+      loadData();
+    </script>
+  </body>
+</html>
