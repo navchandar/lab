@@ -286,7 +286,7 @@ async function startAfterResources(callback) {
         const config = RESOURCES_CONFIG[result.key];
         if (config.globalCheck && !isLoaded(config.globalCheck)) {
           console.warn(
-            `[WARNING] ${result.key} loaded but global '${config.globalCheck}' not found.`
+            `[WARNING] ${result.key} loaded but global '${config.globalCheck}' not found.`,
           );
         }
       }

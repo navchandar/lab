@@ -1,8 +1,17 @@
+// CLI usage: node classify-jobs.js
+
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
 import { CATEGORIES, TITLE_NUDGES, WORD_TO_NUM } from "./constants.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
+const COMPANY_DATA_FILE = path.resolve(
+  __dirname,
+  "../company/company_data.json",
+);
 
 const UNKNOWN = "—";
 
@@ -97,12 +106,12 @@ function scoreDoc(job, config = CATEGORIES) {
     const titleTermMatches = countMatches(
       title,
       posTerms.tokenRe,
-      posTerms.phraseRes
+      posTerms.phraseRes,
     );
     const descTermMatches = countMatches(
       desc,
       posTerms.tokenRe,
-      posTerms.phraseRes
+      posTerms.phraseRes,
     );
 
     // Base weights
@@ -135,7 +144,7 @@ function scoreDoc(job, config = CATEGORIES) {
       const hasK8s = hasAny(
         desc,
         buildRegexes(["kubernetes", "k8s"]).tokenRe,
-        null
+        null,
       );
       const hasTf = hasAny(desc, buildRegexes(["terraform"]).tokenRe, null);
       if (hasK8s && hasTf) {
@@ -244,7 +253,7 @@ const REGEX_SIMPLE_PLUS =
 // Regex 5: Match numbers in words
 const NUMBER_WORDS_RE = new RegExp(
   "\\b(" + Object.keys(WORD_TO_NUM).join("|") + ")\\b",
-  "gi"
+  "gi",
 );
 
 // Regex 6: Matches "Year of experience required" with messy separators/HTML
@@ -297,7 +306,7 @@ function getExperience(jobTitle, jobDescription, jobId) {
 
     // Extract all numbers from the cleaned string
     const numMatches = [...cleaned.matchAll(/\d+/g)].map((m) =>
-      parseInt(m[0], 10)
+      parseInt(m[0], 10),
     );
 
     if (numMatches.length === 0) {
@@ -365,7 +374,7 @@ function normalizeExperience(experienceString) {
   // ensure numbers are digits
   cleanedString = cleanedString.replace(
     NUMBER_WORDS_RE,
-    (m) => WORD_TO_NUM[m.toLowerCase()] || m
+    (m) => WORD_TO_NUM[m.toLowerCase()] || m,
   );
 
   // Regex to strictly capture "Num - Num" or "Num to Num" or "Num+"
@@ -471,31 +480,85 @@ function clean_string(jobs) {
   });
 }
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-let OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
-// CLI usage: node classify-jobs.js
+/**
+ * Creates a lookup map from company data for fast O(1) access
+ */
+function buildCompanyLookup() {
+  try {
+    const raw = fs.readFileSync(COMPANY_DATA_FILE, "utf-8");
+    const companyData = JSON.parse(raw);
+    const lookup = new Map();
+
+    companyData.forEach((co) => {
+      // Index by name (lowercase)
+      if (co.name) lookup.set(co.name.toLowerCase(), co);
+
+      // Index by LinkedIn URL (if present, cleaned of query params)
+      if (co.linkedin) {
+        const cleanLink = co.linkedin.split("?")[0].toLowerCase();
+        lookup.set(cleanLink, co);
+      }
+    });
+    return lookup;
+  } catch (e) {
+    console.warn("Company data file not found or invalid. Skipping merge.");
+    return new Map();
+  }
+}
+
+/**
+ * Injects company metadata directly into the job object
+ */
+function mergeCompanyData(jobs, lookup) {
+  return jobs.map((job) => {
+    // Attempt match by LinkedIn URL first (more unique), then by Name
+    const cleanJobUrl = job.companyUrl
+      ? job.companyUrl.split("?")[0].toLowerCase()
+      : "";
+    const meta =
+      lookup.get(cleanJobUrl) || lookup.get(job.company.toLowerCase());
+
+    if (meta) {
+      return {
+        ...job,
+        companyWebsite: meta.website || "-",
+        employeeCount: meta.employee_count || "-",
+      };
+    } else {
+      return {
+        ...job,
+        companyWebsite: "-",
+        employeeCount: "-",
+      };
+    }
+    return job;
+  });
+}
 
 try {
   // Read the file
   const raw = fs.readFileSync(OUTPUT_FILE, "utf-8");
   const json = JSON.parse(raw);
   const jobs = json.data;
+  // Prepare Company Lookup
+  console.log("Merging company data from:", COMPANY_DATA_FILE);
+  const companyLookup = buildCompanyLookup();
+  const jobswithComp = mergeCompanyData(jobs, companyLookup);
 
-  // Classify the jobs
-  const jobswithDesc = clean_string(jobs);
+  // Run transformations
+  console.log("Cleaning job descriptions");
+  const jobswithDesc = clean_string(jobswithComp);
+  console.log("Extracting experience information");
   const jobswithExp = addExperienceToJobs(jobswithDesc);
-  const out = classifyJobs(jobswithExp);
-  json.data = out;
+  console.log("Classifying jobs into categories");
+  const classifiedJobs = classifyJobs(jobswithExp);
 
-  // Convert back to a nicely formatted JSON string
+  json.data = classifiedJobs;
   const outputJson = JSON.stringify(json, null, 2);
-
-  // Write back to the same file
   fs.writeFileSync(OUTPUT_FILE, outputJson, "utf-8");
 
   console.log(
-    `Successfully classified ${jobs.length} entries and updated the file: ${OUTPUT_FILE}`
+    `Successfully classified ${jobs.length} entries and updated the file: ${OUTPUT_FILE}`,
   );
 } catch (error) {
   console.error(`Error processing file ${OUTPUT_FILE}:`, error.message);
