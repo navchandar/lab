@@ -14,6 +14,7 @@ const IGNORED_DIRS = [
   "stefanzweifel",
   "ip",
   "jobs",
+  "company",
   "smart-dom-inspector",
   "serviceability",
   "hospitals",
