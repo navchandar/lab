@@ -116,14 +116,14 @@ export const DATA_TABLE_CONFIG = {
     {
       // 2. Company Name (Index 1)
       targets: [1],
-      className: "dt-head-left dt-body-left",
-      width: "13%",
+      className: "dt-head-left dt-body-left ellipsis",
+      width: "15%",
     },
     {
       // 3. Location (Index 2)
       targets: [2],
-      className: "dt-head-left dt-body-left",
-      width: "20%",
+      className: "dt-head-left dt-body-left ellipsis",
+      width: "15%",
     },
     {
       // 4. Type (Index 3 - QA / DEV / DEVOPS roles)
@@ -138,11 +138,17 @@ export const DATA_TABLE_CONFIG = {
       width: "7%",
     },
     {
-      // 6. Date Posted (Index 5)
+      // 6. Emploee count (Index 5)
       targets: [5],
+      className: "dt-head-center dt-body-center",
+      width: "8%",
+    },
+    {
+      // 7. Date Posted (Index 6)
+      targets: [6],
       type: "date", // Explicitly tell DataTables to sort this as a date
       className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
-      width: "15%",
+      width: "10%",
     },
   ],
 };

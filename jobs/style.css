@@ -297,7 +297,8 @@ div.dt-container select.dt-input {
     padding: 15px 10px;
 }
 
-#jobTable td:nth-child(6) {
+/* last cell date column*/
+#jobTable td:nth-child(7) {
     padding: 15px 2px;
 }
 
@@ -317,6 +318,10 @@ div.dt-container select.dt-input {
 
 #jobTable th:hover {
     background-color: #eeeeee;
+}
+
+#jobTable th .dt-column-header {
+    flex-direction: row !important;
 }
 
 #jobTable tbody tr:hover {
@@ -375,6 +380,14 @@ div.dt-container select.dt-input {
 .dt-paging-button.current:not(.disabled) {
     background: linear-gradient(to bottom, rgb(182 230 255) 0%, #a7d3ff 100%) !important;
 }
+
+.ellipsis {
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 
 /* ================================================= */
 /* CHART VIEW */
@@ -771,7 +784,7 @@ grammarly-extension,
         padding: 8px 8px;
     }
 
-    #jobTableBody td:nth-child(2), #jobTableBody td:nth-child(3), #jobTableBody td:nth-child(4), #jobTableBody td:nth-child(5), #jobTableBody td:nth-child(6) {
+    #jobTableBody td:nth-child(2), #jobTableBody td:nth-child(3), #jobTableBody td:nth-child(4), #jobTableBody td:nth-child(5), #jobTableBody td:nth-child(6), #jobTableBody td:nth-child(7) {
         font-size: smaller;
     }
 

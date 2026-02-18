@@ -123,18 +123,12 @@ function convertToLocalTime(utcDateString) {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZoneName: "short",
     });
 
     const parts = formatter.formatToParts(date);
     const get = (type) => parts.find((p) => p.type === type)?.value || "";
 
-    const formatted = `${get("year")}-${get("month")}-${get("day")} ${get(
-      "hour",
-    )}:${get("minute")} ${get("timeZoneName")}`;
+    const formatted = `${get("year")}-${get("month")}-${get("day")}`;
     return formatted.trim();
   } catch {
     console.log("Error converting to local timezone");
