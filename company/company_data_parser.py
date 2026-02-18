@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 # --- Constants ---
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "company_data.json"
+JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
@@ -39,19 +40,60 @@ def get_search_params(keyword: str, start: int) -> Dict[str, str]:
     }
 
 
-def fetch_company_urls() -> List[Dict[str, str]]:
-    """Crawls LinkedIn for company page URLs based on keywords."""
+def normalize_linkedin_url(url: str) -> str:
+    """Standardizes LinkedIn URLs to the www domain."""
+    return re.sub(
+        r"https?://[a-z]{1,4}\.linkedin\.com", "https://www.linkedin.com", url
+    )
+
+
+def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
+    """
+    Consolidates company URLs from local job data and live LinkedIn crawling.
+    """
     companies = []
     seen_links = set()
+
+    # 1. Extract from Local Job Data first
+    if JOBS_DATA.exists():
+        try:
+            print(f"Loading companies from {JOBS_DATA}...")
+            with open(JOBS_DATA, "r") as f:
+                jobs = json.load(f).get("data", [])
+
+            if not isinstance(jobs, list):
+                logger.error(f"Expected a list in {JOBS_DATA}, got {type(jobs)}")
+
+            for job in jobs:
+                link = job.get("companyUrl")
+                name = job.get("company")
+
+                if link and name and "linkedin.com" in link:
+                    link = normalize_linkedin_url(link)
+                    if link not in seen_links:
+                        companies.append({"name": name, "linkedin": link})
+                        seen_links.add(link)
+
+            logger.info(f"Loaded {len(companies)} unique companies from local data.")
+        except Exception as e:
+            logger.error(f"Error reading job data: {e}")
+    else:
+        logger.warning(f"{JOBS_DATA} missing. Skipping local extraction.")
+
+    # 2. Crawl LinkedIn for fresh data
+    if not crawl_web:
+        return companies
+
     url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 
     # Load Keywords
-    if not KEYWORDS_FILE.exists():
-        logger.warning(f"{KEYWORDS_FILE} missing. Searching with empty keyword.")
-        keyword_list = [""]
-    else:
+    keyword_list = [""]
+    if KEYWORDS_FILE.exists():
         with open(KEYWORDS_FILE, "r") as f:
-            keyword_list = [""] + list(set(line.strip() for line in f if line.strip()))
+            keyword_list += [line.strip() for line in f if line.strip()]
+
+    # Ensure keyword_list unique
+    keyword_list = list(dict.fromkeys(keyword_list))
 
     for keyword in keyword_list:
         max_range = 100 if keyword else 500
@@ -59,18 +101,19 @@ def fetch_company_urls() -> List[Dict[str, str]]:
 
         for start in range(0, max_range, 25):
             try:
-                # Fresh request per call as requested
                 resp = requests.get(
                     url,
                     params=get_search_params(keyword, start),
                     headers={"User-Agent": USER_AGENT},
                     timeout=15,
+                    # Note: 'impersonate' is a feature of curl_cffi,
+                    # ensure you are using the correct requests-compatible wrapper
                     impersonate="chrome",
                 )
 
                 if resp.status_code != 200:
                     logger.error(
-                        f"Failed search {keyword} at {start}: Status {resp.status_code}"
+                        f"Search failed for {keyword} at {start}: {resp.status_code}"
                     )
                     break
 
@@ -86,26 +129,19 @@ def fetch_company_urls() -> List[Dict[str, str]]:
                     link_tag = title_tag.find("a", href=True)
 
                     if name and link_tag:
-                        link = link_tag["href"]
+                        link = normalize_linkedin_url(link_tag["href"])
+
                         if "linkedin.com" not in link:
-                            logger.error(f"non-LinkedIn link found: {link}")
                             continue
-                        # replace other lang links with english linkedin links
-                        # like de.linkedin.com or uk.linkedin.com with www.linkedin.com
-                        link = re.sub(
-                            r"https?://[a-z]{1,4}\.linkedin\.com",
-                            "https://www.linkedin.com",
-                            link,
-                        )
-                        if link in seen_links:
-                            continue
-                        companies.append({"name": name, "linkedin": link})
-                        seen_links.add(link)
+
+                        if link not in seen_links:
+                            companies.append({"name": name, "linkedin": link})
+                            seen_links.add(link)
 
                 logger.info(
-                    f"Batch processed: start={start}. Total unique companies found: {len(companies)}"
+                    f"Keyword '{keyword}' at {start}: Total unique list is now {len(companies)}"
                 )
-                time.sleep(random.uniform(1, 2))
+                time.sleep(random.uniform(1.5, 3.0))  # Slightly safer delay
 
             except Exception as e:
                 logger.error(f"Exception during search crawl: {e}")

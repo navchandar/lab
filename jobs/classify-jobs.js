@@ -86,8 +86,6 @@ function scoreDoc(job, config = CATEGORIES) {
   const desc = norm(job.description || "");
 
   const scores = {};
-  const titleCap = 12; // prevent over-boost from long titles
-  const descCap = 30; // prevent over-boost from long descriptions
   const negTitleCap = 12;
   const negDescCap = 30;
 
@@ -490,14 +488,12 @@ function buildCompanyLookup() {
     const lookup = new Map();
 
     companyData.forEach((co) => {
-      // Index by name (lowercase)
-      if (co.name) {
-        lookup.set(co.name.toLowerCase(), co);
-      }
-
       // Index by LinkedIn URL (if present, cleaned of query params)
       if (co.linkedin) {
-        const cleanLink = co.linkedin.split("?")[0].toLowerCase();
+        const cleanLink = co.linkedin
+          .split("?")[0]
+          .toLowerCase()
+          .split("linkedin.com/")[1];
         lookup.set(cleanLink, co);
       }
     });
@@ -515,10 +511,9 @@ function mergeCompanyData(jobs, lookup) {
   return jobs.map((job) => {
     // Attempt match by LinkedIn URL first (more unique), then by Name
     const cleanJobUrl = job.companyUrl
-      ? job.companyUrl.split("?")[0].toLowerCase()
+      ? job.companyUrl.split("?")[0].toLowerCase().split("linkedin.com/")[1]
       : "";
-    const meta =
-      lookup.get(cleanJobUrl) || lookup.get(job.company.toLowerCase());
+    const meta = lookup.get(cleanJobUrl);
 
     if (meta) {
       return {
