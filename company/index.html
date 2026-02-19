@@ -91,6 +91,35 @@
         letter-spacing: -1px;
       }
 
+      #loadingSpinner {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        box-sizing: content-box;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+      }
+
+      .spinner-hidden {
+        display: none;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: translate(-50%, -50%) rotate(0deg);
+        }
+
+        100% {
+          transform: translate(-50%, -50%) rotate(360deg);
+        }
+      }
+
       .container {
         flex-grow: 1;
         margin: 0 auto;
@@ -166,7 +195,6 @@
         text-decoration: underline;
       }
 
-      /* FIX: Input field now uses var for text color */
       .dataTables_filter input {
         margin-bottom: 20px;
         outline: none;
@@ -177,7 +205,7 @@
         color: var(--text-main) !important;
       }
 
-      .dataTables_length select {
+      select {
         border: 1px solid var(--glass-border) !important;
         border-radius: 6px !important;
         background: var(--glass-bg) !important;
@@ -191,7 +219,6 @@
         color: var(--text-muted) !important;
       }
 
-      /* FIX: Paginate button text color fixed */
       .paginate_button {
         border: 1px solid var(--glass-border) !important;
         border-radius: 8px !important;
@@ -202,7 +229,6 @@
       .emp-filter-wrapper select {
         backdrop-filter: blur(5px);
         cursor: pointer;
-        margin-left: 15vw;
         outline: none;
         border: 1px solid var(--glass-border) !important;
         border-radius: 8px;
@@ -212,7 +238,7 @@
         font-size: 0.9rem;
       }
 
-      .emp-filter-wrapper select:hover {
+      select:hover {
         background: rgba(150, 150, 150, 0.1) !important;
       }
 
@@ -264,7 +290,13 @@
     </header>
 
     <div class="container">
-      <div class="table-card">
+      <div
+        id="loadingSpinner"
+        role="status"
+        aria-label="Loading data"
+        class=""
+      ></div>
+      <div class="table-card" style="display: none">
         <table id="companyTable" class="responsive nowrap">
           <thead>
             <tr>
@@ -309,6 +341,7 @@
 
     <script>
       document.getElementById("year").textContent = new Date().getFullYear();
+      const loadingSpinner = document.getElementById("loadingSpinner");
 
       async function loadData() {
         try {
@@ -374,45 +407,46 @@
               searchPlaceholder: "Search companies...",
             },
             initComplete: function () {
-              // Create the filter container
-              const filterContainer = $(
-                '<div class="emp-filter-wrapper"></div>',
-              ).css({
-                display: "inline-block",
-                "margin-left": "20px",
-                "vertical-align": "middle",
-              });
-
+              const api = this.api();
+              // Create the select element
               const select = $(
                 '<select id="empFilter"><option value="">All Values</option></select>',
-              )
-                .appendTo(filterContainer)
-                .on("change", function () {
-                  const val = $.fn.dataTable.util.escapeRegex($(this).val());
-                  // Search specifically in Column 1 (Employees)
-                  table
-                    .column(1)
-                    .search(val ? "^" + val + "$" : "", true, false)
-                    .draw();
-                });
+              );
 
-              // Sort the options logically (1-10 before 11-50)
+              // Sort and add options based on values
               const sortedOptions = Array.from(empCountOptions).sort((a, b) => {
                 const getVal = (s) =>
                   parseInt(s.toString().split("-")[0].replace(/\D/g, "")) || 0;
                 return getVal(a) - getVal(b);
               });
+              sortedOptions.forEach((opt) =>
+                select.append(`<option value="${opt}">${opt}</option>`),
+              );
 
-              sortedOptions.forEach((opt) => {
-                select.append(`<option value="${opt}">${opt}</option>`);
+              // Wrap it and append it to the .top-wrapper
+              const filterWrapper = $(
+                '<div class="emp-filter-wrapper"></div>',
+              ).append(select);
+
+              // Place the dropdown next to Length menu inside the top bar
+              $(".dataTables_length").after(filterWrapper);
+
+              // Handle the change event in dropdown
+              $(document).on("change", "#empFilter", function () {
+                const val = $.fn.dataTable.util.escapeRegex($(this).val());
+                api
+                  .column(1)
+                  .search(val ? "^" + val + "$" : "", true, false)
+                  .draw();
               });
-
-              // Append next to the "Show X entries" label
-              $(".dataTables_length").append(filterContainer);
             },
           });
         } catch (error) {
           console.error("Error loading JSON data:", error);
+        } finally {
+          // Show the table card regardless of success or failure
+          document.querySelector(".table-card").style.display = "block";
+          loadingSpinner.classList.add("spinner-hidden");
         }
       }
 
