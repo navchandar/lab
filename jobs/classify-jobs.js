@@ -220,8 +220,16 @@ function confidence(best, second) {
 }
 
 function classifyJobs(jobs) {
-  return jobs.map((j) => {
+  console.log("Classifying jobs into categories");
+  const stats = {};
+  let totalCount = 0;
+
+  const results = jobs.map((j) => {
     const { category, scores, confidence } = scoreDoc(j);
+
+    // Increment the count for this specific category
+    stats[category] = (stats[category] || 0) + 1;
+    totalCount++;
     // Combine the classification results into a single object under 'classification'
     const classification = {
       roleType: category,
@@ -230,6 +238,27 @@ function classifyJobs(jobs) {
     };
     return { ...j, classification };
   });
+
+  // Print the final summary table
+  console.log("\n" + "=".repeat(60));
+  console.log("CLASSIFICATION SUMMARY");
+  console.log("=".repeat(60));
+
+  // Sorting the stats from highest count to lowest for better readability
+  const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+
+  console.table(
+    sortedStats.map(([category, count]) => ({
+      Category: category,
+      Count: count,
+      Percentage: ((count / totalCount) * 100).toFixed(1) + "%",
+    })),
+  );
+
+  console.log(`\nTOTAL JOBS PROCESSED: ${totalCount}`);
+  console.log("=".repeat(60) + "\n");
+
+  return results;
 }
 
 // Regex 1: General numeric patterns with "experience"
@@ -407,6 +436,7 @@ function normalizeExperience(experienceString) {
 
 // -- Get the experience value from title/description --
 function addExperienceToJobs(jobs) {
+  console.log("Extracting experience information");
   return jobs.map((j) => {
     const exp = getExperience(j.title, j.description, j.jobId);
     return {
@@ -417,6 +447,7 @@ function addExperienceToJobs(jobs) {
 }
 
 function clean_string(jobs) {
+  console.log("Cleaning job descriptions");
   // 1. Regex to target invisible/control/separator characters (including LS and PS)
   const invisibleCharsRegex = /[\uFEFF\p{Cf}\p{Co}\p{Cn}\u2028\u2029]/gu;
   // 2. Replacement map for common conversions (curly quotes, long dashes, etc.)
@@ -542,11 +573,8 @@ try {
   const jobswithComp = mergeCompanyData(jobs, companyLookup);
 
   // Run transformations
-  console.log("Cleaning job descriptions");
   const jobswithDesc = clean_string(jobswithComp);
-  console.log("Extracting experience information");
   const jobswithExp = addExperienceToJobs(jobswithDesc);
-  console.log("Classifying jobs into categories");
   const classifiedJobs = classifyJobs(jobswithExp);
 
   json.data = classifiedJobs;

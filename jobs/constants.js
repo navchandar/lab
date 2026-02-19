@@ -182,6 +182,11 @@ export const CATEGORIES = {
       "erp consultant",
       "functional consultant",
       "technical lead",
+      "full-stack engineer",
+      "technical mentorship",
+      "distributed systems",
+      "network programming",
+      "ethernet switching",
     ],
     terms: [
       "developer",
@@ -249,6 +254,16 @@ export const CATEGORIES = {
       "peoplesoft",
       "netsuite",
       "workday",
+      "code reviews",
+      "front-end",
+      "back-end",
+      "architecture",
+      "debugging",
+      "c++",
+      "c",
+      "sdk",
+      "vxlan",
+      "architecture",
     ],
     negative: [
       // QA / Testing
@@ -320,6 +335,14 @@ export const CATEGORIES = {
       "kpo",
       "call center",
       "process associate",
+      "uvm",
+      "verilog",
+      "systemverilog",
+      "asic",
+      "rtl",
+      "fpga",
+      "hardware",
+      "oscilloscope",
     ],
   },
 
@@ -434,6 +457,16 @@ export const CATEGORIES = {
       "asic",
       "oscilloscope",
       "electrical",
+      "systemverilog",
+      "asic",
+      "fpga",
+      "hardware",
+      "oscilloscope",
+      "silicon",
+      "post-silicon",
+      "pcie",
+      "interconnect",
+      "physical layer",
       // DevOps/SRE
       "sre",
       "site reliability",
@@ -726,6 +759,9 @@ export const CATEGORIES = {
       "storytelling",
       "guide designers",
       "high-stakes presentations",
+      "refinery",
+      "crude",
+      "feedstocks",
     ],
   },
 
@@ -781,6 +817,11 @@ export const CATEGORIES = {
       "production process",
       "electrical and programming",
       "material & labor costs",
+      "asic verification",
+      "soc verification",
+      "uvm methodology",
+      "constrained random verification",
+      "design verification",
     ],
     terms: [
       "hardware",
@@ -868,6 +909,15 @@ export const CATEGORIES = {
       "calibration",
       "inspection",
       "incoming material",
+      "Verilog",
+      "systemverilog",
+      "uvm",
+      "pcie",
+      "pci express",
+      "cxl",
+      "interconnect",
+      "simulation",
+      "debug",
     ],
     negative: [
       // Software/web
@@ -1244,6 +1294,17 @@ export const CATEGORIES = {
       "scrum master",
       "product roadmap",
       "stakeholder",
+      "systemverilog",
+      "asic",
+      "rtl",
+      "fpga",
+      "hardware",
+      "oscilloscope",
+      "silicon",
+      "post-silicon",
+      "pcie",
+      "interconnect",
+      "physical layer",
     ],
   },
 
@@ -1269,6 +1330,11 @@ export const CATEGORIES = {
       "data labeling",
       "ground truth",
       "human in the loop",
+      "logistic regression",
+      "random forest",
+      "decision tree",
+      "credit risk analytics",
+      "scorecard development",
     ],
     terms: [
       "ml",
@@ -1314,6 +1380,10 @@ export const CATEGORIES = {
       "artificial general intelligence",
       "linguistics",
       "speech recognition",
+      "SAS",
+      "SQL",
+      "PowerBI",
+      "Tableau",
     ],
     negative: [
       "test case",
@@ -1366,6 +1436,10 @@ export const CATEGORIES = {
       "access control and key management",
       "mock drills",
       "vvip movement",
+      "threat intelligence",
+      "incident response",
+      "zero trust",
+      "network security",
     ],
     terms: [
       "infosec",
@@ -1404,6 +1478,8 @@ export const CATEGORIES = {
       "access control",
       "biometric",
       "concessionaires",
+      "firewall",
+      "endpoint",
     ],
     negative: [
       "qa",
@@ -1603,6 +1679,12 @@ export const CATEGORIES = {
       "delivery head",
       "practice lead",
       "general manager",
+      "business partner",
+      "strategic alignment",
+      "pmo teams",
+      "it initiatives",
+      "functional domain",
+      "technology decisions",
     ],
 
     terms: [
@@ -1628,6 +1710,7 @@ export const CATEGORIES = {
       "project",
       "product",
       "management",
+      "stakeholder",
       "analyst",
       "ux research",
       "market research",
@@ -1708,6 +1791,246 @@ export const CATEGORIES = {
       "seo",
     ],
   },
+
+  HR: {
+    weight: 1,
+    titleBoost: 1.5,
+    phrases: [
+      "human resources",
+      "talent acquisition",
+      "employee relations",
+      "talent management",
+      "people and culture",
+      "talent acquisition",
+      "sourcing",
+      "hiring",
+      "screening",
+    ],
+    terms: [
+      "recruiter",
+      "payroll",
+      "onboarding",
+      "hiring",
+      "shrm",
+      "hris",
+      "compensation",
+      "recruit",
+      "sourcing",
+      "screening",
+      "talent",
+      "hiring",
+    ],
+    negative: [
+      "technical lead",
+      "developer",
+      "coding",
+      "technical architect",
+      "scrum master",
+    ],
+  },
+
+  Finance: {
+    weight: 1,
+    titleBoost: 1.6,
+    phrases: [
+      "chartered accountant",
+      "financial analyst",
+      "accounts payable",
+      "accounts receivable",
+      "profit and loss",
+    ],
+    terms: [
+      "accounting",
+      "audit",
+      "taxation",
+      "ledger",
+      "cpa",
+      "budgeting",
+      "treasury",
+      "tally",
+    ],
+    negative: [
+      "fintech developer",
+      "software engineer",
+      "data scientist",
+      "developer",
+      "coding",
+      "programming",
+      "site reliability",
+      "platform engineer",
+      "infrastructure engineer",
+      "service mesh",
+      "infrastructure as code",
+      "platform as code",
+      "incident management",
+      "high availability",
+      "disaster recovery",
+      "production engineer",
+      "production support",
+      "technical operations",
+      "it operations",
+      "system administrator",
+    ],
+  },
+
+  Marketing: {
+    weight: 1,
+    titleBoost: 1.4,
+    phrases: [
+      "digital marketing",
+      "content strategy",
+      "social media manager",
+      "brand awareness",
+      "growth hacking",
+    ],
+    terms: [
+      "seo",
+      "sem",
+      "campaign",
+      "copywriter",
+      "advertising",
+      "branding",
+      "leads",
+      "market",
+    ],
+    negative: ["marketing analytics engineer", "data engineer"],
+  },
+
+  Sales: {
+    weight: 1,
+    titleBoost: 1.5,
+    phrases: [
+      "business development",
+      "account executive",
+      "inside sales",
+      "sales development",
+    ],
+    terms: [
+      "crm",
+      "salesforce",
+      "quota",
+      "outreach",
+      "prospecting",
+      "negotiation",
+      "targets",
+    ],
+    negative: ["salesforce developer", "technical sales engineer"],
+  },
+
+  Legal: {
+    weight: 1,
+    titleBoost: 1.7,
+    phrases: [
+      "legal counsel",
+      "corporate lawyer",
+      "regulatory compliance",
+      "contract management",
+    ],
+    terms: [
+      "paralegal",
+      "litigation",
+      "attorney",
+      "compliance",
+      "policy",
+      "ethics",
+      "arbitration",
+    ],
+    negative: ["it compliance", "security auditor"],
+  },
+
+  CustomerSupport: {
+    weight: 1,
+    titleBoost: 1.3,
+    phrases: [
+      "customer success",
+      "technical support",
+      "client relations",
+      "customer experience",
+      "call center",
+      "help desk",
+      "customer service",
+    ],
+    terms: [
+      "helpdesk",
+      "ticketing",
+      "zendesk",
+      "support",
+      "troubleshooting",
+      "escalation",
+      "voice",
+      "chat",
+    ],
+    negative: ["software engineer", "development"],
+  },
+  Manufacturing: {
+    weight: 1,
+    titleBoost: 1.5,
+    phrases: [
+      "production planning",
+      "plant management",
+      "assembly line",
+      "shop floor",
+      "quality control",
+      "health and safety",
+    ],
+    terms: [
+      "factory",
+      "machining",
+      "iso",
+      "six sigma", // Also used in IndustrialEngg
+      "ehs",
+      "maintenance",
+      "operator",
+      "welder",
+      "fabrication",
+    ],
+    negative: ["software", "web development", "coding"],
+  },
+
+  Retail: {
+    weight: 1,
+    titleBoost: 1.4,
+    phrases: [
+      "store operations",
+      "visual merchandising",
+      "inventory management",
+      "customer service",
+      "point of sale",
+    ],
+    terms: [
+      "retail",
+      "pos",
+      "showroom",
+      "cashier",
+      "billing",
+      "stock",
+      "merchandise",
+      "fmcg", // Fast Moving Consumer Goods
+    ],
+    negative: ["backend", "manufacturing plant", "heavy machinery"],
+  },
+
+  Logistics: {
+    weight: 1,
+    titleBoost: 1.4,
+    phrases: [
+      "supply chain management",
+      "warehouse operations",
+      "last mile delivery",
+      "freight forwarding",
+    ],
+    terms: [
+      "logistics",
+      "shipping",
+      "fleet",
+      "3pl",
+      "cargo",
+      "inventory",
+      "scm",
+      "courier",
+    ],
+    negative: ["software developer", "ux design"],
+  },
 };
 
 // --- General Color Palette (for Company/Location) ---
@@ -1784,6 +2107,11 @@ export const WORD_TO_NUM = {
 
 // Role-defining title nudges only (specific > generic). Order matters.
 export const TITLE_NUDGES = [
+  {
+    regex: /\b(full\s*stack|fullstack|web\s*application\s*developer)\b/i,
+    cat: "SoftwareDEV",
+    boost: 4,
+  },
   // --- SoftwareQA ---
   {
     regex: /\b(sdet|software\s*developer\s*in\s*test)\b/i,
@@ -1828,7 +2156,11 @@ export const TITLE_NUDGES = [
     cat: "HardwareQA",
     boost: 4,
   },
-
+  {
+    regex: /\b(design\s*verification|dv\s*engineer|verification\s*engineer)\b/i,
+    cat: "HardwareQA",
+    boost: 5,
+  },
   // --- Data Engineering / Analytics Engineering ---
   {
     regex:
@@ -1847,6 +2179,12 @@ export const TITLE_NUDGES = [
     regex: /\b(data\s*scientist|applied\s*scientist|research\s*scientist)\b/i,
     cat: "ML/AI",
     boost: 4,
+  },
+  {
+    regex:
+      /\b(risk\s*analyst|analytics\s*manager|data\s*scientist\s*-\s*banking|credit\s*risk)\b/i,
+    cat: "ML/AI",
+    boost: 5,
   },
   // Ambiguous but useful signal; let description/keyword scoring finalize
   {
@@ -1940,6 +2278,60 @@ export const TITLE_NUDGES = [
     regex: /\b(capa|apqr|change\s*control)\b/i,
     cat: "PharmaQA",
     boost: 3,
+  },
+  // --- Manufacturing ---
+  {
+    regex:
+      /\b(plant\s*head|factory\s*manager|production\s*supervisor|quality\s*inspector)\b/i,
+    cat: "Manufacturing",
+    boost: 5,
+  },
+
+  // --- Retail ---
+  {
+    regex: /\b(store\s*manager|retail\s*associate|cashier|floor\s*manager)\b/i,
+    cat: "Retail",
+    boost: 5,
+  },
+
+  // --- Logistics ---
+  {
+    regex:
+      /\b(warehouse\s*manager|logistics\s*coordinator|fleet\s*supervisor|delivery\s*partner)\b/i,
+    cat: "Logistics",
+    boost: 5,
+  },
+  // --- HR ---
+  {
+    regex: /\b(hr\s*manager|recruiter|talent\s*partner)\b/i,
+    cat: "HR",
+    boost: 5,
+  },
+
+  // --- Finance ---
+  {
+    regex: /\b(accountant|finance\s*manager|controller|tax\s*specialist)\b/i,
+    cat: "Finance",
+    boost: 5,
+  },
+
+  // --- Marketing/Sales ---
+  {
+    regex: /\b(sales\s*manager|bde|account\s*manager)\b/i,
+    cat: "Sales",
+    boost: 4,
+  },
+  {
+    regex: /\b(marketing\s*specialist|seo\s*analyst|content\s*writer)\b/i,
+    cat: "Marketing",
+    boost: 4,
+  },
+
+  // --- Legal ---
+  {
+    regex: /\b(legal|lawyer|compliance\s*officer|counsel)\b/i,
+    cat: "Legal",
+    boost: 5,
   },
 ];
 
