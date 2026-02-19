@@ -17,8 +17,26 @@ const OUTPUT_FILE = path.resolve(__dirname, "jobs.json");
 const HOURS_WINDOW = 8; // Add only jobs <= 8 hours old
 const DAYS_TO_KEEP = 8; // purge jobs > 7 days old
 
-// Define the workable search query
-const SEARCH_QUERY = 'site:apply.workable.com "jobs" "india"';
+// Define the search query for different HCM/ATS sutes
+const SEARCH_SITES = [
+  "site:*.myworkdayjobs.com",
+  "site:*.wd3.myworkdayjobs.com",
+  "site:*.wd5.myworkdayjobs.com",
+  "site:*.wd501.myworkdayjobs.com",
+  "site:*.myworkdaysite.com",
+  "site:apply.workable.com",
+  "site:*.oraclecloud.com",
+  "site:*.jobvite.com",
+  "site:careers.kula.ai",
+  "site:*.zohorecruit.com/jobs",
+  "site:*.zohorecruit.in/jobs",
+  "site:job-boards.greenhouse.io",
+  "site:job-boards.eu.greenhouse.io",
+  "site:talent500.com/jobs/",
+  "site:jobs.ashbyhq.com",
+];
+const SEARCH_QUERY = ' "India" OR "Ind" -intern -internship';
+
 let summaryContent = `## Results\n\n\n`;
 
 // -------- Utilities ----------
@@ -40,7 +58,7 @@ function writeOutput(list) {
     fs.writeFileSync(
       OUTPUT_FILE,
       JSON.stringify(list, null, 2) + "\n",
-      "utf-8"
+      "utf-8",
     );
   } catch (e) {
     console.error(`Failed to save ${OUTPUT_FILE}:`, e.message);
@@ -68,7 +86,7 @@ function limitedRun(runsPerDay) {
     runsPerDay < 1
   ) {
     console.error(
-      `runsPerDay must be a positive integer. Input: ${runsPerDay}`
+      `runsPerDay must be a positive integer. Input: ${runsPerDay}`,
     );
     return false;
   }
@@ -99,11 +117,11 @@ function limitedRun(runsPerDay) {
   // Target hours in UTC (e.g., [0, 5, 10, 14, 19] for 5 runs, where the interval is ~4.8 hours)
   console.log(
     `Target run times set for ${runsPerDay} times a day with an approximate interval of ${rawInterval.toFixed(
-      2
-    )} hours.`
+      2,
+    )} hours.`,
   );
   console.log(
-    `Rounded Target UTC Hours: ${targetHours.sort((a, b) => a - b).join(", ")}.`
+    `Rounded Target UTC Hours: ${targetHours.sort((a, b) => a - b).join(", ")}.`,
   );
 
   // --- 2. Check Current Time against Conditions ---
@@ -134,7 +152,7 @@ function limitedRun(runsPerDay) {
     let failureReason = "";
     if (!isTargetHour) {
       failureReason += `Hour condition not met: Current hour (${currentUTCHour} UTC) is not one of the target hours (${targetHours.join(
-        ", "
+        ", ",
       )} UTC).`;
     }
 
@@ -237,15 +255,15 @@ function parseRelativeTimeToDate(input) {
   const unit = m[2].startsWith("minute")
     ? "minute"
     : m[2].startsWith("hour")
-    ? "hour"
-    : "day";
+      ? "hour"
+      : "day";
 
   const ms =
     unit === "minute"
       ? num * 60 * 1000
       : unit === "hour"
-      ? num * 60 * 60 * 1000
-      : num * 24 * 60 * 60 * 1000;
+        ? num * 60 * 60 * 1000
+        : num * 24 * 60 * 60 * 1000;
 
   const d = new Date(Date.now() - ms);
 
@@ -396,7 +414,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
           // Replace block-level closing tags with guaranteed newlines
           contentHtml = contentHtml.replace(
             /<\/(p|div|h[1-6]|blockquote|pre)>/gi,
-            "\n\n"
+            "\n\n",
           );
 
           // Replace <br> tags with a single newline
@@ -405,7 +423,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
           // Replace H tags with text and ASCII separators for "heading"
           contentHtml = contentHtml.replace(
             /<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi,
-            (match, p1) => `\n\n== ${p1.trim()} ==\n\n`
+            (match, p1) => `\n\n== ${p1.trim()} ==\n\n`,
           );
 
           // Remove remaining structural/unwanted tags (ul, ol, li closing, span, etc.)
@@ -574,6 +592,8 @@ function uniqueBy(arr, keyFn) {
   return out;
 }
 
+const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+
 function clean_title(job_title, company_name) {
   if (!job_title) {
     return "";
@@ -642,7 +662,7 @@ function clean_text(input) {
   // 1. Remove non-printable control characters (ASCII 0-31) that often corrupt JSON
   cleaned = cleaned.replace(
     /[\u0000-\u0009\u000B\u000C\u000E-\u001F\u007F]/g,
-    ""
+    "",
   );
   // 2. Replace all newlines and tabs with a single space.
   cleaned = cleaned.replace(/[\n\r\t]+/g, " ");
@@ -667,7 +687,7 @@ function clean_string_multiline(input) {
   // \u200B is the zero-width space, common in web scraping.
   cleaned = cleaned.replace(
     /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u00A0\u200B]/g,
-    ""
+    "",
   );
 
   // 2. Normalize multiple spaces and tabs within a line to a single space.
@@ -698,7 +718,7 @@ async function mergeAndCleanJobsData(output_data) {
   const currentDayUtcMidnight = Date.UTC(
     now.getUTCFullYear(),
     now.getUTCMonth(),
-    now.getUTCDate()
+    now.getUTCDate(),
   );
   const DaysInMillis = DAYS_TO_KEEP * 24 * 60 * 60 * 1000;
   const cutoffTime = currentDayUtcMidnight - DaysInMillis;
@@ -716,7 +736,7 @@ async function mergeAndCleanJobsData(output_data) {
   summaryContent += ` - Removed **${removedCount}** old job posts from json.\n`;
 
   console.log(
-    `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`
+    `Jobs after cleanup (within ${DAYS_TO_KEEP} days): ${prunedExisting.length}`,
   );
 
   if (limitedRun(2)) {
@@ -745,7 +765,7 @@ async function mergeAndCleanJobsData(output_data) {
       }
     }
     console.log(
-      `Checking status for ${jobsToCheck.length} older LinkedIn jobs...`
+      `Checking status for ${jobsToCheck.length} older LinkedIn jobs...`,
     );
     let closedJobsRemovedCount = 0;
 
@@ -776,10 +796,10 @@ async function mergeAndCleanJobsData(output_data) {
 
     prunedExisting = jobsToKeep;
     console.log(
-      `Removed ${closedJobsRemovedCount} closed/highly applied LinkedIn job posts.`
+      `Removed ${closedJobsRemovedCount} closed/highly applied LinkedIn job posts.`,
     );
     console.log(
-      `Count after cleaning closed/highly applied jobs: ${prunedExisting.length}`
+      `Count after cleaning closed/highly applied jobs: ${prunedExisting.length}`,
     );
     summaryContent += ` - Removed ${closedJobsRemovedCount} closed job posts.\n`;
   }
@@ -842,11 +862,11 @@ async function mergeAndCleanJobsData(output_data) {
 }
 
 /**
- * Searches Workable for QA jobs in India, restricting results to the last 24 hours.
+ * Searches for QA jobs in India, restricting results to the last 24 hours.
  * * @param {string} query The search query string.
  * @returns {Promise<Array|null>} A promise that resolves to an array of search results or null on failure/no results.
  */
-async function getWorkableSearchResults(query) {
+async function getSearchResults(query) {
   // --- Configuration ---
   const API_KEY = process.env.SERP_API_KEY;
   if (!API_KEY) {
@@ -886,7 +906,7 @@ async function getWorkableSearchResults(query) {
  * @param {string} query The original search query.
  * @returns {Array|null} The array of structured job results or null if no results.
  */
-function processWorkableSearchResults(results, query) {
+function processSearchResults(results, query) {
   if (!results || results.length === 0) {
     console.warn(`No organic results found for: "${query}"`);
     return null;
@@ -902,7 +922,7 @@ function processWorkableSearchResults(results, query) {
       // Add default/placeholder values
       company: "",
       location: "",
-      source: "Workable",
+      source: "",
     };
   });
 
@@ -910,25 +930,35 @@ function processWorkableSearchResults(results, query) {
 }
 
 /**
- * Function to execute the workable search and processing logic.
+ * Function to execute the job search in a search engine and process to json
  */
-async function runWorkableJobSearch() {
-  // Get the search results (last 24 hours)
+async function runOpenWebJobSearch() {
   const orCondition = KEYWORDS.map((kw) => `"${kw}"`).join(" OR ");
-  const finalQuery = `${SEARCH_QUERY} (${orCondition})`;
+  const aggregated = [];
 
-  const rawResults = await getWorkableSearchResults(finalQuery);
-
-  // Process and format the results
-  const jsonOutput = processWorkableSearchResults(rawResults, SEARCH_QUERY);
-
-  if (jsonOutput) {
-    console.log("\n--- Workable Job Results ---");
-    console.log(jsonOutput);
-    return jsonOutput;
-  } else {
-    return [];
+  for (const site of SEARCH_SITES) {
+    const finalQuery = `${site} (${orCondition}) ${SEARCH_QUERY}`;
+    try {
+      const rawResults = await getSearchResults(finalQuery);
+      const processed = processSearchResults(rawResults, SEARCH_QUERY) || [];
+      aggregated.push(...processed);
+      // small delay between site searches
+      await delay(200);
+    } catch (err) {
+      console.error(`Search failed for ${site}:`, err);
+    }
   }
+
+  const deduped = uniqueBy(aggregated, (r) =>
+    clean_url(r.url || r.link || r.href),
+  );
+
+  if (deduped.length) {
+    console.log("\n--- Job Results ---");
+    console.log(deduped);
+    return deduped;
+  }
+  return [];
 }
 
 // -------- Main pipeline ----------
@@ -948,7 +978,7 @@ async function runWorkableJobSearch() {
   summaryContent += ` - Total **${total_jobs}** job posts saved in json.\n`;
 
   if (limitedRun(1)) {
-    // await runWorkableJobSearch();
+    // await runOpenWebJobSearch();
   }
 
   try {

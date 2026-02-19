@@ -221,6 +221,7 @@ function confidence(best, second) {
 
 function classifyJobs(jobs) {
   console.log("Classifying jobs into categories");
+  let summaryContent = `\n\n## CLASSIFICATION SUMMARY\n`;
   const stats = {};
   let totalCount = 0;
 
@@ -240,23 +241,36 @@ function classifyJobs(jobs) {
   });
 
   // Print the final summary table
-  console.log("\n" + "=".repeat(60));
-  console.log("CLASSIFICATION SUMMARY");
-  console.log("=".repeat(60));
-
   // Sorting the stats from highest count to lowest for better readability
   const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+  sortedStats.map(([category, count]) => ({
+    Category: category,
+    Count: count,
+    Percentage: ((count / totalCount) * 100).toFixed(1) + "%",
+  }));
 
-  console.table(
-    sortedStats.map(([category, count]) => ({
-      Category: category,
-      Count: count,
-      Percentage: ((count / totalCount) * 100).toFixed(1) + "%",
-    })),
-  );
+  console.table(sortedStats);
+  // Convert sortedStats to a Markdown table format for the summary
+  summaryContent += "\n| Category | Count | Percentage |\n|---|---|---|\n";
+  sortedStats.forEach(([category, count]) => {
+    const percentage = ((count / totalCount) * 100).toFixed(1) + "%";
+    summaryContent += `| ${category} | ${count} | ${percentage} |\n`;
+  });
+  summaryContent += `\nTOTAL JOBS PROCESSED: ${totalCount}\n`;
+  summaryContent += "=".repeat(60) + "\n\n";
 
-  console.log(`\nTOTAL JOBS PROCESSED: ${totalCount}`);
-  console.log("=".repeat(60) + "\n");
+  try {
+    // Append the Markdown to the summary file
+    const summaryFile = process.env.GITHUB_STEP_SUMMARY;
+    if (summaryFile) {
+      fs.appendFileSync(summaryFile, summaryContent);
+    } else {
+      console.log(summaryContent.replace(/## /g, ""));
+    }
+  } catch (e) {
+    console.error("Error writing summary:", e.message);
+    console.log("Summary Content:", summaryContent);
+  }
 
   return results;
 }
