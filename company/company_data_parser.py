@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import random
 import re
 import time
@@ -44,6 +43,8 @@ def get_search_params(keyword: str, start: int) -> Dict[str, str]:
 
 def normalize_linkedin_url(url: str) -> str:
     """Standardizes LinkedIn URLs to the www domain."""
+    if not url:
+        return url
     return re.sub(
         r"https?://[a-z]{1,4}\.linkedin\.com", "https://www.linkedin.com", url
     )
@@ -103,7 +104,9 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
             keyword_list += [line.strip() for line in f if line.strip()]
 
     # Ensure keyword_list unique
-    keyword_list = list(dict.fromkeys(keyword_list))
+    keyword_list = list(set(keyword_list))
+    # make the list randomly ordered
+    random.shuffle(keyword_list)
 
     for keyword in keyword_list:
         max_range = 100 if keyword else 500
@@ -239,7 +242,7 @@ def fetch_company_details(company: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def save_to_json(new_data: List[Dict[str, Any]]):
-    """Merges, sorts, and persists data to disk."""
+    """Merges, existing data, sorts, and saves data to json file."""
     existing_data = []
     if DATA_FILE.exists():
         try:
