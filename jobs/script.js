@@ -1724,22 +1724,29 @@ async function main() {
 
       let roleType = job.classification.roleType;
       let roleTypeLink = `<a href="#" class="search-role-type">#${roleType}</a>`;
-      let jobTitleLink = `<a href="${job.url}" ${props} class="job-title-link" ${descriptionAttr}>${job.title}</a>`;
+      let jobTitleLink = `<a href="${job.url}" title="${job.title}" ${props} class="job-title-link" ${descriptionAttr}>${job.title}</a>`;
       let websiteLink = job.companyWebsite;
       let companyLink = "";
       if (websiteLink && websiteLink !== "-") {
-        companyLink = `<a href="${websiteLink}" ${props} class="job-title-link">${job.company}</a>`;
+        companyLink = `<a href="${websiteLink}" title="${job.company}" ${props} class="job-title-link">${job.company}</a>`;
       } else {
-        companyLink = job.company;
+        companyLink = `<span title="${job.company}">${job.company}</span>`;
       }
+      let location = job.location
+        ? `<span title="${job.location}">${job.location}</span>`
+        : "—";
+      let datePosted = job.datePosted
+        ? `<span title="${job.datePosted}">${job.datePosted}</span>`
+        : "—";
+
       return [
         jobTitleLink,
         companyLink,
-        job.location,
+        location,
         roleType === "—" ? roleType : roleTypeLink,
         job.yoe,
         job.employeeCount,
-        job.datePosted,
+        datePosted,
       ];
     });
 

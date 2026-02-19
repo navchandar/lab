@@ -1,11 +1,11 @@
 
-<h1>⚙️ <a href="https://github.com/navchandar/lab" target="_blank">Lab Repository</a></h1>
+<h1><a href="https://github.com/navchandar/lab" target="_blank">Lab Repository</a></h1>
 
 This Repo for creative tools, experiments and interactive web apps for learning. 
 
 Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made for personal use and non-commercial use.
 
-## 🚀 Project Index
+## Project Index
 
 ### Learning
 
@@ -64,7 +64,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 
 
 
-## 📑 License
+## License
 [GPLv3](https://github.com/navchandar/lab/blob/main/LICENSE)
 
 
