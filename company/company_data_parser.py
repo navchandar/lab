@@ -25,6 +25,8 @@ DATA_FILE = BASE_DIR / "company_data.json"
 JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+# once every 3 chances, skip crawling to reduce load
+COIN_TOSS = random.randint(1, 3) == 1
 
 
 def get_search_params(keyword: str, start: int) -> Dict[str, str]:
@@ -54,7 +56,7 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
     companies = []
     seen_links = set()
 
-    # 1. Extract from Local Job Data first
+    # Extract from Local Job Data first
     if JOBS_DATA.exists():
         try:
             print(f"Loading companies from {JOBS_DATA}...")
@@ -66,10 +68,15 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
 
             for job in jobs:
                 link = job.get("companyUrl")
-                name = job.get("company")
+                link = normalize_linkedin_url(link)
+                emp_count = job.get("employeeCount", "-")
+                # skip companies with employee count data
+                if emp_count and emp_count != "-":
+                    seen_links.add(link)
+                    continue
 
+                name = job.get("company")
                 if link and name and "linkedin.com" in link:
-                    link = normalize_linkedin_url(link)
                     if link not in seen_links:
                         companies.append({"name": name, "linkedin": link})
                         seen_links.add(link)
@@ -80,12 +87,15 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
     else:
         logger.warning(f"{JOBS_DATA} missing. Skipping local extraction.")
 
-    # 2. Crawl LinkedIn for fresh data
+    # Crawl LinkedIn for fresh data
     if not crawl_web:
         return companies
 
-    url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+    # Skip crawling 2 out of 3 times to reduce load
+    if not COIN_TOSS:
+        return companies
 
+    url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
     # Load Keywords
     keyword_list = [""]
     if KEYWORDS_FILE.exists():
@@ -106,8 +116,6 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
                     params=get_search_params(keyword, start),
                     headers={"User-Agent": USER_AGENT},
                     timeout=15,
-                    # Note: 'impersonate' is a feature of curl_cffi,
-                    # ensure you are using the correct requests-compatible wrapper
                     impersonate="chrome",
                 )
 
@@ -289,17 +297,17 @@ def save_to_json(new_data: List[Dict[str, Any]]):
 
 
 def main():
-    # 1. Fetch Company URLs
+    # Fetch Company URLs
     companies = fetch_company_urls()
 
-    # 2. Detail Fetch (with fresh requests)
+    # Detail Fetch (with fresh requests)
     processed_data = []
     for company in companies:
         detailed = fetch_company_details(company)
         processed_data.append(detailed)
         time.sleep(random.uniform(2, 3))
 
-    # 3. Update and Persist
+    # Update and Persist
     save_to_json(processed_data)
 
 
