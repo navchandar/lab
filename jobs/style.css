@@ -7,9 +7,20 @@
 /* Error Red: #D32F2F */
 /* Surface: #F5F5F5 */
 
-body, header, main, footer, #jobTable th, #jobTable tbody tr,
-.dt-search input, .dt-length select, #chartSelector {
-    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+body,
+header,
+main,
+footer,
+#jobTable th,
+#jobTable tbody tr,
+.dt-search input,
+.dt-length select,
+#chartSelector {
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
 }
 
 html {
@@ -30,23 +41,22 @@ body {
         /* Android */
         BlinkMacSystemFont,
         /* Windows, modern Android */
-        'Segoe UI',
+        "Segoe UI",
         /* Fallbacks for older/other OS */
         Roboto,
         Oxygen,
         Ubuntu,
         Cantarell,
-        'Fira Sans',
-        'Droid Sans',
-        'Helvetica Neue',
+        "Fira Sans",
+        "Droid Sans",
+        "Helvetica Neue",
         sans-serif;
-
 }
 
 header {
     box-sizing: border-box;
     box-shadow: 0 4px 15px rgba(25, 118, 210, 0.3);
-    background: linear-gradient(135deg, #085FB5 0%, #0C75CB 50%, #085FB5 100%);
+    background: linear-gradient(135deg, #085fb5 0%, #0c75cb 50%, #085fb5 100%);
     padding: 10px;
     width: 100%;
     color: white;
@@ -63,7 +73,10 @@ h1 {
 
 main {
     margin: 20px auto;
-    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.14), 0 1px 18px rgba(0, 0, 0, 0.12), 0 3px 5px rgba(0, 0, 0, 0.20);
+    box-shadow:
+        0 6px 10px rgba(0, 0, 0, 0.14),
+        0 1px 18px rgba(0, 0, 0, 0.12),
+        0 3px 5px rgba(0, 0, 0, 0.2);
     border-radius: 12px;
     background: #ffffff;
     padding: 30px;
@@ -95,7 +108,7 @@ main {
     box-sizing: content-box;
     margin: 10px 50% 15px;
     border: 5px solid #e0e0e0;
-    border-top: 5px solid #1976D2;
+    border-top: 5px solid #1976d2;
     border-radius: 50%;
     width: 50px;
     height: 50px;
@@ -114,7 +127,9 @@ main {
 /* ================================================= */
 /* FORMS / FILTERS / CONTROLS */
 /* ================================================= */
-.dt-search input, .dt-length select, #filters .select2-selection {
+.dt-search input,
+.dt-length select,
+#filters .select2-selection {
     border: 1px solid #9e9e9e;
     border-radius: 8px;
     background-color: #fcfcfc;
@@ -137,7 +152,10 @@ div.dt-container select.dt-input {
 /* General Select2 Styling (Selection Box) */
 .select2-container--default .select2-selection--multiple,
 .select2-container--default .select2-selection--single {
-    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
     border: 1px solid #bdbdbd;
     border-radius: 8px;
     background-color: #ffffff;
@@ -160,18 +178,19 @@ div.dt-container select.dt-input {
 
 /* Select2 Dropdown Hover/Active */
 .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
-    background-color: #E3F2FD;
-    color: #1976D2;
+    background-color: #e3f2fd;
+    color: #1976d2;
 }
 
 /* Focus state (using Primary Blue) */
-.dt-search input:focus, .dt-length select:focus,
+.dt-search input:focus,
+.dt-length select:focus,
 .select2-container--default.select2-container--focus .select2-selection--multiple,
 .select2-container--default.select2-container--focus .select2-selection--single {
     outline: none;
-    box-shadow: 0 0 0 1px #1976D2;
+    box-shadow: 0 0 0 1px #1976d2;
     border-width: 2px;
-    border-color: #1976D2 !important;
+    border-color: #1976d2 !important;
 }
 
 #filters {
@@ -187,8 +206,9 @@ div.dt-container select.dt-input {
     font-weight: 500;
 }
 
-#filters .select2-container, #filters select {
-    width: 300px !important;
+#filters .select2-container,
+#filters select {
+    width: 25% !important;
 }
 
 #filters .select2-container:last-of-type {
@@ -196,12 +216,14 @@ div.dt-container select.dt-input {
 }
 
 #resetFilters {
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition:
+        background-color 0.3s ease,
+        box-shadow 0.3s ease;
     cursor: pointer;
     margin-left: 2em;
     border: none;
     border-radius: 4px;
-    background: linear-gradient(135deg, #D32F2F 0%, #C62828 100%);
+    background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
     padding: 8px 16px;
     color: white;
     font-weight: 500;
@@ -209,15 +231,18 @@ div.dt-container select.dt-input {
     text-transform: uppercase;
 }
 
-#resetFilters:hover, #resetFilters:focus {
+#resetFilters:hover,
+#resetFilters:focus {
     box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
-    background: linear-gradient(135deg, #E53935 0%, #D32F2F 100%);
+    background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
 }
 
 #resetFilters:active {
     transform: translateY(1px);
-    transition: background-color 0.01s ease, translateY 0.01s ease;
-    background: linear-gradient(135deg, #D32F2F 0%, #E53935 100%);
+    transition:
+        background-color 0.01s ease,
+        translateY 0.01s ease;
+    background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%);
 }
 
 /* Select2 Tag Styling */
@@ -226,10 +251,9 @@ div.dt-container select.dt-input {
     margin-bottom: 4px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
     border: none;
-    background: linear-gradient(180deg, #42A5F5 0%, #2196F3 100%) !important;
+    background: linear-gradient(180deg, #42a5f5 0%, #2196f3 100%) !important;
     padding: 2px 4px;
     color: white !important;
-
 }
 
 .select2-selection__clear {
@@ -246,7 +270,8 @@ div.dt-container select.dt-input {
     overflow: hidden;
 }
 
-.select2-container--default .select2-selection .select2-selection__choice__remove, .select2-selection__clear {
+.select2-container--default .select2-selection .select2-selection__choice__remove,
+.select2-selection__clear {
     color: rgba(105, 105, 105, 0.8) !important;
 }
 
@@ -256,7 +281,7 @@ div.dt-container select.dt-input {
 }
 
 .select2-selection__rendered {
-    text-shadow: 0px 0.5px 0.5px #00000099 !important
+    text-shadow: 0px 0.5px 0.5px #00000099 !important;
 }
 
 .select2-selection__placeholder {
@@ -287,13 +312,15 @@ div.dt-container select.dt-input {
     width: 100%;
 }
 
-#jobTable th, #jobTable td {
+#jobTable th,
+#jobTable td {
     border-bottom: 1px solid #f0f0f0;
     padding: 15px 5px;
     text-align: left;
 }
 
-#jobTable th:nth-child(1), #jobTableBody td:nth-child(1) {
+#jobTable th:nth-child(1),
+#jobTableBody td:nth-child(1) {
     padding: 15px 10px;
 }
 
@@ -329,7 +356,6 @@ div.dt-container select.dt-input {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     background-color: #e3f2fd;
 }
-
 
 .tippy-box {
     word-break: break-word;
@@ -367,7 +393,10 @@ div.dt-container select.dt-input {
 
 /* DataTables Pagination Buttons (Material Pills) */
 .dt-paging-button {
-    transition: background-color 0.2s, box-shadow 0.2s, color 0.2s;
+    transition:
+        background-color 0.2s,
+        box-shadow 0.2s,
+        color 0.2s;
     margin: 0 2px;
     border: 1px solid rgb(0 0 0 / 70%) !important;
     border-radius: 4px;
@@ -378,7 +407,9 @@ div.dt-container select.dt-input {
 }
 
 .dt-paging-button.current:not(.disabled) {
-    background: linear-gradient(to bottom, rgb(182 230 255) 0%, #a7d3ff 100%) !important;
+    background: linear-gradient(to bottom,
+            rgb(182 230 255) 0%,
+            #a7d3ff 100%) !important;
 }
 
 .ellipsis {
@@ -387,7 +418,6 @@ div.dt-container select.dt-input {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-
 
 /* ================================================= */
 /* CHART VIEW */
@@ -409,7 +439,7 @@ div.dt-container select.dt-input {
 #chart-view h2 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #1976D2;
+    color: #1976d2;
     font-weight: 700;
     font-size: 1.75rem;
 }
@@ -417,7 +447,9 @@ div.dt-container select.dt-input {
 /* Selector Dropdown Styling */
 #chartSelector {
     appearance: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
     cursor: pointer;
     margin-bottom: 10px;
     border: 2px solid #9e9e9e;
@@ -435,7 +467,7 @@ div.dt-container select.dt-input {
 #chartSelector:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.3);
-    border-color: #1976D2;
+    border-color: #1976d2;
 }
 
 #chartDescription {
@@ -469,12 +501,15 @@ div.dt-container select.dt-input {
 }
 
 a {
-    transition: color 0.2s ease, border-bottom 0.2s ease;
-    color: #1976D2;
+    transition:
+        color 0.2s ease,
+        border-bottom 0.2s ease;
+    color: #1976d2;
     text-decoration: none;
 }
 
-a:hover, a:focus {
+a:hover,
+a:focus {
     border-bottom: 2px solid #0d47a1;
     color: #0d47a1;
 }
@@ -514,8 +549,13 @@ footer p a {
     transform: translateY(20px);
     opacity: 0;
     z-index: 1000;
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.2), 0 6px 10px 0 rgba(0, 0, 0, 0.14), 0 1px 18px 0 rgba(0, 0, 0, 0.12);
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+    box-shadow:
+        0 3px 5px -1px rgba(0, 0, 0, 0.2),
+        0 6px 10px 0 rgba(0, 0, 0, 0.14),
+        0 1px 18px 0 rgba(0, 0, 0, 0.12);
     border-radius: 4px;
     background-color: #00509f;
     padding: 12px 20px;
@@ -550,7 +590,9 @@ footer p a {
     visibility: hidden;
     opacity: 0;
     z-index: 2000;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease;
     width: 100%;
     height: 100%;
 }
@@ -577,7 +619,10 @@ footer p a {
     z-index: 2001;
     transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     box-sizing: content-box;
-    box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.2), 0 24px 38px 3px rgba(0, 0, 0, 0.14), 0 9px 46px 8px rgba(0, 0, 0, 0.12);
+    box-shadow:
+        0 11px 15px -7px rgba(0, 0, 0, 0.2),
+        0 24px 38px 3px rgba(0, 0, 0, 0.14),
+        0 9px 46px 8px rgba(0, 0, 0, 0.12);
     border-radius: 12px;
     background-color: #ffffff;
     padding: 24px;
@@ -592,7 +637,7 @@ footer p a {
 .modal-content h2 {
     margin-top: 0;
     margin-bottom: 15px;
-    color: #1976D2;
+    color: #1976d2;
     font-weight: 700;
     font-size: 1.5rem;
 }
@@ -602,7 +647,9 @@ footer p a {
     position: absolute;
     top: 10px;
     right: 10px;
-    transition: background-color 0.2s, color 0.2s;
+    transition:
+        background-color 0.2s,
+        color 0.2s;
     cursor: pointer;
     border: none;
     border-radius: 50%;
@@ -626,14 +673,17 @@ footer p a {
 
 .chart-view-close-btn {
     align-self: flex-start;
-    transition: color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
     cursor: pointer;
     margin: 15px 0 10px 0;
     border: none;
     border-radius: 4px;
     background: none;
     padding: 8px 12px;
-    color: #1976D2;
+    color: #1976d2;
     font-weight: 500;
     font-size: 1rem;
     text-decoration: none;
@@ -643,7 +693,7 @@ footer p a {
 .chart-view-close-btn:focus {
     outline: none;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    background-color: #E3F2FD;
+    background-color: #e3f2fd;
     color: #0d47a1;
 }
 
@@ -659,14 +709,15 @@ grammarly-extension,
     visibility: hidden !important;
 }
 
-
 .page-loader-container {
     position: fixed;
     top: 0;
     left: 0;
     opacity: 30%;
     z-index: 9999;
-    transition: width 0.5s ease-out, opacity 2s ease-out;
+    transition:
+        width 0.5s ease-out,
+        opacity 2s ease-out;
     background-color: #eeeeeec0;
     /* Background color for the unfilled part */
     width: 100%;
@@ -678,7 +729,9 @@ grammarly-extension,
 
 .page-loader-progress {
     animation: stripes 5s linear infinite;
-    transition: width 0.5s ease-out, opacity 2s ease-out;
+    transition:
+        width 0.5s ease-out,
+        opacity 2s ease-out;
     background: linear-gradient(90deg,
             #ff5733,
             /* Red */
@@ -711,6 +764,19 @@ grammarly-extension,
 /* ================================================= */
 /* MEDIA QUERIES (MOBILE) */
 /* ================================================= */
+
+@media (max-width: 1200px) {
+
+    #filters .select2-container,
+    #filters select {
+        width: 22% !important;
+    }
+
+    #resetFilters {
+        margin-left: 0;
+    }
+}
+
 @media (max-width: 767px) {
     main {
         margin: 0;
@@ -757,7 +823,8 @@ grammarly-extension,
         padding: 5px;
     }
 
-    #filters .select2-container, #filters select {
+    #filters .select2-container,
+    #filters select {
         width: 96% !important;
     }
 
@@ -780,11 +847,17 @@ grammarly-extension,
         font-size: smaller;
     }
 
-    #jobTable th, #jobTable td {
+    #jobTable th,
+    #jobTable td {
         padding: 8px 8px;
     }
 
-    #jobTableBody td:nth-child(2), #jobTableBody td:nth-child(3), #jobTableBody td:nth-child(4), #jobTableBody td:nth-child(5), #jobTableBody td:nth-child(6), #jobTableBody td:nth-child(7) {
+    #jobTableBody td:nth-child(2),
+    #jobTableBody td:nth-child(3),
+    #jobTableBody td:nth-child(4),
+    #jobTableBody td:nth-child(5),
+    #jobTableBody td:nth-child(6),
+    #jobTableBody td:nth-child(7) {
         font-size: smaller;
     }
 
@@ -819,7 +892,10 @@ grammarly-extension,
 
     .modal-content {
         margin: 10px;
-        box-shadow: 0 8px 10px 1px rgba(0, 0, 0, 0.14), 0 3px 14px 2px rgba(0, 0, 0, 0.12), 0 5px 5px -3px rgba(0, 0, 0, 0.2);
+        box-shadow:
+            0 8px 10px 1px rgba(0, 0, 0, 0.14),
+            0 3px 14px 2px rgba(0, 0, 0, 0.12),
+            0 5px 5px -3px rgba(0, 0, 0, 0.2);
         width: 85%;
     }
 
@@ -829,7 +905,6 @@ grammarly-extension,
         font-size: 0.95rem;
     }
 }
-
 
 /* ================================================= */
 /* DARK MODE SUPPORT */
@@ -841,26 +916,31 @@ grammarly-extension,
     }
 
     main {
-        box-shadow: 0 6px 10px rgba(0, 0, 0, 0.8), 0 1px 18px rgba(0, 0, 0, 0.6);
+        box-shadow:
+            0 6px 10px rgba(0, 0, 0, 0.8),
+            0 1px 18px rgba(0, 0, 0, 0.6);
         background: #1e1e1e;
     }
 
     header {
         border-bottom: 1px solid #1e3a5f;
-        background: linear-gradient(135deg, #0d47a1 0%, #1565C0 100%);
+        background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
     }
 
     a {
-        color: #90CAF9;
+        color: #90caf9;
     }
 
-    a:hover, a:focus {
-        border-bottom: 2px solid #BBDEFB;
+    a:hover,
+    a:focus {
+        border-bottom: 2px solid #bbdefb;
         color: #69a0f1;
     }
 
     /* Inputs */
-    .dt-search input, .dt-length select, #chartSelector {
+    .dt-search input,
+    .dt-length select,
+    #chartSelector {
         border: 1px solid #555;
         background-color: #282828;
         color: #f0f0f0;
@@ -875,10 +955,10 @@ grammarly-extension,
     }
 
     .dt-paging-button.current:not(.disabled) {
-        background: linear-gradient(to bottom, rgb(87 136 161) 0%, #1b3248 100%) !important;
+        background: linear-gradient(to bottom,
+                rgb(87 136 161) 0%,
+                #1b3248 100%) !important;
     }
-
-
 
     /* Select2 Selection Box */
     .select2-container--default .select2-selection--multiple,
@@ -891,7 +971,9 @@ grammarly-extension,
     /* Selected Tags in Dark Mode */
     .select2-container--default .select2-selection .select2-selection__choice {
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-        background: linear-gradient(180deg, #66BB6A 0%, #43A047 100%) !important;
+        background: linear-gradient(180deg,
+                #66bb6a 0%,
+                #43a047 100%) !important;
         color: white !important;
     }
 
@@ -915,7 +997,7 @@ grammarly-extension,
     /* Select2 Dropdown Hover/Active in Dark Mode */
     .select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
         background-color: rgba(100, 181, 246, 0.2);
-        color: #64B5F6;
+        color: #64b5f6;
     }
 
     /* Ensure the search box inside the dropdown is dark mode compliant */
@@ -925,11 +1007,12 @@ grammarly-extension,
         color: #f0f0f0 !important;
     }
 
-    .dt-search input:focus, .dt-length select:focus,
+    .dt-search input:focus,
+    .dt-length select:focus,
     .select2-container--default.select2-container--focus .select2-selection--multiple,
     .select2-container--default.select2-container--focus .select2-selection--single {
-        box-shadow: 0 0 0 1px #64B5F6;
-        border-color: #64B5F6 !important;
+        box-shadow: 0 0 0 1px #64b5f6;
+        border-color: #64b5f6 !important;
     }
 
     .select2-selection--single .select2-selection__rendered {
@@ -937,7 +1020,8 @@ grammarly-extension,
         line-height: normal;
     }
 
-    .select2-container--default .select2-selection .select2-selection__choice__remove, .select2-selection__clear {
+    .select2-container--default .select2-selection .select2-selection__choice__remove,
+    .select2-selection__clear {
         color: rgba(255, 255, 255, 0.8) !important;
     }
 
@@ -956,18 +1040,17 @@ grammarly-extension,
         background-color: rgba(100, 181, 246, 0.2);
     }
 
-
     #jobTable tbody tr:hover {
         background-color: rgba(100, 181, 246, 0.1);
     }
 
     /* Reset button */
     #resetFilters {
-        background-color: #B00020;
+        background-color: #b00020;
     }
 
     #resetFilters:hover {
-        background-color: #CF6679;
+        background-color: #cf6679;
     }
 
     #resetFilters:active {
@@ -1021,14 +1104,15 @@ grammarly-extension,
     }
 
     .modal-content {
-        box-shadow: 0 11px 15px -7px rgba(0, 0, 0, 0.7), 0 24px 38px 3px rgba(0, 0, 0, 0.6), 0 9px 46px 8px rgba(0, 0, 0, 0.5);
+        box-shadow:
+            0 11px 15px -7px rgba(0, 0, 0, 0.7),
+            0 24px 38px 3px rgba(0, 0, 0, 0.6),
+            0 9px 46px 8px rgba(0, 0, 0, 0.5);
         background-color: #1e1e1e;
-
     }
 
     .modal-content h2 {
-        color: #90CAF9;
-
+        color: #90caf9;
     }
 
     .modal-close-btn {
@@ -1042,13 +1126,12 @@ grammarly-extension,
     }
 
     .chart-view-close-btn {
-        color: #90CAF9;
+        color: #90caf9;
     }
 
     .chart-view-close-btn:hover,
     .chart-view-close-btn:focus {
         background-color: rgba(144, 202, 249, 0.1);
-        color: #BBDEFB;
+        color: #bbdefb;
     }
-
 }
