@@ -909,7 +909,7 @@ async function getSearchResults(query) {
   }
 }
 
-function getCompanyFromUrl(link, source) {
+function getCompanyFromUrl(link, source, title) {
   // This function uses different regex patterns based on the source to extract the company name from the URL.
   let company = "";
   if (source === "Workday" || source === "Zoho") {
@@ -941,7 +941,7 @@ function getCompanyFromUrl(link, source) {
     }
   } else if (source === "Oracle") {
     // word in title, first word after "Search Jobs - "
-    const match = result.title.match(/Search Jobs - (.+)/);
+    const match = title.match(/Search Jobs - (.+)/);
     if (match && match[1]) {
       company = match[1].split(" ")[0]; // take the first word as company
     }
@@ -984,12 +984,14 @@ function processSearchResults(results, source) {
   const jsonResults = results.map((result) => {
     // Get Company name from url
     const link = result.link || "";
+    const title = result.title || "";
     if (link) {
-      const company = getCompanyFromUrl(link);
+      const company = getCompanyFromUrl(link, source, title);
+      // add schema validator and get desc from each URL
 
       return {
-        title: result.title,
-        url: result.link,
+        title: title,
+        url: link,
         // Add default/placeholder values
         company: company,
         location: "",
