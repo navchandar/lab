@@ -168,9 +168,9 @@ ${appLinks}
             <div class="version-label">${versionString}</div>
 
             <div class="sidebar-info">
-              <h3>🛠️ Maintainer</h3>
+              <h3>Maintainer</h3>
               <a target="_blank" href="https://navchandar.github.io/">Naveenchandar</a>
-              <h3>📑 License</h3>
+              <h3>License</h3>
               <a target="_blank" href="https://github.com/navchandar/lab/blob/main/LICENSE">GPLv3</a>
             </div>
         </div>

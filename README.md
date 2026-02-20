@@ -1,5 +1,5 @@
 
-<h1><a href="https://github.com/navchandar/lab" target="_blank">Lab Repository</a></h1>
+<h1><a href="https://navchandar.github.io/lab/" target="_blank">Lab Repository</a></h1>
 
 This Repo for creative tools, experiments and interactive web apps for learning. 
 
