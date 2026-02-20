@@ -18,24 +18,26 @@ const HOURS_WINDOW = 8; // Add only jobs <= 8 hours old
 const DAYS_TO_KEEP = 8; // purge jobs > 7 days old
 
 // Define the search query for different HCM/ATS sutes
-const SEARCH_SITES = [
-  "site:*.myworkdayjobs.com",
-  "site:*.wd3.myworkdayjobs.com",
-  "site:*.wd5.myworkdayjobs.com",
-  "site:*.wd501.myworkdayjobs.com",
-  "site:*.myworkdaysite.com",
-  "site:apply.workable.com",
-  "site:*.oraclecloud.com",
-  "site:*.jobvite.com",
-  "site:careers.kula.ai",
-  "site:*.zohorecruit.com/jobs",
-  "site:*.zohorecruit.in/jobs",
-  "site:job-boards.greenhouse.io",
-  "site:job-boards.eu.greenhouse.io",
-  "site:talent500.com/jobs/",
-  "site:jobs.ashbyhq.com",
-];
-const SEARCH_QUERY = ' "India" OR "Ind" -intern -internship';
+const SEARCH_SITES = {
+  "site:*.myworkdayjobs.com": "Workday",
+  "site:*.wd3.myworkdayjobs.com": "Workday",
+  "site:*.wd5.myworkdayjobs.com": "Workday",
+  "site:*.wd501.myworkdayjobs.com": "Workday",
+  "site:*.myworkdaysite.com": "Workday",
+  "site:apply.workable.com": "Workable",
+  "site:*.oraclecloud.com": "Oracle",
+  "site:*.jobvite.com": "Jobvite",
+  "site:careers.kula.ai": "Kula",
+  "site:*.zohorecruit.com/jobs": "Zoho",
+  "site:*.zohorecruit.in/jobs": "Zoho",
+  "site:job-boards.greenhouse.io": "Greenhouse",
+  "site:job-boards.eu.greenhouse.io": "Greenhouse",
+  "site:talent500.com/jobs/": "Talent500",
+  "site:jobs.ashbyhq.com": "Ashby",
+  "site:jobs.lever.co/*": "Lever",
+  "site:*.smartrecruiters.com": "Smartrecruiters",
+};
+const searchQualifier = ' ("India") -intern -internship';
 
 let summaryContent = `## Results\n\n\n`;
 
@@ -115,10 +117,9 @@ function limitedRun(runsPerDay) {
   }
 
   // Target hours in UTC (e.g., [0, 5, 10, 14, 19] for 5 runs, where the interval is ~4.8 hours)
+  const interval = rawInterval.toFixed(2);
   console.log(
-    `Target run times set for ${runsPerDay} times a day with an approximate interval of ${rawInterval.toFixed(
-      2,
-    )} hours.`,
+    `Target run set for ${runsPerDay} times a day with an approx interval of ${interval} hours`,
   );
   console.log(
     `Rounded Target UTC Hours: ${targetHours.sort((a, b) => a - b).join(", ")}.`,
@@ -151,9 +152,8 @@ function limitedRun(runsPerDay) {
     // --- Condition Failed: Print the reason ---
     let failureReason = "";
     if (!isTargetHour) {
-      failureReason += `Hour condition not met: Current hour (${currentUTCHour} UTC) is not one of the target hours (${targetHours.join(
-        ", ",
-      )} UTC).`;
+      const targetHrs = `target hours (${targetHours.join(", ")} UTC)`;
+      failureReason += `Hour condition NOT MET. Current hour (${currentUTCHour} UTC) is not one of the ${targetHrs}`;
     }
 
     if (!isFirstHalfHour) {
@@ -167,7 +167,9 @@ function limitedRun(runsPerDay) {
       failureReason = "Unknown condition failure.";
     }
 
-    console.log(`${timeNow} Condition NOT met. Script will skip.`);
+    console.log(
+      `${timeNow} Condition NOT met. Script callback will skip running.`,
+    );
     console.log(`Failure Reason: ${failureReason}`);
     return false;
   }
@@ -740,8 +742,8 @@ async function mergeAndCleanJobsData(output_data) {
   );
 
   if (limitedRun(2)) {
-    // Check 10hr old LinkedIn posts for closure ---
-    const tenHours = 10 * 60 * 60 * 1000;
+    // Check 5hr old LinkedIn posts for closure ---
+    const tenHours = 5 * 60 * 60 * 1000;
     const twoDays = 2 * 24 * 60 * 60 * 1000;
     const initialCutoff = Date.now() - tenHours;
     const twoDayCutoff = Date.now() - twoDays;
@@ -878,13 +880,15 @@ async function getSearchResults(query) {
     q: query,
     google_domain: "google.com",
     hl: "en",
-    gl: "us",
+    gl: "in",
     api_key: API_KEY,
-    tbs: "qdr:d",
+    // tbs: "qdr:d", // Restrict to last 24 hours
+    tbs: "qdr:d3", // Restrict to last 3 days
+    location: "India",
   };
 
   try {
-    console.log(`Searching for: "${query}" (Last 24 hours)`);
+    console.log(`Searching for: "${query}"`);
 
     // Fetch the JSON results using async/await
     const json = await getJson(params);
@@ -893,6 +897,11 @@ async function getSearchResults(query) {
       console.error("SerpApi Error:", json.error);
       return null;
     }
+    if (!json.organic_results || json.organic_results.length === 0) {
+      console.warn(`No organic results found for query"`);
+      return [];
+    }
+
     return json.organic_results || [];
   } catch (error) {
     console.error("An unexpected error occurred during the API call:", error);
@@ -900,30 +909,93 @@ async function getSearchResults(query) {
   }
 }
 
+function getCompanyFromUrl(link, source) {
+  // This function uses different regex patterns based on the source to extract the company name from the URL.
+  let company = "";
+  if (source === "Workday" || source === "Zoho") {
+    // if workdaysite is used then company name is after recruiting/"guidewire"/
+    // if link contains "workdaysite.com" and recruiting
+    if (link.includes("workdaysite.com") && link.includes("recruiting")) {
+      const match = link.match(/recruiting\/([^/]+)\//);
+      if (match && match[1]) {
+        company = match[1];
+      }
+    } else {
+      // word after https:// and before next dot
+      const match = link.match(/https?:\/\/([^./]+)\./);
+      if (match && match[1]) {
+        company = match[1];
+      }
+    }
+  } else if (
+    source === "Jobvite" ||
+    source === "Smartrecruiters" ||
+    source === "Workable" ||
+    source === "Ashby" ||
+    source === "Lever"
+  ) {
+    // word after .com/ and before next /
+    const match = link.match(/https?:\/\/[^/]+\/([^/]+)\//);
+    if (match && match[1]) {
+      company = match[1];
+    }
+  } else if (source === "Oracle") {
+    // word in title, first word after "Search Jobs - "
+    const match = result.title.match(/Search Jobs - (.+)/);
+    if (match && match[1]) {
+      company = match[1].split(" ")[0]; // take the first word as company
+    }
+    // if not get first word in url https://"jpmc".fa.oraclecloud.com/
+    else {
+      const urlMatch = link.match(/https?:\/\/([^./]+)\./);
+      if (urlMatch && urlMatch[1]) {
+        company = urlMatch[1];
+      }
+    }
+  } else if (source === "Talent500") {
+    // talent500.com/jobs/"cibcindia"/
+    const match = link.match(/talent500\.com\/jobs\/([^/]+)/);
+    if (match && match[1]) {
+      company = match[1];
+    }
+  } else if (source === "Greenhouse") {
+    // greenhouse.io/"samsara"/jobs
+    const match = link.match(/greenhouse\.io\/([^/]+)\//);
+    if (match && match[1]) {
+      company = match[1];
+    }
+  }
+  return company;
+}
 /**
  * Transforms the raw search results into a clean, structured JSON format.
  * * @param {Array} results The raw organic results from the SerpApi call.
  * @param {string} query The original search query.
  * @returns {Array|null} The array of structured job results or null if no results.
  */
-function processSearchResults(results, query) {
+function processSearchResults(results, source) {
   if (!results || results.length === 0) {
-    console.warn(`No organic results found for: "${query}"`);
-    return null;
+    console.warn(`No organic results found for source: "${source}"`);
+    return [];
   }
-
-  console.log(`Found ${results.length} organic results for: "${query}"`);
+  console.log(`Found ${results.length} organic results for: "${source}"`);
 
   // Map the results array to the desired JSON structure
   const jsonResults = results.map((result) => {
-    return {
-      title: result.title,
-      url: result.link,
-      // Add default/placeholder values
-      company: "",
-      location: "",
-      source: "",
-    };
+    // Get Company name from url
+    const link = result.link || "";
+    if (link) {
+      const company = getCompanyFromUrl(link);
+
+      return {
+        title: result.title,
+        url: result.link,
+        // Add default/placeholder values
+        company: company,
+        location: "",
+        source: source,
+      };
+    }
   });
 
   return jsonResults;
@@ -933,19 +1005,21 @@ function processSearchResults(results, query) {
  * Function to execute the job search in a search engine and process to json
  */
 async function runOpenWebJobSearch() {
-  const orCondition = KEYWORDS.map((kw) => `"${kw}"`).join(" OR ");
+  const searchRoles = KEYWORDS.map((kw) => `"${kw}"`).join(" OR ");
   const aggregated = [];
 
-  for (const site of SEARCH_SITES) {
-    const finalQuery = `${site} (${orCondition}) ${SEARCH_QUERY}`;
+  for (const [siteQuery, source] of Object.entries(SEARCH_SITES)) {
+    console.log(`${source} "${siteQuery}"`);
+    const finalQuery = `${siteQuery} intitle:(${searchRoles}) ${searchQualifier}`;
     try {
       const rawResults = await getSearchResults(finalQuery);
-      const processed = processSearchResults(rawResults, SEARCH_QUERY) || [];
+      const processed = processSearchResults(rawResults, source);
+      console.log(processed, "\n\n");
       aggregated.push(...processed);
       // small delay between site searches
       await delay(200);
     } catch (err) {
-      console.error(`Search failed for ${site}:`, err);
+      console.error(`Search failed for ${source}:`, err);
     }
   }
 
