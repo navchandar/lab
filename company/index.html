@@ -27,10 +27,17 @@
       href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
     />
 
+    <!-- DataTables FixedHeader CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.datatables.net/fixedheader/3.3.1/css/fixedHeader.dataTables.min.css"
+    />
+
     <style>
       :root {
         --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
         --title-gradient: linear-gradient(to right, #30daec, #db28c8);
+        --table-head-gradient: linear-gradient(0deg, #1e2638 0%, #0e1525 100%);
         --glass-bg: rgba(255, 255, 255, 0.05);
         --glass-border: rgba(255, 255, 255, 0.1);
         --accent-color: #38bdf8;
@@ -45,6 +52,11 @@
         :root {
           --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
           --title-gradient: linear-gradient(to right, #3b82f6, #9333ea);
+          --table-head-gradient: linear-gradient(
+            180deg,
+            #f8fafc 0%,
+            #e2e8f0 100%
+          );
           --glass-bg: rgba(255, 255, 255, 0.7);
           --glass-border: rgba(0, 0, 0, 0.1);
           /* Darker border for light mode */
@@ -147,7 +159,7 @@
 
       table.dataTable thead th {
         border-bottom: 1px solid var(--glass-border) !important;
-        background: rgba(150, 150, 150, 0.03);
+        background: var(--table-head-gradient) !important;
         padding: 15px !important;
         color: var(--accent-color);
         font-weight: 600;
@@ -196,12 +208,13 @@
       }
 
       .dataTables_filter input {
-        margin-bottom: 20px;
+        margin-bottom: 10px;
         outline: none;
         border: 1px solid var(--glass-border) !important;
         border-radius: 8px !important;
         background: var(--glass-bg) !important;
         padding: 8px 12px !important;
+        width: 400px;
         color: var(--text-main) !important;
       }
 
@@ -248,7 +261,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 15px;
-        margin-bottom: 20px;
+        margin-bottom: 10px;
       }
 
       footer {
@@ -266,6 +279,14 @@
 
         .table-card {
           padding: 12px;
+        }
+
+        .dataTables_wrapper .dataTables_filter {
+          margin: 0 !important;
+        }
+
+        .dataTables_filter input {
+          width: 200px !important;
         }
 
         .emp-filter-wrapper select {
@@ -338,6 +359,8 @@
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <!-- DataTables FixedHeader JS -->
+    <script src="https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js"></script>
 
     <script>
       document.getElementById("year").textContent = new Date().getFullYear();
@@ -401,13 +424,22 @@
             responsive: true,
             pageLength: 10,
             order: [],
+            fixedHeader: true,
             dom: '<"top-wrapper"lf>rtip', // Custom DOM layout to group length and filter
             language: {
-              search: "_INPUT_",
+              search: "Search:",
               searchPlaceholder: "Search companies...",
+              lengthMenu: "Show _MENU_ companies",
+              info: "Showing _START_ to _END_ of _TOTAL_ companies",
             },
             initComplete: function () {
               const api = this.api();
+              // Select the search input and add id/name for Chrome accessibility
+              $(".dataTables_filter input", api.table().container()).attr(
+                "id",
+                "companySearchInput",
+              );
+
               // Create the select element
               const select = $(
                 '<select id="empFilter"><option value="">All Values</option></select>',
