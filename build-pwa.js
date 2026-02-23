@@ -245,7 +245,7 @@ const ALLOWED_CDN_HOSTS = new Set([
 ]);
 
 const duplicates = urlsToCache.filter(
-  (item, index, arr) => arr.indexOf(item) !== index
+  (item, index, arr) => arr.indexOf(item) !== index,
 );
 if (duplicates.length > 0) {
   console.warn("[SW] Duplicate URLs detected in cache list:", duplicates);
@@ -270,7 +270,7 @@ self.addEventListener("install", (event) => {
       return Promise.allSettled(cachePromises).then((results) => {
         const failed = results.filter((result) => result.status === "rejected");
         const successful = results.filter(
-          (result) => result.status === "fulfilled"
+          (result) => result.status === "fulfilled",
         );
 
         console.log("[SW] Successfully cached", successful.length, "resources");
@@ -279,7 +279,7 @@ self.addEventListener("install", (event) => {
             "[SW]",
             failed.length,
             "resources failed to cache:",
-            failed
+            failed,
           );
         }
 
@@ -319,6 +319,7 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") {
     return;
   }
+  // Filter protocol to only http requests
   const url = new URL(req.url);
   if (!["http:", "https:"].includes(url.protocol)) {
     return;
@@ -350,9 +351,11 @@ self.addEventListener("fetch", (event) => {
 
   const normalizedPath = url.pathname.replace(/^\\/|\\/$/g, "");
 
+  // MAIN FETCH HANDLER
   event.respondWith(
     (async () => {
       try {
+      // Ignore List Check
         const ignoreList = Array.isArray(IGNORED_DIRS) ? IGNORED_DIRS : [];
         const isIgnored = ignoreList.some((dir) => {
           const cleanDir = String(dir).replace(/^\\/|\\/$/g, "");
@@ -366,47 +369,62 @@ self.addEventListener("fetch", (event) => {
           return fetch(req); // Don't cache, just fetch
         }
 
+        // Cache List Check
         const cacheList = Array.isArray(urlsToCache) ? urlsToCache : [];
         const shouldBeCached = cacheList.some((path) => {
           const cleanPath = String(path).replace(/^\\/|\\/$/g, "");
+          // Match exact path OR map root/empty path to index.html
           return (
             normalizedPath === cleanPath ||
-            (normalizedPath === "" && cleanPath === "index.html")
+            (normalizedPath === "" &&
+              (cleanPath === "index.html" || cleanPath === ""))
           );
         });
 
         if (shouldBeCached) {
-          const cached = await caches.match(req);
+          const cache = await caches.open(CACHE_NAME);
+          const cachedResponse = await cache.match(req);
 
-          // Background revalidation
-          const refresh = fetch(req)
+          // Network revalidation (Stale-While-Revalidate)
+          const networkFetch = fetch(req)
             .then(async (fresh) => {
-              // Allow "basic" (same-origin) OR "cors" (CDN)
               const isCacheableType =
                 fresh.type === "basic" || fresh.type === "cors";
               if (fresh.ok && isCacheableType) {
-                const cache = await caches.open(CACHE_NAME);
+                // Save to cache the latest response
                 await cache.put(req, fresh.clone());
               }
               return fresh;
             })
             .catch(() => null);
 
-          if (cached) {
-            event.waitUntil(refresh);
-            return cached;
+          if (cachedResponse) {
+            // Return cached version immediately and Update cache in background
+            event.waitUntil(networkFetch);
+            return cachedResponse;
           }
 
-          const freshResponse = await refresh;
-          return freshResponse || fetch(req);
+          // If not in cache, wait for network
+          const freshResponse = await networkFetch;
+          if (freshResponse) {
+            return freshResponse;
+          }
+
+          // Final offline fallback if network fails and no cache exists
+          return new Response("Offline content not available", {
+            status: 503,
+            headers: { "Content-Type": "text/plain" },
+          });
         }
 
-        return fetch(req);
+        // Default: Not in cache list, try network and fallback to cache if available
+        return fetch(req).catch(() => caches.match(req));
       } catch (err) {
         console.warn("[SW] Fetch error:", err);
-        return fetch(req); // If error, just fetch
+        // Last resort: try cache, then network
+        return (await caches.match(req)) || fetch(req);
       }
-    })()
+    })(),
   );
 });
 
@@ -416,7 +434,6 @@ self.addEventListener("message", (event) => {
     self.skipWaiting();
   }
 });
-
 `;
 
   fs.writeFileSync("service-worker.js", swTemplate.trim());

@@ -51,7 +51,9 @@ iframe {
 
 header {
     box-sizing: border-box;
-    background-color: #0b767a;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 15px 15px;
+    background: linear-gradient(135deg, #0b767a 0%, #17a2b8 100%);
     padding: 15px 20px;
     height: 60px;
     color: #fff;
@@ -82,11 +84,15 @@ header {
 #sidebar header {
     box-sizing: border-box;
     border-bottom: 1px solid #dee2e6;
-    background-color: #f8f9fa;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     padding: 1rem 1.5rem;
     height: 60px;
     color: #212529;
+    font-weight: 800;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
     text-align: center;
+    text-transform: uppercase;
 }
 
 .sidebar-content {
@@ -132,8 +138,10 @@ header {
     display: flex;
     align-items: center;
     gap: 12px;
-    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-    border-left: 4px solid transparent;
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    margin: 5px 10px;
+    border-left: none;
+    border-radius: 12px;
     padding: 14px 24px;
     color: #495057;
     font-weight: bold;
@@ -142,14 +150,16 @@ header {
 }
 
 #app-links li a:hover {
-    background-color: #e9ecef;
+    transform: scale(1.05) translateX(5px);
+    box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.05);
+    background-color: #f0f7ff;
     color: #000;
 }
 
 #app-links li.active a {
-    border-left-color: #0d6efd;
-    background-color: #e7f1ff;
-    color: #0d6efd;
+    transform: scale(1.02);
+    background: linear-gradient(90deg, #0d6efd, #00d4ff);
+    color: white !important;
 }
 
 /* --- Hamburger Menu --- */
@@ -161,10 +171,14 @@ header {
     z-index: 1100;
     transition: background-color 0.2s ease, transform 0.2s ease;
     cursor: pointer;
+    box-shadow: 0 1px 5px rgba(11, 118, 122, 0.4);
     border: none;
-    border-radius: 8px;
+    border-radius: 50%;
     background: #0b767a;
     padding: 10px 15px;
+    padding-bottom: 20px;
+    width: 50px;
+    height: 50px;
     color: white;
     font-size: 24px;
     line-height: 1;
@@ -172,12 +186,11 @@ header {
 
 #hamburger-menu.menu-open {
     background: #111;
-    padding-right: 20px;
-    padding-left: 20px;
 }
 
 #hamburger-menu:hover {
-    background-color: #025457;
+    transform: scale(1.2);
+    background: #17a2b8;
     text-shadow: 0px 1px 2px black;
 }
 
