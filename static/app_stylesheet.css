@@ -47,7 +47,10 @@ iframe {
     border: none;
     width: 100%;
     /* Use 'dvh' (dynamic viewport height) to account for browser bars */
+    /* csslint ignore:start */
+    height: 100vh;
     height: 100dvh;
+    /* csslint ignore:end */
 }
 
 header {

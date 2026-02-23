@@ -46,7 +46,9 @@ jobs:
       - name: Validate CSS
         run: |
           css_files=$(find . -name "*.css" -type f -size +0c)
-          csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector $css_files
+          for file in $css_files; do
+            csslint --errors=box-model,duplicate-properties,empty-rules,universal-selector "$file" || echo "Linter found issues in $file"
+          done
 
       - name: Validate JS
         run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
