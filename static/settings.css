@@ -3,6 +3,7 @@
     display: flex;
     position: fixed;
     bottom: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
     left: 20px;
     justify-content: center;
     align-items: center;
@@ -29,6 +30,7 @@
     position: fixed;
     right: 20px;
     bottom: 20px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
     z-index: 999;
     transition: transform 0.3s ease;
     cursor: pointer;
@@ -227,7 +229,8 @@ input[type="checkbox"] {
 /* Styles for mobile devices */
 @media (max-width: 767px) {
     #muteButton {
-        bottom: 10px;
+        bottom: 20px;
+        bottom: calc(30px + env(safe-area-inset-bottom));
         left: 10px;
         width: 40px;
         height: 40px;
@@ -236,7 +239,8 @@ input[type="checkbox"] {
 
     #fullscreen-btn {
         right: 10px;
-        bottom: 10px;
+        bottom: 20px;
+        bottom: calc(30px + env(safe-area-inset-bottom));
         font-size: 1.2em;
     }
 
