@@ -132,7 +132,8 @@ header {
     flex-grow: 1;
     padding: 0.5rem 0;
     padding-bottom: 1rem;
-    overflow-y: auto;
+    overflow-x: hidden;
+    overflow-y: auto; 
     scrollbar-color: #dee2e6 transparent;
     scrollbar-width: thin;
     list-style: none;
@@ -154,9 +155,10 @@ header {
 }
 
 #app-links li a:hover {
-    transform: scale(1.05) translateX(5px);
+    transform: scale(1.05); 
     box-shadow: 4px 4px 15px rgba(0, 0, 0, 0.05);
-    background-color: #f0f7ff;
+    background: linear-gradient(135deg, #b8b8b8, #dedede);
+    padding-left: 30px;
     color: #000;
 }
 
@@ -329,7 +331,7 @@ header {
     }
 
     #app-links li a:hover {
-        background-color: #474747;
+        background: linear-gradient(135deg, #3f3f3f, #676565);
         color: #ffffff;
     }
 
