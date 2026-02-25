@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+
+    <title>World Map Explorer</title>
+    <meta
+      name="description"
+      content="A fun, interactive world map for kids to learn country names. Features bright colors, responsive design, and accessible interactions."
+    />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://unpkg.com/topojson-client@3"></script>
+    <script src="https://unpkg.com/d3-geo-projection@4"></script>
+
+    <style>
+      /* Color Palette & Variables */
+      :root {
+        --bg-color: #87ceeb;
+        /* Bright Sky Blue */
+        --text-color: #333333;
+        --country-fill: #98fb98;
+        /* Playful Pale Green */
+        --country-stroke: #ffffff;
+        --country-hover: #ffd700;
+        /* Gold */
+        --country-active: #ff6347;
+        /* Tomato Red */
+        --panel-bg: rgba(255, 255, 255, 0.95);
+      }
+
+      /* Dark Mode Support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-color: #001f3f;
+          /* Deep Ocean */
+          --text-color: #ffffff;
+          --country-fill: #39cccc;
+          /* Teal */
+          --country-stroke: #001f3f;
+          --country-hover: #ffdc00;
+          /* Bright Yellow */
+          --country-active: #ff851b;
+          /* Orange */
+          --panel-bg: rgba(0, 0, 0, 0.85);
+        }
+      }
+
+      body {
+        /* Prevents accidental scrolling on mobile */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: background-color 0.5s ease;
+        margin: 0;
+        background-color: var(--bg-color);
+        padding: 0;
+        height: 100vh;
+        overflow: hidden;
+        color: var(--text-color);
+        /* Dyslexia-friendly and Kid-friendly fonts */
+        font-family:
+          "Lexend", "Comic Sans MS", "Chalkboard SE", "Marker Felt", sans-serif;
+      }
+
+      /* The Name Popup Display */
+      #name-display {
+        display: flex;
+        position: absolute;
+        top: 10%;
+        align-items: center;
+        gap: 15px;
+        transform: scale(0);
+        z-index: 10;
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        border-radius: 30px;
+        background-color: var(--panel-bg);
+        padding: 15px 40px;
+        pointer-events: none;
+        font-weight: 700;
+        font-size: 3rem;
+        text-align: center;
+      }
+
+      #name-display.show {
+        transform: scale(1);
+      }
+
+      #flag-img {
+        display: none;
+        border-radius: 5px;
+        height: 40px;
+        /* Hidden until a country is clicked */
+      }
+
+      #map-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100%;
+      }
+
+      svg {
+        width: 100%;
+        max-width: 1400px;
+        height: 100%;
+        touch-action: none;
+        /* Better touch handling */
+      }
+
+      /* Country Map Styles */
+      .country {
+        transition: fill 0.2s ease;
+        cursor: pointer;
+        fill: var(--country-fill);
+        stroke: var(--country-stroke);
+        stroke-width: 0.5px;
+        outline: none;
+      }
+
+      /* Hover and Focus (Accessibility) Effects */
+      .country:hover,
+      .country:focus {
+        fill: var(--country-hover);
+        stroke-width: 2.5px;
+      }
+
+      .country.active {
+        fill: var(--country-active);
+      }
+
+      /* Mobile adjustments */
+      @media (max-width: 768px) {
+        #name-display {
+          top: 5%;
+          padding: 10px 20px;
+          font-size: 2.5rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="name-display" aria-live="polite">
+      <img id="flag-img" src="" alt="Country Flag" />
+      <span id="country-name-text">Tap a country!</span>
+    </div>
+
+    <div
+      id="map-container"
+      role="region"
+      aria-label="Interactive Educational World Map"
+    >
+      <svg id="map" role="img" aria-label="World Map Puzzle"></svg>
+    </div>
+
+    <script type="module" src="script.js"></script>
+    
+  </body>
+</html>
