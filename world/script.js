@@ -57,9 +57,10 @@ const projection = d3
 
 const path = d3.geoPath().projection(projection);
 
-// For now, loading the public CDN. Once we set up the python script,
-// this will change to your local generated JSON file (e.g., "../data/map_data.json")
-const dataUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+// For now, loading the public CDN.
+// Once we set up the python script, change to your generated JSON file (e.g., "../map_data.json")
+// const dataUrl = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json";
+const dataUrl = "map_data.json";
 
 d3.json(dataUrl)
   .then((world) => {
