@@ -26,6 +26,7 @@ KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 # once every 3 chances, skip crawling to reduce load
 COIN_TOSS = random.randint(1, 3) == 1
+UPDATE_ALL = False
 
 
 def get_search_params(keyword: str, start: int) -> Dict[str, str]:
@@ -50,9 +51,10 @@ def normalize_linkedin_url(url: str) -> str:
     )
 
 
-def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
+def fetch_company_urls(update_all: bool = False) -> List[Dict[str, str]]:
     """
     Consolidates company URLs from local job data and live LinkedIn crawling.
+    if update_all = True, update existing data too.
     """
     companies = []
     seen_links = set()
@@ -60,7 +62,7 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
     # Extract from Local Job Data first
     if JOBS_DATA.exists():
         try:
-            print(f"Loading companies from {JOBS_DATA}...")
+            logger.info(f"Finding new companies from {JOBS_DATA}")
             with open(JOBS_DATA, "r") as f:
                 jobs = json.load(f).get("data", [])
 
@@ -88,14 +90,26 @@ def fetch_company_urls(crawl_web: bool = True) -> List[Dict[str, str]]:
     else:
         logger.warning(f"{JOBS_DATA} missing. Skipping local extraction.")
 
-    # Crawl LinkedIn for fresh data
-    if not crawl_web:
-        return companies
+    # Crawl LinkedIn for fresh data for all existing companies
+    if update_all:
+        logger.info("Updating all existing companies!")
+        existing_data = read_data()
+        for company in existing_data:
+            name = company.get("name")
+            link = company.get("linkedin")
+            if link and name and "linkedin.com" in link:
+                if link not in seen_links:
+                    companies.append({"name": name, "linkedin": link})
+                    seen_links.add(link)
+    else:
+        logger.info("SKIP: Updating all existing companies!")
 
     # Skip crawling 2 out of 3 times to reduce load
     if not COIN_TOSS:
+        logger.info("SKIP: Find new companies from jobs!")
         return companies
 
+    logger.info("Finding new companies from jobs!")
     url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
     # Load Keywords
     keyword_list = [""]
@@ -201,12 +215,18 @@ def extract_employee_count(text: str) -> Optional[str]:
     return None
 
 
-def fetch_company_details(company: Dict[str, Any]) -> Dict[str, Any]:
+def fetch_company_details(company: Dict[str, Any]) -> None | Dict[str, Any]:
     """Scrapes specific company metadata (Website, Employees)."""
+    name = company["name"]
+    companyUrl = company["linkedin"]
+    if not name or "confidential" in name.lower():
+        return None
+    if not companyUrl or "linkedin.com/school" in companyUrl:
+        return None
     try:
-        logger.info(f"Detail Fetch | {company['name']}")
+        logger.info(f"Detail Fetch | {name}")
         resp = requests.get(
-            company["linkedin"],
+            companyUrl,
             headers={"User-Agent": USER_AGENT},
             timeout=15,
             impersonate="chrome",
@@ -229,20 +249,32 @@ def fetch_company_details(company: Dict[str, Any]) -> Dict[str, Any]:
         # --- Employee Count Extraction ---
         emp_div = soup.find("div", {"data-test-id": "about-us__size"})
         if emp_div:
-            dd = emp_div.find("dd")
-            if dd:
-                count = extract_employee_count(dd.get_text(strip=True))
-                if count:
+            if dd := emp_div.find("dd"):
+                if count := extract_employee_count(dd.get_text(strip=True)):
                     company["employee_count"] = count
+        emp_div = soup.find("span", {"data-test-id": "view-all-employees-cta"})
+        if emp_div:
+            if p := emp_div.find("p"):
+                if count := extract_employee_count(p.get_text(strip=True)):
+                    company["ln_employee_count"] = count
+
+        # --- ORG Type: Public / Private ---
+        org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
+        if org_div:
+            if dd := org_div.find("dd"):
+                if org_type := dd.get_text(strip=True):
+                    if "public" in org_type.lower():
+                        company["public"] = True
+                    else:
+                        company["public"] = False
 
     except Exception as e:
-        logger.error(f"Error detailing {company['name']}: {e}")
+        logger.error(f"Error detailing {name}: {e}")
 
     return company
 
 
-def save_to_json(new_data: List[Dict[str, Any]]):
-    """Merges, existing data, sorts, and saves data to json file."""
+def read_data():
     existing_data = []
     if DATA_FILE.exists():
         try:
@@ -250,7 +282,14 @@ def save_to_json(new_data: List[Dict[str, Any]]):
                 existing_data = json.load(f)
         except json.JSONDecodeError:
             logger.error("Existing data file corrupted. Starting fresh.")
+    else:
+        logger.warning(f"{DATA_FILE} does not exist!")
+    return existing_data
 
+
+def save_to_json(new_data: List[Dict[str, Any]]):
+    """Merges, existing data, sorts, and saves data to json file."""
+    existing_data = read_data()
     # Convert existing to map for O(1) lookups
     data_map = {c["name"]: c for c in existing_data}
 
@@ -261,9 +300,12 @@ def save_to_json(new_data: List[Dict[str, Any]]):
         if name in data_map:
             # Check for changes to update last_updated
             old = data_map[name]
-            has_changed = item.get("employee_count") != old.get(
-                "employee_count"
-            ) or item.get("website") != old.get("website")
+            has_changed = (
+                item.get("employee_count") != old.get("employee_count")
+                or item.get("website") != old.get("website")
+                or item.get("ln_employee_count") != old.get("ln_employee_count")
+                or item.get("public") != old.get("public")
+            )
             data_map[name].update(item)
             if has_changed:
                 data_map[name]["last_updated"] = now_iso
@@ -274,6 +316,7 @@ def save_to_json(new_data: List[Dict[str, Any]]):
     # Sorting logic: Descending count (NaNs at end), Ascending Name
     def sort_logic(x):
         cnt = x.get("employee_count")
+        ln_cnt = x.get("ln_employee_count")
         # count is either a range "5001-10000", a single number "10000", or missing
         if not cnt:
             # Treat missing counts as smallest
@@ -287,10 +330,17 @@ def save_to_json(new_data: List[Dict[str, Any]]):
                 val = -int(val)
         elif cnt.isdigit():
             val = -int(cnt)
+        elif ln_cnt and ln_cnt.isdigit():
+            val = -int(ln_cnt)
         else:
             # Unrecognized format, treat as smallest
             val = float("inf")
-        return (val, x["name"].lower())
+        # sorting key variables
+        if ln_cnt and ln_cnt.isdigit():
+            ln_cnt = -int(ln_cnt) 
+            return (ln_cnt, val, x["name"].lower())
+        else:
+            return (0, val, x["name"].lower())
 
     final_list = sorted(data_map.values(), key=sort_logic)
 
@@ -301,14 +351,19 @@ def save_to_json(new_data: List[Dict[str, Any]]):
 
 def main():
     # Fetch Company URLs
-    companies = fetch_company_urls()
+    companies = fetch_company_urls(UPDATE_ALL)
 
     # Detail Fetch (with fresh requests)
     processed_data = []
-    for company in companies:
+    for i, company in enumerate(companies):
         detailed = fetch_company_details(company)
-        processed_data.append(detailed)
-        time.sleep(random.uniform(2, 3))
+        if detailed:
+            processed_data.append(detailed)
+            time.sleep(random.uniform(1, 2))
+        # save periodically
+        if i % 10 == 0:
+            save_to_json(processed_data)
+        time.sleep(random.uniform(1, 2))
 
     # Update and Persist
     save_to_json(processed_data)
