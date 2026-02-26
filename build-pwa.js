@@ -126,7 +126,7 @@ function generateIndexHtml() {
       const displayName = appName.toUpperCase().replace("-", " ");
       const favicon = getFavicon(`./${appName}`);
       const faviconImg = favicon
-        ? `<img src="${favicon}" alt="favicon" class="favicon">`
+        ? `<img src="${favicon}" alt="${displayName} icon" class="favicon">`
         : "";
 
       return `            <li><a href="${appName}/index.html" title="${displayName}" target="appFrame">${faviconImg}${displayName}</a></li>`;

@@ -164,26 +164,24 @@
 
       /* Country Map Styles */
       .country {
+        transition:
+          fill 0.4s ease,
+          stroke 0.2s ease;
         cursor: pointer;
         fill: var(--country-fill);
         stroke: var(--country-stroke);
         stroke-width: 0.25px;
-        outline: none;
-      }
-
-      .country.hovering {
-        fill: url(#hoverGradient);
       }
 
       /* Hover and Focus (Accessibility) Effects */
-      .country:hover,
-      .country:focus {
-        fill: var(--country-hover);
-        stroke-width: 0.5px;
+      .country.hovering {
+        fill: url(#hoverGradient) !important;
       }
 
       .country.active {
-        fill: var(--country-active);
+        fill: url(#activeGradient) !important;
+        stroke: #fff;
+        stroke-width: 1px;
       }
 
       /* Mobile adjustments */

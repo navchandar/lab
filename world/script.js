@@ -21,18 +21,35 @@ function speaker() {
 const svg = d3.select("#map");
 const defs = svg.append("defs");
 
-const radialGradient = defs
+// Hover Gradient (Soft)
+const hoverGrad = defs
   .append("radialGradient")
   .attr("id", "hoverGradient")
-  .attr("gradientUnits", "userSpaceOnUse") // Critical for absolute positioning
-  .attr("r", "20%"); // The "spread" of the highlight
+  .attr("gradientUnits", "userSpaceOnUse")
+  .attr("r", "15%"); // Smaller initial radius for a tighter glow
 
-radialGradient
+hoverGrad
   .append("stop")
   .attr("offset", "0%")
   .attr("stop-color", "var(--country-hover)");
+hoverGrad
+  .append("stop")
+  .attr("offset", "100%")
+  .attr("stop-color", "var(--country-fill)");
 
-radialGradient
+// Active Gradient (Stronger contrast for the click)
+const activeGrad = defs
+  .append("radialGradient")
+  .attr("id", "activeGradient")
+  .attr("gradientUnits", "userSpaceOnUse")
+  .attr("r", "0%"); // Starts at 0 for a "growth" animation
+
+activeGrad.append("stop").attr("offset", "0%").attr("stop-color", "#ffffff"); // White core
+activeGrad
+  .append("stop")
+  .attr("offset", "40%")
+  .attr("stop-color", "var(--country-active)");
+activeGrad
   .append("stop")
   .attr("offset", "100%")
   .attr("stop-color", "var(--country-fill)");
@@ -47,6 +64,17 @@ svg
 const g = svg.append("g");
 
 const maxZoomLimit = 4;
+
+// Function to update gradient center relative to zoom
+function updateGradientPos(event, gradientId) {
+  const [mx, my] = d3.pointer(event, g.node()); // Points relative to the map group 'g'
+
+  d3.select(gradientId)
+    .attr("cx", mx)
+    .attr("cy", my)
+    .attr("fx", mx)
+    .attr("fy", my);
+}
 
 // Set up limited Zoom and Pan
 const zoom = d3
@@ -90,35 +118,27 @@ d3.json(dataUrl)
       .append("path")
       .attr("d", path)
       .attr("class", "country")
-      .attr("tabindex", "0") // Keyboard accessibility
-      .attr("aria-label", (d) => d.properties.name || "Unknown Country")
-      .on("click", function (event, d) {
-        handleInteraction(this, d);
-      })
-      .on("keypress", function (event, d) {
-        if (event.key === "Enter" || event.key === " ") {
-          handleInteraction(this, d);
+      .on("pointermove", function (event) {
+        if (!d3.select(this).classed("active")) {
+          updateGradientPos(event, "#hoverGradient");
+          d3.select(this).classed("hovering", true);
         }
       })
-      .on("pointermove", function (event) {
-        // Get coordinates relative to the SVG
-        const [mouseX, mouseY] = d3.pointer(event, svg.node());
-        // Update the gradient center to the pointer position
-        radialGradient
-          .attr("cx", mouseX)
-          .attr("cy", mouseY)
-          .attr("fx", mouseX)
-          .attr("fy", mouseY);
-        // Expand the highlight slightly on move
-        radialGradient.transition().duration(200).attr("r", "30%");
-        // Apply the gradient fill
-        d3.select(this).classed("hovering", true);
-      })
       .on("pointerout", function () {
-        // Revert to normal fill
         d3.select(this).classed("hovering", false);
       })
       .on("click", function (event, d) {
+        // Update active gradient position to exactly where clicked
+        updateGradientPos(event, "#activeGradient");
+
+        // Animate the radius growth for the "click" effect
+        d3.select("#activeGradient")
+          .attr("r", "0%")
+          .transition()
+          .duration(600)
+          .ease(d3.easeOutExpo)
+          .attr("r", "100%"); // Expands to cover the country
+
         handleInteraction(this, d);
       });
   })
