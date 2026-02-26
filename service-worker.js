@@ -1,4 +1,4 @@
-// version=v2026.02.23
+// version=v2026.02.26
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","company","smart-dom-inspector","serviceability","hospitals","pm-e-drive"];
 
@@ -119,6 +119,7 @@ const urlsToCache = [
   'static/images/elephant_3.jpg',
   'static/images/elephant_4.jpg',
   'static/images/elephant_5.jpg',
+  'static/images/flag.png',
   'static/images/goat_1.jpg',
   'static/images/goat_2.jpg',
   'static/images/goat_3.jpg',
@@ -169,7 +170,11 @@ const urlsToCache = [
   'static/utils.js',
   'type/index.html',
   'type/preview.png',
-  'type/script.js'
+  'type/script.js',
+  'world/index.html',
+  'world/map_data.json',
+  'world/map_data_parser.py',
+  'world/script.js'
 ];
 
 const ALLOWED_CDN_HOSTS = new Set([
