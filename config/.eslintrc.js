@@ -61,5 +61,18 @@ module.exports = {
         L: "readonly",
       },
     },
+    {
+      files: ["world/script.js"],
+      env: {
+        browser: true,
+        node: false,
+        es6: true,
+      },
+      globals: {
+        // Define global variables injected via HTML script tags
+        d3: "readonly",
+        topojson: "readonly",
+      },
+    },
   ],
 };
