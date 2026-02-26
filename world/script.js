@@ -42,17 +42,19 @@ const activeGrad = defs
   .append("radialGradient")
   .attr("id", "activeGradient")
   .attr("gradientUnits", "userSpaceOnUse")
-  .attr("r", "0%"); // Starts at 0 for a "growth" animation
+  .attr("r", "0%");
 
-activeGrad.append("stop").attr("offset", "0%").attr("stop-color", "#ffffff"); // White core
+activeGrad.append("stop").attr("offset", "0%").attr("stop-color", "#FFFFFF"); // Start with a white "spark"
+
 activeGrad
   .append("stop")
-  .attr("offset", "40%")
-  .attr("stop-color", "var(--country-active)");
+  .attr("offset", "20%")
+  .attr("stop-color", "var(--country-active)"); // Transition to the main color
+
 activeGrad
   .append("stop")
   .attr("offset", "100%")
-  .attr("stop-color", "var(--country-fill)");
+  .attr("stop-color", "var(--country-active)"); // End with the SAME main color for a solid fill
 
 const width = 960;
 const height = 600;
@@ -122,22 +124,30 @@ d3.json(dataUrl)
         if (!d3.select(this).classed("active")) {
           updateGradientPos(event, "#hoverGradient");
           d3.select(this).classed("hovering", true);
+
+          // Animate hover expansion
+          d3.select("#hoverGradient")
+            .transition()
+            .duration(500)
+            .attr("r", "50%"); // Expands to half-glow
         }
       })
       .on("pointerout", function () {
         d3.select(this).classed("hovering", false);
+        // Reset radius for next time
+        d3.select("#hoverGradient").attr("r", "15%");
       })
       .on("click", function (event, d) {
-        // Update active gradient position to exactly where clicked
         updateGradientPos(event, "#activeGradient");
 
-        // Animate the radius growth for the "click" effect
+        // The "Flood" effect: Animate radius from 0 to 100%
         d3.select("#activeGradient")
+          .interrupt() // Stop any previous animation
           .attr("r", "0%")
           .transition()
-          .duration(600)
-          .ease(d3.easeOutExpo)
-          .attr("r", "100%"); // Expands to cover the country
+          .duration(1200) // Adjust for "slow fill" speed
+          .ease(d3.easeCubicOut) // Standard D3 easing
+          .attr("r", "100%");
 
         handleInteraction(this, d);
       });

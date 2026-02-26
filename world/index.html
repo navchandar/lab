@@ -140,10 +140,10 @@
       }
 
       #flag-img {
+        /* Hidden until a country is clicked */
         display: none;
         border-radius: 5px;
         height: 40px;
-        /* Hidden until a country is clicked */
       }
 
       #map-container {
@@ -159,14 +159,11 @@
         max-width: 1400px;
         height: 100%;
         touch-action: none;
-        /* Better touch handling */
       }
 
       /* Country Map Styles */
       .country {
-        transition:
-          fill 0.4s ease,
-          stroke 0.2s ease;
+        transition: fill 0.3s ease;
         cursor: pointer;
         fill: var(--country-fill);
         stroke: var(--country-stroke);
@@ -181,7 +178,7 @@
       .country.active {
         fill: url(#activeGradient) !important;
         stroke: #fff;
-        stroke-width: 1px;
+        stroke-width: 0.7px;
       }
 
       /* Mobile adjustments */
