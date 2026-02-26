@@ -37,7 +37,16 @@
       content="https://navchandar.github.io/lab/animals/preview.png"
     />
 
-    <meta name="theme-color" content="#4e4e4e" />
+    <meta
+      name="theme-color"
+      content="#4e4e4e"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#242424"
+      media="(prefers-color-scheme: dark)"
+    />
 
     <link rel="stylesheet" href="../static/settings.css" />
     <link rel="stylesheet" href="style.css" />
@@ -49,6 +58,13 @@
       :root {
         --bg: #4e4e4e;
         --text: #ecf0f1;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-color: #242424;
+          --text: #b3b3b3;
+        }
       }
     </style>
   </head>

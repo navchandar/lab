@@ -19,6 +19,24 @@ function speaker() {
 
 // --- Map Initialization ---
 const svg = d3.select("#map");
+const defs = svg.append("defs");
+
+const radialGradient = defs
+  .append("radialGradient")
+  .attr("id", "hoverGradient")
+  .attr("gradientUnits", "userSpaceOnUse") // Critical for absolute positioning
+  .attr("r", "20%"); // The "spread" of the highlight
+
+radialGradient
+  .append("stop")
+  .attr("offset", "0%")
+  .attr("stop-color", "var(--country-hover)");
+
+radialGradient
+  .append("stop")
+  .attr("offset", "100%")
+  .attr("stop-color", "var(--country-fill)");
+
 const width = 960;
 const height = 600;
 
@@ -81,6 +99,27 @@ d3.json(dataUrl)
         if (event.key === "Enter" || event.key === " ") {
           handleInteraction(this, d);
         }
+      })
+      .on("pointermove", function (event) {
+        // Get coordinates relative to the SVG
+        const [mouseX, mouseY] = d3.pointer(event, svg.node());
+        // Update the gradient center to the pointer position
+        radialGradient
+          .attr("cx", mouseX)
+          .attr("cy", mouseY)
+          .attr("fx", mouseX)
+          .attr("fy", mouseY);
+        // Expand the highlight slightly on move
+        radialGradient.transition().duration(200).attr("r", "30%");
+        // Apply the gradient fill
+        d3.select(this).classed("hovering", true);
+      })
+      .on("pointerout", function () {
+        // Revert to normal fill
+        d3.select(this).classed("hovering", false);
+      })
+      .on("click", function (event, d) {
+        handleInteraction(this, d);
       });
   })
   .catch((err) => {
