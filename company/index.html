@@ -36,6 +36,7 @@
     <style>
       :root {
         --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        --bg-color: #0f172a;
         --title-gradient: linear-gradient(to right, #30daec, #db28c8);
         --table-head-gradient: linear-gradient(0deg, #1e2638 0%, #0e1525 100%);
         --glass-bg: rgba(255, 255, 255, 0.05);
@@ -51,6 +52,7 @@
       @media (prefers-color-scheme: light) {
         :root {
           --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          --bg-color: #f8fafc;
           --title-gradient: linear-gradient(to right, #3b82f6, #9333ea);
           --table-head-gradient: linear-gradient(
             180deg,
@@ -76,6 +78,16 @@
         box-sizing: border-box;
         margin: 0;
         padding: 0;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background-color: var(--bg-color);
+        padding: 0;
+        width: 100%;
+        min-width: fit-content;
+        overscroll-behavior-x: none;
       }
 
       body {
@@ -147,7 +159,13 @@
         border: 1px solid var(--glass-border);
         border-radius: 16px;
         padding: 24px;
+        overflow: visible !important;
         overflow-x: auto;
+      }
+
+      #companyTable {
+        width: 100% !important;
+        table-layout: fixed;
       }
 
       table.dataTable {
@@ -168,6 +186,26 @@
         text-align: left;
         text-transform: uppercase;
       }
+
+      /* Specific widths for each column */
+      #companyTable th:nth-child(1) {
+        width: 45% !important;
+      } /* Company Name */
+      #companyTable th:nth-child(2) {
+        width: 15% !important;
+      } /* Employees */
+      #companyTable th:nth-child(3) {
+        width: 20% !important;
+      } /* Website */
+      #companyTable th:nth-child(4) {
+        width: 5% !important;
+      } /* LinkedIn */
+      #companyTable th:nth-child(5) {
+        width: 5% !important;
+      } /* Status */
+      #companyTable th:nth-child(6) {
+        width: 10% !important;
+      } /* Updated */
 
       table.dataTable tbody td {
         border-bottom: 1px solid var(--row-border) !important;
@@ -239,6 +277,10 @@
         color: var(--text-main) !important;
       }
 
+      .public-icon {
+        font-size: 1.5em;
+      }
+
       .emp-filter-wrapper select {
         backdrop-filter: blur(5px);
         cursor: pointer;
@@ -253,6 +295,14 @@
 
       select:hover {
         background: rgba(150, 150, 150, 0.1) !important;
+      }
+
+      .text-center {
+        text-align: center !important;
+      }
+
+      td svg {
+        vertical-align: middle;
       }
 
       .top-wrapper {
@@ -271,6 +321,14 @@
         text-align: center;
       }
 
+      .error {
+        background: #ffebee;
+        padding: 20px;
+        color: #d32f2f;
+        text-align: center;
+      }
+
+      /* Mobile view style*/
       @media (max-width: 768px) {
         h1 {
           display: none;
@@ -279,6 +337,19 @@
 
         .table-card {
           padding: 12px;
+        }
+
+        #companyTable {
+          table-layout: auto;
+        }
+        #companyTable th:nth-child(6),
+        #companyTable td:nth-child(6) {
+          display: none;
+        }
+
+        #companyTable td {
+          padding: 8px 4px;
+          font-size: 13px;
         }
 
         .dataTables_wrapper .dataTables_filter {
@@ -323,8 +394,9 @@
             <tr>
               <th>Company Name</th>
               <th>Employees</th>
-              <th>Company Website</th>
-              <th>LinkedIn</th>
+              <th>Website</th>
+              <th class="text-center">LinkedIn</th>
+              <th class="text-center">Type</th>
               <th>Last Updated</th>
             </tr>
           </thead>
@@ -366,6 +438,24 @@
       document.getElementById("year").textContent = new Date().getFullYear();
       const loadingSpinner = document.getElementById("loadingSpinner");
 
+      // HELPER: Generate Public/Private Icons
+      function getStatusIcon(isPublic) {
+        if (isPublic && isPublic === true) {
+          // Public Company Icon (Chart)
+          return `<span class="public-icon" title="Public Company">💹</span>`;
+        }
+        // Private Company Icon (Simple Building)
+        return `<span class="public-icon" title="Private Company">🏢</span>`;
+      }
+
+      function getLinkedInIcon(link) {
+        return `<a href="${link}" target="_blank" title="LinkedIn Profile">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="#0077b5" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                </svg>
+              </a>`;
+      }
+
       function normalizeEmployeeSize(countStr) {
         const count = parseInt(countStr.replace(/,/g, ""), 10);
         if (isNaN(count) || count <= 0) {
@@ -398,11 +488,14 @@
       }
 
       async function loadData() {
+        const tableBody = document.getElementById("tableBody");
         try {
           const response = await fetch("company_data.json");
-          const data = await response.json();
-          const tableBody = document.getElementById("tableBody");
+          if (!response.ok) {
+            throw new Error(`HTTP Error: ${response.status}`);
+          }
 
+          const data = await response.json();
           // We use a Map to store { displayValue: numericalRank }
           // This automatically handles duplicates and gives us sorting data.
           const filterOptionsMap = new Map();
@@ -442,40 +535,36 @@
               }
             }
 
-            // Build Row
-            const row = document.createElement("tr");
             const domain = item.website
               ? new URL(item.website).hostname.replace("www.", "")
               : "-";
             const linkedin_link = item.linkedin
               ? item.linkedin.split("?")[0]
               : "#";
+            const status = item.public ? "Public" : "Private";
 
-            const linkedin = item.linkedin
-              ? `<a href="${linkedin_link}" target="_blank" title="LinkedIn Profile">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                        <path fill="#0077b5" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
-                    </svg>
-                   </a>`
-              : "-";
-
+            // Build Row with data
+            const row = document.createElement("tr");
             row.innerHTML = `
-          <td title="${item.name}"><strong>${item.name}</strong></td>
-          <td data-order="${sortRank}">${displayCount}</td>
-          <td>${item.website ? `<a href="${item.website}" target="_blank">${domain}</a>` : "-"}</td>
-          <td>${linkedin}</td>
-          <td>${item.last_updated ? new Date(item.last_updated).toLocaleDateString() : "-"}</td>
-      `;
+              <td title="${item.name}"><strong>${item.name}</strong></td>
+              <td data-order="${sortRank}">${displayCount}</td>
+              <td>${item.website ? `<a href="${item.website}" target="_blank">${domain}</a>` : "-"}</td>
+              <td class="text-center">${getLinkedInIcon(linkedin_link)}</td>
+              <td class="text-center" data-search="${status}">${getStatusIcon(item.public)}</td>
+              <td>${item.last_updated ? new Date(item.last_updated).toLocaleDateString() : "-"}</td>
+            `;
             fragment.appendChild(row);
           });
 
           tableBody.appendChild(fragment);
 
-          // Initialize DataTable
+          // DataTable Initialization
           const table = $("#companyTable").DataTable({
             responsive: true,
-            pageLength: 25,
+            pageLength: 10,
             order: [[1, "desc"]],
+            fixedHeader: true,
+            autoWidth: false,
             dom: '<"top-wrapper"lf>rtip',
             language: {
               search: "Search:",
@@ -516,10 +605,22 @@
                   )
                   .draw();
               });
+
+              // This ensures the header aligns perfectly after data is loaded
+              setTimeout(() => {
+                api.fixedHeader.adjust();
+              }, 100);
             },
           });
         } catch (error) {
+          // ERROR HANDLING: Show message in table
           console.error("Critical Error:", error);
+          tableBody.innerHTML = `
+            <tr>
+              <td colspan="6" class="error">
+                <strong>⚠️ Error loading data:</strong> ${error.message}. Please refresh or try again later.
+              </td>
+            </tr>`;
         } finally {
           // Show the table card regardless of success or failure
           document.querySelector(".table-card").style.display = "block";
