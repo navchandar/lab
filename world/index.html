@@ -67,32 +67,26 @@
     <style>
       /* Color Palette & Variables */
       :root {
-        --bg-color: #87ceeb;
-        /* Bright Sky Blue */
+        --bg-color: #84dbff;
         --text-color: #333333;
-        --country-fill: #98fb98;
-        /* Playful Pale Green */
+        --country-fill: #42920c;
         --country-stroke: #ffffff;
         --country-hover: #ffd700;
-        /* Gold */
         --country-active: #ff6347;
-        /* Tomato Red */
-        --panel-bg: rgba(255, 255, 255, 0.95);
+        --country-active2: #a6412f;
+        --panel-bg: rgba(255, 255, 255, 0.85);
       }
 
       /* Dark Mode Support */
       @media (prefers-color-scheme: dark) {
         :root {
           --bg-color: #001f3f;
-          /* Deep Ocean */
           --text-color: #ffffff;
-          --country-fill: #39cccc;
-          /* Teal */
-          --country-stroke: #001f3f;
+          --country-fill: #09b988;
+          --country-stroke: #000000;
           --country-hover: #ffdc00;
-          /* Bright Yellow */
           --country-active: #ff851b;
-          /* Orange */
+          --country-active2: #bd5f0d;
           --panel-bg: rgba(0, 0, 0, 0.85);
         }
       }
@@ -163,30 +157,31 @@
 
       /* Country Map Styles */
       .country {
-        transition: fill 0.3s ease;
+        transition: fill 1s ease-in, opacity 1s ease-in-out;
         cursor: pointer;
         fill: var(--country-fill);
         stroke: var(--country-stroke);
-        stroke-width: 0.25px;
+        stroke-width: 0.2px;
       }
 
       /* Hover and Focus (Accessibility) Effects */
       .country.hovering {
         fill: url(#hoverGradient) !important;
+        stroke-width: 0.25px;
       }
 
       .country.active {
         fill: url(#activeGradient) !important;
-        stroke: #fff;
-        stroke-width: 0.7px;
+        stroke: #000000;
+        stroke-width: 0.5px;
       }
 
       /* Mobile adjustments */
       @media (max-width: 768px) {
         #name-display {
-          top: 5%;
+          top: 10%;
           padding: 10px 20px;
-          font-size: 2.5rem;
+          font-size: 2rem;
         }
       }
     </style>
