@@ -549,30 +549,71 @@ function buildCompanyLookup() {
   }
 }
 
+function normalizeEmployeeSize(countStr) {
+  const count = parseInt(countStr.replace(/,/g, ""), 10);
+  if (isNaN(count) || count <= 0) return { display: "-", rank: 0 };
+
+  // For very small companies, keep it simple
+  if (count < 10) return { display: "1-10", rank: 10 };
+
+  // Logic: Find the scale (10, 100, 1000...)
+  const magnitude = Math.pow(10, Math.floor(Math.log10(count)));
+
+  // Find how many of that magnitude (e.g., 400 for 434)
+  // We use a factor of 0.5 to allow for mid-steps like "50" if preferred,
+  // but sticking to your "closest power" request:
+  let rounded = Math.floor(count / magnitude) * magnitude;
+
+  // Special case: if it lands on something like 73, and we want 50+,
+  // we can add a mid-tier check for 5s
+  if (count >= 50 && count < 100) rounded = 50;
+
+  return {
+    display: `${rounded.toLocaleString()}+`,
+    rank: count, // Use the actual count for perfect sorting
+  };
+}
+
 /**
  * Injects company metadata directly into the job object
  */
 function mergeCompanyData(jobs, lookup) {
   return jobs.map((job) => {
-    // Attempt match by LinkedIn URL first (more unique), then by Name
     const cleanJobUrl = job.companyUrl
       ? job.companyUrl.split("?")[0].toLowerCase().split("linkedin.com/")[1]
       : "";
+
     const meta = lookup.get(cleanJobUrl);
+    let sizeData = { display: "-", rank: 0 };
 
     if (meta) {
+      // Priority: 1. ln_employee_count, 2. original employee_count
+      if (meta.ln_employee_count && meta.ln_employee_count !== "0") {
+        sizeData = normalizeEmployeeSize(meta.ln_employee_count);
+      } else if (meta.employee_count && meta.employee_count !== "-") {
+        // Fallback: If it's a range like "51-200", we take the lower bound for the rank
+        const lowerBound = meta.employee_count.split(/[-+]/)[0];
+        sizeData = {
+          display: meta.employee_count,
+          rank: parseInt(lowerBound, 10) || 0,
+        };
+      }
+
       return {
         ...job,
         companyWebsite: meta.website || "-",
-        employeeCount: meta.employee_count || "-",
-      };
-    } else {
-      return {
-        ...job,
-        companyWebsite: "-",
-        employeeCount: "-",
+        employeeCount: sizeData.display,
+        employeeRank: sizeData.rank, // Hidden field for sorting
+        isPublic: meta.public || false,
       };
     }
+
+    return {
+      ...job,
+      companyWebsite: "-",
+      employeeCount: "-",
+      employeeRank: 0,
+    };
   });
 }
 

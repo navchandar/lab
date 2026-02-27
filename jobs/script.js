@@ -1738,6 +1738,9 @@ async function main() {
       let datePosted = job.datePosted
         ? `<span title="${job.datePosted}">${job.datePosted}</span>`
         : "—";
+      let employeeCount = job.employeeCount
+        ? `<span data-order="${job.employeeRank}">${job.employeeCount}</span>`
+        : "—";
 
       return [
         jobTitleLink,
@@ -1745,7 +1748,7 @@ async function main() {
         location,
         roleType === "—" ? roleType : roleTypeLink,
         job.yoe,
-        job.employeeCount,
+        employeeCount,
         datePosted,
       ];
     });
