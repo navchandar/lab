@@ -551,10 +551,14 @@ function buildCompanyLookup() {
 
 function normalizeEmployeeSize(countStr) {
   const count = parseInt(countStr.replace(/,/g, ""), 10);
-  if (isNaN(count) || count <= 0) return { display: "-", rank: 0 };
+  if (isNaN(count) || count <= 0) {
+    return { display: "-", rank: 0 };
+  }
 
   // For very small companies, keep it simple
-  if (count < 10) return { display: "1-10", rank: 10 };
+  if (count < 10) {
+    return { display: "1-10", rank: 10 };
+  }
 
   // Logic: Find the scale (10, 100, 1000...)
   const magnitude = Math.pow(10, Math.floor(Math.log10(count)));
@@ -566,7 +570,9 @@ function normalizeEmployeeSize(countStr) {
 
   // Special case: if it lands on something like 73, and we want 50+,
   // we can add a mid-tier check for 5s
-  if (count >= 50 && count < 100) rounded = 50;
+  if (count >= 50 && count < 100) {
+    rounded = 50;
+  }
 
   return {
     display: `${rounded.toLocaleString()}+`,
