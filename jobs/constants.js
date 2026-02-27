@@ -103,6 +103,7 @@ export const DATA_TABLE_CONFIG = {
   autoWidth: false, // Prevent automatic column width
   language: {
     search: "Search jobs:",
+    searchPlaceholder: "Search job posts...",
     lengthMenu: "Show _MENU_ job posts per page",
     info: "Showing _START_ to _END_ of _TOTAL_ job posts",
   },

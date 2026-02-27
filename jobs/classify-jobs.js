@@ -580,6 +580,30 @@ function normalizeEmployeeSize(countStr) {
   };
 }
 
+function determineBestSize(item) {
+  const lnCount = parseInt(item.ln_employee_count) || 0;
+  const rangeStr = item.employee_count || "0-0";
+  const rangeParts = rangeStr.split(/[-+]/);
+  const rangeMin = parseInt(rangeParts[0]) || 0;
+
+  // RULE: If LinkedIn count is very low AND significantly lower than the admin range,
+  // it's likely a regional/career sub-page. Trust the Admin Range.
+  // Exception: If the Admin range is also tiny (e.g., < 20), trust the LinkedIn count.
+  if (lnCount < rangeMin * 0.1 && rangeMin > 20) {
+    return {
+      display: rangeStr,
+      rank: rangeMin,
+    };
+  }
+
+  // Otherwise, LinkedIn data is usually more "live" and preferred for seekers
+  const normalized = normalizeEmployeeSize(lnCount.toString());
+  return {
+    display: normalized.display,
+    rank: lnCount,
+  };
+}
+
 /**
  * Injects company metadata directly into the job object
  */
@@ -590,26 +614,15 @@ function mergeCompanyData(jobs, lookup) {
       : "";
 
     const meta = lookup.get(cleanJobUrl);
-    let sizeData = { display: "-", rank: 0 };
 
     if (meta) {
-      // Priority: 1. ln_employee_count, 2. original employee_count
-      if (meta.ln_employee_count && meta.ln_employee_count !== "0") {
-        sizeData = normalizeEmployeeSize(meta.ln_employee_count);
-      } else if (meta.employee_count && meta.employee_count !== "-") {
-        // Fallback: If it's a range like "51-200", we take the lower bound for the rank
-        const lowerBound = meta.employee_count.split(/[-+]/)[0];
-        sizeData = {
-          display: meta.employee_count,
-          rank: parseInt(lowerBound, 10) || 0,
-        };
-      }
-
+      // Use the smart heuristic to determine the best size for a seeker
+      const bestSize = determineBestSize(meta);
       return {
         ...job,
         companyWebsite: meta.website || "-",
-        employeeCount: sizeData.display,
-        employeeRank: sizeData.rank, // Hidden field for sorting
+        employeeCount: bestSize.display,
+        employeeRank: bestSize.rank,
         isPublic: meta.public || false,
       };
     }
