@@ -161,6 +161,12 @@
         padding: 24px;
         overflow: visible !important;
         overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        background-color: var(--glass-bg);
+      }
+
+      .fixedHeader-floating {
+        z-index: 1001 !important;
       }
 
       #companyTable {
@@ -280,17 +286,27 @@
       .public-icon {
         font-size: 1.5em;
       }
+      .emp-filter-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
 
-      .emp-filter-wrapper select {
-        backdrop-filter: blur(5px);
+      .emp-filter-wrapper label {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+      }
+
+      #empFilter {
         cursor: pointer;
-        outline: none;
         border: 1px solid var(--glass-border) !important;
         border-radius: 8px;
         background: var(--glass-bg) !important;
-        padding: 6px 12px;
+        padding: 8px 12px;
+        min-width: 160px;
         color: var(--text-main) !important;
-        font-size: 0.9rem;
       }
 
       select:hover {
@@ -558,6 +574,28 @@
 
           tableBody.appendChild(fragment);
 
+          // This is a custom search function that allows us to filter by numeric ranges
+          $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            const selectedRange = $("#empFilter").val(); // Get the selected value from dropdown
+            if (!selectedRange) return true; // If "All Values", show everything
+
+            const rank = parseFloat(data[1].match(/\d+/)) || 0; // Get numeric value from the Employee column
+            // Or better: use the data-order attribute directly if available
+            const sortRank =
+              parseFloat(
+                settings.aoData[dataIndex].anCells[1].getAttribute(
+                  "data-order",
+                ),
+              ) || 0;
+
+            const [min, max] = selectedRange.split("-").map(Number);
+
+            if (isNaN(max)) {
+              return sortRank >= min; // Handle "500+" cases
+            }
+            return sortRank >= min && sortRank <= max; // Handle "50-100" cases
+          });
+
           // DataTable Initialization
           const table = $("#companyTable").DataTable({
             responsive: true,
@@ -575,41 +613,36 @@
             initComplete: function () {
               const api = this.api();
 
-              // Generate sorted filter options from our Map
-              const sortedOptions = Array.from(filterOptionsMap.keys()).sort(
-                (a, b) => {
-                  return filterOptionsMap.get(a) - filterOptionsMap.get(b);
-                },
-              );
+              // 1. Create the Range-Based Dropdown
+              const filterHtml = `
+    <div class="emp-filter-wrapper">
+      <label for="empFilter">Company Size:</label>
+      <select id="empFilter">
+        <option value="">All Sizes</option>
+        <option value="1-10">Micro (1-10)</option>
+        <option value="11-50">Small (11-50)</option>
+        <option value="51-200">Medium (51-200)</option>
+        <option value="201-1000">Large (201-1000)</option>
+        <option value="1001-5000">Enterprise (1001-5000)</option>
+        <option value="5001-10000">Giant (5001-10000)</option>
+        <option value="10001-50000">Conglomerate (10001-50000)</option>
+        <option value="50001-100000">Global Corp (50001-100000)</option>
+        <option value="100001">Mega Corp (100000+)</option>
+      </select>
+    </div>`;
 
-              const select = $(
-                '<select id="empFilter"><option value="">All Values</option></select>',
-              );
-              sortedOptions.forEach((opt) =>
-                select.append(new Option(opt, opt)),
-              );
+              // 2. Inject into the DOM
+              $(".dataTables_length").after(filterHtml);
 
-              $(".dataTables_length").after(
-                $('<div class="emp-filter-wrapper"></div>').append(select),
-              );
-
+              // 3. Trigger Redraw on Change
               $(document).on("change", "#empFilter", function () {
-                const val = $(this).val();
-                // Use exact regex match to avoid "100+" matching "1000+"
-                api
-                  .column(1)
-                  .search(
-                    val ? `^${$.fn.dataTable.util.escapeRegex(val)}$` : "",
-                    true,
-                    false,
-                  )
-                  .draw();
+                api.draw(); // This triggers the $.fn.dataTable.ext.search.push function above
               });
 
-              // This ensures the header aligns perfectly after data is loaded
+              // 4. Fixed Header Adjust
               setTimeout(() => {
                 api.fixedHeader.adjust();
-              }, 100);
+              }, 150);
             },
           });
         } catch (error) {
