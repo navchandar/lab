@@ -366,6 +366,37 @@
       document.getElementById("year").textContent = new Date().getFullYear();
       const loadingSpinner = document.getElementById("loadingSpinner");
 
+      function normalizeEmployeeSize(countStr) {
+        const count = parseInt(countStr.replace(/,/g, ""), 10);
+        if (isNaN(count) || count <= 0) {
+          return { display: "-", rank: 0 };
+        }
+
+        // For very small companies, keep it simple
+        if (count < 10) {
+          return { display: "1-10", rank: 10 };
+        }
+
+        // Logic: Find the scale (10, 100, 1000...)
+        const magnitude = Math.pow(10, Math.floor(Math.log10(count)));
+
+        // Find how many of that magnitude (e.g., 400 for 434)
+        // We use a factor of 0.5 to allow for mid-steps like "50" if preferred,
+        // but sticking to your "closest power" request:
+        let rounded = Math.floor(count / magnitude) * magnitude;
+
+        // Special case: if it lands on something like 73, and we want 50+,
+        // we can add a mid-tier check for 5s
+        if (count >= 50 && count < 100) {
+          rounded = 50;
+        }
+
+        return {
+          display: `${rounded.toLocaleString()}+`,
+          rank: count, // Use the actual count for perfect sorting
+        };
+      }
+
       async function loadData() {
         try {
           const response = await fetch("company_data.json");
