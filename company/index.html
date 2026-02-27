@@ -372,30 +372,49 @@
           const data = await response.json();
           const tableBody = document.getElementById("tableBody");
 
-          // Track unique employee counts for the filter dropdown
-          const empCountOptions = new Set();
+          // We use a Map to store { displayValue: numericalRank }
+          // This automatically handles duplicates and gives us sorting data.
+          const filterOptionsMap = new Map();
+
+          const fragment = document.createDocumentFragment(); // Efficient DOM manipulation
 
           data.forEach((item) => {
             // Data Quality Gate: Ignore row if BOTH critical fields are missing
-            if (!item.employee_count && !item.website) {
+            if (
+              !item.employee_count &&
+              !item.website &&
+              !item.ln_employee_count
+            )
               return;
+
+            let displayCount = "-";
+            let sortRank = 0;
+
+            // Normalize Count Size & Rank
+            if (item.ln_employee_count && item.ln_employee_count !== "0") {
+              const normalized = normalizeEmployeeSize(item.ln_employee_count);
+              displayCount = normalized.display;
+              sortRank = normalized.rank;
+            } else if (item.employee_count && item.employee_count !== "-") {
+              displayCount = item.employee_count;
+              sortRank = parseInt(displayCount.split(/[-+]/)[0]) || 0;
             }
 
+            // Add to Filter Map (O(1) complexity for duplicates)
+            if (displayCount !== "-") {
+              // We store the lowest possible rank for this category to help sort the dropdown
+              if (
+                !filterOptionsMap.has(displayCount) ||
+                sortRank < filterOptionsMap.get(displayCount)
+              ) {
+                filterOptionsMap.set(displayCount, sortRank);
+              }
+            }
+
+            // Build Row
             const row = document.createElement("tr");
-            const updateDate = item.last_updated
-              ? new Date(item.last_updated).toLocaleDateString()
-              : "-";
-            const empCount = item.employee_count ?? "-";
-
-            if (item.employee_count) {
-              empCountOptions.add(item.employee_count);
-            }
-
             const domain = item.website
               ? new URL(item.website).hostname.replace("www.", "")
-              : "-";
-            const website = item.website
-              ? `<a href="${item.website}" target="_blank">${domain}</a>`
               : "-";
             const linkedin_link = item.linkedin
               ? item.linkedin.split("?")[0]
@@ -410,22 +429,23 @@
               : "-";
 
             row.innerHTML = `
-                <td title="${item.name}"><strong>${item.name}</strong></td>
-                <td>${empCount}</td>
-                <td>${website}</td>
-                <td>${linkedin}</td>
-                <td>${updateDate}</td>
-            `;
-            tableBody.appendChild(row);
+          <td title="${item.name}"><strong>${item.name}</strong></td>
+          <td data-order="${sortRank}">${displayCount}</td>
+          <td>${item.website ? `<a href="${item.website}" target="_blank">${domain}</a>` : "-"}</td>
+          <td>${linkedin}</td>
+          <td>${item.last_updated ? new Date(item.last_updated).toLocaleDateString() : "-"}</td>
+      `;
+            fragment.appendChild(row);
           });
+
+          tableBody.appendChild(fragment);
 
           // Initialize DataTable
           const table = $("#companyTable").DataTable({
             responsive: true,
-            pageLength: 10,
-            order: [],
-            fixedHeader: true,
-            dom: '<"top-wrapper"lf>rtip', // Custom DOM layout to group length and filter
+            pageLength: 25,
+            order: [[1, "desc"]],
+            dom: '<"top-wrapper"lf>rtip',
             language: {
               search: "Search:",
               searchPlaceholder: "Search companies...",
@@ -434,47 +454,41 @@
             },
             initComplete: function () {
               const api = this.api();
-              // Select the search input and add id/name for Chrome accessibility
-              $(".dataTables_filter input", api.table().container()).attr(
-                "id",
-                "companySearchInput",
+
+              // Generate sorted filter options from our Map
+              const sortedOptions = Array.from(filterOptionsMap.keys()).sort(
+                (a, b) => {
+                  return filterOptionsMap.get(a) - filterOptionsMap.get(b);
+                },
               );
 
-              // Create the select element
               const select = $(
                 '<select id="empFilter"><option value="">All Values</option></select>',
               );
-
-              // Sort and add options based on values
-              const sortedOptions = Array.from(empCountOptions).sort((a, b) => {
-                const getVal = (s) =>
-                  parseInt(s.toString().split("-")[0].replace(/\D/g, "")) || 0;
-                return getVal(a) - getVal(b);
-              });
               sortedOptions.forEach((opt) =>
-                select.append(`<option value="${opt}">${opt}</option>`),
+                select.append(new Option(opt, opt)),
               );
 
-              // Wrap it and append it to the .top-wrapper
-              const filterWrapper = $(
-                '<div class="emp-filter-wrapper"></div>',
-              ).append(select);
+              $(".dataTables_length").after(
+                $('<div class="emp-filter-wrapper"></div>').append(select),
+              );
 
-              // Place the dropdown next to Length menu inside the top bar
-              $(".dataTables_length").after(filterWrapper);
-
-              // Handle the change event in dropdown
               $(document).on("change", "#empFilter", function () {
-                const val = $.fn.dataTable.util.escapeRegex($(this).val());
+                const val = $(this).val();
+                // Use exact regex match to avoid "100+" matching "1000+"
                 api
                   .column(1)
-                  .search(val ? "^" + val + "$" : "", true, false)
+                  .search(
+                    val ? `^${$.fn.dataTable.util.escapeRegex(val)}$` : "",
+                    true,
+                    false,
+                  )
                   .draw();
               });
             },
           });
         } catch (error) {
-          console.error("Error loading JSON data:", error);
+          console.error("Critical Error:", error);
         } finally {
           // Show the table card regardless of success or failure
           document.querySelector(".table-card").style.display = "block";
