@@ -198,10 +198,10 @@ function handleInteraction(element, data) {
   // Check if the screen width is mobile-sized (768px matches your CSS breakpoint)
   const isMobile = window.innerWidth <= 768;
 
-  // 1. Dynamic Max Zoom: Allow deeper zooming on small screens
+  // Dynamic Max Zoom: Allow deeper zooming on small screens
   const dynamicMaxZoom = isMobile ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
 
-  // 2. Dynamic Padding: Countries should take up more of the screen on mobile
+  // Dynamic Padding: Countries should take up more of the screen on mobile
   // 0.7 means it fills 70% of the screen, 0.4 means 40%
   const paddingFactor = isMobile ? 0.7 : 0.4;
 
@@ -211,7 +211,7 @@ function handleInteraction(element, data) {
     Math.min(dynamicMaxZoom, paddingFactor / Math.max(dx / width, dy / height)),
   );
 
-  // 3. Y-Axis Offset: Shift the center down on mobile so the popup doesn't cover the country
+  // Y-Axis Offset: Shift the center down on mobile so the popup doesn't cover the country
   // Shifts the camera focus UP by 10% of the SVG height (which moves the map DOWN on screen)
   const yOffset = isMobile ? height * 0.1 : 0;
 
@@ -229,11 +229,21 @@ function handleInteraction(element, data) {
   const countryName = data.properties.name || "Unknown";
   nameTextEl.textContent = countryName;
 
-  // Utilize the alpha2 code we created in the python script
-  if (data.properties.alpha2) {
+  if (data.properties.flag_svg) {
+    console.log(`Using SVG data for ${countryName} flag`);
+    // Translate the SVG from json into a browser-readable image URL
+    const svgDataUrl =
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(data.properties.flag_svg);
+    flagImgEl.src = svgDataUrl;
+    flagImgEl.style.display = "block";
+  } else if (data.properties.alpha2) {
+    console.log(`Using country code for ${countryName} flag`);
+    // Utilize the alpha2 code we created in the python script
     flagImgEl.src = `https://flagcdn.com/w80/${data.properties.alpha2}.png`;
     flagImgEl.style.display = "block";
   } else {
+    console.warn(`No SVG or code detected for country: ${countryName}`);
     flagImgEl.style.display = "none";
   }
 
@@ -246,16 +256,17 @@ function handleInteraction(element, data) {
 
 // --- Reset Zoom Logic ---
 function resetMap() {
-  // 1. Remove active state from all countries
+  // Remove active state from all countries
   d3.selectAll(".country").classed("active", false);
 
-  // 2. Hide the popup display
+  // Hide the popup display
   nameDisplayEl.classList.remove("show");
 
-  // 3. Smoothly zoom the map back to the original scale (1x) and center (0,0)
+  // Smoothly zoom the map back to the original scale (1x) and center (0,0)
   svg.transition().duration(1500).call(
     zoom.transform,
-    d3.zoomIdentity, // d3.zoomIdentity represents the default unzoomed state
+    d3.zoomIdentity,
+    // d3.zoomIdentity represents the default unzoomed state
   );
 }
 
