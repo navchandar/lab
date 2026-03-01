@@ -194,24 +194,25 @@
       }
 
       /* Specific widths for each column */
+      /* Company Name */
       #companyTable th:nth-child(1) {
-        width: 45% !important;
-      } /* Company Name */
-      #companyTable th:nth-child(2) {
-        width: 15% !important;
+        width: 40% !important;
       } /* Employees */
+      #companyTable th:nth-child(2) {
+        width: 10% !important;
+      } /* Website */
       #companyTable th:nth-child(3) {
         width: 20% !important;
-      } /* Website */
-      #companyTable th:nth-child(4) {
-        width: 5% !important;
       } /* LinkedIn */
-      #companyTable th:nth-child(5) {
-        width: 5% !important;
-      } /* Status */
-      #companyTable th:nth-child(6) {
+      #companyTable th:nth-child(4) {
         width: 10% !important;
-      } /* Updated */
+      } /* Status/ Type */
+      #companyTable th:nth-child(5) {
+        width: 10% !important;
+      } /* Updated Date */
+      #companyTable th:nth-child(6) {
+        width: 15% !important;
+      }
 
       table.dataTable tbody td {
         border-bottom: 1px solid var(--row-border) !important;
@@ -286,13 +287,14 @@
       .public-icon {
         font-size: 1.5em;
       }
+
       .emp-filter-wrapper {
         display: flex;
         align-items: center;
         gap: 10px;
       }
 
-      .emp-filter-wrapper label {
+      label {
         color: var(--text-muted);
         font-weight: 600;
         font-size: 0.8rem;
@@ -425,7 +427,7 @@
       <p>
         Powered by
         <a
-          href="https://github.com/navchandar/lab/"
+          href="https://github.com/navchandar/lab/tree/main/company/"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -606,7 +608,7 @@
             dom: '<"top-wrapper"lf>rtip',
             language: {
               search: "Search:",
-              searchPlaceholder: "Search companies...",
+              searchPlaceholder: "Company name",
               lengthMenu: "Show _MENU_ companies",
               info: "Showing _START_ to _END_ of _TOTAL_ companies",
             },

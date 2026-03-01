@@ -27,6 +27,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 # once every 3 chances, skip crawling to reduce load
 COIN_TOSS = random.randint(1, 3) == 1
 UPDATE_ALL = False
+avoid_words = ["confidential", "stealth", "secret", "hidden"]
 
 
 def get_search_params(keyword: str, start: int) -> Dict[str, str]:
@@ -219,8 +220,10 @@ def fetch_company_details(company: Dict[str, Any]) -> None | Dict[str, Any]:
     """Scrapes specific company metadata (Website, Employees)."""
     name = company["name"]
     companyUrl = company["linkedin"]
-    if not name or "confidential" in name.lower():
+    # avoid blank names and unwanted company names
+    if not name or any(word in name.lower() for word in avoid_words):
         return None
+    # avoid blank urls and school page urls
     if not companyUrl or "linkedin.com/school" in companyUrl:
         return None
     try:
