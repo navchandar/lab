@@ -32,7 +32,7 @@ module.exports = {
       },
     },
     {
-      files: ["jobs/script.js"],
+      files: ["jobs/script.js", "jobs/constants.js"],
       env: {
         browser: true,
         node: false,
@@ -59,6 +59,19 @@ module.exports = {
       globals: {
         // Define global variables injected via HTML script tags
         L: "readonly",
+      },
+    },
+    {
+      files: ["company/script.js"],
+      env: {
+        browser: true,
+        node: false,
+        es6: true,
+      },
+      globals: {
+        // Define global variables injected via HTML script tags
+        $: "readonly",
+        jQuery: "readonly",
       },
     },
     {

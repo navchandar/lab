@@ -15,7 +15,8 @@ const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 let intervalID = null;
 let visitedHistory = [];
-// The "memory" to prevent bouncing back and forth
+// Store visited country history to prevent bouncing back and forth
+let zoomDelayTimer = null;
 
 setTimeout(() => {
   nameDisplayEl.classList.add("show");
@@ -46,20 +47,20 @@ const hoverGrad = defs
   .append("radialGradient")
   .attr("id", "hoverGradient")
   .attr("gradientUnits", "userSpaceOnUse")
-  .attr("r", "15%");
+  .attr("r", "50%");
 
 // We use stop-opacity to animate the fade-in via D3 instead of CSS
 const hoverStop1 = hoverGrad
   .append("stop")
   .attr("offset", "0%")
   .attr("stop-color", "var(--country-hover)")
-  .attr("stop-opacity", 0.75); // Start invisible
+  .attr("stop-opacity", 0.5); // Start invisible
 
 const hoverStop2 = hoverGrad
   .append("stop")
   .attr("offset", "100%")
   .attr("stop-color", "var(--country-fill)")
-  .attr("stop-opacity", 0.75); // Start invisible
+  .attr("stop-opacity", 0.5); // Start invisible
 
 // Active Gradient (Stronger contrast for the click)
 const activeGrad = defs
@@ -145,8 +146,8 @@ d3.json(dataUrl)
           el.classed("hovering", true);
 
           // Animate the opacity of the gradient stops to fade it in
-          hoverStop1.transition().duration(100).attr("stop-opacity", 1);
-          hoverStop2.transition().duration(150).attr("stop-opacity", 1);
+          hoverStop1.transition().duration(50).attr("stop-opacity", 1);
+          hoverStop2.transition().duration(100).attr("stop-opacity", 1);
         }
       })
       .on("pointerout", function () {
@@ -188,8 +189,7 @@ d3.json(dataUrl)
           .interrupt()
           .attr("r", "0%")
           .transition()
-          .delay(1000)
-          .duration(1500)
+          .duration(1000)
           .ease(d3.easeCubicOut)
           .attr("r", "100%");
 
@@ -244,15 +244,24 @@ function handleInteraction(element, data) {
   // Shifts the camera focus UP by 10% of the SVG height (which moves the map DOWN on screen)
   const yOffset = isMobile ? height * 0.1 : 0;
 
-  svg
-    .transition()
-    .duration(1000)
-    .call(
-      zoom.transform,
-      d3.zoomIdentity
-        .translate(width / 2 - x * scale, height / 2 + yOffset - y * scale)
-        .scale(scale),
-    );
+  // If they click another country before the zoom starts, cancel the old zoom
+  if (zoomDelayTimer) {
+    clearTimeout(zoomDelayTimer);
+  }
+  // Wait 1s (matching the gradient duration) before zooming into the country
+  zoomDelayTimer = setTimeout(() => {
+    svg
+      .transition()
+      .duration(1000)
+      .call(
+        zoom.transform,
+        d3.zoomIdentity
+          .translate(width / 2 - x * scale, height / 2 + yOffset - y * scale)
+          .scale(scale),
+      );
+    speaker();
+    nameDisplayEl.classList.add("show");
+  }, 1000);
 
   // --- UI Updates ---
   const countryName = data.properties.name || "Unknown";
@@ -303,9 +312,6 @@ function handleInteraction(element, data) {
     console.warn(`No SVG or code detected for country: ${countryName}`);
     flagImgEl.style.display = "none";
   }
-
-  nameDisplayEl.classList.add("show");
-  speaker();
 }
 
 // --- Reset Zoom Logic ---
