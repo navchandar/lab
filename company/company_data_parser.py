@@ -27,7 +27,7 @@ JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-avoid_words = ["confidential", "stealth", "secret", "hidden"]
+avoid_words = ["confidential", "stealth", "secret", "hidden", "study from"]
 now = datetime.now()
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 day_of_month = now.day  # 1 to 31
