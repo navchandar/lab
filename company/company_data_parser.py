@@ -7,8 +7,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import yfinance as yf
 from bs4 import BeautifulSoup
 from curl_cffi import requests
+from rapidfuzz import fuzz
 
 # --- Setup Logging ---
 logging.basicConfig(
@@ -24,10 +26,18 @@ DATA_FILE = BASE_DIR / "company_data.json"
 JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-# once every 3 chances, skip crawling to reduce load
-COIN_TOSS = random.randint(1, 3) == 1
-UPDATE_ALL = False
+
 avoid_words = ["confidential", "stealth", "secret", "hidden"]
+now = datetime.now()
+day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
+day_of_month = now.day  # 1 to 31
+
+# Discovery: Only crawl for NEW companies on Mondays and Thursdays (0 and 3)
+CHECK_JOB_POSTS = day_of_week in [0, 3]
+# Deep Refresh: Update EVERYTHING only on the 1st and 15th of the month
+REFRESH_ALL = day_of_month in [1, 15]
+logger.info(f"Schedule | Day of Week: {day_of_week}, Day of Month: {day_of_month}")
+logger.info(f"Discovery Active: {CHECK_JOB_POSTS} | Full Refresh Active: {REFRESH_ALL}")
 
 
 def get_search_params(keyword: str, start: int) -> Dict[str, str]:
@@ -52,10 +62,10 @@ def normalize_linkedin_url(url: str) -> str:
     )
 
 
-def fetch_company_urls(update_all: bool = False) -> List[Dict[str, str]]:
+def fetch_company_urls() -> List[Dict[str, str]]:
     """
     Consolidates company URLs from local job data and live LinkedIn crawling.
-    if update_all = True, update existing data too.
+    if REFRESH_ALL = True, update all of the existing data too.
     """
     companies = []
     seen_links = set()
@@ -92,7 +102,7 @@ def fetch_company_urls(update_all: bool = False) -> List[Dict[str, str]]:
         logger.warning(f"{JOBS_DATA} missing. Skipping local extraction.")
 
     # Crawl LinkedIn for fresh data for all existing companies
-    if update_all:
+    if REFRESH_ALL:
         logger.info("Updating all existing companies!")
         existing_data = read_data()
         for company in existing_data:
@@ -106,7 +116,7 @@ def fetch_company_urls(update_all: bool = False) -> List[Dict[str, str]]:
         logger.info("SKIP: Updating all existing companies!")
 
     # Skip crawling 2 out of 3 times to reduce load
-    if not COIN_TOSS:
+    if not CHECK_JOB_POSTS:
         logger.info("SKIP: Find new companies from jobs!")
         return companies
 
@@ -216,6 +226,52 @@ def extract_employee_count(text: str) -> Optional[str]:
     return None
 
 
+def find_ticker_symbol(company_name: str) -> Optional[str]:
+    if not company_name:
+        return None
+
+    try:
+        logger.info(f"Ticker Lookup | {company_name}")
+        # Get up to 5 results to ensure we see regional variants
+        search = yf.Search(company_name, max_results=5)
+        quotes = search.quotes
+
+        if not quotes:
+            return None
+
+        # Step 1: Filter for only Equities (Stocks)
+        equities = [q for q in quotes if q.get("quoteType") == "EQUITY"]
+        if not equities:
+            return None
+
+        # Step 2: Priority Selection
+        # 1st Priority: Any Indian Exchange (.NS or .BO)
+        for q in equities:
+            # Get the 'longname' from Yahoo (e.g., "Exxon Mobil Corporation")
+            official_name = q.get("longname", "")
+            symbol = q.get("symbol", "")
+            # Calculate similarity between your scraped name and Yahoo's official name
+            score = fuzz.token_sort_ratio(company_name.lower(), official_name.lower())
+            # If the names are 70% similar, we trust the match
+            if score > 70:
+                if symbol.endswith(".NS") or symbol.endswith(".BO"):
+                    return symbol
+
+        # 2nd Priority: Major US Exchanges (usually no dot in symbol)
+        for q in equities:
+            symbol = q.get("symbol", "")
+            if "." not in symbol:
+                return symbol
+
+        # 3rd Priority: Just give us the first Equity found globally
+        return equities[0].get("symbol")
+
+    except Exception as e:
+        logger.error(f"Ticker lookup failed for {company_name}: {e}")
+
+    return None
+
+
 def fetch_company_details(company: Dict[str, Any]) -> None | Dict[str, Any]:
     """Scrapes specific company metadata (Website, Employees)."""
     name = company["name"]
@@ -268,8 +324,14 @@ def fetch_company_details(company: Dict[str, Any]) -> None | Dict[str, Any]:
                 if org_type := dd.get_text(strip=True):
                     if "public" in org_type.lower():
                         company["public"] = True
+                        symbol = find_ticker_symbol(name)
+                        if symbol:
+                            company["ticker"] = symbol
+                        else:
+                            company["ticker"] = None
                     else:
                         company["public"] = False
+                        company["ticker"] = None
 
     except Exception as e:
         logger.error(f"Error detailing {name}: {e}")
@@ -340,7 +402,7 @@ def save_to_json(new_data: List[Dict[str, Any]]):
             val = float("inf")
         # sorting key variables
         if ln_cnt and ln_cnt.isdigit():
-            ln_cnt = -int(ln_cnt) 
+            ln_cnt = -int(ln_cnt)
             return (ln_cnt, val, x["name"].lower())
         else:
             return (0, val, x["name"].lower())
@@ -354,7 +416,7 @@ def save_to_json(new_data: List[Dict[str, Any]]):
 
 def main():
     # Fetch Company URLs
-    companies = fetch_company_urls(UPDATE_ALL)
+    companies = fetch_company_urls()
 
     # Detail Fetch (with fresh requests)
     processed_data = []

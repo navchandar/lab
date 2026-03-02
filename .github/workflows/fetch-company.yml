@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install beautifulsoup4 curl_cffi
+          pip install beautifulsoup4 curl_cffi rapidfuzz yfinance
 
       - name: Run Script
         run: python company_data_parser.py
