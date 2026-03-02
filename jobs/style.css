@@ -66,9 +66,12 @@ header {
 h1 {
     margin-top: 5px;
     margin-bottom: 5px;
+    background: linear-gradient(135deg, white, #d3d0d0);
     font-weight: 500;
     font-size: 2em;
     letter-spacing: 0.5px;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 main {
@@ -557,6 +560,7 @@ footer p a {
         0 6px 10px 0 rgba(0, 0, 0, 0.14),
         0 1px 18px 0 rgba(0, 0, 0, 0.12);
     border-radius: 4px;
+    background: linear-gradient(45deg, #013f8c, #00484b);
     background-color: #00509f;
     padding: 12px 20px;
     color: #ffffff;
@@ -575,7 +579,7 @@ footer p a {
     margin-left: 10px;
     border: none;
     background: none;
-    color: #a0a0a0;
+    color: white;
     font-size: 18px;
 }
 
@@ -1096,6 +1100,7 @@ grammarly-extension,
     }
 
     .ip-toast {
+        background: linear-gradient(45deg, #013f8c, #00484b);
         background-color: #002334;
     }
 

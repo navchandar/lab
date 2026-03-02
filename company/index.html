@@ -39,6 +39,7 @@
         --bg-color: #0f172a;
         --title-gradient: linear-gradient(to right, #30daec, #db28c8);
         --table-head-gradient: linear-gradient(0deg, #1e2638 0%, #0e1525 100%);
+        --table-head-gradient-hover: linear-gradient(0deg, #0e1525 0%, #000205 100%);
         --glass-bg: rgba(255, 255, 255, 0.05);
         --glass-border: rgba(255, 255, 255, 0.1);
         --accent-color: #38bdf8;
@@ -59,6 +60,7 @@
             #f8fafc 0%,
             #e2e8f0 100%
           );
+        --table-head-gradient-hover: linear-gradient(0deg, #e2e8f0 0%, #becfe6 100%);
           --glass-bg: rgba(255, 255, 255, 0.7);
           --glass-border: rgba(0, 0, 0, 0.1);
           /* Darker border for light mode */
@@ -192,6 +194,9 @@
         text-align: left;
         text-transform: uppercase;
       }
+      table.dataTable thead th:hover {
+        background: var(--table-head-gradient-hover) !important;
+      }
 
       /* Specific widths for each column */
       /* Company Name */
@@ -280,6 +285,10 @@
       .dataTables_paginate {
         margin-top: 20px !important;
         color: var(--text-muted) !important;
+      }
+
+      .dataTables_paginate .paginate_button:hover {
+        color: gray !important;
       }
 
       .paginate_button {
