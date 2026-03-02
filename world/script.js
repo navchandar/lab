@@ -188,7 +188,8 @@ d3.json(dataUrl)
           .interrupt()
           .attr("r", "0%")
           .transition()
-          .duration(2500)
+          .delay(1000)
+          .duration(1500)
           .ease(d3.easeCubicOut)
           .attr("r", "100%");
 
@@ -245,7 +246,7 @@ function handleInteraction(element, data) {
 
   svg
     .transition()
-    .duration(1500)
+    .duration(1000)
     .call(
       zoom.transform,
       d3.zoomIdentity

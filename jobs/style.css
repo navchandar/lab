@@ -340,6 +340,7 @@ div.dt-container select.dt-input {
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.12);
     /* Subtle horizontal separation */
     border-bottom: 2px solid #e0e0e0;
+    background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
     background-color: #f5f5f5;
     /* Match body surface, or slightly darker */
     color: #424242;
@@ -347,6 +348,7 @@ div.dt-container select.dt-input {
 }
 
 #jobTable th:hover {
+    background: linear-gradient(0deg, #e2e8f0 0%, #becfe6 100%);
     background-color: #eeeeee;
 }
 
@@ -1038,7 +1040,7 @@ grammarly-extension,
     /* Table */
     #jobTable th {
         border-bottom-color: #444;
-        background: linear-gradient(to bottom, #383838 0%, #303030 100%);
+        background: linear-gradient(0deg, #1e2638 0%, #0e1525 100%);
         color: #f0f0f0;
     }
 
@@ -1047,6 +1049,7 @@ grammarly-extension,
     }
 
     #jobTable th:hover {
+        background: linear-gradient(0deg, #0e1525 0%, #000205 100%);
         background-color: rgba(100, 181, 246, 0.2);
     }
 
