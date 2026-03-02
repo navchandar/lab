@@ -151,6 +151,17 @@ export const DATA_TABLE_CONFIG = {
       className: "dt-head-right dt-body-right text-nowrap", // Align right and prevent wrapping
       width: "10%",
     },
+    {
+      targets: [1, 2, 3, 5, 6],
+      createdCell: function (td, cellData, rowData, row, col) {
+        // rowData is the array you returned in dataToLoad
+        // Extract the "plain text" to add to title
+        const plainText = $(td).text().trim();
+        if (plainText && plainText !== "—") {
+          $(td).attr("title", plainText);
+        }
+      },
+    },
   ],
 };
 
