@@ -227,6 +227,11 @@
         white-space: nowrap;
       }
 
+      table.dataTable tbody td:nth-child(4),
+      table.dataTable tbody td:nth-child(5) {
+        padding: 5px !important;
+      }
+
       table.dataTable tbody tr {
         background: transparent !important;
       }
@@ -283,9 +288,29 @@
         background: var(--glass-bg) !important;
         color: var(--text-main) !important;
       }
-
       .public-icon {
-        font-size: 1.5em;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.2s ease;
+        border-radius: 10px;
+        width: 40px;
+        height: 40px;
+        font-size: 1.4em;
+      }
+
+      /* Specific styling for the ticker link */
+      .icon-link {
+        position: relative;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(56, 189, 248, 0.75);
+        text-decoration: none !important;
+      }
+
+      .icon-link:hover {
+        transform: translateY(-2px) scale(1.1);
+        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+        border-bottom: 1px solid rgba(56, 189, 248, 0.9);
       }
 
       .emp-filter-wrapper {
@@ -456,18 +481,31 @@
       document.getElementById("year").textContent = new Date().getFullYear();
       const loadingSpinner = document.getElementById("loadingSpinner");
 
-      // HELPER: Generate Public/Private Icons
-      function getStatusIcon(isPublic) {
-        if (isPublic && isPublic === true) {
-          // Public Company Icon (Chart)
-          return `<span class="public-icon" title="Public Company">💹</span>`;
+      // HELPER: Generate Public/Private Icons with Financial Links
+      function getStatusIcon(isPublic, ticker) {
+        const icon = isPublic ? "💹" : "🏢";
+        const title = isPublic
+          ? `Public Company ${ticker ? `(${ticker})` : ""}`
+          : "Private Company";
+
+        // If it's public and has a ticker, wrap it in a Yahoo Finance link
+        if (isPublic && ticker) {
+          const financeUrl = `https://finance.yahoo.com/quote/${ticker}/`;
+          return `<a href="${financeUrl}" 
+    target="_blank"
+    class="public-icon icon-link" 
+    data-ticker="${ticker}"
+    title="View ${ticker} on Yahoo Finance">
+              ${icon}
+            </a>`;
         }
-        // Private Company Icon (Simple Building)
-        return `<span class="public-icon" title="Private Company">🏢</span>`;
+
+        // Otherwise, just return the icon as a span
+        return `<span class="public-icon" title="${title}">${icon}</span>`;
       }
 
       function getLinkedInIcon(link) {
-        return `<a href="${link}" target="_blank" title="LinkedIn Profile">
+        return `<a href="${link}" target="_blank" title="LinkedIn Profile" class="public-icon icon-link">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                   <path fill="#0077b5" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
                 </svg>
@@ -568,7 +606,7 @@
               <td data-order="${sortRank}">${displayCount}</td>
               <td>${item.website ? `<a href="${item.website}" target="_blank">${domain}</a>` : "-"}</td>
               <td class="text-center">${getLinkedInIcon(linkedin_link)}</td>
-              <td class="text-center" data-search="${status}">${getStatusIcon(item.public)}</td>
+              <td class="text-center" data-search="${status}">${getStatusIcon(item.public, item.ticker)}</td>
               <td>${item.last_updated ? new Date(item.last_updated).toLocaleDateString() : "-"}</td>
             `;
             fragment.appendChild(row);

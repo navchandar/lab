@@ -52,7 +52,7 @@ To run all scripts in Windows Powershell
 Set-Location hospitals
 # Ask for API Key and stored in memory only
 $env:GMAPS_API_KEY = Read-Host "Please Enter GMAPS_API_KEY"
-pip install ./scripts/requirements.txt
+pip install -r ./scripts/requirements.txt
 # Run all scripts EXCEPT 'merge_data.py'
 Get-ChildItem -Path .\scripts\*.py -Exclude "merge_data.py" | ForEach-Object {
     Write-Host "Starting $($_.Name)" -ForegroundColor Green
@@ -69,7 +69,7 @@ To run all scripts in MacOS or Linux
 cd hospitals
 read -sp "Please Enter GMAPS_API_KEY: " API_KEY_INPUT
 echo ""
-pip install scripts/requirements.txt
+pip install -r scripts/requirements.txt
 for script in scripts/*.py; do
     if [[ "$script" != *"merge_data.py" ]]; then
         echo "Running $script..."
