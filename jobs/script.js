@@ -1728,18 +1728,21 @@ async function main() {
       let websiteLink = job.companyWebsite;
       let companyLink = "";
       if (websiteLink && websiteLink !== "-") {
-        companyLink = `<a href="${websiteLink}" title="${job.company}" ${props} class="job-title-link">${job.company}</a>`;
+        companyLink = `
+          <div title="${job.company}" style="cursor: pointer;">
+            <a href="${websiteLink}" ${props} class="job-title-link">${job.company}</a>
+          </div>`;
       } else {
-        companyLink = `<span title="${job.company}">${job.company}</span>`;
+        companyLink = `<div title="${job.company}">${job.company}</div>`;
       }
       let location = job.location
-        ? `<span title="${job.location}">${job.location}</span>`
+        ? `<div title="${job.location}">${job.location}</div>`
         : "—";
       let datePosted = job.datePosted
-        ? `<span title="${job.datePosted}">${job.datePosted}</span>`
+        ? `<div title="${job.datePosted}">${job.datePosted}</div>`
         : "—";
       let employeeCount = job.employeeCount
-        ? `<span data-order="${job.employeeRank}">${job.employeeCount}</span>`
+        ? `<div data-order="${job.employeeRank}">${job.employeeCount}</div>`
         : "—";
 
       return [
