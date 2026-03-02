@@ -5,9 +5,16 @@ import { TTS } from "../static/speech_helper.js";
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
 
+const nameDisplayEl = document.getElementById("name-display");
 const nameTextEl = document.getElementById("country-name-text");
 const flagImgEl = document.getElementById("flag-img");
-const nameDisplayEl = document.getElementById("name-display");
+
+setTimeout(() => {
+  nameDisplayEl.classList.add("show");
+}, 1500);
+setTimeout(() => {
+  nameDisplayEl.classList.remove("show");
+}, 6000);
 
 function speaker() {
   ttsInstance.speakElement(nameTextEl, {

@@ -118,7 +118,8 @@
         gap: 15px;
         transform: scale(0);
         z-index: 10;
-        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: transform 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        margin: 0;
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
         border-radius: 30px;
         background-color: var(--panel-bg);
@@ -136,6 +137,7 @@
       #flag-img {
         /* Hidden until a country is clicked */
         display: none;
+        border: 1px solid;
         border-radius: 5px;
         height: 40px;
       }
@@ -191,10 +193,10 @@
   </head>
 
   <body>
-    <div id="name-display" aria-live="polite">
+    <h1 id="name-display" aria-live="polite">
       <img id="flag-img" src="../static/images/flag.png" alt="Country Flag" />
-      <span id="country-name-text">Tap a country!</span>
-    </div>
+      <span id="country-name-text">🌏 World Map</span>
+    </h1>
 
     <div
       id="map-container"
