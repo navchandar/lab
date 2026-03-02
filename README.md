@@ -22,7 +22,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🕒 <a href="https://navchandar.github.io/lab/clock/" target="_blank">**Learn the Clock**</a> | Interactive analog and digital clock to teach time-telling. | 🟩🟩🟩🟩🟩 100% |
 | ⿰ <a href="https://navchandar.github.io/lab/type/" target="_blank">**Type Text**</a> | Type and view just one character at a time! | 🟩🟩🟩🟩🟩 100% |
 | 📅 **Days And Months** | Learn days of the week and months of the year with animations and sounds. | ⬜⬜⬜⬜⬜ 0% |
-| 🌍 <a href="https://navchandar.github.io/lab/world/" target="_blank">**World Explorer**</a>  | Learn country names, flags, and capitals with a simple quiz mode. | 🟩🟩🟩⬜⬜ 60% |
+| 🌍 <a href="https://navchandar.github.io/lab/world/" target="_blank">**World Explorer**</a>  | Learn country names, flags, and capitals with a simple quiz mode. | 🟩🟩🟩🟩⬜ 80% |
 
 ### Tools
 

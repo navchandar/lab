@@ -64,6 +64,8 @@
     <script src="https://unpkg.com/topojson-client@3"></script>
     <script src="https://unpkg.com/d3-geo-projection@4"></script>
 
+    <link rel="stylesheet" href="../static/settings.css" />
+
     <style>
       /* Color Palette & Variables */
       :root {
@@ -114,6 +116,7 @@
         display: flex;
         position: absolute;
         top: 10%;
+        flex-direction: column; /* Stack vertically if extra info is shown */
         align-items: center;
         gap: 15px;
         transform: scale(0);
@@ -134,6 +137,26 @@
         transform: scale(1);
       }
 
+      .country-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+
+      /* New styles for the extra info text */
+      .extra-info {
+        margin-top: 5px;
+        color: #555;
+        font-weight: 400;
+        font-size: 1.2rem;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .extra-info {
+          color: #ccc;
+        }
+      }
+
       #flag-img {
         /* Hidden until a country is clicked */
         display: none;
@@ -151,8 +174,8 @@
       }
 
       svg {
+        filter: drop-shadow(1px 2px 0px rgba(0, 0, 0, 0.7));
         width: 100%;
-        max-width: 1400px;
         height: 100%;
         touch-action: none;
       }
@@ -188,15 +211,37 @@
           padding: 10px 20px;
           font-size: 2rem;
         }
+        .extra-info {
+          font-size: 1rem;
+        }
       }
     </style>
   </head>
 
   <body>
-    <h1 id="name-display" aria-live="polite">
-      <img id="flag-img" src="../static/images/flag.png" alt="Country Flag" />
-      <span id="country-name-text">🌏 World Map</span>
-    </h1>
+    <noscript>
+      <div class="noscript-overlay">
+        <div class="noscript-content">
+          <h2>JavaScript is Required</h2>
+          <p>We rely on JavaScript to render the interactive website.</p>
+          <p>
+            Please enable JavaScript in your browser settings and reload the
+            page.
+          </p>
+          <a href="https://www.enable-javascript.com/" target="_blank"
+            >How to enable JavaScript
+          </a>
+        </div>
+      </div>
+    </noscript>
+
+    <div id="name-display" aria-live="polite">
+      <div class="country-header">
+        <img id="flag-img" src="../static/images/flag.png" alt="Country Flag" />
+        <span id="country-name-text">🌏 World Map</span>
+      </div>
+      <div id="extra-info-text" class="extra-info" style="display: none"></div>
+    </div>
 
     <div
       id="map-container"
@@ -204,6 +249,71 @@
       aria-label="Interactive Educational World Map"
     >
       <svg id="map" role="img" aria-label="World Map Puzzle"></svg>
+    </div>
+
+    <button
+      id="muteButton"
+      aria-label="Mute sound"
+      disabled
+      title="Mute sound"
+    ></button>
+
+    <button
+      id="fullscreen-btn"
+      aria-label="Toggle fullscreen mode"
+      title="Toggle fullscreen"
+    >
+      <svg
+        id="fullscreen-icon"
+        fill="none"
+        height="24"
+        viewBox="0 0 24 24"
+        width="24"
+        xmlns="http://www.w3.org/2000/svg"
+      ></svg>
+    </button>
+
+    <!-- Settings Button -->
+    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+      <img
+        id="settings-icon"
+        src="../static/icons/settings.svg"
+        width="24"
+        height="24"
+        alt="Settings"
+        aria-hidden="true"
+      />
+    </button>
+
+    <!-- Overlay Menu -->
+    <div
+      id="settings-menu"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-label"
+    >
+      <span id="settings-label" class="sr-only" style="display: none"
+        >Settings Menu
+      </span>
+      <div class="autoplay-checkbox">
+        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+        <input type="checkbox" id="autoplay" />
+      </div>
+
+      <div
+        class="info-checkbox"
+        style="
+          margin-top: 15px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <label for="show-extra-info" id="extra-info-label"
+          >Show Extra Info:</label
+        >
+        <input type="checkbox" id="show-extra-info" />
+      </div>
     </div>
 
     <script type="module" src="script.js"></script>

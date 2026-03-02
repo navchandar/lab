@@ -1,27 +1,40 @@
 import * as utils from "../static/utils.js";
 import { TTS } from "../static/speech_helper.js";
 
-// --- Speaker Initiation ---
-const ttsInstance = TTS();
-ttsInstance.unlockSpeech();
-
+// --- DOM Element References ---
+const settingsBtn = document.getElementById("settings-btn");
+const settingsIcon = document.getElementById("settings-icon");
 const nameDisplayEl = document.getElementById("name-display");
 const nameTextEl = document.getElementById("country-name-text");
 const flagImgEl = document.getElementById("flag-img");
+const extrainfoCheckbox = document.getElementById("show-extra-info");
+const extraInfoEl = document.getElementById("extra-info-text");
+
+// --- Speaker Initiation ---
+const ttsInstance = TTS();
+ttsInstance.unlockSpeech();
+let intervalID = null;
+let visitedHistory = [];
+// The "memory" to prevent bouncing back and forth
 
 setTimeout(() => {
   nameDisplayEl.classList.add("show");
 }, 1500);
-setTimeout(() => {
+let timeOut = setTimeout(() => {
   nameDisplayEl.classList.remove("show");
+  if (timeOut) {
+    clearTimeout(timeOut);
+  }
 }, 6000);
 
 function speaker() {
-  ttsInstance.speakElement(nameTextEl, {
-    directSpeech: false,
-    rate: 0.8,
-    locale: "en-US",
-  });
+  if (!utils.isMuted()) {
+    ttsInstance.speakElement(nameTextEl, {
+      directSpeech: false,
+      rate: 0.8,
+      locale: "en-US",
+    });
+  }
 }
 
 // --- Map Initialization ---
@@ -155,6 +168,9 @@ d3.json(dataUrl)
       .on("click", function (event, d) {
         // stops the click from "falling through" the country into the ocean
         event.stopPropagation();
+        if (timeOut) {
+          clearTimeout(timeOut);
+        }
 
         const el = d3.select(this);
 
@@ -191,6 +207,11 @@ d3.json(dataUrl)
   });
 
 function handleInteraction(element, data) {
+  // hide existing name if any
+  nameDisplayEl.classList.remove("show");
+  void nameDisplayEl.offsetWidth;
+
+  // remove selection from existing country and add to the selected country
   d3.selectAll(".country").classed("active", false);
   d3.select(element).classed("active", true);
 
@@ -236,6 +257,34 @@ function handleInteraction(element, data) {
   const countryName = data.properties.name || "Unknown";
   nameTextEl.textContent = countryName;
 
+  if (extrainfoCheckbox && extrainfoCheckbox.checked) {
+    let capital = data.properties.capital || "";
+    let continent = data.properties.continent || "";
+
+    // Use an array to collect only the valid, non-empty strings
+    let infoArray = [];
+    // Push data to the array only if it exists
+    if (capital) {
+      infoArray.push(`Capital: ${capital}`);
+    }
+    if (continent) {
+      infoArray.push(`Continent: ${continent}`);
+    }
+
+    // If we have at least one valid piece of info, display it
+    if (infoArray.length > 0) {
+      // Join the array items with a line break HTML tag
+      extraInfoEl.innerHTML = infoArray.join("<br>");
+      extraInfoEl.style.display = "block";
+    } else {
+      // Hide the container if all three happened to be completely empty
+      extraInfoEl.style.display = "none";
+    }
+  } else {
+    // Hide the container if the checkbox is unchecked
+    extraInfoEl.style.display = "none";
+  }
+
   if (data.properties.flag_svg) {
     console.log(`Using SVG data for ${countryName} flag`);
     // Translate the SVG from json into a browser-readable image URL
@@ -254,10 +303,7 @@ function handleInteraction(element, data) {
     flagImgEl.style.display = "none";
   }
 
-  nameDisplayEl.classList.remove("show");
-  void nameDisplayEl.offsetWidth;
   nameDisplayEl.classList.add("show");
-
   speaker();
 }
 
@@ -280,8 +326,183 @@ function resetMap() {
 // Make the background (ocean) clickable to trigger the reset
 svg.on("click", resetMap);
 
-// --- Keyboard Listeners mapping to your existing keys ---
-window.addEventListener("keydown", (event) => {
+function clickNearByCountries() {
+  utils.hideSettings();
+  // Grab all countries and find the currently active one
+  const allCountries = Array.from(document.querySelectorAll(".country"));
+  if (allCountries.length === 0) {
+    return;
+  }
+
+  const activeCountry = document.querySelector(".country.active");
+  let nextCountryNode;
+
+  if (!activeCountry) {
+    // If nothing is selected yet, start randomly anywhere in the world
+    nextCountryNode =
+      allCountries[Math.floor(Math.random() * allCountries.length)];
+  } else {
+    // Get the mathematical center (x, y) of the current country
+    const currentData = d3.select(activeCountry).datum();
+    const [cx, cy] = path.centroid(currentData);
+    const currentCountryId = currentData.id || currentData.properties.name;
+
+    // Add current country to history (and keep history at a max of 10)
+    visitedHistory.push(currentCountryId);
+    if (visitedHistory.length > 10) {
+      visitedHistory.shift();
+    }
+
+    // Measure the distance to all OTHER countries
+    const distances = allCountries
+      .filter((node) => node !== activeCountry)
+      .map((node) => {
+        const nodeData = d3.select(node).datum();
+        const nodeId = nodeData.id || nodeData.properties.name;
+        const [nx, ny] = path.centroid(nodeData);
+
+        // Pythagorean theorem to find the straight-line distance
+        const dist = Math.sqrt(Math.pow(nx - cx, 2) + Math.pow(ny - cy, 2));
+        return { node, dist, nodeId };
+      })
+      // Exclude countries we just visited so we don't get stuck in a loop
+      .filter((item) => !visitedHistory.includes(item.nodeId));
+
+    // Sort the remaining countries by how close they are
+    distances.sort((a, b) => a.dist - b.dist);
+
+    // Pick randomly from the 4 closest unvisited neighbors to ensure "wandering"
+    const nearestOptions = distances.slice(0, 4);
+
+    if (nearestOptions.length > 0) {
+      const randomNeighbor =
+        nearestOptions[Math.floor(Math.random() * nearestOptions.length)];
+      nextCountryNode = randomNeighbor.node;
+    } else {
+      // Fallback just in case history somehow filters everything out
+      nextCountryNode =
+        allCountries[Math.floor(Math.random() * allCountries.length)];
+    }
+  }
+
+  // Trigger the click to run your animations and TTS!
+  if (nextCountryNode) {
+    const clickEvent = new MouseEvent("click", {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+    });
+    nextCountryNode.dispatchEvent(clickEvent);
+  }
+}
+function autoplay() {
+  if (intervalID) {
+    clearInterval(intervalID);
+  }
+  clickNearByCountries();
+  // Runs every 5 seconds
+  intervalID = setInterval(clickNearByCountries, 5000);
+}
+
+function updateSettingsMenu() {
+  // =========================
+  // Settings Menu
+  // =========================
+  const autoplayCheckbox = document.getElementById("autoplay");
+
+  // Toggle menu visibility
+  settingsBtn.style.display = "block";
+  utils.addListeners(settingsBtn, utils.onClickSettings);
+  utils.addListeners(settingsIcon, utils.onClickSettings);
+
+  function handleAutoplayToggle() {
+    if (autoplayCheckbox.checked) {
+      autoplay();
+    } else {
+      clearInterval(intervalID);
+    }
+  }
+
+  function handleExtraInfoToggle() {
+    if (extrainfoCheckbox.checked) {
+      extraInfoEl.style.display = "block";
+    } else {
+      extraInfoEl.style.display = "none";
+    }
+  }
+  utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
+  utils.addUnifiedListeners(extrainfoCheckbox, handleExtraInfoToggle);
+}
+
+// =========================
+// Event Listeners
+// =========================
+function handleKeydown(event) {
   const target = event.target;
-  // Your utils handling goes here
+  switch (event.code) {
+    case "Space":
+      // Ignore key presses if focused on an interactive element
+      if (utils.isInteractiveElement(target)) {
+        return;
+      }
+      event.preventDefault();
+      clearInterval(intervalID);
+      clickNearByCountries();
+      break;
+    case "Enter":
+      // Ignore key presses if focused on an interactive element
+      if (utils.isInteractiveElement(target)) {
+        return;
+      }
+      event.preventDefault();
+      clearInterval(intervalID);
+      clickNearByCountries();
+      break;
+    case "KeyM":
+      event.preventDefault();
+      utils.hideSettings();
+      utils.toggleMute();
+      if (utils.isMuted()) {
+        ttsInstance.cancel();
+      } else {
+        speaker();
+      }
+      break;
+    case "KeyF":
+      event.preventDefault();
+      utils.toggleFullscreen();
+      utils.hideSettings();
+      break;
+    case "KeyS":
+      event.preventDefault();
+      utils.onClickSettings();
+      break;
+    case "Escape":
+      utils.hideSettings();
+      utils.hideSidebar();
+      break;
+    case "Equal":
+      event.preventDefault();
+      utils.handleSidebar();
+      break;
+  }
+}
+
+utils.setFullscreenIcon();
+
+/**
+ * Initializes the clock when the DOM is fully loaded.
+ */
+document.addEventListener("DOMContentLoaded", () => {
+  document.addEventListener("keydown", handleKeydown);
+  utils.updateMuteBtn();
+  utils.updateFullScreenBtn();
+  updateSettingsMenu();
+
+  // update mute button if speech supported
+  if (ttsInstance.isSpeechReady()) {
+    utils.enableMuteBtn();
+  } else {
+    utils.disableMuteBtn();
+  }
 });
