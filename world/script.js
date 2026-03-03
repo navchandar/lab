@@ -10,18 +10,6 @@ const flagImgEl = document.getElementById("flag-img");
 const extrainfoCheckbox = document.getElementById("show-extra-info");
 const extraInfoEl = document.getElementById("extra-info-text");
 
-// --- Loading Screen Animation ---
-const globeEl = document.getElementById("globe-emoji");
-const globeFrames = ["🌍", "🌎", "🌏"];
-let frameIndex = 0;
-// Swap the emoji every 300 milliseconds
-const loadingTimer = setInterval(() => {
-  if (globeEl) {
-    frameIndex = (frameIndex + 1) % globeFrames.length;
-    globeEl.textContent = globeFrames[frameIndex];
-  }
-}, 300);
-
 // --- Speaker Initiation ---
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
@@ -128,7 +116,6 @@ const isMobile = () => window.innerWidth <= 768;
 d3.json(dataUrl)
   .then((world) => {
     // --- HIDE THE LOADING SCREEN ---
-    clearInterval(loadingTimer);
     const loadingScreen = document.getElementById("loading-screen");
     if (loadingScreen) {
       loadingScreen.style.opacity = "0";
@@ -137,9 +124,9 @@ d3.json(dataUrl)
       setTimeout(() => {
         loadingScreen.style.display = "none";
       }, 500);
-      setTimeout(() => {
+      intervalID = setTimeout(() => {
         nameDisplayEl.classList.remove("show");
-      }, 2000);
+      }, 3000);
     }
 
     const countries = topojson.feature(world, world.objects.countries).features;
@@ -193,6 +180,7 @@ d3.json(dataUrl)
       .on("click", function (event, d) {
         // stops the click from "falling through" the country into the ocean
         event.stopPropagation();
+        clearTimeout(intervalID);
         const el = d3.select(this);
 
         // Reset the hover styles immediately on click

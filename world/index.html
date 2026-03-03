@@ -161,13 +161,39 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 100; 
+        z-index: 100;
         transition:
           opacity 0.5s ease,
           visibility 0.5s ease;
         background-color: var(--bg-color); /* Matches the ocean background */
       }
 
+      .spinning-globe {
+        font-size: 6rem;
+      }
+
+      /* Create an invisible element to holds flipping emojis */
+      .spinning-globe::after {
+        animation: flip-earth 0.4s infinite step-end;
+        content: "🌍";
+      }
+
+      /* The flipbook frames! */
+      @keyframes flip-earth {
+        0% {
+          content: "🌍";
+        }
+        33% {
+          content: "🌎";
+        }
+        66% {
+          content: "🌏";
+        }
+        100% {
+          content: "🌍";
+        }
+        /* Loops seamlessly back to the start */
+      }
 
       .loading-text {
         /* Fun pulsing effect for the text */
@@ -176,15 +202,6 @@
         color: var(--text-color);
         font-weight: 700;
         font-size: 2rem;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
       }
 
       @keyframes pulse {
@@ -281,7 +298,6 @@
         </div>
       </div>
     </noscript>
-
 
     <div id="name-display" class="show" aria-live="polite">
       <div class="country-header">
