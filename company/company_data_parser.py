@@ -32,8 +32,8 @@ now = datetime.now()
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 day_of_month = now.day  # 1 to 31
 
-# Discovery: Only crawl for NEW companies on Mondays and Thursdays (0 and 3)
-CHECK_JOB_POSTS = day_of_week in [0, 3]
+# Discovery: Only crawl for NEW companies on Mon, Wed, Fri (0,2,4)
+CHECK_JOB_POSTS = day_of_week in [0, 2, 4]
 # Deep Refresh: Update EVERYTHING only on the 1st and 15th of the month
 REFRESH_ALL = day_of_month in [1, 15]
 logger.info(f"Schedule | Day of Week: {day_of_week}, Day of Month: {day_of_month}")
