@@ -168,11 +168,6 @@
         background-color: var(--bg-color); /* Matches the ocean background */
       }
 
-      .spinning-globe {
-        /* Linear makes it spin smoothly at a constant speed */
-        animation: spin 3s linear infinite;
-        font-size: 6rem;
-      }
 
       .loading-text {
         /* Fun pulsing effect for the text */
@@ -297,7 +292,7 @@
     </div>
 
     <div id="loading-screen" aria-live="polite">
-      <div class="spinning-globe" aria-hidden="true">🌍</div>
+      <div id="globe-emoji" class="spinning-globe" aria-hidden="true">🌍</div>
       <div class="loading-text">Loading...</div>
     </div>
 

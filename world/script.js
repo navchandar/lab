@@ -10,6 +10,18 @@ const flagImgEl = document.getElementById("flag-img");
 const extrainfoCheckbox = document.getElementById("show-extra-info");
 const extraInfoEl = document.getElementById("extra-info-text");
 
+// --- Loading Screen Animation ---
+const globeEl = document.getElementById("globe-emoji");
+const globeFrames = ["🌍", "🌎", "🌏"];
+let frameIndex = 0;
+// Swap the emoji every 300 milliseconds
+const loadingTimer = setInterval(() => {
+  if (globeEl) {
+    frameIndex = (frameIndex + 1) % globeFrames.length;
+    globeEl.textContent = globeFrames[frameIndex];
+  }
+}, 300);
+
 // --- Speaker Initiation ---
 const ttsInstance = TTS();
 ttsInstance.unlockSpeech();
@@ -17,7 +29,6 @@ let intervalID = null;
 let visitedHistory = [];
 // Store visited country history to prevent bouncing back and forth
 let zoomDelayTimer = null;
-
 
 function speaker() {
   if (!utils.isMuted()) {
@@ -117,15 +128,18 @@ const isMobile = () => window.innerWidth <= 768;
 d3.json(dataUrl)
   .then((world) => {
     // --- HIDE THE LOADING SCREEN ---
+    clearInterval(loadingTimer);
     const loadingScreen = document.getElementById("loading-screen");
     if (loadingScreen) {
       loadingScreen.style.opacity = "0";
       loadingScreen.style.visibility = "hidden";
-      nameDisplayEl.classList.remove("show");
       // remove it from the layout after the fade finishes
       setTimeout(() => {
         loadingScreen.style.display = "none";
       }, 500);
+      setTimeout(() => {
+        nameDisplayEl.classList.remove("show");
+      }, 2000);
     }
 
     const countries = topojson.feature(world, world.objects.countries).features;
