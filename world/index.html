@@ -151,6 +151,7 @@
         font-size: 1.2rem;
       }
       /* Loading Screen Styles */
+      /* --- Loading Screen Styles --- */
       #loading-screen {
         display: flex;
         position: absolute;
@@ -165,38 +166,56 @@
         transition:
           opacity 0.5s ease,
           visibility 0.5s ease;
-        background-color: var(--bg-color); /* Matches the ocean background */
+        background-color: var(--bg-color);
       }
 
       .spinning-globe {
+        /* We use relative positioning here so the child frames can stack inside */
+        position: relative;
+        width: 6rem;
+        height: 6rem;
+      }
+
+      .globe-frame {
+        position: absolute;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        /* Total duration is 1.5s (0.5s per emoji) */
+        animation: flip-earth 1.5s infinite;
+        /* Hardware acceleration hint */
+        will-change: opacity;
         font-size: 6rem;
+        line-height: 1;
       }
 
-      /* Create an invisible element to holds flipping emojis */
-      .spinning-globe::after {
-        animation: flip-earth 0.6s infinite step-end;
-        content: "🌍";
+      /* Stagger the animations so they show up one after another */
+      .frame-1 {
+        animation-delay: 0s;
+      }
+      .frame-2 {
+        animation-delay: 0.5s;
+      }
+      .frame-3 {
+        animation-delay: 1s;
       }
 
-      /* The flipbook frames! */
+      /* The opacity keyframes to show/hide the emojis cleanly */
       @keyframes flip-earth {
-        0% {
-          content: "🌍";
-        }
-        33% {
-          content: "🌎";
-        }
-        66% {
-          content: "🌏";
-        }
+        0%,
         100% {
-          content: "🌍";
+          opacity: 0;
         }
-        /* Loops seamlessly back to the start */
+        /* It becomes fully visible for 33% of the total 1.5s animation (0.5 seconds) */
+        33.33% {
+          opacity: 1;
+        }
+        33.34% {
+          opacity: 0;
+        }
       }
 
       .loading-text {
-        /* Fun pulsing effect for the text */
         animation: pulse 1.5s ease-in-out infinite;
         margin-top: 20px;
         color: var(--text-color);
@@ -308,7 +327,11 @@
     </div>
 
     <div id="loading-screen" aria-live="polite">
-      <div id="globe-emoji" class="spinning-globe" aria-hidden="true"></div>
+      <div class="spinning-globe" aria-hidden="true">
+        <span class="globe-frame frame-1">🌍</span>
+        <span class="globe-frame frame-2">🌎</span>
+        <span class="globe-frame frame-3">🌏</span>
+      </div>
       <div class="loading-text">Loading...</div>
     </div>
 

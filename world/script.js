@@ -274,10 +274,13 @@ function handleInteraction(element, data) {
         d3.zoomIdentity
           .translate(width / 2 - x * scale, height / 2 + yOffset - y * scale)
           .scale(scale),
-      );
-    nameTextEl.textContent = countryName;
-    nameDisplayEl.classList.add("show");
-    speaker();
+      )
+      .on("end", () => {
+        // This only runs AFTER the 1s zoom animation finishes
+        nameTextEl.textContent = countryName;
+        nameDisplayEl.classList.add("show");
+        speaker();
+      });
   }, 1000);
 
   if (extrainfoCheckbox && extrainfoCheckbox.checked) {
