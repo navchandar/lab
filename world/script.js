@@ -183,12 +183,13 @@ d3.json(dataUrl)
         clearTimeout(intervalID);
         const el = d3.select(this);
 
+        d3.selectAll(".country").classed("active", false).style("fill", null);
+
         // Reset the hover styles immediately on click
-        if (!isMobile()) {
-          el.classed("hovering", false);
-          hoverStop1.interrupt().attr("stop-opacity", 0.75);
-          hoverStop2.interrupt().attr("stop-opacity", 0.75);
-        }
+        el.classed("hovering", false);
+        hoverStop1.interrupt().attr("stop-opacity", 0.75);
+        hoverStop2.interrupt().attr("stop-opacity", 0.75);
+        el.classed("active", true);
         el.style("fill", "url(#activeGradient)");
 
         // Position the "source" of the flood where you clicked
@@ -223,17 +224,50 @@ d3.json(dataUrl)
     nameDisplayEl.classList.add("show");
   });
 
+// Helper to keep handleInteraction clean
+function updateExtraInfo(data) {
+  if (extrainfoCheckbox && extrainfoCheckbox.checked) {
+    let capital = data.properties.capital || "";
+    let continent = data.properties.continent || "";
+    let infoArray = [];
+    if (capital) infoArray.push(`Capital: ${capital}`);
+    if (continent) infoArray.push(`Continent: ${continent}`);
+
+    if (infoArray.length > 0) {
+      extraInfoEl.innerHTML = infoArray.join("<br>");
+      extraInfoEl.style.display = "block";
+    } else {
+      extraInfoEl.style.display = "none";
+    }
+  } else {
+    extraInfoEl.style.display = "none";
+  }
+}
+
+function updateFlag(data, countryName) {
+  if (!flagImgEl) {
+    return;
+  }
+  if (data.properties?.flag_svg) {
+    const svgDataUrl =
+      "data:image/svg+xml;charset=utf-8," +
+      encodeURIComponent(data.properties.flag_svg);
+    flagImgEl.src = svgDataUrl;
+    flagImgEl.style.display = "block";
+  } else if (data.properties?.alpha2) {
+    flagImgEl.src = `https://flagcdn.com/w80/${data.properties.alpha2.toLowerCase()}.png`;
+    flagImgEl.style.display = "block";
+  } else {
+    flagImgEl.style.display = "none";
+  }
+}
+
 function handleInteraction(element, data) {
   // hide existing name if any
   nameDisplayEl.classList.remove("show");
   void nameDisplayEl.offsetWidth;
-
-  // remove selection from existing country and add to the selected country
-  d3.selectAll(".country").classed("active", false);
-  d3.select(element).classed("active", true);
   // --- Get country name ---
   const countryName = data.properties.name || "Unknown";
-
   const bounds = path.bounds(data);
   const dx = bounds[1][0] - bounds[0][0];
   const dy = bounds[1][1] - bounds[0][1];
@@ -269,6 +303,7 @@ function handleInteraction(element, data) {
     svg
       .transition()
       .duration(1000)
+      .ease(d3.easeCubicInOut)
       .call(
         zoom.transform,
         d3.zoomIdentity
@@ -278,72 +313,31 @@ function handleInteraction(element, data) {
       .on("end", () => {
         // This only runs AFTER the 1s zoom animation finishes
         nameTextEl.textContent = countryName;
+        updateExtraInfo(data);
         nameDisplayEl.classList.add("show");
         speaker();
       });
-  }, 1000);
+  }, 800);
 
-  if (extrainfoCheckbox && extrainfoCheckbox.checked) {
-    let capital = data.properties.capital || "";
-    let continent = data.properties.continent || "";
-
-    // Use an array to collect only the valid, non-empty strings
-    let infoArray = [];
-    // Push data to the array only if it exists
-    if (capital) {
-      infoArray.push(`Capital: ${capital}`);
-    }
-    if (continent) {
-      infoArray.push(`Continent: ${continent}`);
-    }
-
-    // If we have at least one valid piece of info, display it
-    if (infoArray.length > 0) {
-      // Join the array items with a line break HTML tag
-      extraInfoEl.innerHTML = infoArray.join("<br>");
-      extraInfoEl.style.display = "block";
-    } else {
-      // Hide the container if all three happened to be completely empty
-      extraInfoEl.style.display = "none";
-    }
-  } else {
-    // Hide the container if the checkbox is unchecked
-    extraInfoEl.style.display = "none";
-  }
-
-  if (data.properties.flag_svg) {
-    console.log(`Using SVG data for ${countryName} flag`);
-    // Translate the SVG from json into a browser-readable image URL
-    const svgDataUrl =
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(data.properties.flag_svg);
-    flagImgEl.src = svgDataUrl;
-    flagImgEl.style.display = "block";
-  } else if (data.properties.alpha2) {
-    console.log(`Using country code for ${countryName} flag`);
-    // Utilize the alpha2 code we created in the python script
-    flagImgEl.src = `https://flagcdn.com/w80/${data.properties.alpha2}.png`;
-    flagImgEl.style.display = "block";
-  } else {
-    console.warn(`No SVG or code detected for country: ${countryName}`);
-    flagImgEl.style.display = "none";
-  }
+  // Flag logic (stays immediate as it's hidden by nameDisplayEl)
+  updateFlag(data, countryName);
 }
 
 // --- Reset Zoom Logic ---
 function resetMap() {
   // Remove active state from all countries
-  d3.selectAll(".country").classed("active", false);
+  d3.selectAll(".country").classed("active", false).style("fill", null);
 
   // Hide the popup display
   nameDisplayEl.classList.remove("show");
 
   // Smoothly zoom the map back to the original scale (1x) and center (0,0)
-  svg.transition().duration(1500).call(
-    zoom.transform,
-    d3.zoomIdentity,
-    // d3.zoomIdentity represents the default unzoomed state
-  );
+  svg
+    .transition()
+    .duration(1200)
+    .ease(d3.easeExpOut) // Fast start, very slow finish for a "cinematic" feel
+    .call(zoom.transform, d3.zoomIdentity);
+  // d3.zoomIdentity represents the default unzoomed state
 }
 
 // Make the background (ocean) clickable to trigger the reset
@@ -351,6 +345,8 @@ svg.on("click", resetMap);
 
 function clickNearByCountries() {
   utils.hideSettings();
+  d3.selectAll(".country").classed("hovering", false).style("fill", null);
+
   // Grab all countries and find the currently active one
   const allCountries = Array.from(document.querySelectorAll(".country"));
   if (allCountries.length === 0) {

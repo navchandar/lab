@@ -37,7 +37,7 @@ CHECK_JOB_POSTS = day_of_week in [0, 2, 4]
 # Deep Refresh: Update EVERYTHING only on the 1st and 15th of the month
 REFRESH_ALL = day_of_month in [1, 15]
 logger.info(f"Schedule | Day of Week: {day_of_week}, Day of Month: {day_of_month}")
-logger.info(f"Discovery Active: {CHECK_JOB_POSTS} | Full Refresh Active: {REFRESH_ALL}")
+logger.info(f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL}")
 
 
 def get_search_params(keyword: str, start: int) -> Dict[str, str]:
