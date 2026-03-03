@@ -150,10 +150,55 @@
         font-weight: 400;
         font-size: 1.2rem;
       }
+      /* Loading Screen Styles */
+      #loading-screen {
+        display: flex;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 100; 
+        transition:
+          opacity 0.5s ease,
+          visibility 0.5s ease;
+        background-color: var(--bg-color); /* Matches the ocean background */
+      }
 
-      @media (prefers-color-scheme: dark) {
-        .extra-info {
-          color: #ccc;
+      .spinning-globe {
+        /* Linear makes it spin smoothly at a constant speed */
+        animation: spin 3s linear infinite;
+        font-size: 6rem;
+      }
+
+      .loading-text {
+        /* Fun pulsing effect for the text */
+        animation: pulse 1.5s ease-in-out infinite;
+        margin-top: 20px;
+        color: var(--text-color);
+        font-weight: 700;
+        font-size: 2rem;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
         }
       }
 
@@ -204,6 +249,13 @@
         stroke-width: 0.5px;
       }
 
+      /* Nigt mode */
+      @media (prefers-color-scheme: dark) {
+        .extra-info {
+          color: #ccc;
+        }
+      }
+
       /* Mobile adjustments */
       @media (max-width: 768px) {
         #name-display {
@@ -235,12 +287,18 @@
       </div>
     </noscript>
 
-    <div id="name-display" aria-live="polite">
+
+    <div id="name-display" class="show" aria-live="polite">
       <div class="country-header">
         <img id="flag-img" src="../static/images/flag.png" alt="Country Flag" />
         <span id="country-name-text">🌏 World Map</span>
       </div>
       <div id="extra-info-text" class="extra-info" style="display: none"></div>
+    </div>
+
+    <div id="loading-screen" aria-live="polite">
+      <div class="spinning-globe" aria-hidden="true">🌍</div>
+      <div class="loading-text">Loading...</div>
     </div>
 
     <div

@@ -18,15 +18,6 @@ let visitedHistory = [];
 // Store visited country history to prevent bouncing back and forth
 let zoomDelayTimer = null;
 
-setTimeout(() => {
-  nameDisplayEl.classList.add("show");
-}, 1500);
-let timeOut = setTimeout(() => {
-  nameDisplayEl.classList.remove("show");
-  if (timeOut) {
-    clearTimeout(timeOut);
-  }
-}, 6000);
 
 function speaker() {
   if (!utils.isMuted()) {
@@ -125,6 +116,18 @@ const isMobile = () => window.innerWidth <= 768;
 
 d3.json(dataUrl)
   .then((world) => {
+    // --- HIDE THE LOADING SCREEN ---
+    const loadingScreen = document.getElementById("loading-screen");
+    if (loadingScreen) {
+      loadingScreen.style.opacity = "0";
+      loadingScreen.style.visibility = "hidden";
+      nameDisplayEl.classList.remove("show");
+      // remove it from the layout after the fade finishes
+      setTimeout(() => {
+        loadingScreen.style.display = "none";
+      }, 500);
+    }
+
     const countries = topojson.feature(world, world.objects.countries).features;
 
     g.selectAll("path")
@@ -176,10 +179,6 @@ d3.json(dataUrl)
       .on("click", function (event, d) {
         // stops the click from "falling through" the country into the ocean
         event.stopPropagation();
-        if (timeOut) {
-          clearTimeout(timeOut);
-        }
-
         const el = d3.select(this);
 
         // Reset the hover styles immediately on click
@@ -199,8 +198,8 @@ d3.json(dataUrl)
           .attr("r", "0%")
           .transition()
           .duration(800)
-          .ease(d3.easeQuartOut)
-          .attr("r", "150%%");
+          .ease(d3.easeCubicOut)
+          .attr("r", "150%");
 
         handleInteraction(this, d);
       })
@@ -211,8 +210,14 @@ d3.json(dataUrl)
       .style("opacity", 1); // End state: fully visible
   })
   .catch((err) => {
+    // --- Hide on error and Display error message ---
+    const loadingScreen = document.getElementById("loading-screen");
+    if (loadingScreen) {
+      loadingScreen.style.display = "none";
+    }
     console.error("Error loading map data:", err);
-    nameDisplayEl.textContent = "Oops! Map couldn't load.";
+    nameDisplayEl.textContent =
+      "Oops! Map couldn't load. Try refeshing the page!";
     nameDisplayEl.classList.add("show");
   });
 
