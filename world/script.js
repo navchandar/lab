@@ -230,9 +230,12 @@ function updateExtraInfo(data) {
     let capital = data.properties.capital || "";
     let continent = data.properties.continent || "";
     let infoArray = [];
-    if (capital) infoArray.push(`Capital: ${capital}`);
-    if (continent) infoArray.push(`Continent: ${continent}`);
-
+    if (capital) {
+      infoArray.push(`Capital: ${capital}`);
+    }
+    if (continent) {
+      infoArray.push(`Continent: ${continent}`);
+    }
     if (infoArray.length > 0) {
       extraInfoEl.innerHTML = infoArray.join("<br>");
       extraInfoEl.style.display = "block";

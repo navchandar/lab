@@ -189,40 +189,40 @@
 
       .globe-frame {
         position: absolute;
-        top: 0;
-        left: 0;
         opacity: 0;
-        animation: flip-earth 3s infinite;
+        animation: flip-earth 0.6s infinite;
         will-change: transform, opacity;
         font-size: 6rem;
+        line-height: 1;
       }
       @keyframes flip-earth {
-        0%,
-        100% {
-          transform: scale(0.8);
+        0% {
+          transform: scale(0.9);
           opacity: 0;
         }
-        /* The emoji starts fading in at 5% and is fully solid by 20% */
-        20%,
-        40% {
-          transform: scale(1.1); /* Bouncy pop for kids */
+        /* Frame is fully visible for the middle third of its own timing */
+        33% {
+          transform: scale(1);
           opacity: 1;
         }
-        /* It starts fading out after 40% and is gone by 60% */
-        60% {
-          transform: scale(0.8);
+        66% {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        100% {
           opacity: 0;
         }
       }
-      /* Staggered delays: 0s, 1s, 2s (Total 3s duration) */
+
+      /* We stagger the delays by exactly 0.2s (1/3 of the total 0.6s duration) */
       .frame-1 {
         animation-delay: 0s;
       }
       .frame-2 {
-        animation-delay: 1s;
+        animation-delay: 0.2s;
       }
       .frame-3 {
-        animation-delay: 2s;
+        animation-delay: 0.4s;
       }
 
       @keyframes float {
@@ -231,7 +231,7 @@
           transform: translateY(0px);
         }
         50% {
-          transform: translateY(-20px);
+          transform: translateY(-10px);
         }
       }
 
