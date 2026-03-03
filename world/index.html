@@ -162,10 +162,6 @@
       #loading-screen {
         display: flex;
         position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -173,83 +169,86 @@
         transition:
           opacity 0.5s ease,
           visibility 0.5s ease;
+        inset: 0;
         background-color: var(--bg-color);
       }
 
-      .spinning-globe {
+      .globe-loader {
         display: flex;
         position: relative;
         justify-content: center;
         align-items: center;
-        perspective: 1000px;
-        animation: float 3s ease-in-out infinite;
-        width: 6rem;
-        height: 6rem;
+        width: 100px;
+        height: 100px;
       }
 
-      .globe-frame {
+      /* The central Earth with a gentle pulse */
+      .earth-circle {
+        z-index: 2;
+        animation: earth-pulse 2s ease-in-out infinite;
+        font-size: 5rem;
+      }
+
+      /* The invisible ring that handles the rotation */
+      .orbit {
         position: absolute;
-        opacity: 0;
-        animation: flip-earth 0.6s infinite;
-        will-change: transform, opacity;
-        font-size: 6rem;
-        line-height: 1;
+        z-index: 1;
+        /* Pure mathematical rotation - no frames! */
+        animation: smooth-rotate 3s linear infinite;
+        border-radius: 50%;
+        width: 120px; /* Slightly larger than the Earth */
+        height: 120px;
       }
-      @keyframes flip-earth {
-        0% {
-          transform: scale(0.9);
-          opacity: 0;
+
+      /* The little icon traveling around the world */
+      .traveler {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        font-size: 1.5rem;
+      }
+
+      /* --- Animations --- */
+      @keyframes smooth-rotate {
+        from {
+          transform: rotate(0deg);
         }
-        /* Frame is fully visible for the middle third of its own timing */
-        33% {
-          transform: scale(1);
-          opacity: 1;
-        }
-        66% {
-          transform: scale(0.9);
-          opacity: 0;
-        }
-        100% {
-          opacity: 0;
+        to {
+          transform: rotate(360deg);
         }
       }
 
-      /* We stagger the delays by exactly 0.2s (1/3 of the total 0.6s duration) */
-      .frame-1 {
-        animation-delay: 0s;
-      }
-      .frame-2 {
-        animation-delay: 0.2s;
-      }
-      .frame-3 {
-        animation-delay: 0.4s;
-      }
-
-      @keyframes float {
+      @keyframes earth-pulse {
         0%,
         100% {
-          transform: translateY(0px);
+          transform: scale(1);
+          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
         }
         50% {
-          transform: translateY(-10px);
+          transform: scale(1.05);
+          filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
         }
       }
 
       .loading-text {
-        animation: pulse 1.5s ease-in-out infinite;
-        margin-top: 20px;
+        animation: text-pulse 1.5s ease-in-out infinite;
+        margin-top: 30px;
         color: var(--text-color);
         font-weight: 700;
-        font-size: 2rem;
+        font-size: 1.5rem;
+        letter-spacing: 1px;
       }
 
-      @keyframes pulse {
+      @keyframes text-pulse {
         0%,
         100% {
+          transform: translateY(0);
           opacity: 1;
         }
         50% {
-          opacity: 0.5;
+          transform: translateY(5px);
+          opacity: 0.6;
         }
       }
 
@@ -346,11 +345,12 @@
       <div id="extra-info-text" class="extra-info" style="display: none"></div>
     </div>
 
-    <div id="loading-screen" aria-live="polite">
-      <div class="spinning-globe" aria-hidden="true">
-        <span class="globe-frame frame-1">🌍</span>
-        <span class="globe-frame frame-2">🌎</span>
-        <span class="globe-frame frame-3">🌏</span>
+    <div id="loading-screen">
+      <div class="globe-loader">
+        <div class="earth-circle">🌍</div>
+        <div class="orbit">
+          <div class="traveler">✈️</div>
+        </div>
       </div>
       <div class="loading-text">Loading...</div>
     </div>
