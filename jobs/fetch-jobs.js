@@ -37,7 +37,7 @@ const SEARCH_SITES = {
   "site:jobs.lever.co/*": "Lever",
   "site:*.smartrecruiters.com": "Smartrecruiters",
 };
-const searchQualifier = ' ("India") -intern -internship';
+const searchQualifier = ' AND ("India") -intern -internship';
 
 let summaryContent = `## Results\n\n\n`;
 
@@ -70,7 +70,16 @@ function writeOutput(list) {
 function toIsoStringUTC(date) {
   return new Date(date).toISOString();
 }
-
+function getHeaders() {
+  const headers = {
+    "User-Agent":
+      randomUA.getRandom() ||
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
+    Accept: "application/json, text/html",
+    "Accept-Language": "en-US,en;q=0.9",
+  };
+  return headers;
+}
 /**
  * Checks if the current UTC hour is one of the desired run times
  * and if the minutes are within the first 40 of that hour.
@@ -367,14 +376,7 @@ async function fetchJobDetailFromLinkedIn(jobId) {
   let applicants = null;
 
   try {
-    const headers = {
-      "User-Agent":
-        randomUA.getRandom() ||
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36",
-      Accept: "application/json, text/html",
-      "Accept-Language": "en-US,en;q=0.9",
-    };
-
+    const headers = getHeaders();
     const { data } = await axios.get(url, { headers, timeout: 12000 });
 
     // Try to parse JSON directly
@@ -967,40 +969,142 @@ function getCompanyFromUrl(link, source, title) {
   }
   return company;
 }
+
+async function getSchemaFromUrl(link) {
+  let schema = {};
+  try {
+    const headers = getHeaders();
+    headers.Accept =
+      "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
+    headers.Referer = "https://www.google.com/";
+    const { data } = await axios.get(link, { headers, timeout: 12000 });
+    const $ = cheerio.load(data);
+
+    // Look for <script type="application/ld+json"> tags
+    $('script[type="application/ld+json"]').each((i, elem) => {
+      try {
+        const jsonText = $(elem).html();
+        const jsonData = JSON.parse(jsonText);
+        // If it's an array, iterate through items
+        if (Array.isArray(jsonData)) {
+          jsonData.forEach((item) => {
+            if (item["@type"] && item["@type"].toLowerCase() === "jobposting") {
+              Object.assign(schema, item);
+            }
+          });
+        } else if (
+          jsonData["@type"] &&
+          jsonData["@type"].toLowerCase() === "jobposting"
+        ) {
+          Object.assign(schema, jsonData);
+        } else if (jsonData["@graph"] && Array.isArray(jsonData["@graph"])) {
+          jsonData["@graph"].forEach((item) => {
+            if (item["@type"] && item["@type"].toLowerCase() === "jobposting") {
+              Object.assign(schema, item);
+            }
+          });
+        } else {
+          // If no JobPosting type found, but there's structured data, we can still return it
+          if (Object.keys(jsonData).length > 0) {
+            Object.assign(schema, jsonData);
+          } else {
+            console.warn(`No schema found in URL: ${link}`);
+          }
+        }
+      } catch (e) {
+        // Ignore JSON parsing errors and continue
+      }
+    });
+    await sleep(500);
+    return schema;
+  } catch (err) {
+    console.warn(
+      `Failed to fetch or parse schema for URL: ${link} - ${err.message}`,
+    );
+    return null;
+  }
+}
+
 /**
  * Transforms the raw search results into a clean, structured JSON format.
  * * @param {Array} results The raw organic results from the SerpApi call.
  * @param {string} query The original search query.
  * @returns {Array|null} The array of structured job results or null if no results.
  */
-function processSearchResults(results, source) {
+async function processSearchResults(results, source) {
   if (!results || results.length === 0) {
     console.warn(`No organic results found for source: "${source}"`);
     return [];
   }
   console.log(`Found ${results.length} organic results for: "${source}"`);
 
-  // Map the results array to the desired JSON structure
-  const jsonResults = results.map((result) => {
-    // Get Company name from url
+  // Make the map callback async to allow awaiting the schema fetch
+  const promises = results.map(async (result) => {
     const link = result.link || "";
     const title = result.title || "";
+    let jobId = "";
+    let description = "";
+    let type = "";
+    let datePosted = new Date(Date.now()).toISOString();
+    // valid for max 8 days from current date
+    let validThrough = new Date(
+      Date.now() + 7 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
     if (link) {
       const company = getCompanyFromUrl(link, source, title);
-      // add schema validator and get desc from each URL
+      let jobTitleFromSchema = null,
+        companyFromSchema = null,
+        locationFromSchema = null;
+      try {
+        const schemaJson = await getSchemaFromUrl(link);
+
+        if (schemaJson && typeof schemaJson === "object") {
+          jobTitleFromSchema = schemaJson.title || schemaJson.jobTitle || title;
+          companyFromSchema =
+            company || schemaJson.hiringOrganization?.name || "";
+          locationFromSchema =
+            schemaJson.jobLocation?.address?.addressCountry || "";
+          jobId = schemaJson.identifier?.value || "";
+          description = schemaJson.description || "";
+          type = schemaJson.employmentType || "";
+          datePosted = schemaJson.datePosted
+            ? new Date(schemaJson.datePosted).toISOString()
+            : datePosted;
+          validThrough = schemaJson.validThrough
+            ? new Date(schemaJson.validThrough).toISOString()
+            : validThrough;
+
+          if (locationFromSchema && !/india|remote/i.test(locationFromSchema)) {
+            console.warn(`Excluded non-India job post: "${title}"`);
+            return null;
+          }
+        }
+      } catch (err) {
+        console.warn(`Error loading ${link}`);
+      }
 
       return {
-        title: title,
+        jobId,
+        title: jobTitleFromSchema || title,
+        company: companyFromSchema || company,
+        companyUrl: "",
+        applicants: 0,
+        location: locationFromSchema || "",
+        datePosted,
+        validThrough,
         url: link,
-        // Add default/placeholder values
-        company: company,
-        location: "",
         source: source,
+        type,
+        description,
       };
     }
+    return null;
   });
 
-  return jsonResults;
+  // 3. Wait for all promises to resolve and filter out the 'null' entries
+  const jsonResults = await Promise.all(promises);
+  return jsonResults.filter((result) => result !== null);
 }
 
 /**
@@ -1015,8 +1119,7 @@ async function runOpenWebJobSearch() {
     const finalQuery = `${siteQuery} intitle:(${searchRoles}) ${searchQualifier}`;
     try {
       const rawResults = await getSearchResults(finalQuery);
-      const processed = processSearchResults(rawResults, source);
-      console.log(processed, "\n\n");
+      const processed = await processSearchResults(rawResults, source);
       aggregated.push(...processed);
       // small delay between site searches
       await delay(200);

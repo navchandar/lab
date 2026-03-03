@@ -68,7 +68,7 @@ function categorizeExperience(job) {
     return "N/A";
   }
   const range = EXPERIENCE_RANGES.find(
-    (r) => avgExp >= r.min && avgExp <= r.max
+    (r) => avgExp >= r.min && avgExp <= r.max,
   );
   return range ? range.label : "N/A";
 }
@@ -112,7 +112,7 @@ function aggregate(jobs, keyExtractor, limit = null) {
 function aggregateCompanyVsExperience(jobs, topN = 20) {
   // 1. Get the list of Top N companies
   const topCompanies = aggregate(jobs, (job) => job.company, topN).map(
-    (item) => item.label
+    (item) => item.label,
   );
   const topCompanySet = new Set(topCompanies);
 
@@ -217,7 +217,7 @@ function updateDailyJobCounts(currentJobs, existingHistory = []) {
 
   // 4. Convert back to array and sort by date (Ascending)
   let mergedHistory = Array.from(historyMap.values()).sort(
-    (a, b) => new Date(a.date) - new Date(b.date)
+    (a, b) => new Date(a.date) - new Date(b.date),
   );
 
   // 5. Limit to max 5 years (~1825 entries)
@@ -299,7 +299,7 @@ function getCompressionRatio(inputPath, outputPath) {
     const compressionRatio = ((sizeDiff / inputSize) * 100).toFixed(2);
 
     console.log(
-      `Compressed ${path.basename(inputPath)} to ${path.basename(outputPath)}.`
+      `Compressed ${path.basename(inputPath)} to ${path.basename(outputPath)}.`,
     );
     console.log(`(Saved ${compressionRatio}%)`);
   } catch (err) {
@@ -358,6 +358,7 @@ async function gzipFile(inputPath, outputPath) {
 async function runAnalysis() {
   try {
     // 1. Read the raw data file
+    console.log(`Start analyzing ${RAW_DATA_FILE}`);
     const rawData = fs.readFileSync(RAW_DATA_FILE, "utf8");
     const jobData = JSON.parse(rawData);
     const jobs = jobData.data || [];
@@ -383,7 +384,7 @@ async function runAnalysis() {
     // 3. Jobs by Role Type (All)
     const byRoleType = aggregate(
       jobs,
-      (job) => job.classification?.roleType || "N/A"
+      (job) => job.classification?.roleType || "N/A",
     );
 
     // 4. Jobs by Company vs Experience Range (Top 20)
@@ -395,7 +396,7 @@ async function runAnalysis() {
     // Update Daily Job Counts History
     const dailyJobCounts = updateDailyJobCounts(
       jobs,
-      existingChartData.dailyJobCounts
+      existingChartData.dailyJobCounts,
     );
 
     // Combine the results into a single object
@@ -414,7 +415,7 @@ async function runAnalysis() {
     fs.writeFileSync(
       CHART_DATA_FILE,
       JSON.stringify(finalChartData, null, 2),
-      "utf8"
+      "utf8",
     );
 
     console.log(`Successfully analyzed ${jobs.length} jobs.`);
