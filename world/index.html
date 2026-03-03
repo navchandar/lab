@@ -183,7 +183,10 @@
       /* Country Map Styles */
       .country {
         vector-effect: non-scaling-stroke;
-        transition: opacity 1s ease-in-out;
+        transition:
+          opacity 1s ease-in-out,
+          stroke 0.3s ease;
+        will-change: fill;
         cursor: pointer;
         fill: var(--country-fill);
         stroke: var(--country-stroke);

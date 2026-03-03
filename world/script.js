@@ -67,16 +67,12 @@ const activeGrad = defs
   .append("radialGradient")
   .attr("id", "activeGradient")
   .attr("gradientUnits", "userSpaceOnUse")
-  .attr("r", "0%");
+  .attr("r", "0%"); // Start at 0
 
 activeGrad
   .append("stop")
   .attr("offset", "0%")
   .attr("stop-color", "var(--country-active2)");
-activeGrad
-  .append("stop")
-  .attr("offset", "20%")
-  .attr("stop-color", "var(--country-active)");
 activeGrad
   .append("stop")
   .attr("offset", "100%")
@@ -124,6 +120,8 @@ const projection = d3
 const path = d3.geoPath().projection(projection);
 
 const dataUrl = "map_data.json";
+// Check if the screen width is mobile-sized
+const isMobile = () => window.innerWidth <= 768;
 
 d3.json(dataUrl)
   .then((world) => {
@@ -137,6 +135,11 @@ d3.json(dataUrl)
       .attr("class", "country")
       .style("opacity", 0) // Start completely invisible
       .on("pointermove", function (event) {
+        // --- DISABLE HOVER ON MOBILE ---
+        if (isMobile()) {
+          return;
+        }
+
         const el = d3.select(this);
 
         if (!el.classed("active")) {
@@ -151,6 +154,10 @@ d3.json(dataUrl)
         }
       })
       .on("pointerout", function () {
+        // --- DISABLE HOVER ON MOBILE ---
+        if (isMobile()) {
+          return;
+        }
         const el = d3.select(this);
         el.classed("hovering", false);
 
@@ -176,22 +183,24 @@ d3.json(dataUrl)
         const el = d3.select(this);
 
         // Reset the hover styles immediately on click
-        el.style("fill", null);
-        el.classed("hovering", false);
+        if (!isMobile()) {
+          el.classed("hovering", false);
+          hoverStop1.interrupt().attr("stop-opacity", 0.75);
+          hoverStop2.interrupt().attr("stop-opacity", 0.75);
+        }
+        el.style("fill", "url(#activeGradient)");
 
-        hoverStop1.interrupt().attr("stop-opacity", 0.75);
-        hoverStop2.interrupt().attr("stop-opacity", 0.75);
-
+        // Position the "source" of the flood where you clicked
         updateGradientPos(event, "#activeGradient");
 
         // The "Flood" effect: Animate radius from 0 to 100%
         d3.select("#activeGradient")
-          .interrupt()
+          .interrupt() // Stop any current animation
           .attr("r", "0%")
           .transition()
-          .duration(1000)
-          .ease(d3.easeCubicOut)
-          .attr("r", "100%");
+          .duration(800)
+          .ease(d3.easeQuartOut)
+          .attr("r", "150%%");
 
         handleInteraction(this, d);
       })
@@ -215,6 +224,8 @@ function handleInteraction(element, data) {
   // remove selection from existing country and add to the selected country
   d3.selectAll(".country").classed("active", false);
   d3.select(element).classed("active", true);
+  // --- Get country name ---
+  const countryName = data.properties.name || "Unknown";
 
   const bounds = path.bounds(data);
   const dx = bounds[1][0] - bounds[0][0];
@@ -224,17 +235,15 @@ function handleInteraction(element, data) {
   const y = (bounds[0][1] + bounds[1][1]) / 2;
 
   // --- Mobile Optimization Logic ---
-  // Check if the screen width is mobile-sized (768px matches your CSS breakpoint)
-  const isMobile = window.innerWidth <= 768;
-
+  // Check if the screen width is mobile-sized
   // Dynamic Max Zoom: Allow deeper zooming on small screens
-  const dynamicMaxZoom = isMobile ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
+  const dynamicMaxZoom = isMobile() ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
 
   // Dynamic Padding: Countries should take up more of the screen on mobile
   // 0.7 means it fills 70% of the screen, 0.4 means 40%
-  const paddingFactor = isMobile ? 0.7 : 0.4;
+  const paddingFactor = isMobile() ? 0.7 : 0.4;
 
-  // Calculate the perfect scale based on our dynamic variables
+  // Calculate the perfect scale based on dynamic variables
   const scale = Math.max(
     1,
     Math.min(dynamicMaxZoom, paddingFactor / Math.max(dx / width, dy / height)),
@@ -242,7 +251,7 @@ function handleInteraction(element, data) {
 
   // Y-Axis Offset: Shift the center down on mobile so the popup doesn't cover the country
   // Shifts the camera focus UP by 10% of the SVG height (which moves the map DOWN on screen)
-  const yOffset = isMobile ? height * 0.1 : 0;
+  const yOffset = isMobile() ? height * 0.1 : 0;
 
   // If they click another country before the zoom starts, cancel the old zoom
   if (zoomDelayTimer) {
@@ -259,13 +268,10 @@ function handleInteraction(element, data) {
           .translate(width / 2 - x * scale, height / 2 + yOffset - y * scale)
           .scale(scale),
       );
-    speaker();
+    nameTextEl.textContent = countryName;
     nameDisplayEl.classList.add("show");
+    speaker();
   }, 1000);
-
-  // --- UI Updates ---
-  const countryName = data.properties.name || "Unknown";
-  nameTextEl.textContent = countryName;
 
   if (extrainfoCheckbox && extrainfoCheckbox.checked) {
     let capital = data.properties.capital || "";
@@ -392,7 +398,7 @@ function clickNearByCountries() {
     }
   }
 
-  // Trigger the click to run your animations and TTS!
+  // Trigger the click to run animations and TTS!
   if (nextCountryNode) {
     const clickEvent = new MouseEvent("click", {
       bubbles: true,
