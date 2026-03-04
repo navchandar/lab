@@ -17,6 +17,8 @@ SCRIPT_DIR = (
     if "__file__" in globals()
     else Path(Path.cwd()).resolve()
 )
+topo_url = "https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@0.1.0/world/50m.json"
+rc_url = "https://restcountries.com/v3.1/all?fields=ccn3,cca2,name,capital,region,languages,currencies"
 
 
 def fetch_json_api(url: str, session: requests.Session, name: str) -> dict:
@@ -47,79 +49,97 @@ def fetch_svg_flag(alpha2: str, session: requests.Session) -> str:
         return ""
 
 
+def get_avg_latitude(geo, topo_data):
+    """Calculates approximate latitude using TopoJSON quantization transform."""
+    coords = []
+    geom_type = geo.get("type")
+    arcs = geo.get("arcs", [])
+
+    # Decoder Ring: Turn compressed integers into real Lat/Long
+    transform = topo_data.get("transform", {"scale": [1, 1], "translate": [0, 0]})
+    scale = transform["scale"]
+    translate = transform["translate"]
+
+    try:
+        # Extract arcs
+        arc_indices = []
+        if geom_type == "Polygon":
+            arc_indices = arcs[0]
+        elif geom_type == "MultiPolygon":
+            for poly in arcs:
+                arc_indices.extend(poly[0])
+
+        for a_idx in arc_indices:
+            idx = a_idx if a_idx >= 0 else ~a_idx
+            # Just take the first point of each arc for a fast estimate
+            raw_pt = topo_data["arcs"][idx][0]
+
+            # THE MATH: (Compressed_Value * Scale) + Translation
+            lat = raw_pt[1] * scale[1] + translate[1]
+            coords.append(lat)
+
+        return sum(coords) / len(coords) if coords else 0
+    except:
+        return 0
+
+
 def main():
     logger.info("Starting map data update process...")
-    topo_url = (
-        "https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@0.1.0/world/50m.json"
-    )
-    rc_url = "https://restcountries.com/v3.1/all?fields=ccn3,cca2,name,capital,region,languages"
-
     with requests.Session() as session:
         try:
             # Safely fetch primary data
             topo_data = fetch_json_api(topo_url, session, "TopoJSON Map")
             rc_data = fetch_json_api(rc_url, session, "RestCountries")
 
-            logger.info("Building the master country dictionary...")
-            country_info = {}
+            # 1. Create the detailed metadata dictionary
+            logger.info("Downloading flags and building detail database...")
+            details = {}
             for c in rc_data:
-                num_code = c.get("ccn3")
-                if num_code:
-                    country_info[num_code] = {
-                        "alpha2": c.get("cca2", "").lower(),
-                        "common_name": c.get("name", {}).get("common", ""),
+                num_code = str(c.get("ccn3", "")).zfill(3)
+                if num_code and num_code != "000":
+                    alpha2 = c.get("cca2", "").lower()
+                    details[num_code] = {
+                        "name": c.get("name", {}).get("common", ""),
                         "capital": (
                             c.get("capital", [""])[0] if c.get("capital") else ""
                         ),
                         "continent": c.get("region", ""),
-                        "language": (
-                            list(c.get("languages", {}).values())[0]
-                            if c.get("languages")
-                            else ""
-                        ),
+                        "alpha2": alpha2,
+                        "flag_svg": fetch_svg_flag(alpha2, session) if alpha2 else "",
                     }
 
-            logger.info("Merging facts and downloading SVGs into the map...")
-            geometries = (
-                topo_data.setdefault("objects", {})
-                .setdefault("countries", {})
-                .setdefault("geometries", [])
-            )
+            # Clean the TopoJSON (Remove any existing properties to keep it tiny)
+            if "objects" in topo_data and "countries" in topo_data["objects"]:
+                logger.info("Cleaning map geometry...")
+                geometries = topo_data["objects"]["countries"]["geometries"]
+                for geo in geometries:
+                    # We keep ONLY the ID so we can link it to the details file later
+                    geo["properties"] = {}
 
-            merged_count = 0
-            svg_download_count = 0
+                logger.info("Sorting map geometries by Latitude (North to South)...")
+                # Sort: Higher Y (North) to Lower Y (South)
+                geometries.sort(
+                    key=lambda g: get_avg_latitude(g, topo_data), reverse=True
+                )
+                logger.info("Map data sorted geographically!")
 
-            for geo in geometries:
-                props = geo.setdefault("properties", {})
-                country_id = str(geo.get("id", "")).zfill(3)
+            # Sort details by ID for the fastest possible JS lookup
+            sorted_details = dict(sorted(details.items(), key=lambda x: int(x[0])))
 
-                info = country_info.get(country_id)
+            # Save the two files
+            map_path = SCRIPT_DIR / "map_data.json"
+            details_path = SCRIPT_DIR / "country_data.json"
 
-                # save all common information
-                if info and info["alpha2"]:
-                    props["alpha2"] = info["alpha2"]
-                    if info.get("common_name"):
-                        props["name"] = info["common_name"]
-                    props["capital"] = info["capital"]
-                    props["continent"] = info["continent"]
-                    props["language"] = info["language"]
-                    merged_count += 1
-
-                    # Fetch the individual flag safely
-                    flag_svg = fetch_svg_flag(info["alpha2"], session)
-                    props["flag_svg"] = flag_svg
-                    if flag_svg:
-                        svg_download_count += 1
-
-            # Save Data in json file without spaces
-            output_path = SCRIPT_DIR / "map_data.json"
-            logger.info("Writing optimized data to disk...")
-            with open(output_path, "w", encoding="utf-8") as f:
+            # Save Minified (Optimized for Web)
+            with open(map_path, "w") as f:
                 json.dump(topo_data, f, separators=(",", ":"))
+
+            with open(details_path, "w") as f:
+                json.dump(sorted_details, f, indent=2)
+
             logger.info(
-                f"Successfully mapped {merged_count}/{len(geometries)} regions."
+                f"Success! {map_path.name}: {map_path.stat().st_size // 1024}KB | {details_path.name}: {details_path.stat().st_size // 1024}KB"
             )
-            logger.info(f"Done! Saved file to {output_path}")
 
         except Exception as e:
             # The safety net: Catches API failures, JSON parsing errors, or missing variables

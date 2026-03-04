@@ -112,8 +112,13 @@
       }
 
       main {
-        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
         width: 100vw;
+        max-width: 100vw;
+        min-height: 100vh;
       }
 
       /* The Name Popup Display */
@@ -121,7 +126,8 @@
         display: flex;
         position: absolute;
         top: 10%;
-        flex-direction: column; /* Stack vertically if extra info is shown */
+        flex-direction: column;
+        /* Stack vertically if extra info is shown */
         align-items: center;
         gap: 15px;
         transform: scale(0);
@@ -201,7 +207,8 @@
         /* Pure mathematical rotation - no frames! */
         animation: smooth-rotate 3s linear infinite;
         border-radius: 50%;
-        width: 120px; /* Slightly larger than the Earth */
+        width: 120px;
+        /* Slightly larger than the Earth */
         height: 120px;
       }
 
@@ -219,6 +226,7 @@
         from {
           transform: rotate(0deg);
         }
+
         to {
           transform: rotate(360deg);
         }
@@ -230,6 +238,7 @@
           transform: scale(1);
           filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
         }
+
         50% {
           transform: scale(1.05);
           filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
@@ -251,6 +260,7 @@
           transform: translateY(0);
           opacity: 1;
         }
+
         50% {
           transform: translateY(5px);
           opacity: 0.6;
@@ -318,11 +328,25 @@
           padding: 10px 20px;
           font-size: 2rem;
         }
+
         .extra-info {
           font-size: 1rem;
         }
       }
     </style>
+
+    <link
+      rel="preload"
+      href="map_data.json"
+      as="fetch"
+      crossorigin="anonymous"
+    />
+    <link
+      rel="preload"
+      href="country_data.json"
+      as="fetch"
+      crossorigin="anonymous"
+    />
   </head>
 
   <body>

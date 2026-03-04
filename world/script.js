@@ -110,11 +110,18 @@ const projection = d3
 const path = d3.geoPath().projection(projection);
 
 const dataUrl = "map_data.json";
+const country = "country_data.json";
+
 // Check if the screen width is mobile-sized
 const isMobile = () => window.innerWidth <= 768;
 
-d3.json(dataUrl)
-  .then((world) => {
+Promise.all([d3.json(dataUrl), d3.json(country)])
+  .then(([topoData, countryData]) => {
+    // Both data files are now loaded and sorted!
+    const countries = topojson.feature(
+      topoData,
+      topoData.objects.countries,
+    ).features;
     // --- HIDE THE LOADING SCREEN ---
     const loadingScreen = document.getElementById("loading-screen");
     if (loadingScreen) {
@@ -128,8 +135,6 @@ d3.json(dataUrl)
         nameDisplayEl.classList.remove("show");
       }, 3000);
     }
-
-    const countries = topojson.feature(world, world.objects.countries).features;
 
     g.selectAll("path")
       .data(countries)
@@ -204,7 +209,9 @@ d3.json(dataUrl)
           .ease(d3.easeCubicOut)
           .attr("r", "150%");
 
-        handleInteraction(this, d);
+        const info = countryData[String(d.id).padStart(3, "0")];
+        console.log("Found Country:", info?.name);
+        handleInteraction(this, d, info);
       })
       // ANIMATION LOGIC ---
       .transition() // Tell D3 to animate the next changes
@@ -247,30 +254,51 @@ function updateExtraInfo(data) {
   }
 }
 
-function updateFlag(data, countryName) {
-  if (!flagImgEl) {
+function updateFlag(info, countryName) {
+  if (!flagImgEl || !countryName) {
     return;
   }
-  if (data.properties?.flag_svg) {
+
+  if (info?.flag_svg) {
     const svgDataUrl =
-      "data:image/svg+xml;charset=utf-8," +
-      encodeURIComponent(data.properties.flag_svg);
+      "data:image/svg+xml;charset=utf-8," + encodeURIComponent(info.flag_svg);
     flagImgEl.src = svgDataUrl;
     flagImgEl.style.display = "block";
-  } else if (data.properties?.alpha2) {
-    flagImgEl.src = `https://flagcdn.com/w80/${data.properties.alpha2.toLowerCase()}.png`;
+  } else if (info?.alpha2) {
+    flagImgEl.src = `https://flagcdn.com/w80/${info.alpha2.toLowerCase()}.png`;
     flagImgEl.style.display = "block";
   } else {
     flagImgEl.style.display = "none";
   }
 }
 
-function handleInteraction(element, data) {
+// Helper to calculate dynamic duration
+function getTransitionDuration(targetX, targetY, targetScale) {
+  // Get current transform states
+  const currentTransform = d3.zoomTransform(svg.node());
+  const currX = currentTransform.x;
+  const currY = currentTransform.y;
+  const currK = currentTransform.k;
+
+  // Calculate "Distance" to travel
+  // We factor in both coordinate distance and the change in zoom level
+  const dx = targetX - currX;
+  const dy = targetY - currY;
+  const dk = Math.abs(targetScale - currK) * 100; // Weight scale change
+
+  const distance = Math.sqrt(dx * dx + dy * dy) + dk;
+
+  // Minimum 800ms, Maximum 2500ms
+  // This makes long jumps feel cinematic and short jumps feel snappy
+  return Math.max(800, Math.min(2500, distance * 0.8));
+}
+
+function handleInteraction(element, data, info) {
   // hide existing name if any
   nameDisplayEl.classList.remove("show");
   void nameDisplayEl.offsetWidth;
   // --- Get country name ---
-  const countryName = data.properties.name || "Unknown";
+  const countryName = info?.name || data.properties?.name || "Unknown";
   const bounds = path.bounds(data);
   const dx = bounds[1][0] - bounds[0][0];
   const dy = bounds[1][1] - bounds[0][1];
@@ -281,11 +309,12 @@ function handleInteraction(element, data) {
   // --- Mobile Optimization Logic ---
   // Check if the screen width is mobile-sized
   // Dynamic Max Zoom: Allow deeper zooming on small screens
-  const dynamicMaxZoom = isMobile() ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
+  const isMobileSize = isMobile();
+  const dynamicMaxZoom = isMobileSize ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
 
   // Dynamic Padding: Countries should take up more of the screen on mobile
   // 0.7 means it fills 70% of the screen, 0.4 means 40%
-  const paddingFactor = isMobile() ? 0.7 : 0.4;
+  const paddingFactor = isMobileSize ? 0.7 : 0.4;
 
   // Calculate the perfect scale based on dynamic variables
   const scale = Math.max(
@@ -295,7 +324,14 @@ function handleInteraction(element, data) {
 
   // Y-Axis Offset: Shift the center down on mobile so the popup doesn't cover the country
   // Shifts the camera focus UP by 10% of the SVG height (which moves the map DOWN on screen)
-  const yOffset = isMobile() ? height * 0.1 : 0;
+  const yOffset = isMobileSize ? height * 0.1 : 0;
+
+  // Calculate the target translation
+  const targetX = width / 2 - x * scale;
+  const targetY = height / 2 + yOffset - y * scale;
+
+  // DYNAMIC SPEED: Calculate duration based on distance
+  const dynamicDuration = getTransitionDuration(targetX, targetY, scale);
 
   // If they click another country before the zoom starts, cancel the old zoom
   if (zoomDelayTimer) {
@@ -305,25 +341,23 @@ function handleInteraction(element, data) {
   zoomDelayTimer = setTimeout(() => {
     svg
       .transition()
-      .duration(1000)
+      .duration(dynamicDuration)
       .ease(d3.easeCubicInOut)
       .call(
         zoom.transform,
-        d3.zoomIdentity
-          .translate(width / 2 - x * scale, height / 2 + yOffset - y * scale)
-          .scale(scale),
+        d3.zoomIdentity.translate(targetX, targetY).scale(scale),
       )
       .on("end", () => {
         // This only runs AFTER the 1s zoom animation finishes
-        nameTextEl.textContent = countryName;
-        updateExtraInfo(data);
-        nameDisplayEl.classList.add("show");
-        speaker();
+        setTimeout(() => {
+          nameTextEl.textContent = countryName;
+          updateFlag(info, countryName);
+          updateExtraInfo(data);
+          nameDisplayEl.classList.add("show");
+          speaker();
+        }, 10);
       });
   }, 800);
-
-  // Flag logic (stays immediate as it's hidden by nameDisplayEl)
-  updateFlag(data, countryName);
 }
 
 // --- Reset Zoom Logic ---
