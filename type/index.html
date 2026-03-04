@@ -108,6 +108,55 @@
         caret-color: transparent;
         text-shadow: 0 0 0 var(--text-color);
       }
+      .typing-title {
+        position: absolute;
+        top: 2rem;
+        opacity: 0.6;
+        animation:
+          typing 2s steps(4, end) forwards,
+          blink-caret 0.75s step-end infinite;
+        margin: 0 auto;
+        border-right: 0.15em solid var(--caret-color); /* The "cursor" for the title */
+        width: 0;
+
+        /* Typing Animation Logic */
+        overflow: hidden;
+        color: var(--text-color);
+        font-size: 1.5rem;
+        font-family: "Lexend", sans-serif;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      /* The typing effect */
+      @keyframes typing {
+        from {
+          width: 0;
+        }
+        to {
+          width: 5ch;
+        } /* 'Type' is 4 chars + 1 for breathing room */
+      }
+
+      /* The typewriter cursor blinking */
+      @keyframes blink-caret {
+        from,
+        to {
+          border-color: transparent;
+        }
+        50% {
+          border-color: var(--caret-color);
+        }
+      }
+
+      /* Adjust for mobile so it doesn't overlap the huge input */
+      @media (max-width: 768px) {
+        .typing-title {
+          top: 1rem;
+          font-size: 1rem;
+        }
+      }
 
       /* The "jump" Animation */
       @keyframes popIn {
@@ -138,15 +187,17 @@
     </style>
   </head>
   <body>
-    <input
-      type="text"
-      id="big-input"
-      autocomplete="off"
-      spellcheck="false"
-      inputmode="text"
-      autofocus
-    />
-
+    <main role="main">
+      <h1 class="typing-title">Type</h1>
+      <input
+        type="text"
+        id="big-input"
+        autocomplete="off"
+        spellcheck="false"
+        inputmode="text"
+        autofocus
+      />
+    </main>
     <script type="module" src="script.js"></script>
   </body>
 </html>

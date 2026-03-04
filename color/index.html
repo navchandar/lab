@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
@@ -67,73 +67,77 @@
       </div>
     </noscript>
 
-    <div
-      id="color-name"
-      role="heading"
-      aria-live="polite"
-      aria-label="Color name"
-      tabindex="0"
-    ></div>
+    <main role="main">
+      <div
+        id="color-name"
+        role="heading"
+        aria-live="polite"
+        aria-label="Color name"
+        tabindex="0"
+      ></div>
 
-    <button
-      id="muteButton"
-      aria-label="Mute sound"
-      disabled
-      title="Mute sound"
-    ></button>
+      <button
+        id="muteButton"
+        aria-label="Mute sound"
+        disabled
+        title="Mute sound"
+      ></button>
 
-    <button
-      id="fullscreen-btn"
-      aria-label="Toggle fullscreen mode"
-      title="Toggle fullscreen"
-    >
-      <svg
-        id="fullscreen-icon"
-        fill="none"
-        height="24"
-        viewBox="0 0 24 24"
-        width="24"
-        xmlns="http://www.w3.org/2000/svg"
-      ></svg>
-    </button>
+      <button
+        id="fullscreen-btn"
+        aria-label="Toggle fullscreen mode"
+        title="Toggle fullscreen"
+      >
+        <svg
+          id="fullscreen-icon"
+          fill="none"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        ></svg>
+      </button>
 
-    <!-- Settings Button -->
-    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
-      <img
-        id="settings-icon"
-        src="../static/icons/settings.svg"
-        width="24"
-        height="24"
-        alt="Settings"
-        aria-hidden="true"
-      />
-    </button>
+      <!-- Settings Button -->
+      <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+        <img
+          id="settings-icon"
+          src="../static/icons/settings.svg"
+          width="24"
+          height="24"
+          alt="Settings"
+          aria-hidden="true"
+        />
+      </button>
 
-    <!-- Overlay Menu -->
-    <div
-      id="settings-menu"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="settings-label"
-    >
-      <span id="settings-label" class="sr-only" style="display:none;"
-        >Settings Menu
-      </span>
-      <label for="language-select" id="language-label">Choose Language:</label>
-      <select id="language-select">
-        <!-- Options to be populated by JS -->
-      </select>
+      <!-- Overlay Menu -->
+      <div
+        id="settings-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-label"
+      >
+        <span id="settings-label" class="sr-only" style="display: none"
+          >Settings Menu
+        </span>
+        <label for="language-select" id="language-label"
+          >Choose Language:</label
+        >
+        <select id="language-select">
+          <!-- Options to be populated by JS -->
+        </select>
 
-      <div class="randomize-checkbox">
-        <label for="randomize" id="randomize-label">Randomize Colors:</label>
-        <input type="checkbox" id="randomize" />
+        <div class="randomize-checkbox">
+          <label for="randomize" id="randomize-label">Randomize Colors:</label>
+          <input type="checkbox" id="randomize" />
+        </div>
+
+        <div class="autoplay-checkbox">
+          <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+          <input type="checkbox" id="autoplay" />
+        </div>
       </div>
-
-      <div class="autoplay-checkbox">
-        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
-        <input type="checkbox" id="autoplay" />
-      </div>
-    </div>
+    </main>
 
     <script src="data.js"></script>
     <script type="module" src="script.js"></script>

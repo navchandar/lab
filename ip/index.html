@@ -59,43 +59,44 @@
       </div>
     </noscript>
 
-    <header>
+    <header role="banner">
       <h1>Your Public IP Address</h1>
     </header>
 
-    <div class="ip-container">
-      <div class="ip-text">
-        <strong>IPv4:</strong>
-        <span class="spinner" id="spinner-ip1" aria-hidden="true"></span>
-        <span id="ip1"> Fetching IPv4... </span>
+    <main role="main">
+      <div class="ip-container">
+        <div class="ip-text">
+          <strong>IPv4:</strong>
+          <span class="spinner" id="spinner-ip1" aria-hidden="true"></span>
+          <span id="ip1"> Fetching IPv4... </span>
+        </div>
+        <button class="copy-btn" id="copy-ipv4" title="Press 'C' to copy IPv4">
+          <span class="shortcut-hint">C</span>opy
+        </button>
       </div>
-      <button class="copy-btn" id="copy-ipv4" title="Press 'C' to copy IPv4">
-        <span class="shortcut-hint">C</span>opy
-      </button>
-    </div>
 
-    <div class="ip-container">
-      <div class="ip-text">
-        <strong>IPv6:</strong>
-        <span class="spinner" id="spinner-ip2" aria-hidden="true"></span>
-        <span id="ip2"> Fetching IPv6... </span>
+      <div class="ip-container">
+        <div class="ip-text">
+          <strong>IPv6:</strong>
+          <span class="spinner" id="spinner-ip2" aria-hidden="true"></span>
+          <span id="ip2"> Fetching IPv6... </span>
+        </div>
+        <button class="copy-btn" id="copy-ipv6" title="Press 'P' to copy IPv6">
+          Co<span class="shortcut-hint">p</span>y
+        </button>
       </div>
-      <button class="copy-btn" id="copy-ipv6" title="Press 'P' to copy IPv6">
-        Co<span class="shortcut-hint">p</span>y
-      </button>
-    </div>
 
-    <div id="ip-toast" class="ip-toast">
-      <span id="ip-toast-message"></span>
-      <button id="ip-toast-close" class="ip-toast-close">&times;</button>
-    </div>
+      <div id="ip-toast" class="ip-toast">
+        <span id="ip-toast-message"></span>
+        <button id="ip-toast-close" class="ip-toast-close">&times;</button>
+      </div>
 
-    <div id="last-refresh" class="last-refresh">Last refreshed: just now</div>
+      <div id="last-refresh" class="last-refresh">Last refreshed: just now</div>
 
-    <div class="bookmarklet-installer">
-      <a
-        id="ip-bookmarklet-link"
-        href="javascript:(function(){const source=['https://api.ipify.org','https://icanhazip.com'];
+      <div class="bookmarklet-installer">
+        <a
+          id="ip-bookmarklet-link"
+          href="javascript:(function(){const source=['https://api.ipify.org','https://icanhazip.com'];
         function fetchIP(index=0){if(index>=source.length)
           {alert('Failed to retrieve IP from all sources.');return}
         const url=source[index];fetch(url).then(response=>{if(!response.ok)
@@ -106,18 +107,20 @@
             .catch(()=>{alert('Failed to copy IPv4 to clipboard. The IP is: '+new_ip)})})
             .catch(error=>{console.error(`Error fetching from ${url}:`,error);
             fetchIP(index+1)})}fetchIP()})()"
-        title="Drag this button to your browser's bookmarks bar to install this bookmarklet"
-      >
-        IP Bookmarklet
-      </a>
+          title="Drag this button to your browser's bookmarks bar to install this bookmarklet"
+        >
+          IP Bookmarklet
+        </a>
 
-      <p id="installation-instructions">
-        This bookmarklet allows you to copy your current IPv4 address directly
-        from your bookmarks. To install this, drag the button above and drop it
-        onto your browser's bookmarks Bar.
-      </p>
-    </div>
-    <footer>
+        <p id="installation-instructions">
+          This bookmarklet allows you to copy your current IPv4 address directly
+          from your bookmarks. To install this, drag the button above and drop
+          it onto your browser's bookmarks Bar.
+        </p>
+      </div>
+    </main>
+
+    <footer role="contentinfo">
       <p>
         Powered by
         <a href="https://www.ipify.org/" target="_blank">ipify.org</a> and

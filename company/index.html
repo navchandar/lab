@@ -437,35 +437,36 @@
   </head>
 
   <body>
-    <header>
+    <header role="banner">
       <h1>Company Data</h1>
     </header>
-
-    <div class="container">
-      <div
-        id="loadingSpinner"
-        role="status"
-        aria-label="Loading data"
-        class=""
-      ></div>
-      <div class="table-card" style="display: none">
-        <table id="companyTable" class="responsive nowrap">
-          <thead>
-            <tr>
-              <th>Company Name</th>
-              <th>Employees</th>
-              <th>Website</th>
-              <th class="text-center">LinkedIn</th>
-              <th class="text-center">Type</th>
-              <th>Last Updated</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
+    <main role="main">
+      <div class="container">
+        <div
+          id="loadingSpinner"
+          role="status"
+          aria-label="Loading data"
+          class=""
+        ></div>
+        <div class="table-card" style="display: none">
+          <table id="companyTable" class="responsive nowrap">
+            <thead>
+              <tr>
+                <th>Company Name</th>
+                <th>Employees</th>
+                <th>Website</th>
+                <th class="text-center">LinkedIn</th>
+                <th class="text-center">Type</th>
+                <th>Last Updated</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </main>
 
-    <footer>
+    <footer role="contentinfo">
       <p>
         Powered by
         <a

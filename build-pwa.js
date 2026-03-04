@@ -155,7 +155,7 @@ function generateIndexHtml() {
     <link rel="stylesheet" href="./static/app_stylesheet.css">
   </head>
 <body>
-    <header><h1>Apps</h1></header>
+    <header role="banner"><h1>Apps</h1></header>
 
     <div id="app-container">
       <button id="hamburger-menu" aria-label="Toggle menu">☰</button>
@@ -175,7 +175,7 @@ ${appLinks}
             </div>
         </div>
       </nav>
-      <main><iframe name="appFrame" title="App Frame" id="appFrame"></iframe></main>
+      <main role="main"><iframe name="appFrame" title="App Frame" id="appFrame"></iframe></main>
     </div>
 
     <script type="module" src="./static/app_script.js"></script>

@@ -101,108 +101,110 @@
       </div>
     </noscript>
 
-    <div class="container">
-      <h1>
-        Learn the Clock
-        <span class="info-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#555" stroke-width="2" />
-            <line
-              x1="12"
-              y1="8"
-              x2="12"
-              y2="8"
-              stroke="#555"
-              stroke-width="2"
-            />
-            <line
-              x1="12"
-              y1="10"
-              x2="12"
-              y2="16"
-              stroke="#555"
-              stroke-width="2"
-            />
-          </svg>
-          <span class="tooltip"
-            >Move the Clock hands or edit the digital time!</span
-          >
-        </span>
-      </h1>
+    <main role="main">
+      <div class="container">
+        <h1>
+          Learn the Clock
+          <span class="info-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#555" stroke-width="2" />
+              <line
+                x1="12"
+                y1="8"
+                x2="12"
+                y2="8"
+                stroke="#555"
+                stroke-width="2"
+              />
+              <line
+                x1="12"
+                y1="10"
+                x2="12"
+                y2="16"
+                stroke="#555"
+                stroke-width="2"
+              />
+            </svg>
+            <span class="tooltip"
+              >Move the Clock hands or edit the digital time!</span
+            >
+          </span>
+        </h1>
 
-      <div class="clock-area">
-        <!-- Analog -->
-        <div class="clock" id="analog">
-          <div class="hand hour" id="hourHand" data-hand="hour"></div>
-          <div class="hand minute" id="minuteHand" data-hand="minute"></div>
-          <div class="center"></div>
+        <div class="clock-area">
+          <!-- Analog -->
+          <div class="clock" id="analog">
+            <div class="hand hour" id="hourHand" data-hand="hour"></div>
+            <div class="hand minute" id="minuteHand" data-hand="minute"></div>
+            <div class="center"></div>
+          </div>
+
+          <!-- Digital -->
+          <input
+            type="time"
+            id="timeInput"
+            lang="en-US"
+            step="60"
+            value="00:00"
+          />
+        </div>
+      </div>
+
+      <button
+        id="muteButton"
+        aria-label="Mute sound"
+        disabled
+        title="Mute sound"
+      ></button>
+
+      <button
+        id="fullscreen-btn"
+        aria-label="Toggle fullscreen mode"
+        title="Toggle fullscreen"
+      >
+        <svg
+          id="fullscreen-icon"
+          fill="none"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        ></svg>
+      </button>
+
+      <!-- Settings Button -->
+      <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+        <img
+          id="settings-icon"
+          src="../static/icons/settings.svg"
+          width="24"
+          height="24"
+          alt="Settings"
+          aria-hidden="true"
+        />
+      </button>
+
+      <!-- Overlay Menu -->
+      <div
+        id="settings-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-label"
+      >
+        <span id="settings-label" class="sr-only" style="display: none"
+          >Settings Menu
+        </span>
+        <div class="randomize-checkbox">
+          <label for="randomize" id="randomize-label">Randomize Time:</label>
+          <input type="checkbox" id="randomize" />
         </div>
 
-        <!-- Digital -->
-        <input
-          type="time"
-          id="timeInput"
-          lang="en-US"
-          step="60"
-          value="00:00"
-        />
+        <div class="autoplay-checkbox">
+          <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+          <input type="checkbox" id="autoplay" />
+        </div>
       </div>
-    </div>
-
-    <button
-      id="muteButton"
-      aria-label="Mute sound"
-      disabled
-      title="Mute sound"
-    ></button>
-
-    <button
-      id="fullscreen-btn"
-      aria-label="Toggle fullscreen mode"
-      title="Toggle fullscreen"
-    >
-      <svg
-        id="fullscreen-icon"
-        fill="none"
-        height="24"
-        viewBox="0 0 24 24"
-        width="24"
-        xmlns="http://www.w3.org/2000/svg"
-      ></svg>
-    </button>
-
-    <!-- Settings Button -->
-    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
-      <img
-        id="settings-icon"
-        src="../static/icons/settings.svg"
-        width="24"
-        height="24"
-        alt="Settings"
-        aria-hidden="true"
-      />
-    </button>
-
-    <!-- Overlay Menu -->
-    <div
-      id="settings-menu"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="settings-label"
-    >
-      <span id="settings-label" class="sr-only" style="display: none"
-        >Settings Menu
-      </span>
-      <div class="randomize-checkbox">
-        <label for="randomize" id="randomize-label">Randomize Time:</label>
-        <input type="checkbox" id="randomize" />
-      </div>
-
-      <div class="autoplay-checkbox">
-        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
-        <input type="checkbox" id="autoplay" />
-      </div>
-    </div>
+    </main>
 
     <script type="module" src="script.js"></script>
   </body>

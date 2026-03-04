@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -116,137 +116,143 @@
       </div>
     </noscript>
 
-    <div id="map"></div>
+    <main role="main">
+      <div id="map"></div>
 
-    <div class="controls-card" id="sidebar">
-      <div class="drag-handle"></div>
-      <div class="header" id="card-header">
-        <h1>Serviceability Map</h1>
-        <p>Select a company to view their delivery area</p>
-      </div>
-
-      <div class="search-container">
-        <input
-          type="search"
-          id="location-search"
-          placeholder="Search City or PIN code"
-          autocomplete="off"
-        />
-        <button id="search-btn" aria-label="Search">
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            stroke="currentColor"
-            stroke-width="2.5"
-            fill="none"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </button>
-      </div>
-
-      <div class="options" id="options-container">
-        <!-- To be filled during runtime -->
-      </div>
-
-      <div class="legend">
-        <div class="legend-item"><span class="dot"></span> Serviceable</div>
-        <div class="legend-item">
-          <span class="dot empty"></span> Non-Serviceable
+      <div class="controls-card" id="sidebar">
+        <div class="drag-handle"></div>
+        <div class="header" id="card-header">
+          <h1>Serviceability Map</h1>
+          <p>Select a company to view their delivery area</p>
         </div>
-      </div>
 
-      <div class="footer">
-        <span id="last-refresh" class="last-refresh"
-          >Last updated: just now
-        </span>
-        <span class="separator">•</span>
-        <a href="#" id="openDisclaimerModal">Disclaimer</a>
-      </div>
-      <div class="shortcuts-text">
-        <span class="shortcut-item">
-          <span>
-            <b>&#8592;</b> <b>&#8594;</b> <b>&#8593;</b> <b>&#8595;</b> Explore
+        <div class="search-container">
+          <input
+            type="search"
+            id="location-search"
+            placeholder="Search City or PIN code"
+            autocomplete="off"
+          />
+          <button id="search-btn" aria-label="Search">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              stroke="currentColor"
+              stroke-width="2.5"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </div>
+
+        <div class="options" id="options-container">
+          <!-- To be filled during runtime -->
+        </div>
+
+        <div class="legend">
+          <div class="legend-item"><span class="dot"></span> Serviceable</div>
+          <div class="legend-item">
+            <span class="dot empty"></span> Non-Serviceable
+          </div>
+        </div>
+
+        <div class="footer">
+          <span id="last-refresh" class="last-refresh"
+            >Last updated: just now
           </span>
-        </span>
-        <span class="divider">|</span>
-        <span class="shortcut-item">
-          <span><b>+</b> <b>-</b> Zoom</span>
-        </span>
-      </div>
-    </div>
-
-    <div id="disclaimerModal" class="modal">
-      <div class="modal-backdrop"></div>
-      <div class="modal-content">
-        <div class="modal-header">
-          <h2>Disclaimer</h2>
-          <span class="modal-close-btn">&times;</span>
+          <span class="separator">•</span>
+          <a href="#" id="openDisclaimerModal">Disclaimer</a>
         </div>
-        <div class="modal-body">
-          <p>
-            <strong>Serviceability Map</strong> is an open-source visualization
-            intended for general informational purposes only. The overlay maps
-            are generated from periodically collected third‑party data and may
-            not reflect real‑time service area or coverage.
-          </p>
-
-          <ul>
-            <li>
-              <strong>Accuracy & Completeness:</strong> Coverage information
-              (including "Out of Delivery Areas" and serviceable zones) is
-              derived from public sources and may be incomplete, outdated, or
-              inaccurate. Circular overlays displayed for PIN codes are for
-              illustrative purposes only. They do not represent official area
-              boundaries, precise coverage, or true geographic extent, and are
-              not to scale. Users should not rely on these overlays for
-              operational, legal, or logistical decisions and must verify
-              location specific coverage via official sources.
-            </li>
-            <li>
-              <strong>No Guarantees:</strong> We do not guarantee the
-              correctness, completeness, timeliness, or suitability of the map
-              data for any purpose. <em>Always verify</em> specific area's
-              serviceability directly with the respective logistics/service
-              partner before making operational or business decisions.
-            </li>
-            <li>
-              <strong>No Affiliation:</strong> Brand names and logos (e.g.,
-              Amazon, Flipkart, Zepto, Blinkit) are the property of their
-              respective owners. This project is <em>not</em> endorsed by or
-              affiliated with any of these companies.
-            </li>
-            <li>
-              <strong>Liability:</strong> Use at your own risk. To the fullest
-              extent permitted by law, the maintainers and contributors disclaim
-              any liability for direct, indirect, incidental, consequential, or
-              special damages arising from the use of this application or its
-              data.
-            </li>
-            <li>
-              License:
-              <a
-                href="https://github.com/navchandar/lab/blob/main/LICENSE"
-                target="_blank"
-                >GNU GPLv3
-              </a>
-              | Report bugs via
-              <a href="https://github.com/navchandar/lab/issues" target="_blank"
-                >GitHub
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <div class="modal-footer">
-          <button class="btn-close-modal">Understood</button>
+        <div class="shortcuts-text">
+          <span class="shortcut-item">
+            <span>
+              <b>&#8592;</b> <b>&#8594;</b> <b>&#8593;</b>
+              <b>&#8595;</b> Explore
+            </span>
+          </span>
+          <span class="divider">|</span>
+          <span class="shortcut-item">
+            <span><b>+</b> <b>-</b> Zoom</span>
+          </span>
         </div>
       </div>
-    </div>
+
+      <div id="disclaimerModal" class="modal">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Disclaimer</h2>
+            <span class="modal-close-btn">&times;</span>
+          </div>
+          <div class="modal-body">
+            <p>
+              <strong>Serviceability Map</strong> is an open-source
+              visualization intended for general informational purposes only.
+              The overlay maps are generated from periodically collected
+              third‑party data and may not reflect real‑time service area or
+              coverage.
+            </p>
+
+            <ul>
+              <li>
+                <strong>Accuracy & Completeness:</strong> Coverage information
+                (including "Out of Delivery Areas" and serviceable zones) is
+                derived from public sources and may be incomplete, outdated, or
+                inaccurate. Circular overlays displayed for PIN codes are for
+                illustrative purposes only. They do not represent official area
+                boundaries, precise coverage, or true geographic extent, and are
+                not to scale. Users should not rely on these overlays for
+                operational, legal, or logistical decisions and must verify
+                location specific coverage via official sources.
+              </li>
+              <li>
+                <strong>No Guarantees:</strong> We do not guarantee the
+                correctness, completeness, timeliness, or suitability of the map
+                data for any purpose. <em>Always verify</em> specific area's
+                serviceability directly with the respective logistics/service
+                partner before making operational or business decisions.
+              </li>
+              <li>
+                <strong>No Affiliation:</strong> Brand names and logos (e.g.,
+                Amazon, Flipkart, Zepto, Blinkit) are the property of their
+                respective owners. This project is <em>not</em> endorsed by or
+                affiliated with any of these companies.
+              </li>
+              <li>
+                <strong>Liability:</strong> Use at your own risk. To the fullest
+                extent permitted by law, the maintainers and contributors
+                disclaim any liability for direct, indirect, incidental,
+                consequential, or special damages arising from the use of this
+                application or its data.
+              </li>
+              <li>
+                License:
+                <a
+                  href="https://github.com/navchandar/lab/blob/main/LICENSE"
+                  target="_blank"
+                  >GNU GPLv3
+                </a>
+                | Report bugs via
+                <a
+                  href="https://github.com/navchandar/lab/issues"
+                  target="_blank"
+                  >GitHub
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn-close-modal">Understood</button>
+          </div>
+        </div>
+      </div>
+    </main>
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

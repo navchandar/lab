@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -69,67 +69,69 @@
       </div>
     </noscript>
 
-    <div class="shape-container">
-      <div class="shadow-wrapper">
-        <div id="shape" class="shape line"></div>
+    <main role="main">
+      <div class="shape-container">
+        <div class="shadow-wrapper">
+          <div id="shape" class="shape line"></div>
+        </div>
+
+        <label id="shapename" for="shape" class="caption">Line</label>
       </div>
 
-      <label id="shapename" for="shape" class="caption">Line</label>
-    </div>
+      <button
+        id="muteButton"
+        aria-label="Mute sound"
+        disabled
+        title="Mute sound"
+      ></button>
 
-    <button
-      id="muteButton"
-      aria-label="Mute sound"
-      disabled
-      title="Mute sound"
-    ></button>
+      <button
+        id="fullscreen-btn"
+        aria-label="Toggle fullscreen mode"
+        title="Toggle fullscreen"
+      >
+        <svg
+          id="fullscreen-icon"
+          fill="none"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        ></svg>
+      </button>
 
-    <button
-      id="fullscreen-btn"
-      aria-label="Toggle fullscreen mode"
-      title="Toggle fullscreen"
-    >
-      <svg
-        id="fullscreen-icon"
-        fill="none"
-        height="24"
-        viewBox="0 0 24 24"
-        width="24"
-        xmlns="http://www.w3.org/2000/svg"
-      ></svg>
-    </button>
+      <!-- Settings Button -->
+      <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+        <img
+          id="settings-icon"
+          src="../static/icons/settings.svg"
+          width="24"
+          height="24"
+          alt="Settings"
+          aria-hidden="true"
+        />
+      </button>
 
-    <!-- Settings Button -->
-    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
-      <img
-        id="settings-icon"
-        src="../static/icons/settings.svg"
-        width="24"
-        height="24"
-        alt="Settings"
-        aria-hidden="true"
-      />
-    </button>
-
-    <!-- Overlay Menu -->
-    <div
-      id="settings-menu"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="settings-label"
-    >
-      <span id="settings-label" class="sr-only" style="display:none;"
-        >Settings Menu
-      </span>
-      <div class="randomize-checkbox">
-        <label for="randomize" id="randomize-label">Randomize Shapes:</label>
-        <input type="checkbox" id="randomize" />
+      <!-- Overlay Menu -->
+      <div
+        id="settings-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-label"
+      >
+        <span id="settings-label" class="sr-only" style="display: none"
+          >Settings Menu
+        </span>
+        <div class="randomize-checkbox">
+          <label for="randomize" id="randomize-label">Randomize Shapes:</label>
+          <input type="checkbox" id="randomize" />
+        </div>
+        <div class="autoplay-checkbox">
+          <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+          <input type="checkbox" id="autoplay" />
+        </div>
       </div>
-      <div class="autoplay-checkbox">
-        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
-        <input type="checkbox" id="autoplay" />
-      </div>
-    </div>
+    </main>
 
     <script type="module" src="script.js"></script>
   </body>

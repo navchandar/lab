@@ -213,6 +213,22 @@
   </head>
 
   <body>
+    <noscript>
+      <div class="noscript-overlay">
+        <div class="noscript-content">
+          <h2>JavaScript is Required</h2>
+          <p>We rely on JavaScript to render the interactive website.</p>
+          <p>
+            Please enable JavaScript in your browser settings and reload the
+            page.
+          </p>
+          <a href="https://www.enable-javascript.com/" target="_blank"
+            >How to enable JavaScript
+          </a>
+        </div>
+      </div>
+    </noscript>
+
     <div id="toast"></div>
 
     <dialog id="genericModal" class="native-modal">
@@ -222,79 +238,80 @@
         <div class="modal-body" id="modalBody"></div>
       </div>
     </dialog>
-
-    <div class="container">
-      <div class="sidebar">
-        <div class="header">
-          <h1>Hospital Network Map</h1>
-          <p>Know where to go and where not to!</p>
-        </div>
-
-        <div class="dataset-toggle">
-          <button
-            class="toggle-btn active"
-            id="btn-network"
-            onclick="loadDataset('network')"
-            data-tooltip="View hospitals in-network of Insurance providers, where Cashless Treatment is eligible"
-          >
-            In-Network
-          </button>
-          <button
-            class="toggle-btn"
-            id="btn-excluded"
-            onclick="loadDataset('excluded')"
-            data-tooltip="View hospitals that are excluded/blacklisted by Insurance providers and disqualified from claims"
-          >
-            Excluded
-          </button>
-        </div>
-
-        <div class="controls">
-          <div class="search-wrapper">
-            <input
-              type="search"
-              id="searchInput"
-              class="search-box"
-              placeholder="Search hospital name, city..."
-              autocomplete="off"
-            />
-            <span class="search-clear" id="searchClear">&times;</span>
+    <main role="main">
+      <div class="container">
+        <div class="sidebar">
+          <div class="header">
+            <h1>Hospital Network Map</h1>
+            <p>Know where to go and where not to!</p>
           </div>
 
-          <span class="filter-label">Filter by Insurance Company:</span>
-          <div class="checkbox-group" id="insurerFilters">
-            <span class="filter-loading">Loading filters...</span>
+          <div class="dataset-toggle">
+            <button
+              class="toggle-btn active"
+              id="btn-network"
+              onclick="loadDataset('network')"
+              data-tooltip="View hospitals in-network of Insurance providers, where Cashless Treatment is eligible"
+            >
+              In-Network
+            </button>
+            <button
+              class="toggle-btn"
+              id="btn-excluded"
+              onclick="loadDataset('excluded')"
+              data-tooltip="View hospitals that are excluded/blacklisted by Insurance providers and disqualified from claims"
+            >
+              Excluded
+            </button>
+          </div>
+
+          <div class="controls">
+            <div class="search-wrapper">
+              <input
+                type="search"
+                id="searchInput"
+                class="search-box"
+                placeholder="Search hospital name, city..."
+                autocomplete="off"
+              />
+              <span class="search-clear" id="searchClear">&times;</span>
+            </div>
+
+            <span class="filter-label">Filter by Insurance Company:</span>
+            <div class="checkbox-group" id="insurerFilters">
+              <span class="filter-loading">Loading filters...</span>
+            </div>
+          </div>
+
+          <div class="results-info">
+            <span id="resultsCount">Initializing...</span>
+          </div>
+
+          <ul class="hospital-list" id="hospitalList"></ul>
+
+          <div class="sidebar-footer">
+            <span class="footer-link" onclick="openSourcesModal()">
+              Sources
+            </span>
+            <span class="footer-link" onclick="openDisclaimerModal()">
+              Disclaimer
+            </span>
           </div>
         </div>
 
-        <div class="results-info">
-          <span id="resultsCount">Initializing...</span>
-        </div>
-
-        <ul class="hospital-list" id="hospitalList"></ul>
-
-        <div class="sidebar-footer">
-          <span class="footer-link" onclick="openSourcesModal()">
-            Sources
-          </span>
-          <span class="footer-link" onclick="openDisclaimerModal()">
-            Disclaimer
-          </span>
+        <div id="map">
+          <div id="map-loader">
+            <div class="spinner"></div>
+            <span
+              id="map-loader-text"
+              style="font-size: 0.7rem; font-weight: 600"
+            >
+              Updating...
+            </span>
+          </div>
         </div>
       </div>
-
-      <div id="map">
-        <div id="map-loader">
-          <div class="spinner"></div>
-          <span
-            id="map-loader-text"
-            style="font-size: 0.7rem; font-weight: 600"
-          >
-            Updating...
-          </span>
-        </div>
-      </div>
-    </div>
+    </main>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>

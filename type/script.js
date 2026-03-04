@@ -1,10 +1,12 @@
 import * as utils from "../static/utils.js";
 
 const input = document.getElementById("big-input");
+const title = document.querySelector(".typing-title");
 
 // Handles the UI state
 const updateVisuals = () => {
   if (input.value.length > 0) {
+    title.style.display = "none";
     // Has text: Hide caret, trigger animation
     input.classList.add("hide-caret");
 
@@ -13,6 +15,7 @@ const updateVisuals = () => {
     void input.offsetWidth;
     input.classList.add("animate-pop");
   } else {
+    title.style.display = "block";
     // Empty: Show blinking caret, remove animation
     input.classList.remove("hide-caret");
     input.classList.remove("animate-pop");

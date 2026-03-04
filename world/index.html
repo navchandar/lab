@@ -337,96 +337,106 @@
       </div>
     </noscript>
 
-    <div id="name-display" class="show" aria-live="polite">
-      <div class="country-header">
-        <img id="flag-img" src="../static/images/flag.png" alt="Country Flag" />
-        <span id="country-name-text">🌏 World Map</span>
-      </div>
-      <div id="extra-info-text" class="extra-info" style="display: none"></div>
-    </div>
-
-    <div id="loading-screen">
-      <div class="globe-loader">
-        <div class="earth-circle">🌍</div>
-        <div class="orbit">
-          <div class="traveler">✈️</div>
+    <main role="main">
+      <div id="name-display" class="show" aria-live="polite">
+        <div class="country-header">
+          <img
+            id="flag-img"
+            src="../static/images/flag.png"
+            alt="Country Flag"
+          />
+          <span id="country-name-text">🌏 World Map</span>
         </div>
+        <div
+          id="extra-info-text"
+          class="extra-info"
+          style="display: none"
+        ></div>
       </div>
-      <div class="loading-text">Loading...</div>
-    </div>
 
-    <div
-      id="map-container"
-      role="region"
-      aria-label="Interactive Educational World Map"
-    >
-      <svg id="map" role="img" aria-label="World Map Puzzle"></svg>
-    </div>
-
-    <button
-      id="muteButton"
-      aria-label="Mute sound"
-      disabled
-      title="Mute sound"
-    ></button>
-
-    <button
-      id="fullscreen-btn"
-      aria-label="Toggle fullscreen mode"
-      title="Toggle fullscreen"
-    >
-      <svg
-        id="fullscreen-icon"
-        fill="none"
-        height="24"
-        viewBox="0 0 24 24"
-        width="24"
-        xmlns="http://www.w3.org/2000/svg"
-      ></svg>
-    </button>
-
-    <!-- Settings Button -->
-    <button id="settings-btn" aria-label="Settings" title="Settings Menu">
-      <img
-        id="settings-icon"
-        src="../static/icons/settings.svg"
-        width="24"
-        height="24"
-        alt="Settings"
-        aria-hidden="true"
-      />
-    </button>
-
-    <!-- Overlay Menu -->
-    <div
-      id="settings-menu"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="settings-label"
-    >
-      <span id="settings-label" class="sr-only" style="display: none"
-        >Settings Menu
-      </span>
-      <div class="autoplay-checkbox">
-        <label for="autoplay" id="autoplay-label">Auto-Play:</label>
-        <input type="checkbox" id="autoplay" />
+      <div id="loading-screen">
+        <div class="globe-loader">
+          <div class="earth-circle">🌍</div>
+          <div class="orbit">
+            <div class="traveler">✈️</div>
+          </div>
+        </div>
+        <div class="loading-text">Loading...</div>
       </div>
 
       <div
-        class="info-checkbox"
-        style="
-          margin-top: 15px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        "
+        id="map-container"
+        role="region"
+        aria-label="Interactive Educational World Map"
       >
-        <label for="show-extra-info" id="extra-info-label"
-          >Show Extra Info:</label
-        >
-        <input type="checkbox" id="show-extra-info" />
+        <svg id="map" role="img" aria-label="World Map Puzzle"></svg>
       </div>
-    </div>
+
+      <button
+        id="muteButton"
+        aria-label="Mute sound"
+        disabled
+        title="Mute sound"
+      ></button>
+
+      <button
+        id="fullscreen-btn"
+        aria-label="Toggle fullscreen mode"
+        title="Toggle fullscreen"
+      >
+        <svg
+          id="fullscreen-icon"
+          fill="none"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        ></svg>
+      </button>
+
+      <!-- Settings Button -->
+      <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+        <img
+          id="settings-icon"
+          src="../static/icons/settings.svg"
+          width="24"
+          height="24"
+          alt="Settings"
+          aria-hidden="true"
+        />
+      </button>
+
+      <!-- Overlay Menu -->
+      <div
+        id="settings-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-label"
+      >
+        <span id="settings-label" class="sr-only" style="display: none"
+          >Settings Menu
+        </span>
+        <div class="autoplay-checkbox">
+          <label for="autoplay" id="autoplay-label">Auto-Play:</label>
+          <input type="checkbox" id="autoplay" />
+        </div>
+
+        <div
+          class="info-checkbox"
+          style="
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <label for="show-extra-info" id="extra-info-label"
+            >Show Extra Info:</label
+          >
+          <input type="checkbox" id="show-extra-info" />
+        </div>
+      </div>
+    </main>
 
     <script type="module" src="script.js"></script>
   </body>
