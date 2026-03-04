@@ -171,6 +171,7 @@ const urlsToCache = [
   'type/index.html',
   'type/preview.png',
   'type/script.js',
+  'world/country_data.json',
   'world/index.html',
   'world/map_data.json',
   'world/map_data_parser.py',
