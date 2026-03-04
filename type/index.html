@@ -108,21 +108,23 @@
         caret-color: transparent;
         text-shadow: 0 0 0 var(--text-color);
       }
+
       .typing-title {
         position: absolute;
-        top: 2rem;
-        opacity: 0.6;
+        top: 4rem;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0.8;
         animation:
-          typing 2s steps(4, end) forwards,
+          typing 1s steps(4, end) forwards,
           blink-caret 0.75s step-end infinite;
         margin: 0 auto;
-        border-right: 0.15em solid var(--caret-color); /* The "cursor" for the title */
+        border-right: 0.15em solid var(--caret-color);
         width: 0;
-
         /* Typing Animation Logic */
         overflow: hidden;
         color: var(--text-color);
-        font-size: 1.5rem;
+        font-size: 2rem;
         font-family: "Lexend", sans-serif;
         letter-spacing: 2px;
         text-transform: uppercase;
@@ -150,14 +152,6 @@
         }
       }
 
-      /* Adjust for mobile so it doesn't overlap the huge input */
-      @media (max-width: 768px) {
-        .typing-title {
-          top: 1rem;
-          font-size: 1rem;
-        }
-      }
-
       /* The "jump" Animation */
       @keyframes popIn {
         0% {
@@ -179,9 +173,15 @@
         animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       }
 
+      /* Mobile style*/
       @media (max-width: 768px) {
+        .typing-title {
+          top: 3rem;
+          font-size: 2rem;
+        }
+
         #big-input {
-          margin-bottom: 10rem;
+          margin-bottom: 9rem;
         }
       }
     </style>

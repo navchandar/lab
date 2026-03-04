@@ -302,6 +302,9 @@ def fetch_company_details(company: Dict[str, Any]) -> None | Dict[str, Any]:
                 website = a.get_text(strip=True).split("?")[0].rstrip("/")
                 if website and not website.startswith("http"):
                     website = "https://" + website
+                if len(website) < 12:
+                    logger.error(f"Invalid website: '{website}'")
+                    website == ""
                 company["website"] = website
                 break
 

@@ -108,12 +108,21 @@ async function loadData() {
         }
       }
 
-      const domain = item.website
-        ? new URL(item.website).hostname.replace("www.", "")
-        : "-";
-      const linkedin_link = item.linkedin ? item.linkedin.split("?")[0] : "#";
-      const status = item.public ? "Public" : "Private";
-
+      let domain = "";
+      let linkedin_link = "";
+      let status = "";
+      try {
+        domain = item.website
+          ? new URL(item.website).hostname.replace("www.", "")
+          : "-";
+        linkedin_link = item.linkedin ? item.linkedin.split("?")[0] : "#";
+        status = item.public ? "Public" : "Private";
+      } catch (error) {
+        console.warn(
+          `${item.name} Website:'${item.website}' LinkedIn:'${item.linkedin}'`,
+        );
+        console.error(error);
+      }
       // Build Row with data
       const row = document.createElement("tr");
       row.innerHTML = `

@@ -12,13 +12,18 @@ body {
     -ms-user-select: none;
 }
 
+main {
+    width: 100vw;
+}
+
 .container {
     box-sizing: content-box;
+    margin: 0 auto;
     box-shadow: var(--shadow);
     border-radius: 16px;
     background: var(--card);
     padding: 20px;
-    width: 90%;
+    width: 80%;
     max-width: 600px;
     text-align: center;
 }
