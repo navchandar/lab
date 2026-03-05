@@ -185,7 +185,18 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
       .on("click", function (event, d) {
         // stops the click from "falling through" the country into the ocean
         event.stopPropagation();
-        clearTimeout(intervalID);
+        // FIX: event.isTrusted is ONLY true for real human mouse clicks
+        if (event.isTrusted) {
+          if (intervalID) {
+            clearInterval(intervalID);
+          }
+          // Uncheck the autoplay box in the UI if a human takes over
+          const autoplayCheckbox = document.getElementById("autoplay");
+          if (autoplayCheckbox) {
+            autoplayCheckbox.checked = false;
+          }
+        }
+
         const el = d3.select(this);
 
         d3.selectAll(".country").classed("active", false).style("fill", null);
@@ -209,7 +220,8 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
           .ease(d3.easeCubicOut)
           .attr("r", "150%");
 
-        const info = countryData[String(d.id).padStart(3, "0")];
+        const countryId = String(d.id).padStart(3, "0");
+        const info = countryData[countryId];
         console.log("Found Country:", info?.name);
         handleInteraction(this, d, info);
       })
@@ -232,10 +244,10 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
   });
 
 // Helper to keep handleInteraction clean
-function updateExtraInfo(data) {
-  if (extrainfoCheckbox && extrainfoCheckbox.checked) {
-    let capital = data.properties.capital || "";
-    let continent = data.properties.continent || "";
+function updateExtraInfo(info) {
+  if (extrainfoCheckbox && extrainfoCheckbox.checked && info) {
+    let capital = info.capital || "";
+    let continent = info.continent || "";
     let infoArray = [];
     if (capital) {
       infoArray.push(`Capital: ${capital}`);
@@ -352,7 +364,7 @@ function handleInteraction(element, data, info) {
         setTimeout(() => {
           nameTextEl.textContent = countryName;
           updateFlag(info, countryName);
-          updateExtraInfo(data);
+          updateExtraInfo(info);
           nameDisplayEl.classList.add("show");
           speaker();
         }, 10);
