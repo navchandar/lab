@@ -20,7 +20,20 @@ python company_data_parser.py
 
 ## Disclaimer:
 
-- Data is approximate. This is periodically updated but may not be accurate.
+This repository is an independent, non-commercial research project. It functions as a data aggregator, collecting publicly available information from different sites and financial market data providers. We make no representations or warranties regarding the accuracy, completeness, timeliness, or reliability of the information provided. Users are encouraged to verify all information directly with the respective companies or official sources.
+
+### Non-Affiliation & Trademarks
+
+The names, logos, and trademarks of the companies displayed are the property of their respective owners. Their appearance on this platform does not imply any affiliation with, endorsement by, or partnership with the creators/maintainers of this project.
+
+### Data Integrity & Financial Notice
+
+All metrics, including employee counts and growth trends, are approximate estimates derived from third-party snapshots. Financial tickers and performance data are delayed and provided solely for research purposes. This is NOT financial or career advice.
+
+### Intellectual Property & Takedown Policy
+
+We respect intellectual property rights. If you are a representative of a company listed here and wish to request a data correction or the removal of your company profile from this research dashboard, please
+contact the project maintainer via https://github.com/navchandar/lab/issues
 
 ## Support This Project
 

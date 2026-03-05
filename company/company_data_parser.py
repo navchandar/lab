@@ -304,15 +304,11 @@ class CompanyParser:
             # Headcount Parsing
             size_div = soup.find("div", {"data-test-id": "about-us__size"})
             if size_div and (dd := size_div.find("dd")):
-                company["employee_count"] = CompanyParser.get_employee_count(
-                    dd.get_text()
-                )
+                company["emp_count"] = CompanyParser.get_employee_count(dd.get_text())
 
             cta_span = soup.find("span", {"data-test-id": "view-all-employees-cta"})
             if cta_span and (p := cta_span.find("p")):
-                company["ln_employee_count"] = CompanyParser.get_employee_count(
-                    p.get_text()
-                )
+                company["ln_count"] = CompanyParser.get_employee_count(p.get_text())
 
             # Organization Type (Public/Private)
             org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
@@ -428,14 +424,14 @@ class DataCoordinator:
 
         for item in new_batch:
             handle = LnSearch.get_handle(item.get("linkedin"))
-            ln_count = item.get("ln_employee_count")
+            ln_count = item.get("ln_count")
 
             # Log History & Calculate Trends
             if handle and ln_count and ln_count.isdigit():
                 GrowthAnalytics.log_headcount(handle, int(ln_count))
-                item["growth_30d"] = GrowthAnalytics.get_trend(handle, 30)
-                item["growth_90d"] = GrowthAnalytics.get_trend(handle, 90)
-                item["growth_365d"] = GrowthAnalytics.get_trend(handle, 365)
+                item["Δ_30d"] = GrowthAnalytics.get_trend(handle, 30)
+                item["Δ_90d"] = GrowthAnalytics.get_trend(handle, 90)
+                item["Δ_365d"] = GrowthAnalytics.get_trend(handle, 365)
 
             # Merge
             name = item["name"]
@@ -448,8 +444,8 @@ class DataCoordinator:
 
         # Sorting logic: Descending count (NaNs at end), Ascending Name
         def sort_logic(x):
-            cnt = x.get("employee_count")
-            ln_cnt = x.get("ln_employee_count")
+            cnt = x.get("emp_count")
+            ln_cnt = x.get("ln_count")
             # count is either a range "5001-10000", a single number "10000", or missing
             if not cnt:
                 # Treat missing counts as smallest

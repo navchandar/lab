@@ -581,8 +581,8 @@ function normalizeEmployeeSize(countStr) {
 }
 
 function determineBestSize(item) {
-  const lnCount = parseInt(item.ln_employee_count) || 0;
-  const rangeStr = item.employee_count || "0-0";
+  const lnCount = parseInt(item.ln_count) || 0;
+  const rangeStr = item.emp_count || "0-0";
   const rangeParts = rangeStr.split(/[-+]/);
   const rangeMin = parseInt(rangeParts[0]) || 0;
 
