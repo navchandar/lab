@@ -82,6 +82,10 @@
         .sparkline {
           filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
         }
+
+        .sparkline-wrapper:hover .sparkline {
+          filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+        }
       }
 
       * {
@@ -219,7 +223,7 @@
 
       /* Employees */
       #companyTable th:nth-child(2) {
-        width: 10% !important;
+        width: 15% !important;
       }
 
       /* Website */
@@ -475,6 +479,7 @@
       footer {
         padding: 10px 5px 0px 5px;
         color: var(--text-muted);
+        font-size: smaller;
         line-height: 1.8;
         text-align: center;
       }
@@ -490,68 +495,151 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        width: 100%;
+        width: 95%;
       }
 
       .sparkline-wrapper {
         display: flex;
+        flex-shrink: 0;
         align-items: center;
-        width: 50px;
-        height: 25px;
+        padding: 0 4px;
+        width: 45px;
       }
 
       .sparkline {
         /* Adds a subtle glow based on the stroke color */
-        filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.3));
+        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+        transition: filter 0.3s ease;
         width: 100%;
         height: 100%;
         overflow: visible;
       }
 
+      .sparkline-wrapper:hover .sparkline {
+        filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.5));
+      }
+
+      .dataTables_filter input,
+      #empFilter,
+      .dataTables_length select {
+        margin: 5px 0;
+        border-radius: 10px !important;
+        height: 32px;
+        font-size: 15px !important;
+      }
+
       /* Mobile view style*/
       @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        header {
+          margin-bottom: 0;
+        }
+
         h1 {
-          display: none;
-          font-size: 1.8rem;
-        }
-
-        .table-card {
-          padding: 12px;
-        }
-
-        #companyTable {
-          table-layout: auto;
-        }
-
-        #companyTable th:nth-child(6),
-        #companyTable td:nth-child(6) {
-          display: none;
-        }
-
-        #companyTable td {
-          padding: 8px 4px;
-          font-size: 13px;
-        }
-
-        .dataTables_wrapper .dataTables_filter {
-          margin: 0 !important;
-        }
-
-        .dataTables_filter input {
-          width: 200px !important;
-        }
-
-        .emp-filter-wrapper select {
-          margin-left: 0;
-          width: 100%;
+          margin-bottom: 10px;
+          font-size: 1.5rem;
         }
 
         .top-wrapper {
-          justify-content: center;
+          flex-direction: column;
+          /* Stack search and filters */
+          align-items: stretch;
+          gap: 10px;
         }
 
-        table.dataTable tbody td:nth-child(1) {
-          max-width: 200px;
+        /* Make Search and Filter full width on mobile */
+        .dataTables_filter,
+        .emp-filter-wrapper,
+        .dataTables_length {
+          margin: 0 !important;
+          border-radius: 8px !important;
+          width: 100%;
+          font-size: 13px !important;
+        }
+
+        input {
+          margin-left: 0 !important;
+          border-radius: 8px !important;
+          width: 100% !important;
+          font-size: 13px !important;
+        }
+
+        select {
+          border-radius: 8px !important;
+          font-size: 13px !important;
+        }
+
+        .emp-filter-wrapper {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 5px;
+        }
+
+        #empFilter {
+          width: 100%;
+        }
+
+        /* Table Adjustments */
+        .table-card {
+          border-radius: 12px;
+          padding: 10px;
+        }
+
+        table.dataTable tbody td {
+          padding: 5px !important;
+        }
+
+        #companyTable th {
+          padding: 5px !important;
+        }
+
+        /* Hide non-essential columns on very small screens */
+        label[for="empFilter"],
+        #companyTable th:nth-child(3),
+        #companyTable td:nth-child(3),
+        #companyTable th:nth-child(6),
+        #companyTable td:nth-child(6) {
+          display: none !important;
+        }
+
+        .public-icon {
+          border-radius: 5px;
+          width: 30px;
+          height: 30px;
+        }
+
+        .emp-cell {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 4px;
+        }
+
+        .sparkline-wrapper {
+          padding: 0;
+          width: 60px;
+          height: 18px;
+        }
+
+        .emp-cell span {
+          font-weight: 600;
+          font-size: 0.85rem;
+        }
+
+        /* Footer Refinement */
+        footer {
+          padding: 20px 10px;
+          font-size: 0.8rem;
+        }
+
+        .footer-links {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 10px;
         }
       }
     </style>
@@ -655,19 +743,21 @@
         >
           GitHub
         </a>
-        | Copyright &copy; <span id="year"></span> Naveenchandar.<br />
+        | Copyright &copy; <span id="year"></span> Naveenchandar
+      </p>
+      <div class="footer-links">
         <small>
           This work is licensed under the
           <a
             href="https://github.com/navchandar/lab/blob/main/LICENSE"
             target="_blank"
-            rel="noopener noreferrer license"
           >
-            GNU GPLv3 </a
-          >.
+            GNU GPLv3
+          </a>
         </small>
-        | <a href="#" id="openDisclaimerModal">Disclaimer</a>
-      </p>
+        <span class="text-muted">|</span>
+        <a href="#" id="openDisclaimerModal">Disclaimer</a>
+      </div>
     </footer>
 
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>

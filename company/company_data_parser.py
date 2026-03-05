@@ -222,6 +222,46 @@ class GrowthAnalytics:
             return None
 
     @staticmethod
+    def generate_sparkline_svg(item: Dict) -> Optional[str]:
+        """Generates a compact, theme-aware SVG sparkline string."""
+        # Get trends: [Yearly, 90d, 30d]
+        points_raw = [item.get("Δ_365d"), item.get("Δ_90d"), item.get("Δ_30d")]
+
+        # If no data is available for all, return None
+        if not any(p is not None for p in points_raw):
+            return None
+
+        # Get the company handle to create a unique Gradient ID
+        handle = LnSearch.get_handle(item.get("linkedin", "gen")) or str(
+            random.randint(0, 999)
+        )
+        grad_id = f"grad-{handle}"
+
+        points = [p if p is not None else 0.0 for p in points_raw]
+
+        def normalize(val) -> int:
+            return max(0, min(20, 10 - (val / 5)))
+
+        coords = [f"{i * 20},{normalize(p)}" for i, p in enumerate(points)]
+        path_data = "M " + " L ".join(coords)
+
+        # Determine colors for each stop in the gradient
+        # Left (365d), Middle (90d), Right (30d)
+        colors = ["#22c55e" if (p or 0) >= 0 else "#ef4444" for p in points]
+
+        return f"""<svg class='sparkline' viewBox='0 0 40 20' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'>
+                    <defs>
+                    <linearGradient id='{grad_id}' x1='0%' y1='0%' x2='100%' y2='0%'>
+                        <stop offset='0%' stop-color='{colors[0]}' />
+                        <stop offset='50%' stop-color='{colors[1]}' />
+                        <stop offset='100%' stop-color='{colors[2]}' />
+                    </linearGradient>
+                    </defs>
+                    <path d='{path_data}' fill='none' stroke='url(#{grad_id})' 
+                    stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>
+                </svg>"""
+
+    @staticmethod
     def _load_history_file():
         if HISTORY_FILE.exists():
             with open(HISTORY_FILE, "r") as f:
@@ -296,7 +336,7 @@ class CompanyParser:
                         link = f"https://{link}"
                     if not link or len(link) < 12:
                         logger.error(f"Invalid website: '{link}'")
-                        link == ""
+                        link = ""
                     if link:
                         company["website"] = link
                     break
@@ -432,6 +472,7 @@ class DataCoordinator:
                 item["Δ_30d"] = GrowthAnalytics.get_trend(handle, 30)
                 item["Δ_90d"] = GrowthAnalytics.get_trend(handle, 90)
                 item["Δ_365d"] = GrowthAnalytics.get_trend(handle, 365)
+                item["sparkline"] = GrowthAnalytics.generate_sparkline_svg(item)
 
             # Merge
             name = item["name"]

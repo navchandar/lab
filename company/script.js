@@ -1,6 +1,9 @@
 document.getElementById("year").textContent = new Date().getFullYear();
 const loadingSpinner = document.getElementById("loadingSpinner");
 
+// Check if the screen width is mobile-sized
+const isMobile = () => window.innerWidth <= 768;
+
 // HELPER: Generate Public/Private Icons with Financial Links
 function getStatusIcon(isPublic, ticker) {
   const icon = isPublic ? "💹" : "🏢";
@@ -100,6 +103,25 @@ function setupDisclaimer() {
   });
 }
 
+// HELPER: Build a dynamic tooltip string for growth trends
+function getGrowthTitle(item) {
+  const parts = [];
+
+  // Check each value and add to the list if it's not null
+  if (item["Δ_30d"] !== null) {
+    parts.push(`30d: ${item["Δ_30d"]}%`);
+  }
+  if (item["Δ_90d"] !== null) {
+    parts.push(`90d: ${item["Δ_90d"]}%`);
+  }
+  if (item["Δ_365d"] !== null) {
+    parts.push(`1yr: ${item["Δ_365d"]}%`);
+  }
+
+  // Join the existing parts with a separator, or return a default
+  return parts.length > 0 ? `Growth Trend | ${parts.join(" • ")}` : "";
+}
+
 async function loadData() {
   const tableBody = document.getElementById("tableBody");
   try {
@@ -160,11 +182,21 @@ async function loadData() {
         );
         console.error(error);
       }
+
+      const tooltipText = getGrowthTitle(item);
+      const sparklineHtml = item.sparkline
+        ? `<div class="sparkline-wrapper" title="${tooltipText}">${item.sparkline}</div>`
+        : ``;
+
       // Build Row with data
       const row = document.createElement("tr");
       row.innerHTML = `
               <td title="${item.name}"><strong>${item.name}</strong></td>
-              <td data-order="${sortRank}">${displayCount}</td>
+              <td data-order="${sortRank}"><div class="emp-cell">
+                  <span>${displayCount}</span>
+                  ${sparklineHtml}
+              </div>
+              </td>
               <td>${item.website ? `<a href="${item.website}" target="_blank">${domain}</a>` : "-"}</td>
               <td class="text-center">${getLinkedInIcon(linkedin_link)}</td>
               <td class="text-center" data-search="${status}">${getStatusIcon(item.public, item.ticker)}</td>
@@ -207,7 +239,7 @@ async function loadData() {
       autoWidth: false,
       dom: '<"top-wrapper"lf>rtip',
       language: {
-        search: "Search:",
+        search: isMobile() ? "" : "Search",
         searchPlaceholder: "Company name",
         lengthMenu: "Show _MENU_ companies",
         info: "Showing _START_ to _END_ of _TOTAL_ companies",
