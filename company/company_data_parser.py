@@ -175,14 +175,14 @@ class GrowthAnalytics:
 
         records = history.get(handle, [])
         # Update if exists for today, else append
-        existing = next((r for r in records if r["date"] == today), None)
+        existing = next((r for r in records if r["d"] == today), None)
         if existing:
-            existing["count"] = count
+            existing["c"] = count
         else:
-            records.append({"date": today, "count": count})
+            records.append({"d": today, "c": count})
 
         # Retention & Sorting
-        history[handle] = sorted(records, key=lambda x: x["date"])[-RETENTION_DAYS:]
+        history[handle] = sorted(records, key=lambda x: x["d"])[-RETENTION_DAYS:]
         GrowthAnalytics._save_history_file(history)
 
     @staticmethod
@@ -200,20 +200,20 @@ class GrowthAnalytics:
             past = min(
                 history,
                 key=lambda x: abs(
-                    (datetime.strptime(x["date"], "%Y-%m-%d") - target_date).days
+                    (datetime.strptime(x["d"], "%Y-%m-%d") - target_date).days
                 ),
             )
             days_diff = (
-                datetime.strptime(latest["date"], "%Y-%m-%d")
-                - datetime.strptime(past["date"], "%Y-%m-%d")
+                datetime.strptime(latest["d"], "%Y-%m-%d")
+                - datetime.strptime(past["d"], "%Y-%m-%d")
             ).days
 
-            if days_diff < (days * 0.8) or latest["count"] < MIN_GROWTH_THRESHOLD:
+            if days_diff < (days * 0.8) or latest["c"] < MIN_GROWTH_THRESHOLD:
                 return None
 
-            change = latest["count"] - past["count"]
+            change = latest["c"] - past["c"]
             # Noise Filter: Ignore changes < 3 people or < 0.5%
-            growth = (change / past["count"]) * 100
+            growth = (change / past["c"]) * 100
             if abs(change) < 3 or abs(growth) < 0.5:
                 return 0.0
 
