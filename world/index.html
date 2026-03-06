@@ -51,12 +51,12 @@
 
     <meta
       name="theme-color"
-      content="#87ceeb"
+      content="#005983"
       media="(prefers-color-scheme: light)"
     />
     <meta
       name="theme-color"
-      content="#001f3f"
+      content="#011721"
       media="(prefers-color-scheme: dark)"
     />
 
@@ -94,6 +94,10 @@
           --country-active2: #bd5f0d;
           --panel-bg: rgba(0, 0, 0, 0.8);
           --map-shadow: drop-shadow(1px 5px 1px rgba(0, 0, 0, 1));
+        }
+
+        .extra-info {
+          color: #ccc;
         }
       }
 
@@ -207,7 +211,7 @@
       /* The central Earth with a gentle pulse */
       .earth-circle {
         z-index: 2;
-        animation: earth-pulse 2s ease-in-out infinite;
+        animation: earth-pulse 3s ease-in-out infinite;
         font-size: 5rem;
         text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
       }
@@ -215,13 +219,13 @@
       /* The invisible ring that handles the rotation */
       .orbit {
         position: absolute;
-        z-index: 1;
+        z-index: 3;
         /* Pure mathematical rotation - no frames! */
         animation: smooth-rotate 3s linear infinite;
         border-radius: 50%;
-        width: 120px;
         /* Slightly larger than the Earth */
-        height: 120px;
+        width: 130px;
+        height: 130px;
       }
 
       /* The little icon traveling around the world */
@@ -258,7 +262,7 @@
       }
 
       .loading-text {
-        animation: text-pulse 1.5s ease-in-out infinite;
+        animation: text-pulse 3s ease-in-out infinite;
         margin-top: 30px;
         color: var(--text-color);
         font-weight: 700;
@@ -306,7 +310,7 @@
       .country {
         vector-effect: non-scaling-stroke;
         transition:
-          transform 2s ease-in,
+          transform 1s ease-in,
           fill 0.3s ease,
           stroke 0.3s ease,
           opacity 1s ease-in-out;
@@ -327,13 +331,6 @@
         fill: url(#activeGradient) !important;
         stroke: #000000;
         stroke-width: 0.5px;
-      }
-
-      /* Nigt mode */
-      @media (prefers-color-scheme: dark) {
-        .extra-info {
-          color: #ccc;
-        }
       }
 
       /* Mobile adjustments */

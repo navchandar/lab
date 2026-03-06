@@ -206,20 +206,25 @@ function monitorIframeBackgroundColor() {
     return;
   }
   iframe.dataset.themeSyncInit = "1";
-
+  let debounceTimer = null;
   // Schedule update AFTER iframe click handlers complete (next tick)
   // Optimization: Use requestAnimationFrame for UI updates instead of setTimeout
   const scheduleUpdate = (() => {
     let scheduled = false;
+    clearTimeout(debounceTimer);
     return () => {
       if (scheduled) {
         return;
       }
       scheduled = true;
-      requestAnimationFrame(() => {
-        scheduled = false;
-        updateThemeColorFromIframe();
-      });
+      // Set a new timer for 100ms
+      debounceTimer = setTimeout(() => {
+        // Use requestAnimationFrame for the actual DOM write for smoothness
+        requestAnimationFrame(() => {
+          scheduled = false;
+          updateThemeColorFromIframe();
+        });
+      }, 100);
     };
   })();
 
@@ -439,7 +444,6 @@ const collapseSidebar = () => {
  */
 const uncollapseSidebar = () => {
   console.log("Uncollapsing sidebar and showing header.");
-
   sidebar.classList.remove("collapsed");
   sidebar.classList.add("overlay");
   hamburger.classList.toggle("menu-open");
@@ -449,13 +453,20 @@ const uncollapseSidebar = () => {
     header.style.display = "block";
     sidebar.style.paddingTop = "0em";
   }
+  // Ensure focus leaves the iframe
+  window.focus();
 };
 
 function toggleHamburgerMenu() {
+  const isOpening = sidebar.classList.contains("collapsed");
   sidebar.classList.toggle("overlay");
   sidebar.classList.toggle("collapsed");
   hamburger.classList.toggle("menu-open");
   updateHamburger();
+  // If we are opening the menu, pull focus back to the main page
+  if (isOpening) {
+    hamburger.focus();
+  }
 }
 
 function updateHamburger() {
@@ -519,7 +530,7 @@ function initializeAppUI() {
       setTimeout(() => {
         iframe.focus();
         iframe.dataset.themeSyncInit = 0;
-      }, 300);
+      }, 200);
     });
   });
 

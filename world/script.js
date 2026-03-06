@@ -87,6 +87,21 @@ function updateGradientPos(event, gradientId) {
     .attr("fy", my);
 }
 
+function hideLoading() {
+  const loadingScreen = document.getElementById("loading-screen");
+  if (loadingScreen) {
+    loadingScreen.style.opacity = "0";
+    loadingScreen.style.visibility = "hidden";
+    // remove it from the layout after the fade finishes
+    setTimeout(() => {
+      loadingScreen.style.display = "none";
+    }, 500);
+    intervalID = setTimeout(() => {
+      nameDisplayEl.classList.remove("show");
+    }, 3000);
+  }
+}
+
 // Set up limited Zoom and Pan
 const zoom = d3
   .zoom()
@@ -122,19 +137,9 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
       topoData,
       topoData.objects.countries,
     ).features;
+
     // --- HIDE THE LOADING SCREEN ---
-    const loadingScreen = document.getElementById("loading-screen");
-    if (loadingScreen) {
-      loadingScreen.style.opacity = "0";
-      loadingScreen.style.visibility = "hidden";
-      // remove it from the layout after the fade finishes
-      setTimeout(() => {
-        loadingScreen.style.display = "none";
-      }, 500);
-      intervalID = setTimeout(() => {
-        nameDisplayEl.classList.remove("show");
-      }, 3000);
-    }
+    hideLoading();
 
     g.selectAll("path")
       .data(countries)
@@ -158,8 +163,8 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
           el.classed("hovering", true);
 
           // Animate the opacity of the gradient stops to fade it in
-          hoverStop1.transition().duration(50).attr("stop-opacity", 1);
-          hoverStop2.transition().duration(100).attr("stop-opacity", 1);
+          hoverStop1.transition().duration(100).attr("stop-opacity", 1);
+          hoverStop2.transition().duration(200).attr("stop-opacity", 1);
         }
       })
       .on("pointerout", function () {
@@ -171,12 +176,12 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
         el.classed("hovering", false);
 
         // Fade the shared gradient out
-        hoverStop1.transition().duration(100).attr("stop-opacity", 0.75);
-        hoverStop2.transition().duration(100).attr("stop-opacity", 0.75);
+        hoverStop1.transition().duration(50).attr("stop-opacity", 0.75);
+        hoverStop2.transition().duration(50).attr("stop-opacity", 0.75);
 
         // Using setTimeout securely locks the context to THIS specific country path
         setTimeout(() => {
-          // Double check that the user didn't re-hover or click during the 300ms fade
+          // Double check that the user didn't re-hover or click during the fade
           if (!el.classed("hovering") && !el.classed("active")) {
             el.style("fill", null); // Remove the url(#hoverGradient)
           }
@@ -216,9 +221,9 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
           .interrupt() // Stop any current animation
           .attr("r", "0%")
           .transition()
-          .duration(800)
+          .duration(500)
           .ease(d3.easeCubicOut)
-          .attr("r", "150%");
+          .attr("r", "120%");
 
         const countryId = String(d.id).padStart(3, "0");
         const info = countryData[countryId];
@@ -227,16 +232,13 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
       })
       // ANIMATION LOGIC ---
       .transition() // Tell D3 to animate the next changes
-      .duration(200) // Each country takes 200ms to fully fade in
+      .duration(250) // Each country takes 200ms to fully fade in
       .delay((d, i) => i * 5) // Stagger them: index * 5 milliseconds
       .style("opacity", 1); // End state: fully visible
   })
   .catch((err) => {
     // --- Hide on error and Display error message ---
-    const loadingScreen = document.getElementById("loading-screen");
-    if (loadingScreen) {
-      loadingScreen.style.display = "none";
-    }
+    hideLoading();
     console.error("Error loading map data:", err);
     nameDisplayEl.textContent =
       "Oops! Map couldn't load. Try refeshing the page!";
@@ -300,9 +302,9 @@ function getTransitionDuration(targetX, targetY, targetScale) {
 
   const distance = Math.sqrt(dx * dx + dy * dy) + dk;
 
-  // Minimum 800ms, Maximum 2500ms
+  // Minimum 500ms, Maximum 1500ms
   // This makes long jumps feel cinematic and short jumps feel snappy
-  return Math.max(800, Math.min(2500, distance * 0.8));
+  return Math.max(500, Math.min(1500, distance * 0.8));
 }
 
 function handleInteraction(element, data, info) {
@@ -326,7 +328,7 @@ function handleInteraction(element, data, info) {
 
   // Dynamic Padding: Countries should take up more of the screen on mobile
   // 0.7 means it fills 70% of the screen, 0.4 means 40%
-  const paddingFactor = isMobileSize ? 0.7 : 0.4;
+  const paddingFactor = isMobileSize ? 0.8 : 0.5;
 
   // Calculate the perfect scale based on dynamic variables
   const scale = Math.max(
@@ -369,7 +371,7 @@ function handleInteraction(element, data, info) {
           speaker();
         }, 10);
       });
-  }, 800);
+  }, 400);
 }
 
 // --- Reset Zoom Logic ---

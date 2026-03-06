@@ -31,11 +31,6 @@ const forceFocus = () => {
 
 forceFocus(); // Initial focus
 
-// Re-focus on blur
-input.addEventListener("blur", () => {
-  setTimeout(forceFocus, 10);
-});
-
 // Click anywhere to focus
 document.addEventListener("click", forceFocus);
 

@@ -2,8 +2,8 @@
 #muteButton {
     display: flex;
     position: fixed;
-    bottom: 20px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    bottom: 30px;
+    bottom: calc(30px + env(safe-area-inset-bottom)) !important;
     left: 20px;
     justify-content: center;
     align-items: center;
@@ -29,8 +29,8 @@
 #fullscreen-btn {
     position: fixed;
     right: 20px;
-    bottom: 20px;
-    bottom: calc(20px + env(safe-area-inset-bottom));
+    bottom: 30px;
+    bottom: calc(30px + env(safe-area-inset-bottom)) !important;
     z-index: 999;
     transition: transform 0.3s ease;
     cursor: pointer;
@@ -230,7 +230,7 @@ input[type="checkbox"] {
 @media (max-width: 767px) {
     #muteButton {
         bottom: 20px;
-        bottom: calc(30px + env(safe-area-inset-bottom));
+        bottom: calc(35px + env(safe-area-inset-bottom)) !important;
         left: 10px;
         width: 40px;
         height: 40px;
@@ -240,7 +240,7 @@ input[type="checkbox"] {
     #fullscreen-btn {
         right: 10px;
         bottom: 20px;
-        bottom: calc(30px + env(safe-area-inset-bottom));
+        bottom: calc(35px + env(safe-area-inset-bottom)) !important;
         font-size: 1.2em;
     }
 
