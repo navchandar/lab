@@ -52,7 +52,7 @@
     />
     <meta
       name="theme-color"
-      content="#121212"
+      content="#1a1a2e"
       media="(prefers-color-scheme: dark)"
     />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -67,13 +67,32 @@
         --bg-color: #ffffff;
         --text-color: #121212;
         --caret-color: #121212;
+        --text-gradient: linear-gradient(
+          to right,
+          #ffadad,
+          #ffd6a5,
+          #fdffb6,
+          #caffbf,
+          #9bf6ff,
+          #a0c4ff,
+          #bdb2ff,
+          #ffc6ff
+        );
       }
 
       @media (prefers-color-scheme: dark) {
         :root {
-          --bg-color: #121212;
+          --bg-color: #1a1a2e;
           --text-color: #e0e0e0;
-          --caret-color: #e0e0e0;
+          --caret-color: #ff99c8;
+          --text-gradient: linear-gradient(
+            to right,
+            #ee79b0c2,
+            #fcf6bde5,
+            #d0f4ded3,
+            #a9def9da,
+            #e4c1f9db
+          );
         }
       }
 
@@ -111,18 +130,7 @@
         border: none;
         background: transparent;
         /* Define the Gradient */
-        background-image: linear-gradient(
-          to right,
-          #ffadad,
-          #ffd6a5,
-          #fdffb6,
-          #caffbf,
-          #9bf6ff,
-          #a0c4ff,
-          #bdb2ff,
-          #ffc6ff
-        );
-
+        background-image: var(--text-gradient);
         /* Make the background fill the text */
         background-size: 400% 400%; /* Large size for smooth movement */
         width: 90vw;
@@ -131,7 +139,7 @@
         color: var(--text-color);
         caret-color: var(--caret-color);
         font-weight: 700;
-        font-size: clamp(15vh, 40vw, 30dvh);
+        font-size: clamp(15vh, 30vw, 30dvh);
         font-family:
           "Lexend", "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif;
         text-align: center;
@@ -144,7 +152,10 @@
       }
 
       #big-input.hide-caret {
+        margin-top: 2rem;
+        margin-bottom: 6rem;
         caret-color: transparent;
+        font-size: clamp(15vh, 40vw, 45dvh);
       }
 
       .typing-title {
@@ -241,7 +252,7 @@
 
         #big-input {
           margin-bottom: 0;
-          font-size: 25dvh;
+          font-size: 34dvh;
         }
       }
     </style>
