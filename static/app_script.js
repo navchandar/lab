@@ -95,6 +95,42 @@ function showUpdateNotification() {
   }
 }
 
+/* Remove active link highlighted in the sidebar */
+function removeActiveLinksInSidebar() {
+  if (!appLinks) {
+    appLinks = document.querySelectorAll("#app-links li a");
+  }
+  if (appLinks) {
+    appLinks.forEach((l) => l.parentElement.classList.remove("active"));
+  } else {
+    console.warn("Sidebar links not found!");
+  }
+}
+
+/* Make link highlighted in the sidebar */
+function activateLinkInSidebar(link) {
+  if (link && link.parentElement) {
+    const activeItem = link.parentElement;
+    activeItem.classList.add("active");
+  } else {
+    console.warn("Sidebar link not found!");
+  }
+}
+
+function scrollToActiveSidebarItem() {
+  // Find the parent <li> that currently has the "active" class
+  const activeListItem = document.querySelector("#app-links li.active");
+  // If it exists, scroll to it
+  if (activeListItem) {
+    activeListItem.scrollIntoView({
+      behavior: "auto",
+      block: "nearest", // Only scrolls if it's actually off-screen
+    });
+  } else {
+    console.warn("No Active Sidebar link found!");
+  }
+}
+
 /**
  * Creates and displays an update notification, attaching the necessary event listeners.
  */
@@ -371,7 +407,7 @@ function handlePopState() {
   if (!targetSrc) {
     iframe.setAttribute("src", "");
     uncollapseSidebar();
-    appLinks.forEach((l) => l.parentElement.classList.remove("active"));
+    removeActiveLinksInSidebar();
     return;
   }
 
@@ -455,6 +491,7 @@ const uncollapseSidebar = () => {
   }
   // Ensure focus leaves the iframe
   window.focus();
+  scrollToActiveSidebarItem();
 };
 
 function toggleHamburgerMenu() {
@@ -482,6 +519,31 @@ function updateHamburger() {
   }
 }
 
+function updateIframeContent(link) {
+  const iframe = document.getElementById("appFrame");
+  const href = toCanonicalRoute(link.getAttribute("href"));
+
+  // The link is already active and loaded
+  if (iframe.getAttribute("src") === href) {
+    console.log(`Already loaded ${href} in iframe`);
+    return;
+  }
+
+  console.log(`Loading ${href} in iframe`);
+  safeSetIframeSrc(href);
+
+  const newHash = toHash(href); // e.g., #app-name
+  if (window.location.hash !== newHash) {
+    // Update the address bar and create a history entry
+    window.location.hash = newHash;
+  }
+
+  setTimeout(() => {
+    iframe.focus();
+    iframe.dataset.themeSyncInit = 0;
+  }, 200);
+}
+
 function initializeAppUI() {
   const iframe = document.getElementById("appFrame");
   appLinks = document.querySelectorAll("#app-links li a");
@@ -505,32 +567,10 @@ function initializeAppUI() {
   appLinks.forEach((link) => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
+      removeActiveLinksInSidebar();
+      activateLinkInSidebar(link);
       collapseSidebar();
-
-      const href = toCanonicalRoute(link.getAttribute("href"));
-
-      // The link is already active and loaded
-      if (iframe.getAttribute("src") === href) {
-        console.log(`Already loaded ${href} in iframe`);
-        return;
-      }
-
-      console.log(`Loading ${href} in iframe`);
-      safeSetIframeSrc(href);
-
-      const newHash = toHash(href); // e.g., #app-name
-      if (window.location.hash !== newHash) {
-        // Update the address bar and create a history entry
-        window.location.hash = newHash;
-      }
-
-      appLinks.forEach((l) => l.parentElement.classList.remove("active"));
-      link.parentElement.classList.add("active");
-
-      setTimeout(() => {
-        iframe.focus();
-        iframe.dataset.themeSyncInit = 0;
-      }, 200);
+      updateIframeContent(link);
     });
   });
 
