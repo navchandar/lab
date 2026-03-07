@@ -110,6 +110,21 @@
         outline: none;
         border: none;
         background: transparent;
+        /* Define the Gradient */
+        background-image: linear-gradient(
+          to right,
+          #ffadad,
+          #ffd6a5,
+          #fdffb6,
+          #caffbf,
+          #9bf6ff,
+          #a0c4ff,
+          #bdb2ff,
+          #ffc6ff
+        );
+
+        /* Make the background fill the text */
+        background-size: 400% 400%; /* Large size for smooth movement */
         width: 90vw;
         height: auto;
         max-height: 50%;
@@ -121,11 +136,15 @@
           "Lexend", "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif;
         text-align: center;
         text-transform: uppercase;
+        -webkit-background-clip: text;
+        animation: gradient-move 8s ease infinite;
+        background-clip: text;
+        /* Make original text transparent so gradient shows through */
+        -webkit-text-fill-color: transparent;
       }
 
       #big-input.hide-caret {
         caret-color: transparent;
-        text-shadow: 0 0 0 var(--text-color);
       }
 
       .typing-title {
@@ -145,7 +164,7 @@
         color: var(--text-color);
         font-size: 2rem;
         font-family: "Lexend", sans-serif;
-        letter-spacing: 2px;
+        letter-spacing: 5px;
         text-transform: uppercase;
         white-space: nowrap;
       }
@@ -187,9 +206,30 @@
         }
       }
 
+      /* The Animation for the shifting colors */
+      @keyframes gradient-move {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
       /* toggle via JS to trigger animation */
       .animate-pop {
-        animation: popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        animation:
+          popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+          gradient-move 8s ease infinite;
+      }
+
+      #big-input::selection {
+        background: rgba(189, 178, 255, 0.3); /* Subtle purple tint */
+        -webkit-text-fill-color: var(--text-color);
+        /* Fallback to solid color on select */
       }
 
       /* Mobile style*/
