@@ -217,32 +217,32 @@
 
       /* Specific widths for each column */
       /* Company Name */
-      #companyTable th:nth-child(1) {
+      th:nth-child(1) {
         width: 40% !important;
       }
 
       /* Employees */
-      #companyTable th:nth-child(2) {
+      th:nth-child(2) {
         width: 15% !important;
       }
 
       /* Website */
-      #companyTable th:nth-child(3) {
+      th:nth-child(3) {
         width: 20% !important;
       }
 
       /* LinkedIn */
-      #companyTable th:nth-child(4) {
+      th:nth-child(4) {
         width: 10% !important;
       }
 
       /* Status/ Type */
-      #companyTable th:nth-child(5) {
+      th:nth-child(5) {
         width: 10% !important;
       }
 
       /* Updated Date */
-      #companyTable th:nth-child(6) {
+      th:nth-child(6) {
         width: 15% !important;
       }
 
@@ -334,6 +334,10 @@
         width: 40px;
         height: 40px;
         font-size: 1.4em;
+      }
+
+      .no-link {
+        cursor: default;
       }
 
       /* Specific styling for the ticker link */
@@ -437,7 +441,7 @@
 
       .modal-body {
         padding-right: 10px;
-        max-height: 60vh;
+        max-height: 80vh;
         overflow-y: auto;
       }
 
@@ -591,17 +595,31 @@
           padding: 5px !important;
         }
 
-        #companyTable th {
-          padding: 5px !important;
+        th {
+          padding: 10px 2px !important;
+          font-size: smaller;
         }
 
         /* Hide non-essential columns on very small screens */
         label[for="empFilter"],
-        #companyTable th:nth-child(3),
-        #companyTable td:nth-child(3),
-        #companyTable th:nth-child(6),
-        #companyTable td:nth-child(6) {
+        th:nth-child(3),
+        td:nth-child(3),
+        th:nth-child(6),
+        td:nth-child(6) {
           display: none !important;
+        }
+
+        th:nth-child(1) {
+          width: 30% !important;
+        }
+
+        .dataTables_wrapper .dataTables_paginate {
+          font-size: smaller;
+        }
+
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+          margin-right: 5px !important;
+          margin-left: 5px !important;
         }
 
         .public-icon {
@@ -632,7 +650,10 @@
           padding: 20px 10px;
           font-size: 0.8rem;
         }
-
+        .modal-body {
+          max-height: 70vh;
+          font-size: 0.8rem;
+        }
         .footer-links {
           display: flex;
           flex-wrap: wrap;

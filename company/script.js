@@ -24,7 +24,7 @@ function getStatusIcon(isPublic, ticker) {
   }
 
   // Otherwise, just return the icon as a span
-  return `<span class="public-icon" title="${title}">${icon}</span>`;
+  return `<span class="public-icon no-link" title="${title}">${icon}</span>`;
 }
 
 function getLinkedInIcon(link) {

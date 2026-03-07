@@ -73,3 +73,10 @@ input.addEventListener("input", (e) => {
   // Update UI (Animation/Caret)
   updateVisuals();
 });
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", () => {
+    // Set the body height to the actual visible height (minus keyboard)
+    document.body.style.height = `${window.visualViewport.height}px`;
+  });
+}
