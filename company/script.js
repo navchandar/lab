@@ -28,8 +28,8 @@ function getStatusIcon(isPublic, ticker) {
 }
 
 function getLinkedInIcon(link) {
-  return `<a href="${link}" target="_blank" 
-      title="LinkedIn Profile" class="icon icon-link linkedin-icon"></a>`;
+  return `<div class="icon-link ln-icon-container" title="LinkedIn Profile">
+    <a href="${link}" target="_blank" class="icon linkedin-icon"></a></div>`;
 }
 
 function normalizeEmployeeSize(countStr) {

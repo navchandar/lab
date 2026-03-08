@@ -46,4 +46,4 @@ jobs:
         with:
           commit_message: "build: updated company data"
           # Ensure it picks up the JSON file inside the company folder
-          file_pattern: "company/company_data.json company/company_history.json"
+          file_pattern: "company/*.json"

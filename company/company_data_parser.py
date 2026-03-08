@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "company_data.json"
 HISTORY_FILE = BASE_DIR / "company_history.json"
+CHARTS_DATA_FILE = BASE_DIR / "charts_data.json"
 JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 RETENTION_DAYS = 400
@@ -35,12 +36,11 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 
 now = datetime.now()
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
-day_of_month = now.day  # 1 to 31
-# Discovery: Only crawl for NEW companies on Mon, Wed, Fri (0,2,4)
-CHECK_JOB_POSTS = day_of_week in [0, 2, 4]
-# Deep Refresh: Update EVERYTHING less frequently
-REFRESH_ALL = day_of_month in [1, 2, 3, 5, 8, 13, 19, 21, 25, 28, 30]
-logger.info(f"Schedule | Day of Week: {day_of_week}, Day of Month: {day_of_month}")
+# Discovery: Only crawl for NEW companies on Mon, Wed (0,2)
+CHECK_JOB_POSTS = day_of_week in [0, 2]
+# Deep Refresh: Update EVERYTHING during week days
+REFRESH_ALL = day_of_week in [0, 1, 2, 3, 4]
+logger.info(f"Schedule | Day of Week: {day_of_week}")
 logger.info(f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL}")
 
 GEO_IDs = [
@@ -114,7 +114,7 @@ class LnSearch:
         # Exponential Decay - index 0 a weight of 10, and index 1 onwards a weight of 1
         weights = [10 if i == 0 else 1 for i in range(len(GEO_IDs))]
         geo = random.choices(GEO_IDs, weights=weights, k=1)[0]
-        logger.info(f"Searching: {geo}")
+        logger.info(f"Searching in: {geo}")
         for start in range(0, max_range, 25):
             try:
                 params = LnSearch.get_search_params(keyword, start, geo)
@@ -294,6 +294,98 @@ class GrowthAnalytics:
                 </svg>"""
 
     @staticmethod
+    def aggregate_global_history():
+        """Aggregates headcount for all companies into a global daily index."""
+        logger.info("Calculating Global Headcount Index")
+        history = GrowthAnalytics._load_history_file()
+        if not history:
+            return
+        # Use a temporary dict to sum counts by date
+        # key: date string, value: total count
+        global_map = {}
+
+        for handle, records in history.items():
+            # Skip the aggregate key itself if it already exists
+            if handle == "history":
+                continue
+            for entry in records:
+                date = entry.get("d")
+                count = entry.get("c")
+                if date and count:
+                    global_map[date] = global_map.get(date, 0) + count
+
+        # Convert back format: list of {"c": total, "d": date}
+        # Sorted by date ascending
+        sorted_dates = sorted(global_map.keys())
+        global_records = [{"c": global_map[d], "d": d} for d in sorted_dates]
+
+        # Save back to the main history object
+        history["history"] = global_records
+        GrowthAnalytics._save_history_file(history)
+        logger.info(f"Global History Index Updated: {len(global_records)} data points.")
+
+    @staticmethod
+    def generate_market_chart_data():
+        """Calculates global trends using a calendar-based 7-day window to handle irregular runs."""
+        history_file = GrowthAnalytics._load_history_file()
+        raw_history = history_file.get("history", [])
+
+        if len(raw_history) < 2:
+            logger.warning("Insufficient data for charting.")
+            return
+
+        # Pre-parse dates once to avoid repeated string-to-date conversion in the loop
+        parsed_history = []
+        for item in raw_history:
+            try:
+                parsed_history.append(
+                    {
+                        "d_obj": datetime.strptime(item["d"], "%Y-%m-%d"),
+                        "d_str": item["d"],
+                        "c": item["c"],
+                    }
+                )
+            except ValueError:
+                continue
+
+        chart_points = []
+
+        for i, current in enumerate(parsed_history):
+            # Define the 7-day calendar window ending at the current date
+            window_end = current["d_obj"]
+            window_start = window_end - timedelta(days=7)
+
+            # Find all records that fall within this ACTUAL 7-day calendar window
+            # This handles gaps where the script didn't run
+            window_data = [
+                item["c"]
+                for item in parsed_history[: i + 1]
+                if window_start <= item["d_obj"] <= window_end
+            ]
+
+            # Calculate Moving Average (MA)
+            current_ma = sum(window_data) // len(window_data)
+
+            # Calculate % Change vs the previous MA in the sequence
+            pct_change = 0.0
+            if i > 0:
+                prev_ma = chart_points[-1]["ma"]
+                if prev_ma > 0:
+                    # Calculate growth velocity between recorded points
+                    pct_change = round(((current_ma - prev_ma) / prev_ma) * 100, 3)
+
+            chart_points.append(
+                {"d": current["d_str"], "ma": current_ma, "chg": pct_change}
+            )
+
+        try:
+            with open(CHARTS_DATA_FILE, "w") as f:
+                json.dump(chart_points, f, indent=2)
+            logger.info(f"Market chart data updated: {len(chart_points)} points.")
+        except Exception as e:
+            logger.error(f"Failed to save charts_data.json: {e}")
+
+    @staticmethod
     def _load_history_file():
         if HISTORY_FILE.exists():
             with open(HISTORY_FILE, "r") as f:
@@ -412,14 +504,19 @@ class DataCoordinator:
             enriched = CompanyParser.get_company_details(target)
             if enriched:
                 processed.append(enriched)
-                time.sleep(random.uniform(1, 2))
+                time.sleep(random.uniform(0.5, 1.0))
 
             # save periodically
             if (i + 1) % 10 == 0:
                 DataCoordinator._save_to_disk(processed)
                 processed = []
 
+        # Final save for the remaining processed data
         DataCoordinator._save_to_disk(processed)
+        # Calculate the Global Index after all companies are updated
+        GrowthAnalytics.aggregate_global_history()
+        # Generate the frontend-ready chart data
+        GrowthAnalytics.generate_market_chart_data()
 
     @staticmethod
     def _get_target_urls(discovery, refresh) -> List[Dict]:
