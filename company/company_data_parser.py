@@ -27,15 +27,15 @@ DATA_FILE = BASE_DIR / "company_data.json"
 HISTORY_FILE = BASE_DIR / "company_history.json"
 JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
-USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 RETENTION_DAYS = 400
 MIN_GROWTH_THRESHOLD = 25  # Don't calculate trends for very small teams
 avoid_words = ["confidential", "stealth", "secret", "hidden", "study from"]
 guest_job_url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+
 now = datetime.now()
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 day_of_month = now.day  # 1 to 31
-
 # Discovery: Only crawl for NEW companies on Mon, Wed, Fri (0,2,4)
 CHECK_JOB_POSTS = day_of_week in [0, 2, 4]
 # Deep Refresh: Update EVERYTHING less frequently
@@ -43,17 +43,46 @@ REFRESH_ALL = day_of_month in [1, 2, 3, 5, 8, 13, 19, 21, 25, 28, 30]
 logger.info(f"Schedule | Day of Week: {day_of_week}, Day of Month: {day_of_month}")
 logger.info(f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL}")
 
+GEO_IDs = [
+    {"location": "India", "geoId": "102713980"},
+    {"location": "United States", "geoId": "103644278"},
+    {"location": "Germany", "geoId": "101282230"},
+    {"location": "Canada", "geoId": "101174742"},
+    {"location": "California, United States", "geoId": "102095887"},
+    {"location": "San Francisco Bay Area", "geoId": "90000084"},
+    {"location": "Singapore", "geoId": "102454443"},
+    {"location": "Netherlands", "geoId": "102890719"},
+    {"location": "The Randstad, Netherlands", "geoId": "90009706"},
+    {"location": "France", "geoId": "105015875"},
+    {"location": "Spain", "geoId": "105646813"},
+    {"location": "England, United Kingdom", "geoId": "102299470"},
+    {"location": "United Kingdom", "geoId": "101165590"},
+    {"location": "Australia", "geoId": "101452733"},
+    {"location": "Poland", "geoId": "105072130"},
+    {"location": "Portugal", "geoId": "100364837"},
+    {"location": "Barcelona", "geoId": "105088894"},
+    {"location": "Madrid", "geoId": "100994331"},
+    {"location": "Brazil", "geoId": "106057199"},
+    {"location": "Minas Gerais, Brazil", "geoId": "100358611"},
+    {"location": "United Arab Emirates", "geoId": "104305776"},
+    {"location": "Japan", "geoId": "103121230"},
+    {"location": "Egypt", "geoId": "106155005"},
+    {"location": "Vienna, VA", "geoId": "101627305"},
+]
+
 
 class LnSearch:
     """Discover company URLs via LinkedIn Guest Job APIs."""
 
     @staticmethod
-    def get_search_params(keyword: str, start: int) -> Dict[str, str]:
+    def get_search_params(keyword: str, start: int, geo: dict = None) -> Dict[str, str]:
         """Constructs params for the LinkedIn Guest Job API."""
+        if not geo:
+            geo = random.choice(GEO_IDs)
         return {
             "keywords": keyword,
-            "location": "India",
-            "geoId": "102713980",
+            "location": geo["location"],
+            "geoId": geo["geoId"],
             "f_TPR": "r86400",  # 24 hours
             "position": str(start + 1),
             "pageNum": str(start // 25),
@@ -82,10 +111,13 @@ class LnSearch:
     def get_companies(keyword: str, targets: list, seen: set):
         logger.info(f"Starting crawl for keyword: '{keyword}'")
         max_range = 100 if keyword else 500
-
+        # Exponential Decay - index 0 a weight of 10, and index 1 onwards a weight of 1
+        weights = [10 if i == 0 else 1 for i in range(len(GEO_IDs))]
+        geo = random.choices(GEO_IDs, weights=weights, k=1)[0]
+        logger.info(f"Searching: {geo}")
         for start in range(0, max_range, 25):
             try:
-                params = LnSearch.get_search_params(keyword, start)
+                params = LnSearch.get_search_params(keyword, start, geo)
                 resp = requests.get(
                     guest_job_url,
                     params=params,
