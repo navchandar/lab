@@ -287,6 +287,13 @@ async function loadData() {
             </tr>`;
   } finally {
     loadingSpinner.classList.add("spinner-hidden");
+    loadingSpinner.addEventListener(
+      "transitionend",
+      () => {
+        loadingSpinner.style.display = "none";
+      },
+      { once: true },
+    );
     const dataTable = document.querySelector(".table-card");
     // Show the table card regardless of success or failure
     dataTable.style.display = "block";
