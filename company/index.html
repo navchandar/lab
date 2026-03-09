@@ -156,7 +156,7 @@
       }
 
       .spinner-hidden {
-        opacity: 0;
+        opacity: 0 !important;
       }
 
       @keyframes spin {
@@ -187,6 +187,8 @@
         overflow: visible !important;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
+        opacity: 0;
+        transition: opacity 0.5s ease-in;
         background-color: var(--glass-bg);
         min-height: 250px;
       }
