@@ -108,8 +108,7 @@ class LnSearch:
             return None
 
     @staticmethod
-    def get_companies(keyword: str, targets: list, seen: set):
-        logger.info(f"Starting crawl for keyword: '{keyword}'")
+    def get_companies(keyword: str, targets: list, seen: set):  # -> tuple[list, set]:
         max_range = 100 if keyword else 500
         # Exponential Decay - index 0 a weight of 10, and index 1 onwards a weight of 1
         weights = [10 if i == 0 else 1 for i in range(len(GEO_IDs))]
@@ -156,10 +155,11 @@ class LnSearch:
                 logger.info(
                     f"Keyword '{keyword}' at {start}: List is now {len(targets)}"
                 )
-                time.sleep(random.uniform(1.0, 2.0))  # Slightly safer delay
+                time.sleep(random.uniform(0.5, 2.0))
 
             except Exception as e:
                 logger.error(f"Exception during search crawl: {e}")
+                time.sleep(random.uniform(1.0, 3.0))
         return targets, seen
 
 
@@ -408,10 +408,10 @@ class CompanyParser:
     def get_employee_count(text: str) -> Optional[str]:
         """
         Extracts a numeric employee count from text like "5,001 - 10,000 employees" or "10,000+ employees".
-         - For ranges, it returns the full range (e.g. "5001-10000").
-         - For plus counts, it returns the base number (e.g. "10000").
-         - Removes text, commas, and handles various formats robustly.
-         - If no valid number is found, it returns None.
+            - For ranges, it returns the full range (e.g. "5001-10000").
+            - For plus counts, it returns the base number (e.g. "10000").
+            - Removes text, commas, and handles various formats robustly.
+            - If no valid number is found, it returns None.
         """
         if not text:
             return None
@@ -429,7 +429,9 @@ class CompanyParser:
         return m.group(1) if m else None
 
     @staticmethod
-    def get_company_details(company: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def get_company_details(
+        i: int, company: Dict[str, Any]
+    ) -> Optional[Dict[str, Any]]:
         name, url = company.get("name"), company.get("linkedin")
         # avoid blank names and unwanted company names
         if not name or any(word in name.lower() for word in avoid_words):
@@ -439,7 +441,7 @@ class CompanyParser:
             return None
 
         try:
-            logger.info(f"Detail Fetch | {name}")
+            logger.info(f"Detail Fetch #{i}| {name}")
             resp = requests.get(
                 url,
                 headers={"User-Agent": USER_AGENT},
@@ -448,8 +450,10 @@ class CompanyParser:
             )
             if resp.status_code != 200:
                 logger.error(f"Failed to load: {url} Status: {resp.status_code}")
+                time.sleep(random.uniform(1.0, 3.0))
                 return company
 
+            # Parse the html response
             soup = BeautifulSoup(resp.text, "html.parser")
 
             # Website Parsing
@@ -470,6 +474,7 @@ class CompanyParser:
             if size_div and (dd := size_div.find("dd")):
                 company["emp_count"] = CompanyParser.get_employee_count(dd.get_text())
 
+            # Linkedin Employee Count
             cta_span = soup.find("span", {"data-test-id": "view-all-employees-cta"})
             if cta_span and (p := cta_span.find("p")):
                 company["ln_count"] = CompanyParser.get_employee_count(p.get_text())
@@ -482,11 +487,12 @@ class CompanyParser:
                 company["ticker"] = (
                     FinancialService.find_ticker(name) if is_public else None
                 )
-
+            time.sleep(random.uniform(0.5, 1.0))
             return company
         except Exception as e:
             logger.error(f"Scrape failed for {name}: {e}")
-            return company
+            time.sleep(random.uniform(1.0, 3.0))
+        return company
 
 
 class DataCoordinator:
@@ -501,10 +507,9 @@ class DataCoordinator:
         processed = []
         random.shuffle(url_list)
         for i, target in enumerate(url_list):
-            enriched = CompanyParser.get_company_details(target)
+            enriched = CompanyParser.get_company_details(i, target)
             if enriched:
                 processed.append(enriched)
-                time.sleep(random.uniform(0.5, 1.0))
 
             # save periodically
             if (i + 1) % 10 == 0:
@@ -572,7 +577,8 @@ class DataCoordinator:
                 # make the list randomly ordered
                 random.shuffle(keyword_list)
 
-                for keyword in keyword_list:
+                for i, keyword in enumerate(keyword_list):
+                    logger.info(f"Searching with keyword #{i}: '{keyword}'")
                     targets, seen = LnSearch.get_companies(keyword, targets, seen)
                 logger.info(f"Found total {len(targets)} companies")
 

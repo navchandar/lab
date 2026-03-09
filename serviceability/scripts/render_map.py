@@ -212,7 +212,9 @@ class MapRenderer:
                 pin = loc["pin"]
                 partners = self.data.availability.get(pin, {})
                 available = partners.get(service, 0)
-                if available is None or not isinstance(available, int):
+                if available is None:
+                    continue
+                if not isinstance(available, int):
                     logger.warning(
                         f"   -> Invalid value for {pin} in {service}: {available}"
                     )
