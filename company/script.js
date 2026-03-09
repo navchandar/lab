@@ -286,9 +286,11 @@ async function loadData() {
               </td>
             </tr>`;
   } finally {
-    // Show the table card regardless of success or failure
-    document.querySelector(".table-card").style.display = "block";
     loadingSpinner.classList.add("spinner-hidden");
+    const dataTable = document.querySelector(".table-card");
+    // Show the table card regardless of success or failure
+    dataTable.style.display = "block";
+    dataTable.style.opacity = 1;
   }
 }
 
