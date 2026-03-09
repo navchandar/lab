@@ -30,7 +30,7 @@ JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 RETENTION_DAYS = 400
 MIN_GROWTH_THRESHOLD = 25  # Don't calculate trends for very small teams
-avoid_words = ["confidential", "stealth", "secret", "hidden", "study from"]
+avoid_words = ["confidential", "confidencial", "stealth", "secret", "hidden", "study from"]
 guest_job_url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 

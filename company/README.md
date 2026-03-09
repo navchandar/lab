@@ -2,6 +2,8 @@
 
 This script is designed to gather and visualize company data from public sources and compile it into a structured format.
 
+[https://navchandar.github.io/lab/company/](https://navchandar.github.io/lab/company/)
+
 ## Features
 
 1. **Fetch Company URLs**: The script fetches a list of jobs from LinkedIn
@@ -13,8 +15,8 @@ This script is designed to gather and visualize company data from public sources
 ## Usage
 
 ```
-pip install curl-cffi beautifulsoup4
 cd company
+pip install curl-cffi beautifulsoup4
 python company_data_parser.py
 ```
 
@@ -34,6 +36,8 @@ All metrics, including employee counts and growth trends, are approximate estima
 
 We respect intellectual property rights. If you are a representative of a company listed here and wish to request a data correction or the removal of your company profile from this research dashboard, please
 contact the project maintainer via https://github.com/navchandar/lab/issues
+
+### Maintained By: <a style="display:inline-block;" href="https://navchandar.github.io/">Naveenchandar</a>
 
 ## Support This Project
 

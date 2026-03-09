@@ -1,24 +1,14 @@
-# 💼 Job Listings
+# 🌍 World Explorer
 
-Browse and filter a comprehensive list of recently posted job openings. Find job details, location, and company information easily.
+A fun, interactive world map for kids to learn country names. Features bright colors, responsive design, and accessible interactions.
 
-[https://navchandar.github.io/lab/jobs/](https://navchandar.github.io/lab/jobs/)
+[https://navchandar.github.io/lab/world/](https://navchandar.github.io/lab/world/)
 
 ## Features
 
-- Browse job openings across different companies
-- Filter by date, location, role-type and other keywords
-- Responsive and user-friendly interface
-
-## Usage
-
-```
-cd jobs
-npm install
-npm run fetch
-npm run classify
-npm run analyze
-```
+- View the World Map and Navigate
+- Click on each country to view their names, capital and continent.
+- Mobile-friendly and kid-friendly design
 
 ### Maintained By: <a style="display:inline-block;" href="https://navchandar.github.io/">Naveenchandar</a>
 
