@@ -1,33 +1,31 @@
 import asyncio
-import json
 import logging
-import os
 import random
 import time
-from pathlib import Path
 
+import utils
 from fake_useragent import UserAgent
 from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 from playwright.async_api import async_playwright
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-DATA_DIR = PROJECT_ROOT / "data"
-
-if not DATA_DIR.exists():
-    DATA_DIR.mkdir(parents=True)
-
+DATA_DIR = utils.get_data_folder()
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 OUTPUT_FILE = DATA_DIR / "availability_zo.json"
-SAVE_INTERVAL = 10
 MAX_RETRIES = 2
 MAX_CONCURRENT_TABS = 2
 HEADLESS = True  # Set to True to run in headless mode (no window)
+
+
+# Setup Logger
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
+)
+logger = logging.getLogger()
+ua_generator = UserAgent(os=["Windows"], platforms=["desktop"])
+utils.delete_old_data(OUTPUT_FILE)
 
 # --- LOCATORS ---
 LCTR = {
@@ -39,36 +37,6 @@ LCTR = {
     "first_result": '[data-testid="address-search-item"]:nth-child(1) div[data-size]:nth-child(1)',
     "delivery": '[data-testid="delivery-time"]',
 }
-
-# Setup Logger
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%H:%M:%S",
-)
-logger = logging.getLogger()
-ua_generator = UserAgent(os=["Windows"], platforms=["desktop"])
-
-
-# --- FILE OPERATIONS ---
-def load_json(filename):
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Could not read {filename}: {e}")
-        return []
-
-
-def save_json(filename, data):
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info("Progress saved.")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
 
 
 async def get_browser_context(browser):
@@ -219,8 +187,8 @@ async def check_pincode_worker(context, pincode, retries=0, is_pincode=True):
 async def main():
     logger.info("--- Starting Zepto Checker ---")
 
-    input_data = load_json(INPUT_FILE)
-    output_data = load_json(OUTPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
+    output_data = utils.load_json(OUTPUT_FILE)
     output_map = {entry["pin"]: entry for entry in output_data}
 
     # Filter pending items
@@ -298,8 +266,8 @@ async def main():
                     logger.info(f"   -> {updates_buffer} Result: {result_msg}")
 
                 # Save periodically
-                if updates_buffer % SAVE_INTERVAL == 0:
-                    save_json(OUTPUT_FILE, output_data)
+                if updates_buffer % utils.SAVE_INTERVAL == 0:
+                    utils.sort_and_save_json(OUTPUT_FILE, output_data)
 
         except KeyboardInterrupt:
             logger.warning("Interrupted by user! Stopping gracefully...")
@@ -314,7 +282,7 @@ async def main():
 
         finally:
             logger.info("Saving final progress...")
-            save_json(OUTPUT_FILE, output_data)
+            utils.sort_and_save_json(OUTPUT_FILE, output_data)
 
     logger.info("--- Zepto Checker Completed ---")
 

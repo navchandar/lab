@@ -3,23 +3,14 @@ import logging
 import os
 import random
 import time
-from pathlib import Path
 
+import utils
 from curl_cffi import requests
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = utils.get_data_folder()
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
-OUTPUT_FILE = DATA_DIR / "availability_zom.json"
-
-SAVE_INTERVAL = 10
+OUTPUT_FILE = DATA_DIR / "availability_zm.json"
 
 # Setup logger
 logging.basicConfig(
@@ -39,25 +30,8 @@ HEADERS = {
     "referer": "https://www.zomato.com/",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
 }
-
-
-def load_json(filename):
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return []
-
-
-def save_json(filename, data):
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info("Progress saved.")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
+# Delete older file to refresh new data
+utils.delete_old_data(OUTPUT_FILE)
 
 
 def init_session():
@@ -221,8 +195,8 @@ def get_google_place_id(lat, lng):
 def main():
     logger.info("--- Starting Zomato Checker ---")
 
-    input_data = load_json(INPUT_FILE)
-    output_data = load_json(OUTPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
+    output_data = utils.load_json(OUTPUT_FILE)
     output_map = {entry["pin"]: entry for entry in output_data}
 
     pending_items = []
@@ -282,12 +256,12 @@ def main():
             logger.info(f"   -> Result: {res_str}")
             updates_buffer += 1
 
-        if updates_buffer >= SAVE_INTERVAL:
-            save_json(OUTPUT_FILE, output_data)
+        if updates_buffer >= utils.SAVE_INTERVAL:
+            utils.sort_and_save_json(OUTPUT_FILE, output_data)
             updates_buffer = 0
 
     if updates_buffer > 0:
-        save_json(OUTPUT_FILE, output_data)
+        utils.sort_and_save_json(OUTPUT_FILE, output_data)
 
     logger.info("--- Zomato Checker Completed ---")
 

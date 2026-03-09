@@ -1,28 +1,17 @@
-import json
 import logging
 import os
 import random
-import re
 import time
-from pathlib import Path
 
+import utils
 from curl_cffi import requests
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-
-# Define the data directory
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = utils.get_data_folder()
 # Define the full file paths
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 OUTPUT_FILE = DATA_DIR / "availability_bb.json"
 
-SAVE_INTERVAL = 10
 
 # Setup simple console logger
 logging.basicConfig(
@@ -41,28 +30,8 @@ HEADERS = {
     "x-channel": "BB-WEB",
     "x-requested-with": "XMLHttpRequest",
 }
-
-
-def load_json(filename):
-    """Loads JSON file safely. Returns empty list if file missing."""
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Could not read {filename}: {e}")
-        return []
-
-
-def save_json(filename, data):
-    """Saves data to JSON file."""
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info("Progress saved.")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
+# Delete older file to refresh new data
+utils.delete_old_data(OUTPUT_FILE)
 
 
 def refresh_session(session):
@@ -228,8 +197,8 @@ def main():
     logger.info(f"Reading from: {INPUT_FILE}")
     logger.info(f"Writing to:   {OUTPUT_FILE}")
 
-    input_data = load_json(INPUT_FILE)
-    output_data = load_json(OUTPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
+    output_data = utils.load_json(OUTPUT_FILE)
 
     # Create a dictionary (Map) for fast lookup: pin -> entry object
     output_map = {entry["pin"]: entry for entry in output_data}
@@ -310,15 +279,15 @@ def main():
             logger.error(f"   -> Failed to get status for PIN {pin}.")
 
         # Save periodically
-        if updates_buffer >= SAVE_INTERVAL:
-            save_json(OUTPUT_FILE, output_data)
+        if updates_buffer >= utils.SAVE_INTERVAL:
+            utils.sort_and_save_json(OUTPUT_FILE, output_data)
             updates_buffer = 0
 
         time.sleep(random.uniform(0.5, 1.5))
 
     # Final Save
     if updates_buffer > 0:
-        save_json(OUTPUT_FILE, output_data)
+        utils.sort_and_save_json(OUTPUT_FILE, output_data)
 
     logger.info("--- BB Checker Completed ---")
 

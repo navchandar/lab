@@ -1,55 +1,10 @@
-import json
-from pathlib import Path
+import utils
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-DATA_DIR = PROJECT_ROOT / "data"
-
+DATA_DIR = utils.get_data_folder()
 # The final output file name
 OUTPUT_FILENAME = "availability.json"
 FINAL_OUTPUT = DATA_DIR / OUTPUT_FILENAME
-
-
-def load_json(filepath) -> list:
-    """Reads a JSON file and returns a list."""
-    if not filepath.exists():
-        return []
-    try:
-        with open(filepath, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Error reading {filepath.name}: {e}")
-    return []
-
-
-def sort_and_save_json(filepath: Path, data_list: list):
-    """
-    Sorts the list by 'pin' and saves it to the specified filepath.
-    Reusable for both input files and the final merged file.
-    """
-    if not data_list:
-        return
-
-    # 1. Sort the list in-place by the 'pin' key
-    try:
-        # Try numeric sort first
-        data_list.sort(key=lambda x: int(x["pin"]) if str(x["pin"]).isdigit() else x["pin"])
-    except Exception as e:
-        print(f"Failed to sort {filepath.name} numerically, falling back to string sort. ({e})")
-        data_list.sort(key=lambda x: x["pin"])
-
-    # 2. Save to disk
-    try:
-        with open(filepath, "w", encoding="utf-8") as f:
-            json.dump(data_list, f, indent=2)
-        print(f"Saved: {filepath.name}")
-    except Exception as e:
-        print(f"Failed to save {filepath.name}: {e}")
 
 
 def main():
@@ -61,7 +16,7 @@ def main():
     # --- Load the existing data file first (Preserve History) ---
     if FINAL_OUTPUT.exists():
         print(f"Loading existing master file: {OUTPUT_FILENAME}")
-        existing_data = load_json(FINAL_OUTPUT)
+        existing_data = utils.load_json(FINAL_OUTPUT)
         for entry in existing_data:
             pin = entry.get("pin")
             if pin:
@@ -83,13 +38,13 @@ def main():
 
     # --- Process each input file ---
     for filepath in files_to_merge:
-        data = load_json(filepath)
+        data = utils.load_json(filepath)
 
         if not data:
             continue
 
         # Sort and save the input file itself before merging
-        sort_and_save_json(filepath, data)
+        utils.sort_and_save_json(filepath, data)
 
         # Merge Logic
         for entry in data:
@@ -110,7 +65,7 @@ def main():
 
     # --- Final Sort and Save ---
     print(f"--- Saving Merged File ({len(final_list)} records) ---")
-    sort_and_save_json(FINAL_OUTPUT, final_list)
+    utils.sort_and_save_json(FINAL_OUTPUT, final_list)
 
     print("Merge Process Complete.")
 

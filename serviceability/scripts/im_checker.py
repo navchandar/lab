@@ -1,37 +1,15 @@
-import json
 import logging
-import os
 import random
 import time
-from pathlib import Path
 
+import utils
 from curl_cffi import requests
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-DATA_DIR = PROJECT_ROOT / "data"
-
-# Ensure data directory exists
-if not DATA_DIR.exists():
-    DATA_DIR.mkdir(parents=True)
-
+DATA_DIR = utils.get_data_folder()
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 OUTPUT_FILE = DATA_DIR / "availability_im.json"
 
-SAVE_INTERVAL = 10
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    "Accept": "*/*",
-    "Content-Type": "application/json",
-    "Origin": "https://www.swiggy.com",
-    "Referer": "https://www.swiggy.com/instamart",
-}
 
 # Setup logger
 logging.basicConfig(
@@ -41,25 +19,15 @@ logging.basicConfig(
 )
 logger = logging.getLogger()
 
-
-def load_json(filename):
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Could not read {filename}: {e}")
-        return []
-
-
-def save_json(filename, data):
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info("Progress saved.")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Accept": "*/*",
+    "Content-Type": "application/json",
+    "Origin": "https://www.swiggy.com",
+    "Referer": "https://www.swiggy.com/instamart",
+}
+# Delete older file to refresh new data
+utils.delete_old_data(OUTPUT_FILE)
 
 
 def check_instamart(lat, lng):
@@ -142,8 +110,8 @@ def check_instamart(lat, lng):
 def main():
     logger.info("--- Starting Swiggy Instamart Checker ---")
 
-    input_data = load_json(INPUT_FILE)
-    output_data = load_json(OUTPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
+    output_data = utils.load_json(OUTPUT_FILE)
 
     output_map = {entry["pin"]: entry for entry in output_data}
     pending_items = []
@@ -202,8 +170,8 @@ def main():
                 time.sleep(5)
 
             # Periodic Save
-            if updates_buffer >= SAVE_INTERVAL:
-                save_json(OUTPUT_FILE, output_data)
+            if updates_buffer >= utils.SAVE_INTERVAL:
+                utils.sort_and_save_json(OUTPUT_FILE, output_data)
                 updates_buffer = 0
 
             # Random sleep
@@ -214,7 +182,7 @@ def main():
 
     finally:
         if updates_buffer > 0:
-            save_json(OUTPUT_FILE, output_data)
+            utils.sort_and_save_json(OUTPUT_FILE, output_data)
         logger.info("--- Instamart Checker Completed ---")
 
 

@@ -1,20 +1,12 @@
 import json
 import logging
-import os
 import re
-from pathlib import Path
 
 import requests
+import utils
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = utils.get_data_folder()
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 # FH = FreshToHome
 OUTPUT_FILE = DATA_DIR / "availability_fh.json"
@@ -31,26 +23,6 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
 }
-
-
-def load_json(filename):
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Could not read {filename}: {e}")
-        return []
-
-
-def save_json(filename, data):
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info(f"Saved data to {filename}")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
 
 
 def get_serviceable_pins():
@@ -109,7 +81,7 @@ def main():
         return
 
     # Load Input Data
-    input_data = load_json(INPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
 
     # 3. Build Minimal Output List
     final_output = []
@@ -140,7 +112,7 @@ def main():
     logger.info(f"Found {serviceable_count} serviceable locations.")
 
     # Save the output
-    save_json(OUTPUT_FILE, final_output)
+    utils.sort_and_save_json(OUTPUT_FILE, final_output)
 
     logger.info("--- FreshToHome Completed ---")
 

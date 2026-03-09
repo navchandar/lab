@@ -1,36 +1,23 @@
-import json
 import logging
-import os
 import random
 import time
-from pathlib import Path
 
 import requests
+import utils
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = utils.get_data_folder()
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 OUTPUT_FILE = DATA_DIR / "availability_lcs.json"
 
-SAVE_INTERVAL = 10
 
-
-if not DATA_DIR.exists():
-    DATA_DIR.mkdir(parents=True)
-
-
-# Setup logger
+# Setup simple console logger
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%H:%M:%S",
 )
 logger = logging.getLogger()
 
@@ -44,27 +31,8 @@ HEADERS = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
 }
 
-
-def load_json(filename):
-    """Loads JSON file safely. Returns empty list if file missing."""
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Could not read {filename}: {e}")
-        return []
-
-
-def save_json(filename, data):
-    """Saves data to JSON file."""
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info("Progress saved.")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
+# Delete older file to refresh new data
+utils.delete_old_data(OUTPUT_FILE)
 
 
 def get_session():
@@ -105,7 +73,6 @@ def check_pincode(session, lat, lng, pin):
             except:
                 pass
 
-
             if "hub-ids" in cookies or "current-city-id" in cookies:
                 return 1
             else:
@@ -131,8 +98,8 @@ def main():
     logger.info(f"Reading from: {INPUT_FILE}")
     logger.info(f"Writing to:   {OUTPUT_FILE}")
 
-    input_data = load_json(INPUT_FILE)
-    output_data = load_json(OUTPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
+    output_data = utils.load_json(OUTPUT_FILE)
 
     # Map for fast lookup
     output_map = {entry["pin"]: entry for entry in output_data}
@@ -201,8 +168,8 @@ def main():
             logger.error("   -> Skipped due to API error.")
 
         # Save periodically
-        if updates_buffer >= SAVE_INTERVAL:
-            save_json(OUTPUT_FILE, output_data)
+        if updates_buffer >= utils.SAVE_INTERVAL:
+            utils.sort_and_save_json(OUTPUT_FILE, output_data)
             updates_buffer = 0
 
         # Random sleep to avoid WAF
@@ -210,7 +177,7 @@ def main():
 
     # Final Save
     if updates_buffer > 0:
-        save_json(OUTPUT_FILE, output_data)
+        utils.sort_and_save_json(OUTPUT_FILE, output_data)
 
     logger.info("--- Licious Checker Completed ---")
 

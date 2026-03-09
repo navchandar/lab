@@ -1,24 +1,15 @@
-import json
 import logging
 import math
 import os
-import random
 import time
-from pathlib import Path
 
 import requests
+import utils
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # --- CONFIGURATION ---
-SCRIPT_DIR = (
-    Path(__file__).resolve().parent
-    if "__file__" in globals()
-    else Path(Path.cwd() / "scripts").resolve()
-)
-PROJECT_ROOT = SCRIPT_DIR.parent
-
-DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR = utils.get_data_folder()
 # We read your existing database of PINs to find matches
 INPUT_FILE = DATA_DIR / "pincodes_latlng.json"
 OUTPUT_FILE = DATA_DIR / "availability_1mg.json"
@@ -31,7 +22,6 @@ if not API_KEY:
 # Radius to consider a PIN as "part of the city" (in Kilometers)
 SERVICE_RADIUS_KM = 10.0
 
-SAVE_INTERVAL = 10
 
 logging.basicConfig(
     level=logging.INFO,
@@ -65,26 +55,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     distance = R * c
     return distance
-
-
-def load_json(filename):
-    if not os.path.exists(filename):
-        return []
-    try:
-        with open(filename, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logger.error(f"Could not read {filename}: {e}")
-        return []
-
-
-def save_json(filename, data):
-    try:
-        with open(filename, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
-        logger.info("Progress saved.")
-    except Exception as e:
-        logger.error(f"Could not save {filename}: {e}")
 
 
 def get_session():
@@ -155,8 +125,8 @@ def main():
 
     # Load PIN database
     logger.info("Loading local PIN database...")
-    input_data = load_json(INPUT_FILE)
-    output_data = load_json(OUTPUT_FILE)
+    input_data = utils.load_json(INPUT_FILE)
+    output_data = utils.load_json(OUTPUT_FILE)
 
     # Convert output list to dict for fast updates
     output_map = {str(entry["pin"]): entry for entry in output_data}
@@ -257,14 +227,14 @@ def main():
             logger.info(f"[{index}/{total}] ❌ 1mg does not serve '{city_name}'")
 
         # Periodically save
-        if updates_buffer >= SAVE_INTERVAL:
+        if updates_buffer >= utils.SAVE_INTERVAL:
             final_list = list(output_map.values())
-            save_json(OUTPUT_FILE, final_list)
+            utils.sort_and_save_json(OUTPUT_FILE, final_list)
             updates_buffer = 0
 
     # Final Save
     final_list = list(output_map.values())
-    save_json(OUTPUT_FILE, final_list)
+    utils.sort_and_save_json(OUTPUT_FILE, final_list)
 
     logger.info("--- Tata 1mg Completed ---")
 
