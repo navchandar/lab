@@ -3,6 +3,7 @@ let currentOverlay = null;
 let mapBounds = null;
 let brandColors = {};
 let brandShortcuts = {};
+let brandCounts = {};
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
 let isLayerSwitching = false;
@@ -423,6 +424,7 @@ async function initApp() {
     mapBounds = [boundsData.southWest, boundsData.northEast];
     brandColors = boundsData.colors || {};
     brandShortcuts = boundsData.shortcuts || {};
+    brandCounts = boundsData.counts || {};
     updateFooterTime(boundsData.lastUpdated);
 
     // Get the list of what is actually available
@@ -1165,6 +1167,25 @@ function updateUIColors(color, selectedInput) {
   if (legendDot) {
     legendDot.style.backgroundColor = color;
     legendDot.style.boxShadow = `0 0 5px ${color}66`;
+  }
+
+  // --- Update Serviceable Count ---
+  const countEl = document.getElementById("count");
+  if (countEl && selectedInput) {
+    const serviceName = selectedInput.value;
+    const count = brandCounts[serviceName] || 0;
+    // Format the number with commas (e.g., 19,473)
+    countEl.textContent = count.toLocaleString("en-IN");
+  }
+
+  // --- Update Mobile Header Title ---
+  if (window.innerWidth <= 600) {
+    const headerTitle = document.querySelector("#card-header h1");
+    if (headerTitle && selectedInput) {
+      // Capitalize the brand name (e.g., "zepto" -> "Zepto")
+      const brandName = capitalize(selectedInput.value);
+      headerTitle.textContent = `Serviceability Map - ${brandName}`;
+    }
   }
 
   // Reset all cards
