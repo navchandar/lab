@@ -99,14 +99,16 @@
       body,
       html {
         display: flex;
-        position: fixed; /* Prevents the whole page from being pushed up */
+        position: fixed;
+        /* Prevents the whole page from being pushed up */
         justify-content: center;
         align-items: center;
         margin: 0;
         background-color: var(--bg-color);
         padding: 0;
         width: 100%;
-        height: 100dvh; /* Use dvh to account for browser UI and keyboards */
+        height: 100dvh;
+        /* Use dvh to account for browser UI and keyboards */
         overflow: hidden;
       }
 
@@ -132,7 +134,8 @@
         /* Define the Gradient */
         background-image: var(--text-gradient);
         /* Make the background fill the text */
-        background-size: 400% 400%; /* Large size for smooth movement */
+        background-size: 400% 400%;
+        /* Large size for smooth movement */
         width: 90vw;
         height: auto;
         max-height: 50%;
@@ -140,12 +143,12 @@
         caret-color: var(--caret-color);
         font-weight: 700;
         font-size: clamp(15vh, 30vw, 30dvh);
-        font-family:
-          "Lexend", "Comic Sans MS", "Chalkboard SE", "Comic Neue", sans-serif;
+        font-family: "Lexend", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         text-align: center;
         text-transform: uppercase;
         -webkit-background-clip: text;
-        animation: gradient-move 8s ease infinite;
+        filter: drop-shadow(2px 4px 10px rgba(0, 0, 0, 0.8));
+        animation: gradient-move 16s ease infinite;
         background-clip: text;
         /* Make original text transparent so gradient shows through */
         -webkit-text-fill-color: transparent;
@@ -185,9 +188,12 @@
         from {
           width: 0;
         }
+
         to {
           width: 5ch;
-        } /* 'Type' is 4 chars + 1 for breathing room */
+        }
+
+        /* 'Type' is 4 chars + 1 for breathing room */
       }
 
       /* The typewriter cursor blinking */
@@ -196,6 +202,7 @@
         to {
           border-color: transparent;
         }
+
         50% {
           border-color: var(--caret-color);
         }
@@ -204,13 +211,15 @@
       /* The "jump" Animation */
       @keyframes popIn {
         0% {
-          transform: scale(0.5);
+          transform: scale(0.8);
           opacity: 0;
         }
+
         50% {
-          transform: scale(1.2);
+          transform: scale(1.1);
           opacity: 1;
         }
+
         100% {
           transform: scale(1);
           opacity: 1;
@@ -222,23 +231,28 @@
         0% {
           background-position: 0% 50%;
         }
+
         50% {
           background-position: 100% 50%;
         }
+
         100% {
           background-position: 0% 50%;
         }
       }
 
       /* toggle via JS to trigger animation */
-      .animate-pop {
+      #big-input.animate-pop {
+        backface-visibility: hidden;
         animation:
-          popIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.275),
-          gradient-move 8s ease infinite;
+          popIn 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          gradient-move 16s ease infinite;
+        will-change: transform, opacity, background-position;
       }
 
       #big-input::selection {
-        background: rgba(189, 178, 255, 0.3); /* Subtle purple tint */
+        background: rgba(189, 178, 255, 0.3);
+        /* Subtle purple tint */
         -webkit-text-fill-color: var(--text-color);
         /* Fallback to solid color on select */
       }
@@ -252,12 +266,32 @@
 
         #big-input {
           margin-bottom: 0;
+          overflow: visible;
           font-size: 34dvh;
         }
       }
     </style>
+
+    <link rel="stylesheet" href="../static/settings.css" />
   </head>
+
   <body>
+    <noscript>
+      <div class="noscript-overlay">
+        <div class="noscript-content">
+          <h2>JavaScript is Required</h2>
+          <p>We rely on JavaScript to render the interactive website.</p>
+          <p>
+            Please enable JavaScript in your browser settings and reload the
+            page.
+          </p>
+          <a href="https://www.enable-javascript.com/" target="_blank"
+            >How to enable JavaScript
+          </a>
+        </div>
+      </div>
+    </noscript>
+
     <main role="main">
       <h1 class="typing-title">Type</h1>
       <input
