@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import random
@@ -5,8 +6,9 @@ import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
+import pandas as pd
 import yfinance as yf
 from bs4 import BeautifulSoup
 from curl_cffi import requests
@@ -30,9 +32,20 @@ JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 RETENTION_DAYS = 400
 MIN_GROWTH_THRESHOLD = 25  # Don't calculate trends for very small teams
-avoid_words = ["confidential", "confidencial", "stealth", "secret", "hidden", "study from"]
+avoid_words = [
+    "confidential",
+    "confidencial",
+    "stealth",
+    "secret",
+    "hidden",
+    "study from",
+]
 guest_job_url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+# Official CSV URLs
+NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
+BSE_URL = "https://www.bseindia.com/downloads1/List_of_companies.csv"
+
 
 now = datetime.now()
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
@@ -40,8 +53,12 @@ day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 CHECK_JOB_POSTS = day_of_week in [0, 2]
 # Deep Refresh: Update EVERYTHING during week days
 REFRESH_ALL = day_of_week in [0, 1, 2, 3, 4]
+# Search and update Listed companies once a wekk
+FIND_LISTED = day_of_week in [1]
 logger.info(f"Schedule | Day of Week: {day_of_week}")
-logger.info(f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL}")
+logger.info(
+    f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
+)
 
 GEO_IDs = [
     {"location": "India", "geoId": "102713980"},
@@ -103,12 +120,13 @@ class LnSearch:
         if not url or "/company/" not in url:
             return None
         try:
-            return url.split("/company/")[1].split("/")[0].split("?")[0].rstrip("/")
+            handle = url.split("/company/")[1].split("/")[0].split("?")[0].rstrip("/")
+            return handle
         except (IndexError, AttributeError):
             return None
 
     @staticmethod
-    def get_companies(keyword: str, targets: list, seen: set):  # -> tuple[list, set]:
+    def get_companies(keyword: str, targets: list, seen: Set) -> tuple[list, set]:
         max_range = 100 if keyword else 500
         # Exponential Decay - index 0 a weight of 10, and index 1 onwards a weight of 1
         weights = [10 if i == 0 else 1 for i in range(len(GEO_IDs))]
@@ -148,9 +166,14 @@ class LnSearch:
                             continue
                         if "linkedin.com" not in link:
                             continue
-                        if link not in seen:
-                            targets.append({"name": name, "linkedin": link})
-                            seen.add(link)
+                        handle = LnSearch.get_handle(link)
+                        if not handle:
+                            continue
+                        # If handle is already in seen, we skip it entirely.
+                        if handle in seen:
+                            continue
+                        targets.append({"name": name, "linkedin": link})
+                        seen.add(handle)
 
                 logger.info(
                     f"Keyword '{keyword}' at {start}: List is now {len(targets)}"
@@ -322,7 +345,9 @@ class GrowthAnalytics:
         # Save back to the main history object
         history["history"] = global_records
         GrowthAnalytics._save_history_file(history)
-        logger.info(f"Global History Index Updated: {len(global_records)} data points.")
+        logger.info(
+            f"Global History Index Updated: {len(global_records)} data points in {HISTORY_FILE.name}"
+        )
 
     @staticmethod
     def generate_market_chart_data():
@@ -381,7 +406,9 @@ class GrowthAnalytics:
         try:
             with open(CHARTS_DATA_FILE, "w") as f:
                 json.dump(chart_points, f, indent=2)
-            logger.info(f"Market chart data updated: {len(chart_points)} points.")
+            logger.info(
+                f"Chart data updated: {len(chart_points)} points in {CHARTS_DATA_FILE.name}"
+            )
         except Exception as e:
             logger.error(f"Failed to save charts_data.json: {e}")
 
@@ -501,7 +528,7 @@ class DataCoordinator:
     @staticmethod
     def run():
         # Discover URLs
-        url_list = DataCoordinator._get_target_urls(CHECK_JOB_POSTS, REFRESH_ALL)
+        url_list = DataCoordinator._get_target_urls()
 
         # Parse data & Enrich
         processed = []
@@ -524,65 +551,245 @@ class DataCoordinator:
         GrowthAnalytics.generate_market_chart_data()
 
     @staticmethod
-    def _get_target_urls(discovery, refresh) -> List[Dict]:
+    def _get_target_urls() -> List[Dict]:
         targets, seen = [], set()
+        # Read existing linkedin handles to avoid duplicates
+        if DATA_FILE.exists():
+            with open(DATA_FILE, "r") as f:
+                for c in json.load(f):
+                    if handle := LnSearch.get_handle(c.get("linkedin", "")):
+                        seen.add(handle)
+
         # Add from local jobs for every run
-        if JOBS_DATA.exists():
-            logger.info(f"Finding new companies from {JOBS_DATA.name}")
-            with open(JOBS_DATA, "r") as f:
-                for j in json.load(f).get("data", []):
-                    url = LnSearch.normalize_url(j.get("companyUrl"))
-                    if not refresh:
-                        emp_count = j.get("employeeCount", "-")
-                        # skip companies with employee count data
-                        if emp_count and emp_count != "-":
-                            seen.add(url)
-                            continue
-                    if url in seen:
-                        continue
-                    if url and "linkedin.com" in url:
-                        targets.append({"name": j.get("company"), "linkedin": url})
-                        seen.add(url)
-            logger.info(f"Found {len(targets)} companies from local jobs data!")
-        else:
-            logger.warning(f"{JOBS_DATA} missing. Skipping local jobs data!")
+        targets, seen = DataCoordinator._get_jobs_data(REFRESH_ALL, targets, seen)
 
         # Add existing company data if refresh day
-        if refresh and DATA_FILE.exists():
+        targets, seen = DataCoordinator._get_existing_comp(REFRESH_ALL, targets, seen)
+
+        # find new companies from job posts
+        if CHECK_JOB_POSTS:
+            targets, seen = DataCoordinator._find_new_comp(targets, seen)
+
+        # Add the Indian Public Companies (URL List)
+        # This should return: [{"name": "TCS", "linkedin": "https://www.linkedin.com/company/tata-consultancy-services"}, ...]
+        if FIND_LISTED:
+            targets, seen = DataCoordinator._get_indian_listed_companies(targets, seen)
+
+        return targets
+
+    @staticmethod
+    def _get_jobs_data(refresh, targets, seen) -> tuple:
+        if not JOBS_DATA.exists():
+            logger.warning(f"{JOBS_DATA} missing. Skipping local jobs data!")
+            return targets, seen
+        logger.info(f"Finding new companies from {JOBS_DATA.name}")
+        with open(JOBS_DATA, "r") as f:
+            for j in json.load(f).get("data", []):
+                url = LnSearch.normalize_url(j.get("companyUrl"))
+                handle = LnSearch.get_handle(url)
+                if not handle:
+                    continue
+                # If handle is already in seen, we skip it entirely.
+                if handle in seen:
+                    continue
+                if not refresh:
+                    emp_count = j.get("employeeCount", "-")
+                    # skip companies with employee count data
+                    if emp_count and emp_count != "-":
+                        seen.add(handle)
+                        continue
+                if url and "linkedin.com" in url:
+                    targets.append({"name": j.get("company"), "linkedin": url})
+                    seen.add(handle)
+        logger.info(f"Found {len(targets)} companies from local jobs data!")
+        return targets, seen
+
+    @staticmethod
+    def _get_existing_comp(refresh, targets, seen) -> tuple:
+        if not DATA_FILE.exists():
+            logger.warning(f"{DATA_FILE} missing. No existing data found!")
+            return targets, seen
+        if refresh:
             logger.info("Updating all existing companies!")
             with open(DATA_FILE, "r") as f:
                 for c in json.load(f):
                     url = LnSearch.normalize_url(c.get("linkedin", ""))
-                    if url in seen:
+                    handle = LnSearch.get_handle(url)
+                    if not handle:
+                        continue
+                    # If handle is already in seen, we skip it entirely.
+                    if handle in seen:
                         continue
                     if url and "linkedin.com" in url:
                         targets.append({"name": c["name"], "linkedin": c["linkedin"]})
-                        seen.add(url)
+                        seen.add(handle)
             logger.info(f"Found total {len(targets)} companies")
-        elif not DATA_FILE.exists():
-            logger.warning(f"{DATA_FILE} not found!")
+        return targets, seen
 
-        if discovery:
-            # Find companies from job posts
-            logger.info("Finding new companies from current Linkedin jobs!")
-            # Load Keywords
-            keyword_list = [""]
-            if not KEYWORDS_FILE.exists():
-                logger.warning(f"{KEYWORDS_FILE} not found. Skipping job search!")
-            else:
-                with open(KEYWORDS_FILE, "r") as f:
-                    keyword_list += [line.strip() for line in f if line.strip()]
-                # Ensure keyword_list unique
-                keyword_list = list(set(keyword_list))
-                # make the list randomly ordered
-                random.shuffle(keyword_list)
+    @staticmethod
+    def _find_new_comp(targets, seen) -> tuple:
+        # Find companies from job posts
+        logger.info("Finding new companies from current Linkedin jobs!")
+        # Load Keywords from txt file
+        keyword_list = [""]
+        if not KEYWORDS_FILE.exists():
+            logger.warning(f"{KEYWORDS_FILE} not found. Skipping job search!")
+        else:
+            with open(KEYWORDS_FILE, "r") as f:
+                keyword_list += [line.strip() for line in f if line.strip()]
 
-                for i, keyword in enumerate(keyword_list):
-                    logger.info(f"Searching with keyword #{i}: '{keyword}'")
-                    targets, seen = LnSearch.get_companies(keyword, targets, seen)
-                logger.info(f"Found total {len(targets)} companies")
+        # Ensure keyword_list unique
+        keyword_list = list(set(keyword_list))
+        logger.info(f"Total Keywords for Searching: {len(keyword_list)}")
+        # make the list randomly ordered
+        random.shuffle(keyword_list)
+        for i, keyword in enumerate(keyword_list):
+            logger.info(f"Searching with keyword #{i}: '{keyword}'")
+            targets, seen = LnSearch.get_companies(keyword, targets, seen)
+        logger.info(f"Found total {len(targets)} companies")
+        return targets, seen
 
-        return targets
+    @staticmethod
+    def _get_indian_listed_companies(targets, seen) -> tuple:
+        """Fetches, parses, and enriches official Indian listed companies with dual-listing protection."""
+        logger.info("Fetching official NSE and BSE lists...")
+        # Track websites to avoid dual-listing overhead
+        seen_websites = set()
+        symbol_list = DataCoordinator._get_symbols_from_bourse()
+        # Enrichment with Cross-Source Deduplication
+        if not symbol_list:
+            logger.error("No Symbols found")
+            return targets, seen
+        random.shuffle(symbol_list)
+        if len(symbol_list) < 200:
+            logger.error("Less than 200 symbols found")
+            return targets, seen
+        symbol_sample = symbol_list[:200]
+
+        for sym in symbol_sample:
+            time.sleep(random.uniform(1.2, 2.5))
+            try:
+                # The helper now returns website early to allow for deduplication
+                company_data = DataCoordinator._enrich_from_screener(sym)
+                if not company_data:
+                    continue
+
+                # Deduplicate by Website (catches dual-listed companies)
+                web_domain = company_data["website"].replace("www.", "").lower()
+                if web_domain in seen_websites:
+                    logger.info(f"Skipping duplicate via website: {web_domain} ({sym})")
+                    continue
+
+                # Deduplicate by LinkedIn handles already in json
+                url = LnSearch.normalize_url(company_data["linkedin"])
+                handle = LnSearch.get_handle(url)
+                if not handle:
+                    continue
+                # If handle is already in seen, we skip it entirely.
+                if handle in seen:
+                    continue
+                targets.append(company_data)
+                seen.add(handle)
+                seen_websites.add(web_domain)
+                logger.info(f"Added: {company_data['name']} | Ticker: {sym}")
+            except Exception as e:
+                continue
+
+        return targets, seen
+
+    def _get_symbols_from_bourse() -> list:
+        """Get Public listed company ticker symbols from NSE and BSE"""
+        symbols = set()
+        with requests.Session() as session:
+            # Parse NSE (Series 'EQ' only)
+            try:
+                resp = session.get(NSE_URL, impersonate="chrome", timeout=15)
+                df_nse = pd.read_csv(io.StringIO(resp.text))
+                nse_symbols = df_nse[df_nse[" SERIES"] == "EQ"]["SYMBOL"].tolist()
+                symbols.update([f"{s}.NS" for s in nse_symbols])
+                logger.info(f"Found {len(nse_symbols)} symbols from NSE")
+            except Exception as e:
+                logger.error(f"NSE CSV Parse Error: {e}")
+
+            #  Parse BSE (Scrip Code)
+            try:
+                resp = session.get(BSE_URL, impersonate="chrome", timeout=15)
+                csv_content = resp.text
+                df_bse = pd.read_csv(io.StringIO(csv_content))
+                #  Check if the required column is missing
+                if "Scrip code" not in df_bse.columns:
+                    df_bse = pd.read_csv(io.StringIO(csv_content), skiprows=1)
+                bse_codes = df_bse["Scrip code"].dropna().tolist()
+                symbols.update([f"{s}.BO" for s in bse_codes])
+                logger.info(f"Found {len(bse_codes)} symbols from BSE")
+            except Exception as e:
+                logger.error(f"BSE CSV Parse Error: {e}")
+
+        return list(symbols)
+
+    @staticmethod
+    def _enrich_from_screener(symbol: str) -> Optional[Dict]:
+        """Scrapes Screener to find the official website."""
+        # Use only the prefix for Screener (works for both NSE symbol and BSE code)
+        ticker = symbol.split(".")[0]
+        url = f"https://www.screener.in/company/{ticker}/"
+
+        try:
+            logger.info(f"Loading {url=}")
+            resp = requests.get(url, impersonate="chrome", timeout=10)
+            if resp.status_code != 200:
+                logger.error(f"Error fetching {url=} | Status: {resp.status_code}")
+                return None
+
+            soup = BeautifulSoup(resp.text, "html.parser")
+
+            # Extract Website Link
+            website = None
+            links_container = soup.find("div", class_="company-links")
+            if links_container:
+                a_tag = links_container.find("a", href=True)
+                if a_tag:
+                    website = a_tag["href"].strip().split("?")[0].rstrip("/")
+
+            if not website:
+                logger.error(f"Website NOT found in {url=}")
+                return None
+
+            # Get Name
+            name_tag = soup.find("h1")
+            name = name_tag.get_text(strip=True) if name_tag else ticker
+
+            # Find LinkedIn from the company website
+            li_url = DataCoordinator._find_linkedin_on_website(website)
+            if not li_url:
+                logger.error(f"Linkedin url NOT found in {website}")
+            if li_url:
+                return {
+                    "name": name,
+                    "linkedin": li_url,
+                    "website": website,
+                    "ticker": symbol,
+                    "public": True,
+                }
+
+        except Exception as e:
+            logger.error(f"Screener error for {symbol}: {e}")
+        return None
+
+    @staticmethod
+    def _find_linkedin_on_website(url: str) -> Optional[str]:
+        """Quickly scans a homepage for a LinkedIn company link."""
+        try:
+            logger.info(f"Loading {url=}")
+            resp = requests.get(url, impersonate="chrome", timeout=20)
+            soup = BeautifulSoup(resp.text, "html.parser")
+            for a in soup.find_all("a", href=True):
+                href = a["href"]
+                if "linkedin.com/company/" in href:
+                    return href.split("?")[0].rstrip("/")
+        except Exception:
+            return None
+        return None
 
     @staticmethod
     def _save_to_disk(new_batch: List[Dict]):

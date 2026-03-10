@@ -2,8 +2,8 @@ name: Fetch Company Data
 
 on:
   schedule:
-    # Runs at 02:00 UTC (07:30 AM IST) Mon-Fri
-    - cron: "0 2 * * 1-5"
+    # Runs at 00:00 UTC (05:30 AM IST) Mon-Fri
+    - cron: "0 0 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install beautifulsoup4 curl_cffi rapidfuzz yfinance
+          pip install -r requirements.txt
 
       - name: Run Script
         run: python company_data_parser.py
