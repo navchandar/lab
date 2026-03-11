@@ -512,9 +512,14 @@ class CompanyParser:
                 is_public = "public" in dd.get_text().lower()
                 company["public"] = is_public
                 if is_public:
-                    ticker = FinancialService.find_ticker(name)
-                    if ticker:
-                        company["ticker"] = ticker
+                    # ONLY call find_ticker if it's missing or empty
+                    if not company.get("ticker"):
+                        ticker = FinancialService.find_ticker(name)
+                        if ticker:
+                            company["ticker"] = ticker
+                            logger.info(f"New Ticker Found: {name} -> {ticker}")
+                    else:
+                        logger.info(f"Skipping Ticker lookup for {name} (Already exists)")
                     
             time.sleep(random.uniform(0.5, 1.0))
             return company
@@ -658,15 +663,32 @@ class DataCoordinator:
         # Track websites to avoid dual-listing overhead
         seen_websites = set()
         symbol_list = DataCoordinator._get_symbols_from_bourse()
+        random.shuffle(symbol_list)
+        
         # Enrichment with Cross-Source Deduplication
         if not symbol_list:
             logger.error("No Symbols found")
             return targets, seen
-        random.shuffle(symbol_list)
-        if len(symbol_list) < 500:
-            logger.error("Less than 500 symbols found")
+        
+        if len(symbol_list) < 100:
+            logger.error("Less than 100 symbols found")
             return targets, seen
-        symbol_sample = symbol_list[:500]
+
+        # GET ALREADY KNOWN TICKERS
+        known_tickers = set()
+        if DATA_FILE.exists():
+            with open(DATA_FILE, "r") as f:
+                known_tickers = {c.get("ticker") for c in json.load(f) if c.get("ticker")}
+                
+        # FILTER: Only try to load symbols we dont already have
+        new_symbols = [s for s in symbol_list if s not in known_tickers]
+        logger.info(f"Found {len(symbol_list)} symbols. {len(known_tickers)} already in JSON. {len(new_symbols)} new ones to discover.")
+        if not new_symbols:
+            return targets, seen
+
+        symbol_sample = new_symbols
+        if len(new_symbols) > 200:
+            symbol_sample = new_symbols[:int(len(new_symbols)/2)]
 
         for sym in symbol_sample:
             time.sleep(random.uniform(1.2, 2.5))
