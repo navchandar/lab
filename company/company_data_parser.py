@@ -627,9 +627,18 @@ class DataCoordinator:
                     # If handle is already in seen, we skip it entirely.
                     if handle in seen:
                         continue
+                    is_active = c.get("active", True)
+                    last_upd = datetime.fromisoformat(c.get("last_updated", now.isoformat()))
+                    days_since_update = (now - last_upd).days
                     if url and "linkedin.com" in url:
-                        targets.append({"name": c["name"], "linkedin": c["linkedin"]})
-                        seen.add(handle)
+                        if is_active:
+                            targets.append({"name": c["name"], "linkedin": c["linkedin"]})
+                            seen.add(handle)
+                        # If Inactive: Only recheck if it's been more than 10 days
+                        elif not is_active and days_since_update >= 10:
+                            logger.info(f"Rechecking inactive company: {c['name']}")
+                            targets.append({"name": c["name"], "linkedin": c["linkedin"]})
+                            seen.add(handle)
             logger.info(f"Found total {len(targets)} companies")
         return targets, seen
 
@@ -761,6 +770,10 @@ class DataCoordinator:
         try:
             logger.info(f"Loading {url=}")
             resp = requests.get(url, impersonate="chrome", timeout=10)
+            if resp.status_code == 404:
+                logger.warning(f"Company page not found (404): {name}. Marking as inactive!")
+                company["active"] = False
+                return company
             if resp.status_code != 200:
                 logger.error(f"Error fetching {url=} | Status: {resp.status_code}")
                 return None
