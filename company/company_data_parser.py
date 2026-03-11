@@ -560,25 +560,19 @@ class DataCoordinator:
     @staticmethod
     def _get_target_urls() -> List[Dict]:
         targets, seen = [], set()
-        # Read existing linkedin handles to avoid duplicates
-        if DATA_FILE.exists():
-            with open(DATA_FILE, "r") as f:
-                for c in json.load(f):
-                    if handle := LnSearch.get_handle(c.get("linkedin", "")):
-                        seen.add(handle)
+
+        # If REFRESH_ALL is True, this adds existing company data to targets.
+        # If False, it just adds them to 'seen' so they are skipped from other methods
+        targets, seen = DataCoordinator._get_existing_comp(REFRESH_ALL, targets, seen)
 
         # Add from local jobs for every run
         targets, seen = DataCoordinator._get_jobs_data(REFRESH_ALL, targets, seen)
 
-        # Add existing company data if refresh day
-        targets, seen = DataCoordinator._get_existing_comp(REFRESH_ALL, targets, seen)
-
-        # find new companies from job posts
+        # Discover new companies from job posts
         if CHECK_JOB_POSTS:
             targets, seen = DataCoordinator._find_new_comp(targets, seen)
 
         # Add the Indian Public Companies (URL List)
-        # This should return: [{"name": "TCS", "linkedin": "https://www.linkedin.com/company/tata-consultancy-services"}, ...]
         if FIND_LISTED:
             targets, seen = DataCoordinator._get_indian_listed_companies(targets, seen)
 
@@ -616,30 +610,48 @@ class DataCoordinator:
         if not DATA_FILE.exists():
             logger.warning(f"{DATA_FILE} missing. No existing data found!")
             return targets, seen
+
+        with open(DATA_FILE, "r") as f:
+            existing_data = json.load(f)
+            
+        for c in existing_data:
+            handle = LnSearch.get_handle(c.get("linkedin", ""))
+            if not handle:
+                continue
+            
+            # ALWAYS add to seen so we don't re-discover them as "new"
+            seen.add(handle)
+
+            # ONLY add to targets if it's a refresh day (or if it meets recheck criteria)
+            if refresh:
+                is_active = c.get("active", True)
+                last_upd_str = if c.get("last_updated")
+                
+                # Default to a long time ago if no date exists so it definitely refreshes
+                last_upd = datetime.fromisoformat(last_upd_str) if last_upd_str else now - timedelta(days=10)
+                days_since_update = (now - last_upd).days
+                
+                # Get employee count (default to 0 if missing)
+                ln_count_str = str(c.get("ln_count", "0"))
+                ln_count = int(ln_count_str) if ln_count_str.isdigit() else 0
+                should_refresh = False
+                if is_active:
+                    if ln_count >= 50:
+                        # Large companies: Refresh every day
+                        should_refresh = True
+                    elif days_since_update >= 2:
+                        # Small companies (<50): Only refresh if at least 2 days old
+                        should_refresh = True
+                
+                # Recheck inactive companies every 10 days regardless of size
+                elif not is_active and days_since_update >= 10:
+                    should_refresh = True
+
+                if should_refresh:
+                    targets.append({"name": c["name"], "linkedin": c["linkedin"]})
+
         if refresh:
-            logger.info("Updating all existing companies!")
-            with open(DATA_FILE, "r") as f:
-                for c in json.load(f):
-                    url = LnSearch.normalize_url(c.get("linkedin", ""))
-                    handle = LnSearch.get_handle(url)
-                    if not handle:
-                        continue
-                    # If handle is already in seen, we skip it entirely.
-                    if handle in seen:
-                        continue
-                    is_active = c.get("active", True)
-                    last_upd = datetime.fromisoformat(c.get("last_updated", now.isoformat()))
-                    days_since_update = (now - last_upd).days
-                    if url and "linkedin.com" in url:
-                        if is_active:
-                            targets.append({"name": c["name"], "linkedin": c["linkedin"]})
-                            seen.add(handle)
-                        # If Inactive: Only recheck if it's been more than 10 days
-                        elif not is_active and days_since_update >= 10:
-                            logger.info(f"Rechecking inactive company: {c['name']}")
-                            targets.append({"name": c["name"], "linkedin": c["linkedin"]})
-                            seen.add(handle)
-            logger.info(f"Found total {len(targets)} companies")
+            logger.info(f"Refresh Active: Added {len(targets)} existing companies to update")
         return targets, seen
 
     @staticmethod
