@@ -196,7 +196,7 @@ class FinancialService:
         try:
             search = yf.Search(name, max_results=5)
             equities = [q for q in search.quotes if q.get("quoteType") == "EQUITY"]
-
+            time.sleep(random.uniform(0.5, 1.0))
             # Priority 1: Indian Exchanges with Fuzzy Match
             for q in equities:
                 sym, official = q.get("symbol", ""), q.get("longname", "")
@@ -511,9 +511,11 @@ class CompanyParser:
             if org_div and (dd := org_div.find("dd")):
                 is_public = "public" in dd.get_text().lower()
                 company["public"] = is_public
-                company["ticker"] = (
-                    FinancialService.find_ticker(name) if is_public else None
-                )
+                if is_public:
+                    ticker = FinancialService.find_ticker(name)
+                    if ticker:
+                        company["ticker"] = ticker
+                    
             time.sleep(random.uniform(0.5, 1.0))
             return company
         except Exception as e:
