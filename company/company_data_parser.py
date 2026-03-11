@@ -661,10 +661,10 @@ class DataCoordinator:
             logger.error("No Symbols found")
             return targets, seen
         random.shuffle(symbol_list)
-        if len(symbol_list) < 200:
-            logger.error("Less than 200 symbols found")
+        if len(symbol_list) < 500:
+            logger.error("Less than 500 symbols found")
             return targets, seen
-        symbol_sample = symbol_list[:200]
+        symbol_sample = symbol_list[:500]
 
         for sym in symbol_sample:
             time.sleep(random.uniform(1.2, 2.5))
