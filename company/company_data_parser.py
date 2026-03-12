@@ -536,11 +536,10 @@ class DataCoordinator:
 
     @staticmethod
     def run():
-        # Discover URLs
-        url_list = DataCoordinator._get_target_urls()
-
         # Parse data & Enrich
         processed = []
+        # Discover URLs
+        url_list = DataCoordinator._get_target_urls()
         random.shuffle(url_list)
         for i, target in enumerate(url_list):
             enriched = CompanyParser.get_company_details(i, target)
