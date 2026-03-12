@@ -54,7 +54,7 @@ CHECK_JOB_POSTS = day_of_week in [0, 2]
 # Deep Refresh: Update EVERYTHING during week days
 REFRESH_ALL = day_of_week in [0, 1, 2, 3, 4]
 # Search and update Listed companies once a wekk
-FIND_LISTED = day_of_week in [1]
+FIND_LISTED = day_of_week in [1, 3]
 logger.info(f"Schedule | Day of Week: {day_of_week}")
 logger.info(
     f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
@@ -519,8 +519,10 @@ class CompanyParser:
                             company["ticker"] = ticker
                             logger.info(f"New Ticker Found: {name} -> {ticker}")
                     else:
-                        logger.info(f"Skipping Ticker lookup for {name} (Already exists)")
-                    
+                        logger.info(
+                            f"Skipping Ticker lookup for {name} (Already exists)"
+                        )
+
             time.sleep(random.uniform(0.5, 1.0))
             return company
         except Exception as e:
@@ -613,24 +615,28 @@ class DataCoordinator:
 
         with open(DATA_FILE, "r") as f:
             existing_data = json.load(f)
-            
+
         for c in existing_data:
             handle = LnSearch.get_handle(c.get("linkedin", ""))
             if not handle:
                 continue
-            
+
             # ALWAYS add to seen so we don't re-discover them as "new"
             seen.add(handle)
 
             # ONLY add to targets if it's a refresh day (or if it meets recheck criteria)
             if refresh:
                 is_active = c.get("active", True)
-                last_upd_str = if c.get("last_updated")
-                
+                last_upd_str = c.get("last_updated")
+
                 # Default to a long time ago if no date exists so it definitely refreshes
-                last_upd = datetime.fromisoformat(last_upd_str) if last_upd_str else now - timedelta(days=10)
+                last_upd = (
+                    datetime.fromisoformat(last_upd_str)
+                    if last_upd_str
+                    else now - timedelta(days=10)
+                )
                 days_since_update = (now - last_upd).days
-                
+
                 # Get employee count (default to 0 if missing)
                 ln_count_str = str(c.get("ln_count", "0"))
                 ln_count = int(ln_count_str) if ln_count_str.isdigit() else 0
@@ -642,7 +648,7 @@ class DataCoordinator:
                     elif days_since_update >= 2:
                         # Small companies (<50): Only refresh if at least 2 days old
                         should_refresh = True
-                
+
                 # Recheck inactive companies every 10 days regardless of size
                 elif not is_active and days_since_update >= 10:
                     should_refresh = True
@@ -651,7 +657,9 @@ class DataCoordinator:
                     targets.append({"name": c["name"], "linkedin": c["linkedin"]})
 
         if refresh:
-            logger.info(f"Refresh Active: Added {len(targets)} existing companies to update")
+            logger.info(
+                f"Refresh Active: Added {len(targets)} existing companies to update"
+            )
         return targets, seen
 
     @staticmethod
@@ -685,12 +693,12 @@ class DataCoordinator:
         seen_websites = set()
         symbol_list = DataCoordinator._get_symbols_from_bourse()
         random.shuffle(symbol_list)
-        
+
         # Enrichment with Cross-Source Deduplication
         if not symbol_list:
             logger.error("No Symbols found")
             return targets, seen
-        
+
         if len(symbol_list) < 100:
             logger.error("Less than 100 symbols found")
             return targets, seen
@@ -699,17 +707,21 @@ class DataCoordinator:
         known_tickers = set()
         if DATA_FILE.exists():
             with open(DATA_FILE, "r") as f:
-                known_tickers = {c.get("ticker") for c in json.load(f) if c.get("ticker")}
-                
+                known_tickers = {
+                    c.get("ticker") for c in json.load(f) if c.get("ticker")
+                }
+
         # FILTER: Only try to load symbols we dont already have
         new_symbols = [s for s in symbol_list if s not in known_tickers]
-        logger.info(f"Found {len(symbol_list)} symbols. {len(known_tickers)} already in JSON. {len(new_symbols)} new ones to discover.")
+        logger.info(
+            f"Found {len(symbol_list)} symbols. {len(known_tickers)} already in JSON. {len(new_symbols)} new ones to discover."
+        )
         if not new_symbols:
             return targets, seen
 
         symbol_sample = new_symbols
         if len(new_symbols) > 200:
-            symbol_sample = new_symbols[:int(len(new_symbols)/2)]
+            symbol_sample = new_symbols[: int(len(new_symbols) / 2)]
 
         for sym in symbol_sample:
             time.sleep(random.uniform(1.2, 2.5))
@@ -783,7 +795,9 @@ class DataCoordinator:
             logger.info(f"Loading {url=}")
             resp = requests.get(url, impersonate="chrome", timeout=10)
             if resp.status_code == 404:
-                logger.warning(f"Company page not found (404): {name}. Marking as inactive!")
+                logger.warning(
+                    f"Company page not found (404): {name}. Marking as inactive!"
+                )
                 company["active"] = False
                 return company
             if resp.status_code != 200:
