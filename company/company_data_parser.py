@@ -719,19 +719,23 @@ class DataCoordinator:
             return targets, seen
 
         MAX_PROCESS = 200
+        error_count = 0
         # Use random.sample to get a diverse subset across the alphabet
         if len(new_symbols) > MAX_PROCESS:
             symbol_sample = random.sample(new_symbols, MAX_PROCESS)
         else:
             symbol_sample = new_symbols
         logger.info(f"Screening a subset of tickers: {len(symbol_sample)}")
-
+    
         for sym in symbol_sample:
-            time.sleep(random.uniform(1.2, 2.5))
+            time.sleep(random.uniform(0.7, 1.0))
             try:
-                # The helper now returns website early to allow for deduplication
-                company_data = DataCoordinator._enrich_from_screener(sym)
+                company_data = None
+                if error_count < MAX_PROCESS:
+                    # The helper now returns website early to allow for deduplication
+                    company_data = DataCoordinator._enrich_from_screener(sym)
                 if not company_data:
+                    error_count += 1
                     continue
 
                 # Deduplicate by Website (catches dual-listed companies)
