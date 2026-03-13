@@ -2095,6 +2095,88 @@ async function main() {
         }
       });
     });
+
+    // --- Keyboard Navigation ---
+    $(document).on("keydown", function (e) {
+      // 1. Safety: Ignore if user is typing in a search/filter input
+      if ($(e.target).is("input, textarea, .select2-search__field")) {
+        return;
+      }
+
+      // 2. Safety: Ignore if modifier keys (Ctrl, Alt, Shift, Cmd) are held
+      if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+        return;
+      }
+
+      const info = jobsTable.page.info();
+
+      if (e.which === 39) {
+        // Right Arrow -> Next
+        if (info.page < info.pages - 1) {
+          jobsTable.page("next").draw("page");
+          scrollToTableTop();
+        }
+      } else if (e.which === 37) {
+        // Left Arrow -> Previous
+        if (info.page > 0) {
+          jobsTable.page("previous").draw("page");
+          scrollToTableTop();
+        }
+      } else if (e.which >= 49 && e.which <= 57) {
+        // Numbers 1-9
+        const pageNum = e.which - 49;
+        if (pageNum < info.pages) {
+          jobsTable.page(pageNum).draw("page");
+          scrollToTableTop();
+        }
+      }
+    });
+
+    // --- Swipe Navigation ---
+    let touchstartX = 0;
+    let touchendX = 0;
+    const minSwipeDistance = 75; // Adjust sensitivity
+
+    const handleSwipe = () => {
+      const info = jobsTable.page.info();
+      const distance = touchendX - touchstartX;
+
+      if (Math.abs(distance) < minSwipeDistance) {
+        return;
+      }
+
+      if (distance < 0) {
+        // Swipe Left -> Next Page
+        if (info.page < info.pages - 1) {
+          jobsTable.page("next").draw("page");
+          scrollToTableTop();
+        }
+      } else {
+        // Swipe Right -> Previous Page
+        if (info.page > 0) {
+          jobsTable.page("previous").draw("page");
+          scrollToTableTop();
+        }
+      }
+    };
+
+    // Use the existing 'dataTable' variable defined at the top of your script
+    dataTable.addEventListener(
+      "touchstart",
+      (e) => {
+        touchstartX = e.changedTouches[0].screenX;
+      },
+      { passive: true },
+    );
+
+    dataTable.addEventListener(
+      "touchend",
+      (e) => {
+        touchendX = e.changedTouches[0].screenX;
+        handleSwipe();
+      },
+      { passive: true },
+    );
   }
 
   // Handle the browser's back/forward buttons for query changes

@@ -276,6 +276,75 @@ async function loadData() {
         }, 150);
       },
     });
+
+    // --- KEYBOARD NAVIGATION ---
+    $(document).on("keydown", function (e) {
+      // IGNORE if typing in an input
+      if ($(e.target).is("input, textarea")) {
+        return;
+      }
+
+      // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
+      if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+        return;
+      }
+
+      const info = table.page.info();
+
+      if (e.which === 39) {
+        // Right Arrow
+        if (info.page < info.pages - 1) {
+          table.page("next").draw("page");
+        }
+      } else if (e.which === 37) {
+        // Left Arrow
+        if (info.page > 0) {
+          table.page("previous").draw("page");
+        }
+      } else if (e.which >= 49 && e.which <= 57) {
+        // Numbers 1-9
+        const pageNum = e.which - 49;
+        if (pageNum < info.pages) {
+          table.page(pageNum).draw("page");
+        }
+      }
+    });
+
+    // --- 2. SWIPE NAVIGATION ---
+    let touchstartX = 0;
+    let touchendX = 0;
+
+    // Minimum distance in pixels to count as a swipe
+    const minSwipeDistance = 70;
+
+    function handleSwipe() {
+      const info = table.page.info();
+      const distance = touchendX - touchstartX;
+
+      // Swipe Left (Move to Next Page)
+      if (distance < -minSwipeDistance) {
+        if (info.page < info.pages - 1) {
+          table.page("next").draw("page");
+        }
+      }
+      // Swipe Right (Move to Previous Page)
+      else if (distance > minSwipeDistance) {
+        if (info.page > 0) {
+          table.page("previous").draw("page");
+        }
+      }
+    }
+
+    // Attach listeners to the table container
+    const tableContainer = document.getElementById("companyTable");
+    tableContainer.addEventListener("touchstart", (e) => {
+      touchstartX = e.changedTouches[0].screenX;
+    });
+
+    tableContainer.addEventListener("touchend", (e) => {
+      touchendX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
   } catch (error) {
     // ERROR HANDLING: Show message in table
     console.error("Critical Error:", error);
