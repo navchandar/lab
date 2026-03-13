@@ -129,9 +129,13 @@ async function loadData() {
     const minSwipeDistance = 75;
 
     if (distance < -minSwipeDistance) {
-      if (info.page < info.pages - 1) table.page("next").draw("page");
+      if (info.page < info.pages - 1) {
+        table.page("next").draw("page");
+      }
     } else if (distance > minSwipeDistance) {
-      if (info.page > 0) table.page("previous").draw("page");
+      if (info.page > 0) {
+        table.page("previous").draw("page");
+      }
     }
   };
 

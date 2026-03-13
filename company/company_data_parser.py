@@ -507,17 +507,20 @@ class CompanyParser:
                 company["ln_count"] = CompanyParser.get_employee_count(p.get_text())
 
             # Organization Type (Public/Private)
+            error_count = 0
             org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
             if org_div and (dd := org_div.find("dd")):
                 is_public = "public" in dd.get_text().lower()
                 company["public"] = is_public
                 if is_public:
                     # ONLY call find_ticker if it's missing or empty
-                    if not company.get("ticker"):
+                    if not company.get("ticker") and error_count < 100:
                         ticker = FinancialService.find_ticker(name)
                         if ticker:
                             company["ticker"] = ticker
                             logger.info(f"New Ticker Found: {name} -> {ticker}")
+                        else:
+                            error_count += 1
                     else:
                         logger.info(
                             f"Skipping Ticker lookup for {name} (Already exists)"
