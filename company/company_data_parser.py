@@ -718,9 +718,13 @@ class DataCoordinator:
         if not new_symbols:
             return targets, seen
 
-        symbol_sample = new_symbols
-        if len(new_symbols) > 200:
-            symbol_sample = new_symbols[: int(len(new_symbols) / 2)]
+        MAX_PROCESS = 200
+        # Use random.sample to get a diverse subset across the alphabet
+        if len(new_symbols) > MAX_PROCESS:
+            symbol_sample = random.sample(new_symbols, MAX_PROCESS)
+        else:
+            symbol_sample = new_symbols
+        logger.info(f"Screening a subset of tickers: {len(symbol_sample)}")
 
         for sym in symbol_sample:
             time.sleep(random.uniform(1.2, 2.5))

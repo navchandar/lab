@@ -121,6 +121,20 @@ function getGrowthTitle(item) {
 
 async function loadData() {
   const tableBody = document.getElementById("tableBody");
+
+  // Define helper functions at the top of the main function scope
+  const handleSwipe = (touchstartX, touchendX, table) => {
+    const info = table.page.info();
+    const distance = touchendX - touchstartX;
+    const minSwipeDistance = 75;
+
+    if (distance < -minSwipeDistance) {
+      if (info.page < info.pages - 1) table.page("next").draw("page");
+    } else if (distance > minSwipeDistance) {
+      if (info.page > 0) table.page("previous").draw("page");
+    }
+  };
+
   try {
     const response = await fetch("company_data.json");
     if (!response.ok) {
@@ -212,8 +226,7 @@ async function loadData() {
         return true;
       }
 
-      const rank = parseFloat(data[1].match(/\d+/)) || 0; // Get numeric value from the Employee column
-      // Or better: use the data-order attribute directly if available
+      // use the data-order attribute directly if available
       const sortRank =
         parseFloat(
           settings.aoData[dataIndex].anCells[1].getAttribute("data-order"),
@@ -314,27 +327,6 @@ async function loadData() {
     let touchstartX = 0;
     let touchendX = 0;
 
-    // Minimum distance in pixels to count as a swipe
-    const minSwipeDistance = 70;
-
-    function handleSwipe() {
-      const info = table.page.info();
-      const distance = touchendX - touchstartX;
-
-      // Swipe Left (Move to Next Page)
-      if (distance < -minSwipeDistance) {
-        if (info.page < info.pages - 1) {
-          table.page("next").draw("page");
-        }
-      }
-      // Swipe Right (Move to Previous Page)
-      else if (distance > minSwipeDistance) {
-        if (info.page > 0) {
-          table.page("previous").draw("page");
-        }
-      }
-    }
-
     // Attach listeners to the table container
     const tableContainer = document.getElementById("companyTable");
     tableContainer.addEventListener("touchstart", (e) => {
@@ -343,7 +335,8 @@ async function loadData() {
 
     tableContainer.addEventListener("touchend", (e) => {
       touchendX = e.changedTouches[0].screenX;
-      handleSwipe();
+      // Call the helper
+      handleSwipe(touchstartX, touchendX, table);
     });
   } catch (error) {
     // ERROR HANDLING: Show message in table
