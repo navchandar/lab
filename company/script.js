@@ -73,14 +73,30 @@ function normalizeEmployeeSize(countStr) {
  * Maps a numeric count to the specific string keys used in sizeBuckets
  */
 function getBucketName(count) {
-  if (count <= 10) return "1-10";
-  if (count <= 50) return "11-50";
-  if (count <= 200) return "51-200";
-  if (count <= 1000) return "201-1000";
-  if (count <= 5000) return "1001-5000";
-  if (count <= 10000) return "5001-10000";
-  if (count <= 50000) return "10001-50000";
-  if (count <= 100000) return "50001-100000";
+  if (count <= 10) {
+    return "1-10";
+  }
+  if (count <= 50) {
+    return "11-50";
+  }
+  if (count <= 200) {
+    return "51-200";
+  }
+  if (count <= 1000) {
+    return "201-1000";
+  }
+  if (count <= 5000) {
+    return "1001-5000";
+  }
+  if (count <= 10000) {
+    return "5001-10000";
+  }
+  if (count <= 50000) {
+    return "10001-50000";
+  }
+  if (count <= 100000) {
+    return "50001-100000";
+  }
   return "100001+";
 }
 
