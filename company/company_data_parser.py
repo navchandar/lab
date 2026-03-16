@@ -59,6 +59,7 @@ logger.info(f"Schedule | Day of Week: {day_of_week}")
 logger.info(
     f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
 )
+ticker_error_count = 0
 
 GEO_IDs = [
     {"location": "India", "geoId": "102713980"},
@@ -468,15 +469,16 @@ class CompanyParser:
             return None
 
         try:
-            logger.info(f"Detail Fetch #{i}| {name}")
             resp = requests.get(
                 url,
                 headers={"User-Agent": USER_AGENT},
                 timeout=15,
                 impersonate="chrome",
             )
-            if resp.status_code != 200:
-                logger.error(f"Failed to load: {url} Status: {resp.status_code}")
+            status = resp.status_code
+            logger.info(f"Detail Fetch #{i} | {status=} | {name}")
+            if status != 200:
+                logger.error(f"Failed to load: {url}")
                 time.sleep(random.uniform(1.0, 3.0))
                 return company
 
@@ -507,24 +509,25 @@ class CompanyParser:
                 company["ln_count"] = CompanyParser.get_employee_count(p.get_text())
 
             # Organization Type (Public/Private)
-            error_count = 0
             org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
             if org_div and (dd := org_div.find("dd")):
                 is_public = "public" in dd.get_text().lower()
                 company["public"] = is_public
                 if is_public:
+                    ticker = company.get("ticker")
                     # ONLY call find_ticker if it's missing or empty
-                    if not company.get("ticker") and error_count < 100:
-                        ticker = FinancialService.find_ticker(name)
-                        if ticker:
-                            company["ticker"] = ticker
-                            logger.info(f"New Ticker Found: {name} -> {ticker}")
+                    if not ticker:
+                        if ticker_error_count < 50:
+                            ticker = FinancialService.find_ticker(name)
+                            if ticker:
+                                company["ticker"] = ticker
+                                logger.info(f"New Ticker Found: {name} -> {ticker}")
+                            else:
+                                ticker_error_count += 1
                         else:
-                            error_count += 1
+                            logger.warn(f"Skipping ticker lookup!")
                     else:
-                        logger.info(
-                            f"Skipping Ticker lookup for {name} (Already exists)"
-                        )
+                        logger.info(f"Ticker exists for {name}: {ticker}")
 
             time.sleep(random.uniform(0.5, 1.0))
             return company
@@ -588,6 +591,7 @@ class DataCoordinator:
             logger.warning(f"{JOBS_DATA} missing. Skipping local jobs data!")
             return targets, seen
         logger.info(f"Finding new companies from {JOBS_DATA.name}")
+        comp_list = list()
         with open(JOBS_DATA, "r") as f:
             for j in json.load(f).get("data", []):
                 url = LnSearch.normalize_url(j.get("companyUrl"))
@@ -604,10 +608,10 @@ class DataCoordinator:
                         seen.add(handle)
                         continue
                 if url and "linkedin.com" in url:
-                    targets.append({"name": j.get("company"), "linkedin": url})
+                    comp_list.append({"name": j.get("company"), "linkedin": url})
                     seen.add(handle)
-        logger.info(f"Found {len(targets)} companies from local jobs data!")
-        return targets, seen
+        logger.info(f"Found {len(comp_list)} companies from {JOBS_DATA.name}")
+        return (targets + comp_list), seen
 
     @staticmethod
     def _get_existing_comp(refresh, targets, seen) -> tuple:
@@ -644,11 +648,11 @@ class DataCoordinator:
                 ln_count = int(ln_count_str) if ln_count_str.isdigit() else 0
                 should_refresh = False
                 if is_active:
-                    if ln_count >= 50:
+                    if ln_count > 50:
                         # Large companies: Refresh every day
                         should_refresh = True
                     elif days_since_update >= 2:
-                        # Small companies (<50): Only refresh if at least 2 days old
+                        # Small companies (<=50): Only refresh if at least 2 days old
                         should_refresh = True
 
                 # Recheck inactive companies every 10 days regardless of size
@@ -685,6 +689,7 @@ class DataCoordinator:
             logger.info(f"Searching with keyword #{i}: '{keyword}'")
             targets, seen = LnSearch.get_companies(keyword, targets, seen)
         logger.info(f"Found total {len(targets)} companies")
+        logger.info("-------------------------------------")
         return targets, seen
 
     @staticmethod
