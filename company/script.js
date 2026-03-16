@@ -2,6 +2,8 @@
 const loadingSpinner = document.getElementById("loadingSpinner");
 let sizeDistributionData = {};
 let employmentTrendData = [];
+let sizeChartInst = null;
+let trendChartInst = null;
 
 document.getElementById("year").textContent = new Date().getFullYear();
 // Check if the screen width is mobile-sized
@@ -65,6 +67,21 @@ function normalizeEmployeeSize(countStr) {
     display: `${rounded.toLocaleString()}+`,
     rank: count, // Use the actual count for perfect sorting
   };
+}
+
+/**
+ * Maps a numeric count to the specific string keys used in sizeBuckets
+ */
+function getBucketName(count) {
+  if (count <= 10) return "1-10";
+  if (count <= 50) return "11-50";
+  if (count <= 200) return "51-200";
+  if (count <= 1000) return "201-1000";
+  if (count <= 5000) return "1001-5000";
+  if (count <= 10000) return "5001-10000";
+  if (count <= 50000) return "10001-50000";
+  if (count <= 100000) return "50001-100000";
+  return "100001+";
 }
 
 /**
@@ -140,12 +157,19 @@ async function fetchTrendData() {
 
 // --- Chart Rendering Logic ---
 function renderMarketCharts() {
+  // Crucial for performance and bug-free re-renders
+  if (sizeChartInst) {
+    sizeChartInst.destroy();
+  }
+  if (trendChartInst) {
+    trendChartInst.destroy();
+  }
+
   const ctxSize = document.getElementById("sizeDistChart").getContext("2d");
   const ctxTrend = document
     .getElementById("employmentTrendChart")
     .getContext("2d");
 
-  // Helper to get CSS variable values
   const getStyle = (varName) =>
     getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
 
@@ -154,50 +178,53 @@ function renderMarketCharts() {
   const accentColor = getStyle("--accent-color");
   const gridColor = getStyle("--row-border");
 
-  // Create Gradients
-  const blueGrad = ctxSize.createLinearGradient(0, 0, 0, 400);
-  blueGrad.addColorStop(0, "#30daec");
-  blueGrad.addColorStop(1, "#38bdf8");
+  // Indian Number Formatter (Lakhs/Crores)
+  const IN_Format = new Intl.NumberFormat("en-IN");
 
-  const trendGrad = ctxTrend.createLinearGradient(0, 0, 0, 400);
-  trendGrad.addColorStop(0, "rgba(48, 218, 236, 0.3)");
+  // GRADIENTS: Dynamic scaling
+  const blueGrad = ctxSize.createLinearGradient(0, 0, 0, 300);
+  blueGrad.addColorStop(0, "#30daec");
+  blueGrad.addColorStop(1, "rgba(56, 189, 248, 0.2)");
+
+  const trendGrad = ctxTrend.createLinearGradient(0, 0, 0, 300);
+  trendGrad.addColorStop(0, "rgba(48, 218, 236, 0.4)");
   trendGrad.addColorStop(1, "rgba(219, 40, 200, 0)");
 
-  // Common Options
+  // SHARED CONFIGURATION
   const commonOptions = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: getStyle("--bg-color"),
-        titleColor: "#30daec",
-        bodyColor: "#f1f5f9",
-        borderColor: "#38bdf8",
-        borderWidth: 1,
+        backgroundColor: "rgba(15, 23, 42, 0.9)", // Darker glass look
+        titleFont: { size: 13, weight: "bold" },
         padding: 12,
         cornerRadius: 10,
         displayColors: false,
+        borderWidth: 1,
+        borderColor: "rgba(255,255,255,0.1)",
       },
+      datalabels: { display: false }, // Hidden by default, useful for mobile
     },
     scales: {
       x: {
         grid: { display: false },
-        ticks: {
-          color: mutedColor,
-          font: { family: "'Inter', sans-serif", size: 11 },
-        },
+        ticks: { color: mutedColor, font: { size: 10 } },
       },
       y: {
-        grid: { color: gridColor },
-        border: { dash: [5, 5] },
-        ticks: { color: mutedColor, font: { family: "'Inter', sans-serif" } },
+        grid: { color: gridColor, drawBorder: false },
+        ticks: {
+          color: mutedColor,
+          callback: (val) =>
+            val >= 1000 ? (val / 1000).toFixed(0) + "k" : val,
+        },
       },
     },
   };
 
-  // 1. Size Distribution (Modern Rounded Bars)
-  new Chart(ctxSize, {
+  // RENDER CHART 1: Size Distribution
+  sizeChartInst = new Chart(ctxSize, {
     type: "bar",
     data: {
       labels: Object.keys(sizeDistributionData),
@@ -205,7 +232,9 @@ function renderMarketCharts() {
         {
           data: Object.values(sizeDistributionData),
           backgroundColor: blueGrad,
-          borderRadius: 8,
+          borderColor: "#30daec",
+          borderWidth: 1,
+          borderRadius: 6,
           hoverBackgroundColor: "#db28c8",
         },
       ],
@@ -218,31 +247,34 @@ function renderMarketCharts() {
           display: true,
           text: "COMPANIES BY SIZE",
           color: accentColor,
-          font: { weight: "bold", letterSpacing: 1 },
+          font: { weight: "600" },
+        },
+        tooltip: {
+          ...commonOptions.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => ` ${ctx.parsed.y} Companies`,
+          },
         },
       },
     },
   });
 
-  // 2. Employment Trend (Area Chart with Glow)
-  new Chart(ctxTrend, {
+  // RENDER CHART 2: Employment Trend
+  trendChartInst = new Chart(ctxTrend, {
     type: "line",
     data: {
       labels: employmentTrendData.map((d) => d.d),
       datasets: [
         {
-          label: "Total Headcount Index",
           data: employmentTrendData.map((d) => d.ma),
           fill: true,
           backgroundColor: trendGrad,
           borderColor: "#30daec",
-          borderWidth: 3,
-          pointBackgroundColor: "#30daec",
-          pointBorderColor: getStyle("--bg-color"),
-          pointBorderWidth: 2,
-          pointRadius: 4,
+          borderWidth: 2,
+          pointRadius: isMobile() ? 2 : 4,
           pointHoverRadius: 6,
-          tension: 0.4, // Extra smooth curves
+          pointBackgroundColor: "#30daec",
+          tension: 0.4,
         },
       ],
     },
@@ -252,9 +284,20 @@ function renderMarketCharts() {
         ...commonOptions.plugins,
         title: {
           display: true,
-          text: "MARKET EMPLOYMENT VELOCITY",
+          text: "TOTAL EMPLOYMENT VELOCITY",
           color: accentColor,
-          font: { weight: "bold", letterSpacing: 1 },
+          font: { weight: "600" },
+        },
+        tooltip: {
+          ...commonOptions.plugins.tooltip,
+          callbacks: {
+            label: (ctx) => {
+              const item = employmentTrendData[ctx.dataIndex];
+              const changeText =
+                item.chg >= 0 ? `(+${item.chg}%)` : `(${item.chg}%)`;
+              return ` Index: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
+            },
+          },
         },
       },
     },
@@ -288,7 +331,6 @@ async function loadData() {
     "50001-100000": 0,
     "100001+": 0,
   };
-
   // Define helper functions at the top of the main function scope
   const handleSwipe = (touchstartX, touchendX, table) => {
     const info = table.page.info();
@@ -338,6 +380,12 @@ async function loadData() {
         sortRank = parseInt(displayCount.split(/[-+]/)[0]) || 0;
       }
 
+      // USE THE NUMERIC RANK TO FILL BUCKETS
+      if (sortRank > 0) {
+        const bucketKey = getBucketName(sortRank);
+        sizeBuckets[bucketKey]++;
+      }
+
       // Add to Filter Map (O(1) complexity for duplicates)
       if (displayCount !== "-") {
         // We store the lowest possible rank for this category to help sort the dropdown
@@ -347,12 +395,7 @@ async function loadData() {
         ) {
           filterOptionsMap.set(displayCount, sortRank);
         }
-        // Logic to map to the correct bucket keys
-        if (sizeBuckets.hasOwnProperty(displayCount)) {
-          sizeBuckets[displayCount]++;
-        }
       }
-      sizeDistributionData = sizeBuckets;
 
       let domain = "";
       let linkedin_link = "";
@@ -393,6 +436,7 @@ async function loadData() {
     });
 
     tableBody.appendChild(fragment);
+    sizeDistributionData = sizeBuckets;
 
     // This is a custom search function that allows us to filter by numeric ranges
     $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
