@@ -7,7 +7,7 @@ A easier and better way to calculate and compare EV 2-wheelers and 3-wheelers!
 ## Features
 
 - Allows comparison of different EVs from different manufacturers eligible for PM E-Drive scheme
-- Visualizes information in a simpler way with data from [https://pmedrive.heavyindustries.gov.in](https://pmedrive.heavyindustries.gov.in)
+- Visualizes information in a simpler way with data from pmedrive.heavyindustries.gov.in
 - Calculates basic real world usage information
 
 ### Maintained By: <a style="display:inline-block;" href="https://navchandar.github.io/">Naveenchandar</a>
