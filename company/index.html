@@ -520,39 +520,63 @@
           opacity: 1;
         }
       }
-
       .modal-backdrop {
         display: none;
         position: fixed;
         justify-content: center;
         align-items: center;
-        opacity: 0;
-        z-index: 1000;
-        backdrop-filter: blur(4px);
-        transition: opacity 0.3s;
+        z-index: 2000;
+        backdrop-filter: blur(8px);
         inset: 0;
-        background: rgba(0, 0, 0, 0.7);
+        background: rgba(0, 0, 0, 0.75);
+        -webkit-backdrop-filter: blur(8px);
+        opacity: 0;
+        transition: opacity 0.3s ease;
       }
 
       .modal-backdrop.show {
         display: flex;
         opacity: 1;
       }
-      
-      .chart-modal-content {
+
+      /* Modal Content Box */
+      .modal-content {
+        display: flex;
+        position: relative;
+        flex-direction: column;
         backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
+        animation: modalSlideUp 0.3s ease-out;
         box-shadow: var(--card-shadow);
         border: 1px solid var(--glass-border);
         border-radius: 24px;
         background: var(--glass-bg);
         padding: 30px;
-        width: 95%;
-        max-width: 1000px;
+        width: 90%;
+        max-width: 600px;
         max-height: 90vh;
+        overflow: hidden;
         color: var(--text-main);
       }
 
+      /* Specific size for Charts */
+      .chart-modal-content {
+        max-width: 1000px;
+      }
+      @keyframes modalSlideUp {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .modal-body {
+        padding-right: 10px;
+        overflow-y: auto;
+      }
       .modal-header h2 {
         background: var(--title-gradient);
         -webkit-background-clip: text;
@@ -810,65 +834,64 @@
         </div>
       </div>
 
-      <div id="disclaimerModal" class="modal" aria-hidden="true" role="dialog">
-        <div class="modal-backdrop">
-          <div class="modal-content">
-            <span class="modal-close-btn" aria-label="Close modal"
-              >&times;</span
-            >
-            <h2>Disclaimer</h2>
-            <div class="modal-body">
-              <h3>Definition</h3>
-              <p>
-                This dashboard is an independent, non-commercial research
-                project. It functions as a data aggregator, collecting publicly
-                available information from different sites and financial market
-                data providers. We make no representations or warranties
-                regarding the accuracy, completeness, timeliness, or reliability
-                of the information provided. Users are encouraged to verify all
-                information directly with the respective companies or official
-                sources.
-              </p>
+      <div
+        id="disclaimerModal"
+        class="modal-backdrop"
+        aria-hidden="true"
+        role="dialog"
+      >
+        <div class="modal-content">
+          <span class="modal-close-btn" aria-label="Close modal">&times;</span>
+          <h2>Disclaimer</h2>
+          <div class="modal-body">
+            <h3>Definition</h3>
+            <p>
+              This dashboard is an independent, non-commercial research project.
+              It functions as a data aggregator, collecting publicly available
+              information from different sites and financial market data
+              providers. We make no representations or warranties regarding the
+              accuracy, completeness, timeliness, or reliability of the
+              information provided. Users are encouraged to verify all
+              information directly with the respective companies or official
+              sources.
+            </p>
 
-              <h3>Non-Affiliation & Endorsement</h3>
-              <p>
-                The names, logos, and trademarks of the companies displayed are
-                the property of their respective owners. Their appearance on
-                this platform does not imply any affiliation with, endorsement
-                by, or partnership with the creators/maintainers of this
-                project.
-              </p>
+            <h3>Non-Affiliation & Endorsement</h3>
+            <p>
+              The names, logos, and trademarks of the companies displayed are
+              the property of their respective owners. Their appearance on this
+              platform does not imply any affiliation with, endorsement by, or
+              partnership with the creators/maintainers of this project.
+            </p>
 
-              <h3>Data Integrity & Financial Notice</h3>
-              <p>
-                All metrics, including employee counts and growth trends, are
-                approximate estimates derived from third-party snapshots.
-                Financial tickers and performance data are delayed and provided
-                solely for research purposes. This is
-                <strong>not</strong> financial or career advice.
-              </p>
+            <h3>Data Integrity & Financial Notice</h3>
+            <p>
+              All metrics, including employee counts and growth trends, are
+              approximate estimates derived from third-party snapshots.
+              Financial tickers and performance data are delayed and provided
+              solely for research purposes. This is
+              <strong>not</strong> financial or career advice.
+            </p>
 
-              <h3>Intellectual Property & Takedown Policy</h3>
-              <p>
-                We respect intellectual property rights. If you are a
-                representative of a company listed here and wish to request a
-                data correction or the removal of your company profile from this
-                research dashboard, please contact the project maintainer via
-                the
-                <a
-                  href="https://github.com/navchandar/lab/issues"
-                  target="_blank"
-                >
-                  GitHub repository </a
-                >.
-              </p>
+            <h3>Intellectual Property & Takedown Policy</h3>
+            <p>
+              We respect intellectual property rights. If you are a
+              representative of a company listed here and wish to request a data
+              correction or the removal of your company profile from this
+              research dashboard, please contact the project maintainer via the
+              <a
+                href="https://github.com/navchandar/lab/issues"
+                target="_blank"
+              >
+                GitHub repository </a
+              >.
+            </p>
 
-              <p>
-                <small
-                  ><em>Use of this data is at the user's own risk.</em></small
-                >
-              </p>
-            </div>
+            <p>
+              <small
+                ><em>Use of this data is at the user's own risk.</em></small
+              >
+            </p>
           </div>
         </div>
       </div>
@@ -914,7 +937,7 @@
           </a>
         </small>
         <span class="text-muted">|</span>
-        <a href="#" id="openDisclaimerModal">Disclaimer</a>
+        <a href="#disclaimer" id="openDisclaimerModal">Disclaimer</a>
         <span class="text-muted">|</span>
         <a href="#charts" id="openCharts">Display Charts</a>
       </div>

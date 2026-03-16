@@ -84,47 +84,6 @@ function getBucketName(count) {
   return "100001+";
 }
 
-/**
- * Sets up the Disclaimer Modal interaction
- */
-function setupDisclaimer() {
-  const modal = document.getElementById("disclaimerModal");
-  const openBtn = document.getElementById("openDisclaimerModal");
-  const closeBtn = document.querySelector(".modal-close-btn");
-  const backdrop = document.querySelector(".modal-backdrop");
-
-  if (!modal || !openBtn) {
-    return;
-  }
-
-  // Open modal
-  openBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    modal.classList.add("show");
-    document.body.style.overflow = "hidden"; // Disable background scroll
-  });
-
-  // Close modal function
-  const closeModal = () => {
-    modal.classList.remove("show");
-    document.body.style.overflow = "auto"; // Re-enable scroll
-    window.location.hash = "";
-  };
-
-  closeBtn.addEventListener("click", closeModal);
-  backdrop.addEventListener("click", closeModal);
-
-  // Close on Escape key
-  window.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && modal.classList.contains("show")) {
-      closeModal();
-    }
-  });
-
-  window.addEventListener("hashchange", handleHashChange);
-  document.getElementById("closeCharts").onclick = closeModal;
-}
-
 // HELPER: Build a dynamic tooltip string for growth trends
 function getGrowthTitle(item) {
   const parts = [];
@@ -306,15 +265,59 @@ function renderMarketCharts() {
 
 // --- Hash & Modal Handling ---
 function handleHashChange() {
-  const modal = document.getElementById("chartModal");
-  if (window.location.hash === "#charts") {
-    modal.classList.add("show");
+  const chartModal = document.getElementById("chartModal");
+  const discModal = document.getElementById("disclaimerModal");
+  const hash = window.location.hash;
+
+  // Reset state
+  [chartModal, discModal].forEach((m) => m.classList.remove("show"));
+  document.body.style.overflow = "auto";
+
+  // Open specific modal based on hash
+  if (hash === "#charts") {
+    chartModal.classList.add("show");
     document.body.style.overflow = "hidden";
     renderMarketCharts();
-  } else {
-    modal.classList.remove("show");
-    document.body.style.overflow = "auto";
+  } else if (hash === "#disclaimer") {
+    discModal.classList.add("show");
+    document.body.style.overflow = "hidden";
   }
+}
+
+function setupModals() {
+  // Listen for hash changes
+  window.addEventListener("hashchange", handleHashChange);
+
+  // Close functionality (clearing the hash closes any active modal)
+  const closeModal = (e) => {
+    if (e) {
+      e.preventDefault();
+    }
+    window.location.hash = "";
+  };
+
+  // Attach to all close buttons and backdrops
+  document.querySelectorAll(".modal-close-btn").forEach((btn) => {
+    btn.onclick = closeModal;
+  });
+
+  document.querySelectorAll(".modal-backdrop").forEach((backdrop) => {
+    backdrop.onclick = (e) => {
+      if (e.target === backdrop) {
+        closeModal();
+      }
+    };
+  });
+
+  // Escape key handler
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeModal();
+    }
+  });
+
+  // Initial check on load
+  handleHashChange();
 }
 
 async function loadData() {
@@ -591,5 +594,5 @@ async function loadData() {
 // Call this inside your DOMContentLoaded or init function
 document.addEventListener("DOMContentLoaded", () => {
   loadData();
-  setupDisclaimer();
+  setupModals();
 });
