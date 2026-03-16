@@ -6,6 +6,7 @@ let employmentTrendData = [];
 document.getElementById("year").textContent = new Date().getFullYear();
 // Check if the screen width is mobile-sized
 const isMobile = () => window.innerWidth <= 768;
+Chart.register(ChartDataLabels);
 
 // HELPER: Generate Public/Private Icons with Financial Links
 function getStatusIcon(isPublic, ticker) {
@@ -139,80 +140,122 @@ async function fetchTrendData() {
 
 // --- Chart Rendering Logic ---
 function renderMarketCharts() {
-  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const textColor = isDarkMode ? "#eee" : "#333";
+  const ctxSize = document.getElementById("sizeDistChart").getContext("2d");
+  const ctxTrend = document
+    .getElementById("employmentTrendChart")
+    .getContext("2d");
 
-  // Size Distribution (Bar Chart)
-  new Chart(document.getElementById("sizeDistChart"), {
+  // Helper to get CSS variable values
+  const getStyle = (varName) =>
+    getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+
+  const textColor = getStyle("--text-main");
+  const mutedColor = getStyle("--text-muted");
+  const accentColor = getStyle("--accent-color");
+  const gridColor = getStyle("--row-border");
+
+  // Create Gradients
+  const blueGrad = ctxSize.createLinearGradient(0, 0, 0, 400);
+  blueGrad.addColorStop(0, "#30daec");
+  blueGrad.addColorStop(1, "#38bdf8");
+
+  const trendGrad = ctxTrend.createLinearGradient(0, 0, 0, 400);
+  trendGrad.addColorStop(0, "rgba(48, 218, 236, 0.3)");
+  trendGrad.addColorStop(1, "rgba(219, 40, 200, 0)");
+
+  // Common Options
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: getStyle("--bg-color"),
+        titleColor: "#30daec",
+        bodyColor: "#f1f5f9",
+        borderColor: "#38bdf8",
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 10,
+        displayColors: false,
+      },
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          color: mutedColor,
+          font: { family: "'Inter', sans-serif", size: 11 },
+        },
+      },
+      y: {
+        grid: { color: gridColor },
+        border: { dash: [5, 5] },
+        ticks: { color: mutedColor, font: { family: "'Inter', sans-serif" } },
+      },
+    },
+  };
+
+  // 1. Size Distribution (Modern Rounded Bars)
+  new Chart(ctxSize, {
     type: "bar",
     data: {
       labels: Object.keys(sizeDistributionData),
       datasets: [
         {
-          label: "Number of Companies",
           data: Object.values(sizeDistributionData),
-          backgroundColor: "rgba(54, 162, 235, 0.6)",
-          borderColor: "rgb(54, 162, 235)",
-          borderWidth: 1,
+          backgroundColor: blueGrad,
+          borderRadius: 8,
+          hoverBackgroundColor: "#db28c8",
         },
       ],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      ...commonOptions,
       plugins: {
+        ...commonOptions.plugins,
         title: {
           display: true,
-          text: "Company Size Distribution",
-          color: textColor,
+          text: "COMPANIES BY SIZE",
+          color: accentColor,
+          font: { weight: "bold", letterSpacing: 1 },
         },
-        legend: { display: false },
-      },
-      scales: {
-        y: { ticks: { color: textColor }, beginAtZero: true },
-        x: { ticks: { color: textColor } },
       },
     },
   });
 
-  // Employment Trend (Line Chart)
-  new Chart(document.getElementById("employmentTrendChart"), {
+  // 2. Employment Trend (Area Chart with Glow)
+  new Chart(ctxTrend, {
     type: "line",
     data: {
       labels: employmentTrendData.map((d) => d.d),
       datasets: [
         {
-          label: "Global Headcount Index",
+          label: "Total Headcount Index",
           data: employmentTrendData.map((d) => d.ma),
           fill: true,
-          backgroundColor: "rgba(34, 197, 94, 0.1)",
-          borderColor: "#22c55e",
-          tension: 0.3,
+          backgroundColor: trendGrad,
+          borderColor: "#30daec",
+          borderWidth: 3,
+          pointBackgroundColor: "#30daec",
+          pointBorderColor: getStyle("--bg-color"),
+          pointBorderWidth: 2,
           pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.4, // Extra smooth curves
         },
       ],
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false,
+      ...commonOptions,
       plugins: {
+        ...commonOptions.plugins,
         title: {
           display: true,
-          text: "Total Market Employment Trend",
-          color: textColor,
+          text: "MARKET EMPLOYMENT VELOCITY",
+          color: accentColor,
+          font: { weight: "bold", letterSpacing: 1 },
         },
-        tooltip: {
-          callbacks: {
-            label: (context) => {
-              const chg = employmentTrendData[context.dataIndex].chg;
-              return `Count: ${context.parsed.y.toLocaleString()} (${chg >= 0 ? "+" : ""}${chg}%)`;
-            },
-          },
-        },
-      },
-      scales: {
-        y: { ticks: { color: textColor } },
-        x: { ticks: { color: textColor, autoSkip: true, maxRotation: 0 } },
       },
     },
   });
