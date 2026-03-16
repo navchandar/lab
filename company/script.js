@@ -108,6 +108,7 @@ function setupDisclaimer() {
   const closeModal = () => {
     modal.classList.remove("show");
     document.body.style.overflow = "auto"; // Re-enable scroll
+    window.location.hash = "";
   };
 
   closeBtn.addEventListener("click", closeModal);
@@ -121,8 +122,7 @@ function setupDisclaimer() {
   });
 
   window.addEventListener("hashchange", handleHashChange);
-  document.getElementById("closeCharts").onclick = () =>
-    (window.location.hash = "");
+  document.getElementById("closeCharts").onclick = closeModal;
 }
 
 // HELPER: Build a dynamic tooltip string for growth trends
