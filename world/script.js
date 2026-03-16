@@ -9,6 +9,8 @@ const nameTextEl = document.getElementById("country-name-text");
 const flagImgEl = document.getElementById("flag-img");
 const extrainfoCheckbox = document.getElementById("show-extra-info");
 const extraInfoEl = document.getElementById("extra-info-text");
+const startTime = Date.now();
+const MIN_LOAD_TIME = 3000;
 
 // --- Speaker Initiation ---
 const ttsInstance = TTS();
@@ -89,17 +91,27 @@ function updateGradientPos(event, gradientId) {
 
 function hideLoading() {
   const loadingScreen = document.getElementById("loading-screen");
-  if (loadingScreen) {
+  if (!loadingScreen) {
+    return;
+  }
+
+  const currentTime = Date.now();
+  const elapsedTime = currentTime - startTime;
+
+  // Calculate how much longer we need to wait to hit the minimum
+  const remainingTime = Math.max(0, MIN_LOAD_TIME - elapsedTime);
+
+  setTimeout(() => {
     loadingScreen.style.opacity = "0";
     loadingScreen.style.visibility = "hidden";
-    // remove it from the layout after the fade finishes
+
     setTimeout(() => {
       loadingScreen.style.display = "none";
     }, 500);
     intervalID = setTimeout(() => {
       nameDisplayEl.classList.remove("show");
     }, 3000);
-  }
+  }, remainingTime);
 }
 
 // Set up limited Zoom and Pan

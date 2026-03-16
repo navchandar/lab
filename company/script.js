@@ -1,6 +1,9 @@
-document.getElementById("year").textContent = new Date().getFullYear();
+// --- Global Variables ---
 const loadingSpinner = document.getElementById("loadingSpinner");
+let sizeDistributionData = {};
+let employmentTrendData = [];
 
+document.getElementById("year").textContent = new Date().getFullYear();
 // Check if the screen width is mobile-sized
 const isMobile = () => window.innerWidth <= 768;
 
@@ -98,6 +101,10 @@ function setupDisclaimer() {
       closeModal();
     }
   });
+
+  window.addEventListener("hashchange", handleHashChange);
+  document.getElementById("closeCharts").onclick = () =>
+    (window.location.hash = "");
 }
 
 // HELPER: Build a dynamic tooltip string for growth trends
@@ -119,14 +126,131 @@ function getGrowthTitle(item) {
   return parts.length > 0 ? `Growth Trend | ${parts.join(" • ")}` : "";
 }
 
+async function fetchTrendData() {
+  try {
+    const response = await fetch("charts_data.json");
+    if (response.ok) {
+      employmentTrendData = await response.json();
+    }
+  } catch (e) {
+    console.error("Trend data load failed", e);
+  }
+}
+
+// --- Chart Rendering Logic ---
+function renderMarketCharts() {
+  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const textColor = isDarkMode ? "#eee" : "#333";
+
+  // Size Distribution (Bar Chart)
+  new Chart(document.getElementById("sizeDistChart"), {
+    type: "bar",
+    data: {
+      labels: Object.keys(sizeDistributionData),
+      datasets: [
+        {
+          label: "Number of Companies",
+          data: Object.values(sizeDistributionData),
+          backgroundColor: "rgba(54, 162, 235, 0.6)",
+          borderColor: "rgb(54, 162, 235)",
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "Company Size Distribution",
+          color: textColor,
+        },
+        legend: { display: false },
+      },
+      scales: {
+        y: { ticks: { color: textColor }, beginAtZero: true },
+        x: { ticks: { color: textColor } },
+      },
+    },
+  });
+
+  // Employment Trend (Line Chart)
+  new Chart(document.getElementById("employmentTrendChart"), {
+    type: "line",
+    data: {
+      labels: employmentTrendData.map((d) => d.d),
+      datasets: [
+        {
+          label: "Global Headcount Index",
+          data: employmentTrendData.map((d) => d.ma),
+          fill: true,
+          backgroundColor: "rgba(34, 197, 94, 0.1)",
+          borderColor: "#22c55e",
+          tension: 0.3,
+          pointRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "Total Market Employment Trend",
+          color: textColor,
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              const chg = employmentTrendData[context.dataIndex].chg;
+              return `Count: ${context.parsed.y.toLocaleString()} (${chg >= 0 ? "+" : ""}${chg}%)`;
+            },
+          },
+        },
+      },
+      scales: {
+        y: { ticks: { color: textColor } },
+        x: { ticks: { color: textColor, autoSkip: true, maxRotation: 0 } },
+      },
+    },
+  });
+}
+
+// --- Hash & Modal Handling ---
+function handleHashChange() {
+  const modal = document.getElementById("chartModal");
+  if (window.location.hash === "#charts") {
+    modal.classList.add("show");
+    document.body.style.overflow = "hidden";
+    renderMarketCharts();
+  } else {
+    modal.classList.remove("show");
+    document.body.style.overflow = "auto";
+  }
+}
+
 async function loadData() {
   const tableBody = document.getElementById("tableBody");
+  // Initialize Size Aggregator
+  const sizeBuckets = {
+    "1-10": 0,
+    "11-50": 0,
+    "51-200": 0,
+    "201-1000": 0,
+    "1001-5000": 0,
+    "5001-10000": 0,
+    "10001-50000": 0,
+    "50001-100000": 0,
+    "100001+": 0,
+  };
 
   // Define helper functions at the top of the main function scope
   const handleSwipe = (touchstartX, touchendX, table) => {
     const info = table.page.info();
     const distance = touchendX - touchstartX;
-    const minSwipeDistance = 75;
+    const minSwipeDistance = 30;
 
     if (distance < -minSwipeDistance) {
       if (info.page < info.pages - 1) {
@@ -180,7 +304,12 @@ async function loadData() {
         ) {
           filterOptionsMap.set(displayCount, sortRank);
         }
+        // Logic to map to the correct bucket keys
+        if (sizeBuckets.hasOwnProperty(displayCount)) {
+          sizeBuckets[displayCount]++;
+        }
       }
+      sizeDistributionData = sizeBuckets;
 
       let domain = "";
       let linkedin_link = "";
@@ -327,7 +456,7 @@ async function loadData() {
       }
     });
 
-    // --- 2. SWIPE NAVIGATION ---
+    // --- SWIPE NAVIGATION ---
     let touchstartX = 0;
     let touchendX = 0;
 
@@ -342,6 +471,11 @@ async function loadData() {
       // Call the helper
       handleSwipe(touchstartX, touchendX, table);
     });
+
+    // Get the trend info
+    await fetchTrendData();
+    // Trigger initial check for hash
+    handleHashChange();
   } catch (error) {
     // ERROR HANDLING: Show message in table
     console.error("Critical Error:", error);
