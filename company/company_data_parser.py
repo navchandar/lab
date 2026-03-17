@@ -7,6 +7,7 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
+from urllib.parse import urljoin, urlparse
 
 import pandas as pd
 import yfinance as yf
@@ -59,7 +60,7 @@ logger.info(f"Schedule | Day of Week: {day_of_week}")
 logger.info(
     f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
 )
-ticker_error_count = 0
+
 
 GEO_IDs = [
     {"location": "India", "geoId": "102713980"},
@@ -432,6 +433,8 @@ class GrowthAnalytics:
 class CompanyParser:
     """Save metadata from individual company pages"""
 
+    ticker_error_count = 0
+
     @staticmethod
     def get_employee_count(text: str) -> Optional[str]:
         """
@@ -486,48 +489,24 @@ class CompanyParser:
             soup = BeautifulSoup(resp.text, "html.parser")
 
             # Website Parsing
-            for a in soup.find_all("a", href=True):
-                if "websitelink" in str(a.get("aria-describedby", "")).lower():
-                    link = a.get_text(strip=True).split("?")[0].rstrip("/")
-                    if link and not link.startswith("http"):
-                        link = f"https://{link}"
-                    if not link or len(link) < 12:
-                        logger.error(f"Invalid website: '{link}'")
-                        link = ""
-                    if link:
-                        company["website"] = link
-                    break
+            website = CompanyParser._extract_website(soup)
+            if website and "http" in website:
+                company["website"] = website
 
             # Headcount Parsing
-            size_div = soup.find("div", {"data-test-id": "about-us__size"})
-            if size_div and (dd := size_div.find("dd")):
-                company["emp_count"] = CompanyParser.get_employee_count(dd.get_text())
+            if emp_count := CompanyParser._extract_headcount(soup):
+                company["emp_count"] = emp_count
 
             # Linkedin Employee Count
-            cta_span = soup.find("span", {"data-test-id": "view-all-employees-cta"})
-            if cta_span and (p := cta_span.find("p")):
-                company["ln_count"] = CompanyParser.get_employee_count(p.get_text())
+            if ln_count := CompanyParser._extract_ln_headcount(soup):
+                company["ln_count"] = ln_count
 
             # Organization Type (Public/Private)
-            org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
-            if org_div and (dd := org_div.find("dd")):
-                is_public = "public" in dd.get_text().lower()
-                company["public"] = is_public
-                if is_public:
-                    ticker = company.get("ticker")
-                    # ONLY call find_ticker if it's missing or empty
-                    if not ticker:
-                        if ticker_error_count < 50:
-                            ticker = FinancialService.find_ticker(name)
-                            if ticker:
-                                company["ticker"] = ticker
-                                logger.info(f"New Ticker Found: {name} -> {ticker}")
-                            else:
-                                ticker_error_count += 1
-                        else:
-                            logger.warn(f"Skipping ticker lookup!")
-                    else:
-                        logger.info(f"Ticker exists for {name}: {ticker}")
+            is_public, ticker = CompanyParser._extract_org_type(
+                soup, name, company.get("ticker")
+            )
+            company["public"] = is_public
+            company["ticker"] = ticker
 
             time.sleep(random.uniform(0.5, 1.0))
             return company
@@ -535,6 +514,57 @@ class CompanyParser:
             logger.error(f"Scrape failed for {name}: {e}")
             time.sleep(random.uniform(1.0, 3.0))
         return company
+
+    @staticmethod
+    def _extract_website(soup: BeautifulSoup) -> str | None:
+        # Logic for website parsing only
+        for a in soup.find_all("a", href=True):
+            if "websitelink" in str(a.get("aria-describedby", "")).lower():
+                link = a.get_text(strip=True).split("?")[0].rstrip("/")
+                if link and not link.startswith("http"):
+                    link = f"https://{link}"
+                if not link or len(link) < 12:
+                    logger.error(f"Invalid website: '{link}'")
+                    link = ""
+                if link:
+                    return str(link)
+                break
+
+    @staticmethod
+    def _extract_headcount(soup: BeautifulSoup) -> str | None:
+        # Logic for emp_count only
+        size_div = soup.find("div", {"data-test-id": "about-us__size"})
+        if size_div and (dd := size_div.find("dd")):
+            return CompanyParser.get_employee_count(dd.get_text())
+
+    @staticmethod
+    def _extract_ln_headcount(soup: BeautifulSoup) -> str | None:
+        # Logic for ln_count only
+        cta_span = soup.find("span", {"data-test-id": "view-all-employees-cta"})
+        if cta_span and (p := cta_span.find("p")):
+            return CompanyParser.get_employee_count(p.get_text())
+
+    @staticmethod
+    def _extract_org_type(soup: BeautifulSoup, name: str, ticker: str | None) -> tuple:
+        # Logic for public or private org and ticker symbol
+        is_public = False
+        org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
+        if org_div and (dd := org_div.find("dd")):
+            is_public = "public" in dd.get_text().lower()
+            if is_public:
+                # ONLY call find_ticker if it's missing or empty
+                if not ticker:
+                    if CompanyParser.ticker_error_count < 50:
+                        ticker = FinancialService.find_ticker(name)
+                        if ticker:
+                            logger.info(f"New Ticker Found: {name} -> {ticker}")
+                        else:
+                            CompanyParser.ticker_error_count += 1
+                    else:
+                        logger.warning(f"Skipping ticker lookup!")
+                else:
+                    logger.info(f"Ticker exists for {name}: {ticker}")
+        return (is_public, ticker)
 
 
 class DataCoordinator:
@@ -632,41 +662,33 @@ class DataCoordinator:
 
             # ONLY add to targets if it's a refresh day (or if it meets recheck criteria)
             if refresh:
-                is_active = c.get("active", True)
-                last_upd_str = c.get("last_updated")
-
-                # Default to a long time ago if no date exists so it definitely refreshes
-                last_upd = (
-                    datetime.fromisoformat(last_upd_str)
-                    if last_upd_str
-                    else now - timedelta(days=10)
-                )
-                days_since_update = (now - last_upd).days
-
-                # Get employee count (default to 0 if missing)
-                ln_count_str = str(c.get("ln_count", "0"))
-                ln_count = int(ln_count_str) if ln_count_str.isdigit() else 0
-                should_refresh = False
-                if is_active:
-                    if ln_count > 50:
-                        # Large companies: Refresh every day
-                        should_refresh = True
-                    elif days_since_update >= 2:
-                        # Small companies (<=50): Only refresh if at least 2 days old
-                        should_refresh = True
-
-                # Recheck inactive companies every 10 days regardless of size
-                elif not is_active and days_since_update >= 10:
-                    should_refresh = True
-
+                should_refresh = DataCoordinator._should_refresh(c)
                 if should_refresh:
                     targets.append({"name": c["name"], "linkedin": c["linkedin"]})
 
         if refresh:
-            logger.info(
-                f"Refresh Active: Added {len(targets)} existing companies to update"
-            )
+            logger.info(f"Added {len(targets)} existing companies to Refresh")
         return targets, seen
+
+    @staticmethod
+    def _should_refresh(company: dict) -> bool:
+        """Return True if a specific company needs data refreshed today"""
+        # Default to a long time ago if no date exists so it definitely refreshes
+        last_upd = datetime.fromisoformat(company.get("last_updated", "1970-01-01"))
+        days_old = (now - last_upd).days
+
+        # Get employee count (default to 0 if missing)
+        ln_count_str = str(company.get("ln_count", 0))
+        ln_count = int(ln_count_str) if ln_count_str.isdigit() else 0
+
+        # Check inactive companies every 10 days regardless of size
+        if not company.get("active", True):
+            return days_old >= 10
+        # Large companies: Refresh every day
+        if ln_count > 50:
+            return True
+        # Small companies (<=50): Only refresh if at least 2 days old
+        return days_old >= 2
 
     @staticmethod
     def _find_new_comp(targets, seen) -> tuple:
@@ -734,7 +756,7 @@ class DataCoordinator:
         else:
             symbol_sample = new_symbols
         logger.info(f"Screening a subset of tickers: {len(symbol_sample)}")
-    
+
         for sym in symbol_sample:
             time.sleep(random.uniform(0.7, 1.0))
             try:
@@ -769,6 +791,7 @@ class DataCoordinator:
 
         return targets, seen
 
+    @staticmethod
     def _get_symbols_from_bourse() -> list:
         """Get Public listed company ticker symbols from NSE and BSE"""
         symbols = set()
@@ -855,18 +878,76 @@ class DataCoordinator:
         return None
 
     @staticmethod
+    def _extract_linkedin_url(soup: BeautifulSoup) -> Optional[str]:
+        """Helper to find a LinkedIn company link within a soup object."""
+        for a in soup.find_all("a", href=True):
+            href = a["href"]
+            if "linkedin.com/company/" in href:
+                # Clean URL: remove fragments, queries, and trailing slashes
+                return href.split("?")[0].split("#")[0].rstrip("/")
+        return None
+
+    @staticmethod
     def _find_linkedin_on_website(url: str) -> Optional[str]:
-        """Quickly scans a homepage for a LinkedIn company link."""
+        """Scans homepage and optionally a contact page for LinkedIn links."""
         try:
             logger.info(f"Loading {url=}")
             resp = requests.get(url, impersonate="chrome", timeout=20)
+            if resp.status_code != 200:
+                logger.warning(f"Error loading {url}")
+                return None
+
             soup = BeautifulSoup(resp.text, "html.parser")
+
+            # Try to find it on the homepage immediately
+            if link := DataCoordinator._extract_linkedin_url(soup):
+                return link
+
+            # If not found, look for a contact/about page link
+            contact_keywords = [
+                "contact",
+                "get-in-touch",
+                "reach-us",
+                "support",
+                "help",
+                "about",
+                "who-we-are",
+                "company",
+                "our-story",
+                "team",
+                "leadership",
+                "press",
+                "media",
+                "connect",
+                "social",
+            ]
+            contact_urls = []
+            parsed_uri = urlparse(url)
             for a in soup.find_all("a", href=True):
-                href = a["href"]
-                if "linkedin.com/company/" in href:
-                    return href.split("?")[0].rstrip("/")
-        except Exception:
-            return None
+                href = a["href"].lower()
+                # Handle relative URLs (e.g., /contact -> https://site.com/contact)
+                full_url = urljoin(url, href)
+                # skip if url found is not of current site
+                if urlparse(full_url).netloc != parsed_uri.netloc:
+                    continue
+                if any(k in href for k in contact_keywords):
+                    contact_urls.append(full_url)
+
+            # Scan the contact page if found
+            if contact_urls:
+                for contact_url in contact_urls:
+                    if contact_url != url:
+                        logger.info(f"Loading {contact_url=}")
+                        c_resp = requests.get(
+                            contact_url, impersonate="chrome", timeout=20
+                        )
+                        if c_resp.status_code == 200:
+                            c_soup = BeautifulSoup(c_resp.text, "html.parser")
+                            if ln := DataCoordinator._extract_linkedin_url(c_soup):
+                                return ln
+
+        except Exception as e:
+            logger.warning(f"Error loading {url=}: {e}")
         return None
 
     @staticmethod
