@@ -480,6 +480,14 @@ class CompanyParser:
             )
             status = resp.status_code
             logger.info(f"Detail Fetch #{i} | {status=} | {name}")
+            if status == 404:
+                logger.warning(
+                    f"Company page not found (404): {name}. Marking as inactive!"
+                )
+                company["active"] = False
+                time.sleep(random.uniform(1.0, 3.0))
+                return company
+
             if status != 200:
                 logger.error(f"Failed to load: {url}")
                 time.sleep(random.uniform(1.0, 3.0))
@@ -832,12 +840,6 @@ class DataCoordinator:
         try:
             logger.info(f"Loading {url=}")
             resp = requests.get(url, impersonate="chrome", timeout=10)
-            if resp.status_code == 404:
-                logger.warning(
-                    f"Company page not found (404): {name}. Marking as inactive!"
-                )
-                company["active"] = False
-                return company
             if resp.status_code != 200:
                 logger.error(f"Error fetching {url=} | Status: {resp.status_code}")
                 return None
@@ -848,8 +850,7 @@ class DataCoordinator:
             website = None
             links_container = soup.find("div", class_="company-links")
             if links_container:
-                a_tag = links_container.find("a", href=True)
-                if a_tag:
+                if a_tag := links_container.find("a", href=True):
                     website = a_tag["href"].strip().split("?")[0].rstrip("/")
 
             if not website:
@@ -883,8 +884,11 @@ class DataCoordinator:
         for a in soup.find_all("a", href=True):
             href = a["href"]
             if "linkedin.com/company/" in href:
-                # Clean URL: remove fragments, queries, and trailing slashes
-                return href.split("?")[0].split("#")[0].rstrip("/")
+                # Everything after "company/"
+                base, _, tail = href.partition("company/")
+                # Keep only the first segment of that tail
+                company_id = tail.split("/")[0].split("?")[0].split("#")[0]
+                return f"{base}company/{company_id}"
         return None
 
     @staticmethod
@@ -935,7 +939,10 @@ class DataCoordinator:
 
             # Scan the contact page if found
             if contact_urls:
-                for contact_url in contact_urls:
+                # deduplicate and limit to 10 urls max per site
+                contact_urls = list(set(contact_urls))
+                random.shuffle(contact_urls)
+                for contact_url in contact_urls[:10]:
                     if contact_url != url:
                         logger.info(f"Loading {contact_url=}")
                         c_resp = requests.get(
