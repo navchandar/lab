@@ -331,12 +331,6 @@
       .paginate_button {
         border: 1px solid var(--glass-border) !important;
         border-radius: 8px !important;
-        background: var(--glass-bg) !important;
-        color: var(--text-main);
-      }
-
-      .paginate_button:hover {
-        color: gray !important;
       }
 
       .icon {
@@ -560,7 +554,8 @@
 
       /* Specific size for Charts */
       .chart-modal-content {
-        max-width: 1000px;
+        background: var(--table-head-gradient);
+        max-width: 1100px;
       }
       @keyframes modalSlideUp {
         from {
@@ -778,6 +773,12 @@
           max-height: 70vh;
           font-size: 0.8rem;
         }
+
+        .modal-content {
+          margin: 5vh auto;
+          padding: 15px;
+        }
+
         .footer-links {
           display: flex;
           flex-wrap: wrap;

@@ -100,6 +100,28 @@ function getBucketName(count) {
   return "100001+";
 }
 
+/**
+ * Maps a bucket key (e.g., "1-10") to a descriptive label
+ */
+function getBucketLabel(bucketKey) {
+  if (isMobile()) {
+    return bucketKey;
+  }
+  const labels = {
+    "1-10": "Micro (1-10)",
+    "11-50": "Small (11-50)",
+    "51-200": "Medium (51-200)",
+    "201-1000": "Large (201-1000)",
+    "1001-5000": "Enterprise (1001-5000)",
+    "5001-10000": "Giant (5001-10000)",
+    "10001-50000": "Conglomerate (10001-50000)",
+    "50001-100000": "Global Corp (50001-100000)",
+    "100001+": "Mega Corp (100000+)",
+  };
+
+  return labels[bucketKey] || bucketKey; // Fallback to key if not found
+}
+
 // HELPER: Build a dynamic tooltip string for growth trends
 function getGrowthTitle(item) {
   const parts = [];
@@ -158,29 +180,51 @@ function renderMarketCharts() {
 
   // GRADIENTS: Dynamic scaling
   const blueGrad = ctxSize.createLinearGradient(0, 0, 0, 300);
-  blueGrad.addColorStop(0, "#30daec");
-  blueGrad.addColorStop(1, "rgba(56, 189, 248, 0.2)");
+  blueGrad.addColorStop(0, "#0bb495");
+  blueGrad.addColorStop(1, "rgba(56, 189, 248, 0.8)");
 
   const trendGrad = ctxTrend.createLinearGradient(0, 0, 0, 300);
-  trendGrad.addColorStop(0, "rgba(48, 218, 236, 0.4)");
-  trendGrad.addColorStop(1, "rgba(219, 40, 200, 0)");
+  trendGrad.addColorStop(0, "rgba(48, 217, 236, 0.5)");
+  trendGrad.addColorStop(1, "rgba(56, 189, 248, 0.8)");
 
   // SHARED CONFIGURATION
   const commonOptions = {
     responsive: true,
-    maintainAspectRatio: false,
+    maintainAspectRatio: !isMobile(),
+    aspectRatio: isMobile() ? 1.2 : 2, // Higher number = wider chart
+    interaction: {
+      intersect: false,
+      mode: "index", // Shows the tooltip for the nearest x-axis value
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
-        backgroundColor: "rgba(15, 23, 42, 0.9)", // Darker glass look
-        titleFont: { size: 13, weight: "bold" },
+        backgroundColor: "rgba(15, 23, 42, 0.8)", // Darker glass look
+        titleFont: { size: 14, weight: "bold" },
         padding: 12,
         cornerRadius: 10,
         displayColors: false,
         borderWidth: 1,
-        borderColor: "rgba(255,255,255,0.1)",
+        borderColor: "rgba(255, 255, 255, 0.1)",
       },
-      datalabels: { display: false }, // Hidden by default, useful for mobile
+      datalabels: {
+        // If isMobile() is true, display is false. Otherwise, it's true.
+        display: (context) => !isMobile(),
+        anchor: "end",
+        align: "top",
+        color: textColor,
+        font: {
+          size: 11,
+          weight: "600",
+        },
+        formatter: (value) => {
+          if (value >= 1000000)
+            return (value / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+          if (value >= 1000)
+            return (value / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+          return value;
+        },
+      },
     },
     scales: {
       x: {
@@ -191,8 +235,15 @@ function renderMarketCharts() {
         grid: { color: gridColor, drawBorder: false },
         ticks: {
           color: mutedColor,
-          callback: (val) =>
-            val >= 1000 ? (val / 1000).toFixed(0) + "k" : val,
+          callback: (val) => {
+            if (val >= 1000000) {
+              return (val / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
+            }
+            if (val >= 1000) {
+              return (val / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+            }
+            return val;
+          },
         },
       },
     },
@@ -202,15 +253,19 @@ function renderMarketCharts() {
   sizeChartInst = new Chart(ctxSize, {
     type: "bar",
     data: {
-      labels: Object.keys(sizeDistributionData),
+      // Transform keys like "1-10" into "Micro (1-10)"
+      labels: Object.keys(sizeDistributionData).map((key) =>
+        getBucketLabel(key),
+      ),
       datasets: [
         {
           data: Object.values(sizeDistributionData),
           backgroundColor: blueGrad,
-          borderColor: "#30daec",
+          borderColor: "#00604f",
           borderWidth: 1,
           borderRadius: 6,
-          hoverBackgroundColor: "#db28c8",
+          hoverBackgroundColor: "#025b4b",
+          pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
         },
       ],
     },
@@ -227,6 +282,8 @@ function renderMarketCharts() {
         tooltip: {
           ...commonOptions.plugins.tooltip,
           callbacks: {
+            // customize the tooltip title to show the friendly name
+            title: (items) => items[0].label,
             label: (ctx) => ` ${ctx.parsed.y} Companies`,
           },
         },
@@ -244,12 +301,13 @@ function renderMarketCharts() {
           data: employmentTrendData.map((d) => d.ma),
           fill: true,
           backgroundColor: trendGrad,
-          borderColor: "#30daec",
+          borderColor: "#0bb495",
           borderWidth: 2,
           pointRadius: isMobile() ? 2 : 4,
           pointHoverRadius: 6,
-          pointBackgroundColor: "#30daec",
+          pointBackgroundColor: "#025b4b",
           tension: 0.4,
+          pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
         },
       ],
     },
@@ -270,7 +328,7 @@ function renderMarketCharts() {
               const item = employmentTrendData[ctx.dataIndex];
               const changeText =
                 item.chg >= 0 ? `(+${item.chg}%)` : `(${item.chg}%)`;
-              return ` Index: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
+              return ` Total Employed: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
             },
           },
         },
@@ -293,7 +351,13 @@ function handleHashChange() {
   if (hash === "#charts") {
     chartModal.classList.add("show");
     document.body.style.overflow = "hidden";
-    renderMarketCharts();
+    requestAnimationFrame(() => {
+      try {
+        renderMarketCharts();
+      } catch (e) {
+        console.error("Charts failed to load:", e);
+      }
+    });
   } else if (hash === "#disclaimer") {
     discModal.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -431,7 +495,13 @@ async function loadData() {
         );
         console.error(error);
       }
-
+      const name = `<strong>${item.name}</strong>`;
+      const mobileName = item.website
+        ? `<a href="${item.website}" class="mobile-only-link" target="_blank">${item.name}</a>`
+        : "";
+      const desktopLink = item.website
+        ? `<a href="${item.website}" class="desktop-only-link" target="_blank">${domain}</a>`
+        : "-";
       const tooltipText = getGrowthTitle(item);
       const sparklineHtml = item.sparkline
         ? `<div class="sparkline-wrapper" title="${tooltipText}">${item.sparkline}</div>`
@@ -440,13 +510,13 @@ async function loadData() {
       // Build Row with data
       const row = document.createElement("tr");
       row.innerHTML = `
-              <td title="${item.name}"><strong>${item.name}</strong></td>
+              <td title="${item.name}">${isMobile() ? mobileName : name}</td>
               <td data-order="${sortRank}"><div class="emp-cell">
                   <span>${displayCount}</span>
                   ${sparklineHtml}
               </div>
               </td>
-              <td>${item.website ? `<a href="${item.website}" target="_blank">${domain}</a>` : "-"}</td>
+              <td>${desktopLink}</td>
               <td class="text-center">${getLinkedInIcon(linkedin_link)}</td>
               <td class="text-center" data-search="${status}">${getStatusIcon(item.public, item.ticker)}</td>
               <td>${item.last_updated ? new Date(item.last_updated).toLocaleDateString() : "-"}</td>
