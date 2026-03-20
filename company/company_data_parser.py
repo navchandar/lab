@@ -222,7 +222,7 @@ class GrowthAnalytics:
     """Manages historical headcount data and growth trend calculations."""
 
     @staticmethod
-    def log_headcount(handle: str, count: int):
+    def log_headcount(handle: str, count: int) -> None:
         """Records the employee count for today in the history file."""
         if not handle or not count:
             return
@@ -319,7 +319,7 @@ class GrowthAnalytics:
                 </svg>"""
 
     @staticmethod
-    def aggregate_global_history():
+    def aggregate_global_history() -> None:
         """Aggregates headcount for all companies into a global daily index."""
         logger.info("Calculating Global Headcount Index")
         history = GrowthAnalytics._load_history_file()
@@ -352,7 +352,7 @@ class GrowthAnalytics:
         )
 
     @staticmethod
-    def generate_market_chart_data():
+    def generate_market_chart_data() -> None:
         """Calculates global trends using a calendar-based 7-day window to handle irregular runs."""
         history_file = GrowthAnalytics._load_history_file()
         raw_history = history_file.get("history", [])
@@ -415,7 +415,7 @@ class GrowthAnalytics:
             logger.error(f"Failed to save charts_data.json: {e}")
 
     @staticmethod
-    def _load_history_file():
+    def _load_history_file() -> dict:
         if HISTORY_FILE.exists():
             with open(HISTORY_FILE, "r") as f:
                 return json.load(f)
@@ -424,10 +424,9 @@ class GrowthAnalytics:
         return {}
 
     @staticmethod
-    def _save_history_file(data):
-        with open(HISTORY_FILE, "w") as f:
-            # sort_keys=True - alphabetical ordering companies
-            json.dump(data, f, indent=2, sort_keys=True)
+    def _save_history_file(data) -> None:
+        # sort_keys=True - alphabetical ordering companies
+        HISTORY_FILE.write_text(json.dumps(data, indent=2, sort_keys=True))
 
 
 class CompanyParser:
@@ -553,15 +552,18 @@ class CompanyParser:
             return CompanyParser.get_employee_count(p.get_text())
 
     @staticmethod
-    def _extract_org_type(soup: BeautifulSoup, name: str, ticker: str | None) -> tuple:
+    def _extract_org_type(
+        soup: BeautifulSoup, name: str, existing_ticker: str | None
+    ) -> tuple:
         # Logic for public or private org and ticker symbol
         is_public = False
+        ticker = existing_ticker
         org_div = soup.find("div", {"data-test-id": "about-us__organizationType"})
         if org_div and (dd := org_div.find("dd")):
             is_public = "public" in dd.get_text().lower()
             if is_public:
                 # ONLY call find_ticker if it's missing or empty
-                if not ticker:
+                if not existing_ticker or existing_ticker == "":
                     if CompanyParser.ticker_error_count < 50:
                         ticker = FinancialService.find_ticker(name)
                         if ticker:
@@ -569,9 +571,11 @@ class CompanyParser:
                         else:
                             CompanyParser.ticker_error_count += 1
                     else:
-                        logger.warning(f"Skipping ticker lookup!")
+                        logger.info(f"Skipping ticker lookup!")
                 else:
                     logger.info(f"Ticker exists for {name}: {ticker}")
+        if existing_ticker and not ticker:
+            ticker = existing_ticker
         return (is_public, ticker)
 
 
@@ -579,7 +583,7 @@ class DataCoordinator:
     """Manages data flow, merging, and trend calculation and injection."""
 
     @staticmethod
-    def run():
+    def run() -> None:
         # Parse data & Enrich
         processed = []
         # Discover URLs
@@ -958,11 +962,11 @@ class DataCoordinator:
         return None
 
     @staticmethod
-    def _save_to_disk(new_batch: List[Dict]):
+    def _save_to_disk(new_batch: List[Dict]) -> None:
         if not new_batch:
             return
 
-        # Load existing
+        # Load existing data
         current_data = []
         if DATA_FILE.exists():
             with open(DATA_FILE, "r") as f:
@@ -971,16 +975,22 @@ class DataCoordinator:
         data_map = {c["name"]: c for c in current_data}
 
         for item in new_batch:
-            handle = LnSearch.get_handle(item.get("linkedin"))
-            ln_count = item.get("ln_count")
+            # Clean the item: Remove keys where value is None or "null" string
+            clean = {k: v for k, v in item.items() if v is not None}
+
+            handle = LnSearch.get_handle(clean.get("linkedin"))
+            ln_count = clean.get("ln_count")
 
             # Log History & Calculate Trends
             if handle and ln_count and ln_count.isdigit():
                 GrowthAnalytics.log_headcount(handle, int(ln_count))
-                item["Δ_30d"] = GrowthAnalytics.get_trend(handle, 30)
-                item["Δ_90d"] = GrowthAnalytics.get_trend(handle, 90)
-                item["Δ_365d"] = GrowthAnalytics.get_trend(handle, 365)
-                item["sparkline"] = GrowthAnalytics.generate_sparkline_svg(item)
+                if trend_30 := GrowthAnalytics.get_trend(handle, 30):
+                    clean["Δ_30d"] = trend_30
+                if trend_90 := GrowthAnalytics.get_trend(handle, 90):
+                    clean["Δ_90d"] = trend_90
+                if trend_365 := GrowthAnalytics.get_trend(handle, 365):
+                    clean["Δ_365d"] = trend_365
+                clean["sparkline"] = GrowthAnalytics.generate_sparkline_svg(clean)
 
             # Merge
             name = item["name"]
@@ -990,6 +1000,11 @@ class DataCoordinator:
             else:
                 item["last_updated"] = datetime.now().isoformat()
                 data_map[name] = item
+
+        # One last pass to ensure no nulls exist in the final map
+        final_list = []
+        for entry in data_map.values():
+            final_list.append({k: v for k, v in entry.items() if v is not None})
 
         # Sorting logic: Descending count (NaNs at end), Ascending Name
         def sort_logic(x):
@@ -1021,7 +1036,7 @@ class DataCoordinator:
                 return (0, val, x["name"].lower())
 
         # Final Sort and Save
-        final = sorted(data_map.values(), key=sort_logic)
+        final = sorted(final_list, key=sort_logic)
         with open(DATA_FILE, "w") as f:
             json.dump(final, f, indent=2)
         logger.info(f"Saved {len(final)} companies to {DATA_FILE}")
