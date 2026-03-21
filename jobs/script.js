@@ -955,9 +955,13 @@ function getHybridJobData(rawData) {
 
   rawData.forEach((item) => {
     const itemDate = new Date(item.date).getTime();
-    if (itemDate >= fifDaysAgo) liveZone.push(item);
-    else if (itemDate >= ninetyDaysAgo) contextZone.push(item);
-    else historyZone.push(item);
+    if (itemDate >= fifDaysAgo) {
+      liveZone.push(item);
+    } else if (itemDate >= ninetyDaysAgo) {
+      contextZone.push(item);
+    } else {
+      historyZone.push(item);
+    }
   });
 
   const aggregate = (data, type) => {
@@ -971,7 +975,9 @@ function getHybridJobData(rawData) {
             })
           : `Week of ${new Date(date.setDate(date.getDate() - date.getDay())).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
 
-      if (!acc[key]) acc[key] = { sum: 0, count: 0 };
+      if (!acc[key]) {
+        acc[key] = { sum: 0, count: 0 };
+      }
       acc[key].sum += item.count;
       acc[key].count += 1;
       return acc;

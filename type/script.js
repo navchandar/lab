@@ -6,6 +6,13 @@ const titleEl = document.querySelector(".typing-title");
 // Track if the user is currently "composing" a character
 let isComposing = false;
 
+// Configuration for text size scaling
+const SCALE_CONFIG = {
+  minFontSize: 10,     // Minimum font size in vh
+  maxFontSize: 45,     // Maximum font size in vh (matches your CSS clamp)
+  threshold: 1,        // Start shrinking after this many graphemes
+};
+
 // Check Unicode support once at startup
 const isUnicodeSupported = (() => {
   try {
@@ -15,6 +22,25 @@ const isUnicodeSupported = (() => {
     return false;
   }
 })();
+
+/**
+ * Dynamic Font Resizer
+ * Shrinks the font as the character count grows to prevent overflow.
+ */
+const adjustFontSize = (charCount) => {
+  if (charCount > SCALE_CONFIG.threshold) {
+    // Inverse relationship: more characters = smaller font
+    // This formula scales down based on character count
+    const newSize = Math.max(
+      SCALE_CONFIG.minFontSize, 
+      SCALE_CONFIG.maxFontSize - (charCount * 5) 
+    );
+    inputEl.style.fontSize = `${newSize}dvh`;
+  } else {
+    // Reset to default (let CSS clamp handle it)
+    inputEl.style.fontSize = ""; 
+  }
+};
 
 /**
  * CORE LOGIC (Validation & Cleaning)
@@ -49,7 +75,8 @@ const sanitizeInput = (rawVal) => {
  * UI RENDERING
  */
 const renderUI = () => {
-  const hasValue = inputEl.value.length > 0;
+  const val = inputEl.value;
+  const hasValue = val.length > 0;
 
   // Toggle Title visibility
   titleEl.style.display = hasValue ? "none" : "block";
@@ -58,12 +85,14 @@ const renderUI = () => {
   inputEl.classList.toggle("hide-caret", hasValue);
 
   if (hasValue) {
+    adjustFontSize(val.length);
     // Restart "pop" animation by forcing a reflow
     inputEl.classList.remove("animate-pop");
     void inputEl.offsetWidth;
     inputEl.classList.add("animate-pop");
   } else {
     inputEl.classList.remove("animate-pop");
+    inputEl.style.fontSize = ""; // Reset
   }
 };
 
