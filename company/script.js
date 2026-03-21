@@ -122,6 +122,19 @@ function getBucketLabel(bucketKey) {
   return labels[bucketKey] || bucketKey; // Fallback to key if not found
 }
 
+// Initialize Size Aggregator
+const sizeBuckets = {
+  "1-10": 0,
+  "11-50": 0,
+  "51-200": 0,
+  "201-1000": 0,
+  "1001-5000": 0,
+  "5001-10000": 0,
+  "10001-50000": 0,
+  "50001-100000": 0,
+  "100001+": 0,
+};
+
 // HELPER: Build a dynamic tooltip string for growth trends
 function getGrowthTitle(item) {
   const parts = [];
@@ -150,6 +163,64 @@ async function fetchTrendData() {
   } catch (e) {
     console.error("Trend data load failed", e);
   }
+}
+
+function getHybridTrendData(rawData) {
+  const now = new Date();
+  const sevenDaysAgo = new Date().setDate(now.getDate() - 7);
+  const ninetyDaysAgo = new Date().setDate(now.getDate() - 90);
+
+  // 1. Partition the data
+  const liveZone = [];
+  const contextZone = [];
+  const historyZone = [];
+
+  rawData.forEach((item) => {
+    const itemDate = new Date(item.d).getTime();
+    if (itemDate >= sevenDaysAgo) liveZone.push(item);
+    else if (itemDate >= ninetyDaysAgo) contextZone.push(item);
+    else historyZone.push(item);
+  });
+
+  // 2. Helper to aggregate a specific array
+  const aggregate = (data, type) => {
+    const grouped = data.reduce((acc, item) => {
+      const date = new Date(item.d);
+      const key =
+        type === "month"
+          ? date.toLocaleDateString("en-IN", {
+              month: "short",
+              year: "numeric",
+            })
+          : `Week of ${new Date(date.setDate(date.getDate() - date.getDay())).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+
+      if (!acc[key]) acc[key] = { sumMa: 0, sumChg: 0, count: 0 };
+      acc[key].sumMa += item.ma;
+      acc[key].sumChg += item.chg;
+      acc[key].count += 1;
+      return acc;
+    }, {});
+
+    return Object.keys(grouped).map((key) => ({
+      d: key,
+      ma: Math.round(grouped[key].sumMa / grouped[key].count),
+      chg: (grouped[key].sumChg / grouped[key].count).toFixed(2),
+      isAggregated: true, // Useful for tooltips later!
+    }));
+  };
+
+  // 3. Stitch them together
+  return [
+    ...aggregate(historyZone, "month"),
+    ...aggregate(contextZone, "week"),
+    ...liveZone.map((d) => ({
+      ...d,
+      d: new Date(d.d).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+    })),
+  ];
 }
 
 // --- Chart Rendering Logic ---
@@ -294,13 +365,14 @@ function renderMarketCharts() {
   });
 
   // RENDER CHART 2: Employment Trend
+  const hybridData = getHybridTrendData(employmentTrendData);
   trendChartInst = new Chart(ctxTrend, {
     type: "line",
     data: {
-      labels: employmentTrendData.map((d) => d.d),
+      labels: hybridData.map((item) => item.d),
       datasets: [
         {
-          data: employmentTrendData.map((d) => d.ma),
+          data: hybridData.map((item) => item.ma),
           fill: true,
           backgroundColor: trendGrad,
           borderColor: "#0bb495",
@@ -310,6 +382,12 @@ function renderMarketCharts() {
           pointBackgroundColor: "#025b4b",
           tension: 0.4,
           pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
+          pointRadius: 5,
+          segment: {
+            // Dynamic styling: Dash the line for historical (aggregated) data
+            borderDash: (ctx) =>
+              hybridData[ctx.p1DataIndex].isAggregated ? [5, 5] : [],
+          },
         },
       ],
     },
@@ -326,11 +404,20 @@ function renderMarketCharts() {
         tooltip: {
           ...commonOptions.plugins.tooltip,
           callbacks: {
+            title: (items) => {
+              const item = hybridData[items[0].dataIndex];
+              return item.isAggregated
+                ? `Period: ${item.d}`
+                : `Date: ${item.d}`;
+            },
             label: (ctx) => {
-              const item = employmentTrendData[ctx.dataIndex];
+              const item = hybridData[ctx.dataIndex];
+              const prefix = item.isAggregated
+                ? "Avg. Employed"
+                : "Total Employed";
               const changeText =
                 item.chg >= 0 ? `(+${item.chg}%)` : `(${item.chg}%)`;
-              return ` Total Employed: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
+              return ` ${prefix}: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
             },
           },
         },
@@ -397,25 +484,11 @@ function setupModals() {
       closeModal();
     }
   });
-
-  // Initial check on load
-  handleHashChange();
 }
 
 async function loadData() {
   const tableBody = document.getElementById("tableBody");
-  // Initialize Size Aggregator
-  const sizeBuckets = {
-    "1-10": 0,
-    "11-50": 0,
-    "51-200": 0,
-    "201-1000": 0,
-    "1001-5000": 0,
-    "5001-10000": 0,
-    "10001-50000": 0,
-    "50001-100000": 0,
-    "100001+": 0,
-  };
+
   // Define helper functions at the top of the main function scope
   const handleSwipe = (touchstartX, touchendX, table) => {
     const info = table.page.info();
@@ -649,11 +722,6 @@ async function loadData() {
       // Call the helper
       handleSwipe(touchstartX, touchendX, table);
     });
-
-    // Get the trend info
-    await fetchTrendData();
-    // Trigger initial check for hash
-    handleHashChange();
   } catch (error) {
     // ERROR HANDLING: Show message in table
     console.error("Critical Error:", error);
@@ -681,6 +749,11 @@ async function loadData() {
 
 // Call this inside your DOMContentLoaded or init function
 document.addEventListener("DOMContentLoaded", () => {
-  loadData();
   setupModals();
+  // Trigger initial check for hash
+  handleHashChange();
+  // Load company info
+  loadData();
+  // Get the trend info
+  fetchTrendData();
 });
