@@ -177,9 +177,13 @@ function getHybridTrendData(rawData) {
 
   rawData.forEach((item) => {
     const itemDate = new Date(item.d).getTime();
-    if (itemDate >= sevenDaysAgo) liveZone.push(item);
-    else if (itemDate >= ninetyDaysAgo) contextZone.push(item);
-    else historyZone.push(item);
+    if (itemDate >= sevenDaysAgo) {
+      liveZone.push(item);
+    } else if (itemDate >= ninetyDaysAgo) {
+      contextZone.push(item);
+    } else {
+      historyZone.push(item);
+    }
   });
 
   // 2. Helper to aggregate a specific array
@@ -194,7 +198,9 @@ function getHybridTrendData(rawData) {
             })
           : `Week of ${new Date(date.setDate(date.getDate() - date.getDay())).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
 
-      if (!acc[key]) acc[key] = { sumMa: 0, sumChg: 0, count: 0 };
+      if (!acc[key]) {
+        acc[key] = { sumMa: 0, sumChg: 0, count: 0 };
+      }
       acc[key].sumMa += item.ma;
       acc[key].sumChg += item.chg;
       acc[key].count += 1;
@@ -334,7 +340,7 @@ function renderMarketCharts() {
         {
           data: Object.values(sizeDistributionData),
           backgroundColor: blueGrad,
-          borderColor: "#00604f",
+          borderColor: "#0bb495",
           borderWidth: 1,
           borderRadius: 6,
           hoverBackgroundColor: "#025b4b",
@@ -376,13 +382,13 @@ function renderMarketCharts() {
           fill: true,
           backgroundColor: trendGrad,
           borderColor: "#0bb495",
-          borderWidth: 2,
-          pointRadius: isMobile() ? 2 : 4,
-          pointHoverRadius: 6,
+          borderWidth: 1,
+          borderRadius: 6,
+          pointRadius: isMobile() ? 2 : 5,
+          pointHoverRadius: 7,
           pointBackgroundColor: "#025b4b",
           tension: 0.4,
           pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
-          pointRadius: 5,
           segment: {
             // Dynamic styling: Dash the line for historical (aggregated) data
             borderDash: (ctx) =>
@@ -440,13 +446,27 @@ function handleHashChange() {
   if (hash === "#charts") {
     chartModal.classList.add("show");
     document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => {
-      try {
-        renderMarketCharts();
-      } catch (e) {
-        console.error("Charts failed to load:", e);
+    const tryRender = () => {
+      // If both data arrays have content, render the charts
+      if (
+        employmentTrendData.length > 0 &&
+        Object.keys(sizeDistributionData).length > 0
+      ) {
+        requestAnimationFrame(() => {
+          try {
+            renderMarketCharts();
+          } catch (e) {
+            console.error("Charts failed to load:", e);
+          }
+        });
+      } else {
+        // Otherwise, wait 3s and check again
+        setTimeout(tryRender, 3000);
       }
-    });
+    };
+
+    tryRender();
+
   } else if (hash === "#disclaimer") {
     discModal.classList.add("show");
     document.body.style.overflow = "hidden";
@@ -748,12 +768,14 @@ async function loadData() {
 }
 
 // Call this inside your DOMContentLoaded or init function
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   setupModals();
+  await Promise.all([
+    // Load company info
+    loadData(),
+    // Get the trend info
+    fetchTrendData(),
+  ]);
   // Trigger initial check for hash
   handleHashChange();
-  // Load company info
-  loadData();
-  // Get the trend info
-  fetchTrendData();
 });
