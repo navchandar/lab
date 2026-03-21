@@ -944,37 +944,115 @@ function prepareStackedExperienceChart(dataSet, experienceRanges) {
   };
 }
 
+function getHybridJobData(rawData) {
+  const now = new Date();
+  const fifDaysAgo = new Date().setDate(now.getDate() - 15);
+  const ninetyDaysAgo = new Date().setDate(now.getDate() - 90);
+
+  const liveZone = [];
+  const contextZone = [];
+  const historyZone = [];
+
+  rawData.forEach((item) => {
+    const itemDate = new Date(item.date).getTime();
+    if (itemDate >= fifDaysAgo) liveZone.push(item);
+    else if (itemDate >= ninetyDaysAgo) contextZone.push(item);
+    else historyZone.push(item);
+  });
+
+  const aggregate = (data, type) => {
+    const grouped = data.reduce((acc, item) => {
+      const date = new Date(item.date);
+      const key =
+        type === "month"
+          ? date.toLocaleDateString("en-IN", {
+              month: "short",
+              year: "numeric",
+            })
+          : `Week of ${new Date(date.setDate(date.getDate() - date.getDay())).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+
+      if (!acc[key]) acc[key] = { sum: 0, count: 0 };
+      acc[key].sum += item.count;
+      acc[key].count += 1;
+      return acc;
+    }, {});
+
+    return Object.keys(grouped).map((key) => ({
+      date: key,
+      count: Math.round(grouped[key].sum / grouped[key].count), // Average per day in that period
+      isAggregated: true,
+    }));
+  };
+
+  return [
+    ...aggregate(historyZone, "month"),
+    ...aggregate(contextZone, "week"),
+    ...liveZone.map((d) => ({
+      ...d,
+      date: new Date(d.date).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+      }),
+      isAggregated: false,
+    })),
+  ];
+}
+
 function prepareDailyJobCountChart(dataSet) {
-  const labels = dataSet.map((item) =>
-    new Date(item.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
-  );
+  const hybridData = getHybridJobData(dataSet);
+
+  const labels = hybridData.map((item) => item.date);
 
   const datasets = [
     {
-      label: "Job Posts per day",
-      data: dataSet.map((item) => item.count),
+      label: "Job Posts",
+      data: hybridData.map((item) => item.count),
       backgroundColor: "rgba(54, 162, 235, 0.5)",
       borderColor: "rgb(54, 162, 235)",
       borderWidth: 2,
-      pointRadius: 5,
+      pointRadius: (ctx) => (hybridData[ctx.dataIndex]?.isAggregated ? 2 : 5),
       fill: true,
-      tension: 0.2,
+      tension: 0.3,
+      segment: {
+        // Dash the line for historical (aggregated) data
+        borderDash: (ctx) =>
+          hybridData[ctx.p1DataIndex]?.isAggregated ? [5, 5] : [],
+      },
     },
   ];
 
   return {
     type: "line",
     data: { labels, datasets },
-    options: createStandardOptions({
-      indexAxis: "x",
-      isStacked: false,
-      chartType: "line",
-    }),
+    options: {
+      // Get the standard options first
+      ...createStandardOptions({
+        indexAxis: "x",
+        isStacked: false,
+        chartType: "line",
+      }),
+
+      // Explicitly define/override the plugins block
+      plugins: {
+        // Spread existing plugins if createStandardOptions returns any (like datalabels)
+        ...createStandardOptions({ chartType: "line" }).plugins,
+
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            label: (ctx) => {
+              const item = hybridData[ctx.dataIndex];
+              const prefix = item.isAggregated
+                ? "Avg. Job Posts/Day"
+                : "New Job Posts";
+              return ` ${prefix}: ${item.count}`;
+            },
+          },
+        },
+      },
+    },
     height: "400px",
-    description: "Daily trend of new job postings that were detected.",
+    description: "Trend of new job postings with historical aggregation.",
   };
 }
 

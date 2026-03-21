@@ -170,7 +170,7 @@ function getHybridTrendData(rawData) {
   const sevenDaysAgo = new Date().setDate(now.getDate() - 7);
   const ninetyDaysAgo = new Date().setDate(now.getDate() - 90);
 
-  // 1. Partition the data
+  // Partition the data based on number of days
   const liveZone = [];
   const contextZone = [];
   const historyZone = [];
@@ -186,7 +186,7 @@ function getHybridTrendData(rawData) {
     }
   });
 
-  // 2. Helper to aggregate a specific array
+  // Helper to aggregate a specific array
   const aggregate = (data, type) => {
     const grouped = data.reduce((acc, item) => {
       const date = new Date(item.d);
@@ -215,7 +215,7 @@ function getHybridTrendData(rawData) {
     }));
   };
 
-  // 3. Stitch them together
+  // Stitch all data points together
   return [
     ...aggregate(historyZone, "month"),
     ...aggregate(contextZone, "week"),
@@ -225,6 +225,7 @@ function getHybridTrendData(rawData) {
         day: "numeric",
         month: "short",
       }),
+      isAggregated: false,
     })),
   ];
 }
@@ -257,7 +258,7 @@ function renderMarketCharts() {
 
   // GRADIENTS: Dynamic scaling
   const blueGrad = ctxSize.createLinearGradient(0, 0, 0, 300);
-  blueGrad.addColorStop(0, "#0bb495");
+  blueGrad.addColorStop(0, "#0bb495dd");
   blueGrad.addColorStop(1, "rgba(56, 189, 248, 0.8)");
 
   const trendGrad = ctxTrend.createLinearGradient(0, 0, 0, 300);
@@ -341,7 +342,7 @@ function renderMarketCharts() {
           data: Object.values(sizeDistributionData),
           backgroundColor: blueGrad,
           borderColor: "#0bb495",
-          borderWidth: 1,
+          borderWidth: 2,
           borderRadius: 6,
           hoverBackgroundColor: "#025b4b",
           pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
@@ -382,7 +383,7 @@ function renderMarketCharts() {
           fill: true,
           backgroundColor: trendGrad,
           borderColor: "#0bb495",
-          borderWidth: 1,
+          borderWidth: 2,
           borderRadius: 6,
           pointRadius: isMobile() ? 2 : 5,
           pointHoverRadius: 7,
@@ -466,7 +467,6 @@ function handleHashChange() {
     };
 
     tryRender();
-
   } else if (hash === "#disclaimer") {
     discModal.classList.add("show");
     document.body.style.overflow = "hidden";
