@@ -21,42 +21,45 @@ const isUnicodeSupported = (() => {
  * Measures the PARENT container so the font always fits the screen.
  */
 const adjustFontSize = () => {
-  const charCount = inputEl.value.length;
-  const charCount = inputEl.value.length;
-  const parentHeight = inputEl.parentElement.clientHeight;
-  const parentWidth = inputEl.parentElement.clientWidth;
+  try {
+    const charCount = inputEl.value.length;
+    const parentHeight = inputEl.parentElement.clientHeight;
+    const parentWidth = inputEl.parentElement.clientWidth;
 
-  // Detect Screen Type
-  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    // Detect Screen Type
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
 
-  // Set Variable Ratios
-  // Mobile: Big and bold (80% height)
-  // Desktop: Elegant and contained (50% height)
-  const heightRatio = isMobile ? 0.8 : 0.5;
+    // Set Variable Ratios
+    // Mobile: Big and bold (80% height)
+    // Desktop: Elegant and contained (50% height)
+    const heightRatio = isMobile ? 0.8 : 0.5;
 
-  // Mobile needs to shrink faster because the screen is narrow
-  const shrinkFactor = isMobile ? 0.75 : 0.9;
+    // Mobile needs to shrink faster because the screen is narrow
+    const shrinkFactor = isMobile ? 0.75 : 0.9;
 
-  if (charCount > 0) {
-    // Calculate base size using our context-aware ratio
-    let targetSize = parentHeight * heightRatio;
-    // Apply shrinkage for multiple characters
-    if (charCount > 1) {
-      targetSize = targetSize * Math.pow(shrinkFactor, charCount - 1);
+    if (charCount > 0) {
+      // Calculate base size using our context-aware ratio
+      let targetSize = parentHeight * heightRatio;
+      // Apply shrinkage for multiple characters
+      if (charCount > 1) {
+        targetSize = targetSize * Math.pow(shrinkFactor, charCount - 1);
+      }
+
+      // Width Protection: Prevents horizontal scrolling
+      // Mobile uses 95% width, Desktop uses 80% width for padding
+      const widthLimit = isMobile ? 0.95 : 0.8;
+      const maxWidthFontSize = (parentWidth * widthLimit) / (charCount * 0.8);
+
+      // Pick the safest (smallest) size to ensure NO overflow
+      const finalSize = Math.min(targetSize, maxWidthFontSize);
+
+      inputEl.style.fontSize = `${finalSize}px`;
+    } else {
+      // Caret size when empty
+      inputEl.style.fontSize = isMobile ? "25vh" : "15vh";
     }
-
-    // Width Protection: Prevents horizontal scrolling
-    // Mobile uses 95% width, Desktop uses 80% width for padding
-    const widthLimit = isMobile ? 0.95 : 0.8;
-    const maxWidthFontSize = (parentWidth * widthLimit) / (charCount * 0.8);
-
-    // Pick the safest (smallest) size to ensure NO overflow
-    const finalSize = Math.min(targetSize, maxWidthFontSize);
-
-    inputEl.style.fontSize = `${finalSize}px`;
-  } else {
-    // Caret size when empty
-    inputEl.style.fontSize = isMobile ? "25vh" : "15vh";
+  } catch {
+    console.error("Error scaling text size!");
   }
 };
 
