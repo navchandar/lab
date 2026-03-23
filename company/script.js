@@ -283,10 +283,20 @@ function renderMarketCharts() {
     const pct = sizeDistributionData[key] || 0;
     // Logic: Higher percentage = more intense color
     // We use RGBA to vary the "Alpha" (opacity) based on impact
-    if (pct > 25) return "rgba(11, 180, 149, 1.0)"; // Critical Impact (Solid)
-    if (pct > 10) return "rgba(11, 180, 149, 0.8)"; // High Impact
-    if (pct > 1) return "rgba(11, 180, 149, 0.5)"; // Medium Impact
-    return "rgba(11, 180, 149, 0.25)"; // Low Impact (Pale)
+    if (pct > 25) {
+      // Critical Impact (Solid)
+      return "rgba(11, 180, 149, 1.0)";
+    }
+    if (pct > 10) {
+      // High Impact
+      return "rgba(11, 180, 149, 0.8)";
+    }
+    if (pct > 1) {
+      // Minor Impact
+      return "rgba(11, 180, 149, 0.5)";
+    }
+    // Low Impact (Pale)
+    return "rgba(11, 180, 149, 0.25)";
   });
 
   // SHARED CONFIGURATION
@@ -730,10 +740,6 @@ async function loadData() {
     // and gives the charts display priority.
     requestAnimationFrame(() => {
       tableBody.appendChild(fragment);
-      initializeDataTable();
-    });
-
-    function initializeDataTable() {
       // This is a custom search function that allows us to filter by numeric ranges
       $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
         const selectedRange = $("#empFilter").val(); // Get the selected value from dropdown
@@ -854,7 +860,7 @@ async function loadData() {
         // Call the helper
         handleSwipe(touchstartX, touchendX, table);
       });
-    }
+    });
   } catch (error) {
     // ERROR HANDLING: Show message in table
     console.error("Critical Error:", error);
