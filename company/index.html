@@ -16,21 +16,28 @@
     />
     <meta name="author" content="Naveenchandar" />
 
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media = 'all'"
     />
 
     <link
       rel="stylesheet"
       type="text/css"
       href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+      media="print"
+      onload="this.media = 'all'"
     />
-
     <!-- DataTables FixedHeader CSS -->
     <link
       rel="stylesheet"
       href="https://cdn.datatables.net/fixedheader/3.3.1/css/fixedHeader.dataTables.min.css"
+      media="print"
+      onload="this.media = 'all'"
     />
 
     <style>
@@ -192,9 +199,20 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         opacity: 0;
-        transition: opacity 0.5s ease-in;
+        transition: opacity 0.5s ease-in-out;
         background-color: var(--glass-bg);
         min-height: 250px;
+      }
+
+      #tableBody:empty {
+        animation: spin 1.5s infinite;
+        background: linear-gradient(
+          90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%
+        );
+        background-size: 200% 100%;
       }
 
       .fixedHeader-floating {
@@ -514,6 +532,7 @@
           opacity: 1;
         }
       }
+
       .modal-backdrop {
         display: none;
         position: fixed;
@@ -557,11 +576,13 @@
         background: var(--table-head-gradient);
         max-width: 1100px;
       }
+
       @keyframes modalSlideUp {
         from {
           transform: translateY(20px);
           opacity: 0;
         }
+
         to {
           transform: translateY(0);
           opacity: 1;
@@ -572,6 +593,7 @@
         padding-right: 10px;
         overflow-y: auto;
       }
+
       .modal-header h2 {
         background: var(--title-gradient);
         -webkit-background-clip: text;
@@ -769,6 +791,7 @@
           padding: 20px 10px;
           font-size: 0.8rem;
         }
+
         .modal-body {
           max-height: 70vh;
           font-size: 0.8rem;
@@ -919,8 +942,12 @@
             <canvas id="sizeDistChart"></canvas>
           </div>
           <div class="chart-container">
+            <canvas id="ownershipSplitChart"></canvas>
+          </div>
+          <div class="chart-container">
             <canvas id="employmentTrendChart"></canvas>
           </div>
+          <div id="momentumStats" class="momentum-container"></div>
         </div>
       </div>
     </div>
@@ -954,13 +981,22 @@
       </div>
     </footer>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" defer></script>
+    <script
+      src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"
+      defer
+    ></script>
     <!-- DataTables FixedHeader JS -->
-    <script src="https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+    <script
+      src="https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js"
+      defer
+    ></script>
+    <!-- Chart JS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"
+      defer
+    ></script>
 
     <script type="module" src="script.js"></script>
   </body>

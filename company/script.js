@@ -1,9 +1,12 @@
 // --- Global Variables ---
 const loadingSpinner = document.getElementById("loadingSpinner");
 let sizeDistributionData = {};
+let companyDistributionData = {};
 let employmentTrendData = [];
+let marketSnapshot = null;
 let sizeChartInst = null;
 let trendChartInst = null;
+let ownershipChartInst = null;
 
 document.getElementById("year").textContent = new Date().getFullYear();
 // Check if the screen width is mobile-sized
@@ -122,19 +125,6 @@ function getBucketLabel(bucketKey) {
   return labels[bucketKey] || bucketKey; // Fallback to key if not found
 }
 
-// Initialize Size Aggregator
-const sizeBuckets = {
-  "1-10": 0,
-  "11-50": 0,
-  "51-200": 0,
-  "201-1000": 0,
-  "1001-5000": 0,
-  "5001-10000": 0,
-  "10001-50000": 0,
-  "50001-100000": 0,
-  "100001+": 0,
-};
-
 // HELPER: Build a dynamic tooltip string for growth trends
 function getGrowthTitle(item) {
   const parts = [];
@@ -158,7 +148,21 @@ async function fetchTrendData() {
   try {
     const response = await fetch("charts_data.json");
     if (response.ok) {
-      employmentTrendData = await response.json();
+      const fullData = await response.json();
+      // Save the nested data to the correct variables
+      employmentTrendData = fullData.history || [];
+      marketSnapshot = fullData.snapshot || null;
+
+      // Update the sizeDistributionData directly from the backend snapshot
+      if (marketSnapshot) {
+        sizeDistributionData = marketSnapshot.concentration_pct || {};
+        companyDistributionData = marketSnapshot.company_distribution || {};
+      }
+
+      // Trigger render if we are already on the charts tab
+      if (window.location.hash === "#charts") {
+        requestAnimationFrame(renderMarketCharts);
+      }
     }
   } catch (e) {
     console.error("Trend data load failed", e);
@@ -239,8 +243,17 @@ function renderMarketCharts() {
   if (trendChartInst) {
     trendChartInst.destroy();
   }
+  if (ownershipChartInst) {
+    ownershipChartInst.destroy();
+  }
+  if (!marketSnapshot) {
+    return;
+  }
 
   const ctxSize = document.getElementById("sizeDistChart").getContext("2d");
+  const ctxOwnership = document
+    .getElementById("ownershipSplitChart")
+    .getContext("2d");
   const ctxTrend = document
     .getElementById("employmentTrendChart")
     .getContext("2d");
@@ -264,6 +277,17 @@ function renderMarketCharts() {
   const trendGrad = ctxTrend.createLinearGradient(0, 0, 0, 300);
   trendGrad.addColorStop(0, "rgba(48, 217, 236, 0.5)");
   trendGrad.addColorStop(1, "rgba(56, 189, 248, 0.8)");
+
+  // Generate an array of colors based on Market Share Intensity
+  const backgroundColors = Object.keys(companyDistributionData).map((key) => {
+    const pct = sizeDistributionData[key] || 0;
+    // Logic: Higher percentage = more intense color
+    // We use RGBA to vary the "Alpha" (opacity) based on impact
+    if (pct > 25) return "rgba(11, 180, 149, 1.0)"; // Critical Impact (Solid)
+    if (pct > 10) return "rgba(11, 180, 149, 0.8)"; // High Impact
+    if (pct > 1) return "rgba(11, 180, 149, 0.5)"; // Medium Impact
+    return "rgba(11, 180, 149, 0.25)"; // Low Impact (Pale)
+  });
 
   // SHARED CONFIGURATION
   const commonOptions = {
@@ -292,7 +316,7 @@ function renderMarketCharts() {
         align: "top",
         color: textColor,
         font: {
-          size: 11,
+          size: 14,
           weight: "600",
         },
         formatter: (value) => {
@@ -329,18 +353,19 @@ function renderMarketCharts() {
     },
   };
 
-  // RENDER CHART 1: Size Distribution
+  // RENDER CHART 1: Size Distribution (including Company Counts)
   sizeChartInst = new Chart(ctxSize, {
     type: "bar",
     data: {
       // Transform keys like "1-10" into "Micro (1-10)"
-      labels: Object.keys(sizeDistributionData).map((key) =>
+      labels: Object.keys(companyDistributionData).map((key) =>
         getBucketLabel(key),
       ),
       datasets: [
         {
-          data: Object.values(sizeDistributionData),
-          backgroundColor: blueGrad,
+          label: "Number of Companies",
+          data: Object.values(companyDistributionData),
+          backgroundColor: backgroundColors,
           borderColor: "#0bb495",
           borderWidth: 2,
           borderRadius: 6,
@@ -362,16 +387,82 @@ function renderMarketCharts() {
         tooltip: {
           ...commonOptions.plugins.tooltip,
           callbacks: {
-            // customize the tooltip title to show the friendly name
-            title: (items) => items[0].label,
-            label: (ctx) => ` ${ctx.parsed.y} Companies`,
+            label: (ctx) => {
+              const bucketKey = Object.keys(companyDistributionData)[
+                ctx.dataIndex
+              ];
+              const count = ctx.parsed.y;
+              const pct = sizeDistributionData[bucketKey] || 0;
+              return [
+                ` Companies: ${count}`,
+                ` Market Share: ${pct}% of total workforce`,
+              ];
+            },
           },
         },
       },
     },
   });
 
-  // RENDER CHART 2: Employment Trend
+  // RENDER CHART 2: Public vs Private Split
+  ownershipChartInst = new Chart(ctxOwnership, {
+    type: "doughnut",
+    data: {
+      labels: ["Publicly listed Companies", "Privately owned Companies"],
+      datasets: [
+        {
+          data: [
+            marketSnapshot.ownership_split.public_emp_pct,
+            marketSnapshot.ownership_split.private_emp_pct,
+          ],
+          backgroundColor: ["#0bb495", "#38bdf8"],
+          spacing: 5,
+          hoverOffset: 10,
+          borderRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      layout: {
+        padding: 30,
+      },
+      plugins: {
+        datalabels: {
+          display: true,
+          color: textColor,
+          font: {
+            size: 14, // Change font size
+            weight: "bold", // Make it stand out
+          },
+          formatter: (value) => {
+            // Add the % symbol to the raw value
+            return value + "%";
+          },
+          // Anchor and Align keep the text centered in the slice
+          anchor: "center",
+          align: "center",
+          // Add a subtle text shadow for better readability
+          textStrokeColor: "rgba(0, 0, 0, 0.3)",
+          textStrokeWidth: 1,
+        },
+        legend: { position: "top", labels: { color: textColor } },
+        title: {
+          display: true,
+          text: "EMPLOYMENT SHARE: PUBLIC VS PRIVATE",
+          color: accentColor,
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx) =>
+              `${ctx.raw}% of total workforce employed in ${ctx.label}`,
+          },
+        },
+      },
+    },
+  });
+
+  // RENDER CHART 3: Employment Trend
   const hybridData = getHybridTrendData(employmentTrendData);
   trendChartInst = new Chart(ctxTrend, {
     type: "line",
@@ -431,6 +522,28 @@ function renderMarketCharts() {
       },
     },
   });
+
+  updateMomentumUI(marketSnapshot.aggregate_momentum);
+}
+
+function updateMomentumUI(momentum) {
+  // If you have a div for this, you can inject the comparison directly
+  const container = document.getElementById("momentumStats");
+  if (!container) {
+    return;
+  }
+
+  const pub = momentum.public_avg_30d_chg;
+  const priv = momentum.private_avg_30d_chg;
+
+  if (pub && pub > 0 && priv && priv > 0) {
+    container.innerHTML = `
+        <div class="momentum-card">
+            <span>Public Market Momentum: <strong>${pub > 0 ? "+" : ""}${pub}%</strong></span>
+            <span>Private Market Momentum: <strong>${priv > 0 ? "+" : ""}${priv}%</strong></span>
+        </div>
+    `;
+  }
 }
 
 // --- Hash & Modal Handling ---
@@ -558,12 +671,6 @@ async function loadData() {
         sortRank = parseInt(displayCount.split(/[-+]/)[0]) || 0;
       }
 
-      // USE THE NUMERIC RANK TO FILL BUCKETS
-      if (sortRank > 0) {
-        const bucketKey = getBucketName(sortRank);
-        sizeBuckets[bucketKey]++;
-      }
-
       // Add to Filter Map (O(1) complexity for duplicates)
       if (displayCount !== "-") {
         // We store the lowest possible rank for this category to help sort the dropdown
@@ -619,50 +726,55 @@ async function loadData() {
       fragment.appendChild(row);
     });
 
-    tableBody.appendChild(fragment);
-    sizeDistributionData = sizeBuckets;
-
-    // This is a custom search function that allows us to filter by numeric ranges
-    $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-      const selectedRange = $("#empFilter").val(); // Get the selected value from dropdown
-      // If "All Values", show everything
-      if (!selectedRange) {
-        return true;
-      }
-
-      // use the data-order attribute directly if available
-      const sortRank =
-        parseFloat(
-          settings.aoData[dataIndex].anCells[1].getAttribute("data-order"),
-        ) || 0;
-
-      const [min, max] = selectedRange.split("-").map(Number);
-
-      if (isNaN(max)) {
-        return sortRank >= min; // Handle "500+" cases
-      }
-      return sortRank >= min && sortRank <= max; // Handle "50-100" cases
+    // Push the "heavy lifting" to the end of the browser's execution queue
+    // and gives the charts display priority.
+    requestAnimationFrame(() => {
+      tableBody.appendChild(fragment);
+      initializeDataTable();
     });
 
-    // DataTable Initialization
-    const table = $("#companyTable").DataTable({
-      responsive: true,
-      pageLength: 10,
-      order: [[1, "desc"]],
-      fixedHeader: true,
-      autoWidth: false,
-      dom: '<"top-wrapper"lf>rtip',
-      language: {
-        search: isMobile() ? "" : "Search",
-        searchPlaceholder: "Company name",
-        lengthMenu: "Show _MENU_ companies",
-        info: "Showing _START_ to _END_ of _TOTAL_ companies",
-      },
-      initComplete: function () {
-        const api = this.api();
+    function initializeDataTable() {
+      // This is a custom search function that allows us to filter by numeric ranges
+      $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+        const selectedRange = $("#empFilter").val(); // Get the selected value from dropdown
+        // If "All Values", show everything
+        if (!selectedRange) {
+          return true;
+        }
 
-        // 1. Create the Range-Based Dropdown
-        const filterHtml = `
+        // use the data-order attribute directly if available
+        const sortRank =
+          parseFloat(
+            settings.aoData[dataIndex].anCells[1].getAttribute("data-order"),
+          ) || 0;
+
+        const [min, max] = selectedRange.split("-").map(Number);
+
+        if (isNaN(max)) {
+          return sortRank >= min; // Handle "500+" cases
+        }
+        return sortRank >= min && sortRank <= max; // Handle "50-100" cases
+      });
+
+      // DataTable Initialization
+      const table = $("#companyTable").DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [[1, "desc"]],
+        fixedHeader: true,
+        autoWidth: false,
+        dom: '<"top-wrapper"lf>rtip',
+        language: {
+          search: isMobile() ? "" : "Search",
+          searchPlaceholder: "Company name",
+          lengthMenu: "Show _MENU_ companies",
+          info: "Showing _START_ to _END_ of _TOTAL_ companies",
+        },
+        initComplete: function () {
+          const api = this.api();
+
+          // 1. Create the Range-Based Dropdown
+          const filterHtml = `
     <div class="emp-filter-wrapper">
       <label for="empFilter">Company Size:</label>
       <select id="empFilter">
@@ -679,69 +791,70 @@ async function loadData() {
       </select>
     </div>`;
 
-        // 2. Inject into the DOM
-        $(".dataTables_length").after(filterHtml);
+          // 2. Inject into the DOM
+          $(".dataTables_length").after(filterHtml);
 
-        // 3. Trigger Redraw on Change
-        $(document).on("change", "#empFilter", function () {
-          api.draw(); // This triggers the $.fn.dataTable.ext.search.push function above
-        });
+          // 3. Trigger Redraw on Change
+          $(document).on("change", "#empFilter", function () {
+            api.draw(); // This triggers the $.fn.dataTable.ext.search.push function above
+          });
 
-        // 4. Fixed Header Adjust
-        setTimeout(() => {
-          api.fixedHeader.adjust();
-        }, 150);
-      },
-    });
+          // 4. Fixed Header Adjust
+          setTimeout(() => {
+            api.fixedHeader.adjust();
+          }, 150);
+        },
+      });
 
-    // --- KEYBOARD NAVIGATION ---
-    $(document).on("keydown", function (e) {
-      // IGNORE if typing in an input
-      if ($(e.target).is("input, textarea")) {
-        return;
-      }
-
-      // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
-      if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
-        return;
-      }
-
-      const info = table.page.info();
-
-      if (e.which === 39) {
-        // Right Arrow
-        if (info.page < info.pages - 1) {
-          table.page("next").draw("page");
+      // --- KEYBOARD NAVIGATION ---
+      $(document).on("keydown", function (e) {
+        // IGNORE if typing in an input
+        if ($(e.target).is("input, textarea")) {
+          return;
         }
-      } else if (e.which === 37) {
-        // Left Arrow
-        if (info.page > 0) {
-          table.page("previous").draw("page");
+
+        // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
+        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+          return;
         }
-      } else if (e.which >= 49 && e.which <= 57) {
-        // Numbers 1-9
-        const pageNum = e.which - 49;
-        if (pageNum < info.pages) {
-          table.page(pageNum).draw("page");
+
+        const info = table.page.info();
+
+        if (e.which === 39) {
+          // Right Arrow
+          if (info.page < info.pages - 1) {
+            table.page("next").draw("page");
+          }
+        } else if (e.which === 37) {
+          // Left Arrow
+          if (info.page > 0) {
+            table.page("previous").draw("page");
+          }
+        } else if (e.which >= 49 && e.which <= 57) {
+          // Numbers 1-9
+          const pageNum = e.which - 49;
+          if (pageNum < info.pages) {
+            table.page(pageNum).draw("page");
+          }
         }
-      }
-    });
+      });
 
-    // --- SWIPE NAVIGATION ---
-    let touchstartX = 0;
-    let touchendX = 0;
+      // --- SWIPE NAVIGATION ---
+      let touchstartX = 0;
+      let touchendX = 0;
 
-    // Attach listeners to the table container
-    const tableContainer = document.getElementById("companyTable");
-    tableContainer.addEventListener("touchstart", (e) => {
-      touchstartX = e.changedTouches[0].screenX;
-    });
+      // Attach listeners to the table container
+      const tableContainer = document.getElementById("companyTable");
+      tableContainer.addEventListener("touchstart", (e) => {
+        touchstartX = e.changedTouches[0].screenX;
+      });
 
-    tableContainer.addEventListener("touchend", (e) => {
-      touchendX = e.changedTouches[0].screenX;
-      // Call the helper
-      handleSwipe(touchstartX, touchendX, table);
-    });
+      tableContainer.addEventListener("touchend", (e) => {
+        touchendX = e.changedTouches[0].screenX;
+        // Call the helper
+        handleSwipe(touchstartX, touchendX, table);
+      });
+    }
   } catch (error) {
     // ERROR HANDLING: Show message in table
     console.error("Critical Error:", error);
@@ -770,12 +883,17 @@ async function loadData() {
 // Call this inside your DOMContentLoaded or init function
 document.addEventListener("DOMContentLoaded", async () => {
   setupModals();
-  await Promise.all([
-    // Load company info
-    loadData(),
-    // Get the trend info
-    fetchTrendData(),
-  ]);
-  // Trigger initial check for hash
-  handleHashChange();
+
+  // Get the trend info
+  fetchTrendData().then(() => {
+    // If the user arrived at #charts, render them the moment data arrives
+    if (window.location.hash === "#charts") {
+      renderMarketCharts();
+    }
+  });
+
+  // Load company info
+  (loadData(),
+    // Trigger initial check for hash
+    handleHashChange());
 });

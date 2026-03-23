@@ -358,9 +358,110 @@ class GrowthAnalytics:
         raw_history = history_file.get("history", [])
 
         if len(raw_history) < 2:
-            logger.warning("Insufficient data for charting.")
+            logger.warning("Insufficient data for charting history.")
             return
+        companies = []
+        # Load the full data to calculate concentrations
+        if not DATA_FILE.exists():
+            logger.warning(f"{DATA_FILE} missing. No existing data found!")
+            return
+        with open(DATA_FILE, "r") as f:
+            companies = json.load(f)
 
+        # Define your specific buckets
+        bucket_keys = [
+            "1-10",
+            "11-50",
+            "51-200",
+            "201-1000",
+            "1001-5000",
+            "5001-10000",
+            "10001-50000",
+            "50001-100000",
+            "100001+",
+        ]
+
+        stats = {
+            "total_emp": 0,
+            "pub": {"emp": 0, "chg_sum": 0.0, "count": 0},
+            "priv": {"emp": 0, "chg_sum": 0.0, "count": 0},
+            "buckets": {k: 0 for k in bucket_keys},  # Tracks total headcount
+            "comp_counts": {k: 0 for k in bucket_keys},  # Tracks number of companies
+        }
+        for c in companies:
+            count = (
+                int(c.get("ln_count", 0)) if str(c.get("ln_count", 0)).isdigit() else 0
+            )
+            if count == 0:
+                continue
+
+            stats["total_emp"] += count
+
+            # Identify Ownership & Aggregate Momentum (30d change)
+            is_pub = c.get("public", False)
+            key = "pub" if is_pub else "priv"
+            stats[key]["emp"] += count
+            stats[key]["count"] += 1
+            # Aggregating the 30-day change for comparison
+            stats[key]["chg_sum"] += c.get("Δ_30d") or 0.0
+
+            # Map to your specific categories
+            if count <= 10:
+                b = "1-10"
+            elif count <= 50:
+                b = "11-50"
+            elif count <= 200:
+                b = "51-200"
+            elif count <= 1000:
+                b = "201-1000"
+            elif count <= 5000:
+                b = "1001-5000"
+            elif count <= 10000:
+                b = "5001-10000"
+            elif count <= 50000:
+                b = "10001-50000"
+            elif count <= 100000:
+                b = "50001-100000"
+            else:
+                b = "100001+"
+            stats["buckets"][b] += count
+            stats["comp_counts"][b] += 1
+
+        # Finalize the "Snapshot"
+        snapshot = {
+            "company_distribution": stats["comp_counts"],
+            "concentration_pct": {
+                k: round((v / stats["total_emp"]) * 100, 2)
+                for k, v in stats["buckets"].items()
+                if stats["total_emp"] > 0
+            },
+            "ownership_split": {
+                "public_emp_pct": (
+                    round((stats["pub"]["emp"] / stats["total_emp"]) * 100, 2)
+                    if stats["total_emp"] > 0
+                    else 0
+                ),
+                "private_emp_pct": (
+                    round((stats["priv"]["emp"] / stats["total_emp"]) * 100, 2)
+                    if stats["total_emp"] > 0
+                    else 0
+                ),
+            },
+            "aggregate_momentum": {
+                "public_avg_30d_chg": (
+                    round(stats["pub"]["chg_sum"] / stats["pub"]["count"], 3)
+                    if stats["pub"]["count"] > 0
+                    else 0
+                ),
+                "private_avg_30d_chg": (
+                    round(stats["priv"]["chg_sum"] / stats["priv"]["count"], 3)
+                    if stats["priv"]["count"] > 0
+                    else 0
+                ),
+            },
+        }
+
+        # --- MOVING AVERAGE LOGIC ---
         # Pre-parse dates once to avoid repeated string-to-date conversion in the loop
         parsed_history = []
         for item in raw_history:
@@ -372,7 +473,7 @@ class GrowthAnalytics:
                         "c": item["c"],
                     }
                 )
-            except ValueError:
+            except (ValueError, KeyError):
                 continue
 
         chart_points = []
@@ -400,16 +501,16 @@ class GrowthAnalytics:
                 if prev_ma > 0:
                     # Calculate growth velocity between recorded points
                     pct_change = round(((current_ma - prev_ma) / prev_ma) * 100, 3)
-
             chart_points.append(
                 {"d": current["d_str"], "ma": current_ma, "chg": pct_change}
             )
 
         try:
+            output_data = {"snapshot": snapshot, "history": chart_points}
             with open(CHARTS_DATA_FILE, "w") as f:
-                json.dump(chart_points, f, indent=2)
+                json.dump(output_data, f, indent=2)
             logger.info(
-                f"Chart data updated: {len(chart_points)} points in {CHARTS_DATA_FILE.name}"
+                f"Chart data updated with history & snapshot in {CHARTS_DATA_FILE.name}"
             )
         except Exception as e:
             logger.error(f"Failed to save charts_data.json: {e}")
@@ -584,12 +685,28 @@ class DataCoordinator:
 
     @staticmethod
     def run() -> None:
+        # Set the timer to under 6 hours (Github actions limit)
+        start_time = time.time()
+        MAX_RUNTIME_SECONDS = int(5.75 * 60 * 60)
+        SAFETY_BUFFER = 300
+        TIME_LIMIT = MAX_RUNTIME_SECONDS - SAFETY_BUFFER
+
         # Parse data & Enrich
         processed = []
         # Discover URLs
         url_list = DataCoordinator._get_target_urls()
         random.shuffle(url_list)
+        logger.info(f"Started run with {len(url_list)} targets.")
+
         for i, target in enumerate(url_list):
+            # Check the clock at the start of every iteration
+            elapsed = time.time() - start_time
+            if elapsed > TIME_LIMIT:
+                logger.warning(
+                    f"Time limit reached ({round(elapsed/3600, 2)}h). Stopping run!"
+                )
+                break
+
             enriched = CompanyParser.get_company_details(i, target)
             if enriched:
                 processed.append(enriched)
@@ -601,10 +718,14 @@ class DataCoordinator:
 
         # Final save for the remaining processed data
         DataCoordinator._save_to_disk(processed)
+
         # Calculate the Global Index after all companies are updated
         GrowthAnalytics.aggregate_global_history()
         # Generate the frontend-ready chart data
         GrowthAnalytics.generate_market_chart_data()
+
+        total_time = time.time() - start_time
+        logger.info(f"Run completed in {round(total_time/3600, 2)} hours.")
 
     @staticmethod
     def _get_target_urls() -> List[Dict]:
