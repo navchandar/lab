@@ -29,6 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "company_data.json"
 HISTORY_FILE = BASE_DIR / "company_history.json"
 CHARTS_DATA_FILE = BASE_DIR / "charts_data.json"
+TEMP_FILE = BASE_DIR / "comp.json"
 JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
 KEYWORDS_FILE = BASE_DIR / "keywords.txt"
 RETENTION_DAYS = 400
@@ -128,8 +129,9 @@ class LnSearch:
             return None
 
     @staticmethod
-    def get_companies(keyword: str, targets: list, seen: Set) -> tuple[list, set]:
+    def get_companies(keyword: str, seen: Set) -> tuple[list, set]:
         max_range = 100 if keyword else 500
+        comp_list = list()
         # Exponential Decay - index 0 a weight of 10, and index 1 onwards a weight of 1
         weights = [10 if i == 0 else 1 for i in range(len(GEO_IDs))]
         geo = random.choices(GEO_IDs, weights=weights, k=1)[0]
@@ -174,18 +176,18 @@ class LnSearch:
                         # If handle is already in seen, we skip it entirely.
                         if handle in seen:
                             continue
-                        targets.append({"name": name, "linkedin": link})
+                        comp_list.append({"name": name, "linkedin": link})
                         seen.add(handle)
 
                 logger.info(
-                    f"Keyword '{keyword}' at {start}: List is now {len(targets)}"
+                    f"Keyword '{keyword}' at {start}: List is now {len(comp_list)}"
                 )
                 time.sleep(random.uniform(0.5, 2.0))
 
             except Exception as e:
                 logger.error(f"Exception during search crawl: {e}")
                 time.sleep(random.uniform(1.0, 3.0))
-        return targets, seen
+        return comp_list, seen
 
 
 class FinancialService:
@@ -222,12 +224,11 @@ class GrowthAnalytics:
     """Manages historical headcount data and growth trend calculations."""
 
     @staticmethod
-    def log_headcount(handle: str, count: int) -> None:
+    def log_headcount(history: dict, handle: str, count: int) -> dict:
         """Records the employee count for today in the history file."""
         if not handle or not count:
             return
 
-        history = GrowthAnalytics._load_history_file()
         today = now.strftime("%Y-%m-%d")
 
         records = history.get(handle, [])
@@ -240,22 +241,22 @@ class GrowthAnalytics:
 
         # Retention & Sorting
         history[handle] = sorted(records, key=lambda x: x["d"])[-RETENTION_DAYS:]
-        GrowthAnalytics._save_history_file(history)
+        return history
 
     @staticmethod
-    def get_trend(handle: str, days: int) -> Optional[float]:
+    def get_trend(history: dict, handle: str, days: int) -> Optional[float]:
         """Calculates growth % over a period with noise filters."""
-        history = GrowthAnalytics._load_history_file().get(handle, [])
-        if len(history) < 2:
+        company_history = history.get(handle, [])
+        if len(company_history) < 2:
             return None
 
-        latest = history[-1]
+        latest = company_history[-1]
         target_date = now - timedelta(days=days)
 
         # Find nearest historical record
         try:
             past = min(
-                history,
+                company_history,
                 key=lambda x: abs(
                     (datetime.strptime(x["d"], "%Y-%m-%d") - target_date).days
                 ),
@@ -360,13 +361,12 @@ class GrowthAnalytics:
         if len(raw_history) < 2:
             logger.warning("Insufficient data for charting history.")
             return
-        companies = []
         # Load the full data to calculate concentrations
         if not DATA_FILE.exists():
             logger.warning(f"{DATA_FILE} missing. No existing data found!")
             return
-        with open(DATA_FILE, "r") as f:
-            companies = json.load(f)
+        # Load existing data
+        current_data = DataCoordinator._load_data_file()
 
         # Define your specific buckets
         bucket_keys = [
@@ -388,7 +388,7 @@ class GrowthAnalytics:
             "buckets": {k: 0 for k in bucket_keys},  # Tracks total headcount
             "comp_counts": {k: 0 for k in bucket_keys},  # Tracks number of companies
         }
-        for c in companies:
+        for c in current_data:
             count = (
                 int(c.get("ln_count", 0)) if str(c.get("ln_count", 0)).isdigit() else 0
             )
@@ -528,6 +528,7 @@ class GrowthAnalytics:
     def _save_history_file(data) -> None:
         # sort_keys=True - alphabetical ordering companies
         HISTORY_FILE.write_text(json.dumps(data, indent=2, sort_keys=True))
+        logger.info(f"Saved {HISTORY_FILE.name} file")
 
 
 class CompanyParser:
@@ -695,8 +696,8 @@ class DataCoordinator:
         processed = []
         # Discover URLs
         url_list = DataCoordinator._get_target_urls()
-        random.shuffle(url_list)
-        logger.info(f"Started run with {len(url_list)} targets.")
+        logger.info(f"Started run with total: {len(url_list)} targets")
+        logger.info("------------------------------------------------")
 
         for i, target in enumerate(url_list):
             # Check the clock at the start of every iteration
@@ -723,6 +724,8 @@ class DataCoordinator:
         GrowthAnalytics.aggregate_global_history()
         # Generate the frontend-ready chart data
         GrowthAnalytics.generate_market_chart_data()
+        # Sync data if missing or removed during run
+        DataCoordinator._sync_temp_data()
 
         total_time = time.time() - start_time
         logger.info(f"Run completed in {round(total_time/3600, 2)} hours.")
@@ -774,7 +777,7 @@ class DataCoordinator:
                     comp_list.append({"name": j.get("company"), "linkedin": url})
                     seen.add(handle)
         logger.info(f"Found {len(comp_list)} companies from {JOBS_DATA.name}")
-        return (targets + comp_list), seen
+        return (comp_list + targets), seen
 
     @staticmethod
     def _get_existing_comp(refresh, targets, seen) -> tuple:
@@ -782,10 +785,9 @@ class DataCoordinator:
             logger.warning(f"{DATA_FILE} missing. No existing data found!")
             return targets, seen
 
-        with open(DATA_FILE, "r") as f:
-            existing_data = json.load(f)
-
-        for c in existing_data:
+        # Load existing data
+        current_data = DataCoordinator._load_data_file()
+        for c in current_data:
             handle = LnSearch.get_handle(c.get("linkedin", ""))
             if not handle:
                 continue
@@ -797,10 +799,18 @@ class DataCoordinator:
             if refresh:
                 should_refresh = DataCoordinator._should_refresh(c)
                 if should_refresh:
-                    targets.append({"name": c["name"], "linkedin": c["linkedin"]})
+                    # Pass the whole dict to keep existing tickers/metadata
+                    targets.append(c)
 
         if refresh:
             logger.info(f"Added {len(targets)} existing companies to Refresh")
+
+        mid = len(targets) // 2
+        bottom_half = targets[mid:]
+        # Shuffle only the bottom half of extracted list for randomness
+        random.shuffle(bottom_half)
+        # Re-assign it back to the original list's bottom half range
+        targets[mid:] = bottom_half
         return targets, seen
 
     @staticmethod
@@ -827,6 +837,7 @@ class DataCoordinator:
     def _find_new_comp(targets, seen) -> tuple:
         # Find companies from job posts
         logger.info("Finding new companies from current Linkedin jobs!")
+        comp_list = list()
         # Load Keywords from txt file
         keyword_list = [""]
         if not KEYWORDS_FILE.exists():
@@ -842,10 +853,10 @@ class DataCoordinator:
         random.shuffle(keyword_list)
         for i, keyword in enumerate(keyword_list):
             logger.info(f"Searching with keyword #{i}: '{keyword}'")
-            targets, seen = LnSearch.get_companies(keyword, targets, seen)
-        logger.info(f"Found total {len(targets)} companies")
-        logger.info("-------------------------------------")
-        return targets, seen
+            new_comps, seen = LnSearch.get_companies(keyword, seen)
+            comp_list += new_comps
+        logger.info(f"Found total {len(comp_list)} companies from open jobs")
+        return (comp_list + targets), seen
 
     @staticmethod
     def _get_indian_listed_companies(targets, seen) -> tuple:
@@ -915,7 +926,8 @@ class DataCoordinator:
                 # If handle is already in seen, we skip it entirely.
                 if handle in seen:
                     continue
-                targets.append(company_data)
+                if company_data:
+                    targets = [company_data] + targets
                 seen.add(handle)
                 seen_websites.add(web_domain)
                 logger.info(f"Added: {company_data['name']} | Ticker: {sym}")
@@ -1083,16 +1095,56 @@ class DataCoordinator:
         return None
 
     @staticmethod
-    def _save_to_disk(new_batch: List[Dict]) -> None:
+    def _sync_temp_data() -> None:
+        """Merges Tickers and new entries from TEMP_FILE into DATA_FILE."""
+        if not TEMP_FILE.exists():
+            return
+        if not DATA_FILE.exists():
+            return
+        logger.info(f"Syncing data from {TEMP_FILE.name}")
+        try:
+            with open(TEMP_FILE, "r") as f:
+                temp_data = json.load(f)
+            master_list = DataCoordinator._load_data_file()
+            master_map = {c["name"]: c for c in master_list}
+            updated_count = 0
+            for item in temp_data:
+                name = item.get("name")
+                if name in master_map:
+                    # Only update these specific fields if they exist in the temp file
+                    if "ticker" in item:
+                        master_map[name]["ticker"] = item["ticker"]
+                    if "public" in item:
+                        master_map[name]["public"] = item["public"]
+                    updated_count += 1
+
+            if updated_count > 0:
+                with open(DATA_FILE, "w") as f:
+                    json.dump(list(master_map.values()), f, indent=2)
+                logger.info(f"Sync complete: Updated {updated_count} companies.")
+        except Exception as e:
+            logger.error(f"Failed to sync temp file: {e}")
+
+    @staticmethod
+    def _load_data_file() -> list:
+        if DATA_FILE.exists():
+            with open(DATA_FILE, "r") as f:
+                return json.load(f)
+        else:
+            logger.warning(f"{DATA_FILE} file not found")
+        return []
+
+    @staticmethod
+    def _save_to_disk(new_batch: List[Dict], last_updated_date=True) -> None:
         if not new_batch:
             return
 
         # Load existing data
-        current_data = []
-        if DATA_FILE.exists():
-            with open(DATA_FILE, "r") as f:
-                current_data = json.load(f)
+        current_data = DataCoordinator._load_data_file()
+        # Read history file
+        history = GrowthAnalytics._load_history_file()
 
+        # map each entry based on company name
         data_map = {c["name"]: c for c in current_data}
 
         for item in new_batch:
@@ -1104,23 +1156,28 @@ class DataCoordinator:
 
             # Log History & Calculate Trends
             if handle and ln_count and ln_count.isdigit():
-                GrowthAnalytics.log_headcount(handle, int(ln_count))
-                if trend_30 := GrowthAnalytics.get_trend(handle, 30):
+                history = GrowthAnalytics.log_headcount(history, handle, int(ln_count))
+                if trend_30 := GrowthAnalytics.get_trend(history, handle, 30):
                     clean["Δ_30d"] = trend_30
-                if trend_90 := GrowthAnalytics.get_trend(handle, 90):
+                if trend_90 := GrowthAnalytics.get_trend(history, handle, 90):
                     clean["Δ_90d"] = trend_90
-                if trend_365 := GrowthAnalytics.get_trend(handle, 365):
+                if trend_365 := GrowthAnalytics.get_trend(history, handle, 365):
                     clean["Δ_365d"] = trend_365
                 clean["sparkline"] = GrowthAnalytics.generate_sparkline_svg(clean)
 
             # Merge
             name = item["name"]
             if name in data_map:
-                data_map[name].update(item)
-                data_map[name]["last_updated"] = datetime.now().isoformat()
+                data_map[name].update(clean)
+                if last_updated_date:
+                    data_map[name]["last_updated"] = datetime.now().isoformat()
             else:
-                item["last_updated"] = datetime.now().isoformat()
+                if last_updated_date:
+                    item["last_updated"] = datetime.now().isoformat()
                 data_map[name] = item
+
+        # Save headcount history file
+        GrowthAnalytics._save_history_file(history)
 
         # One last pass to ensure no nulls exist in the final map
         final_list = []
