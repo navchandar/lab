@@ -107,8 +107,7 @@
         background-color: var(--bg-color);
         padding: 0;
         width: 100%;
-        height: 100dvh;
-        /* Use dvh to account for browser UI and keyboards */
+        height: 100%;
         overflow: hidden;
       }
 
@@ -116,10 +115,11 @@
         display: flex;
         position: relative;
         flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
+        justify-content: center; /* Center vertically */
+        align-items: center; /* Center horizontally */
+        container-type: size;
         width: 100%;
-        height: auto;
+        height: 100%;
       }
 
       /* Font Stack: Lexend first, Comic Sans as reliable backup */
@@ -128,7 +128,7 @@
         /* Prepare for animation */
         transition: font-size 0.2s ease-out;
         will-change: transform;
-        margin-top: 6rem;
+        margin: 0;
         outline: none;
         border: none;
         background: transparent;
@@ -136,14 +136,16 @@
         background-image: var(--text-gradient);
         /* Make the background fill the text */
         background-size: 400% 400%;
+        padding: 0;
         /* Large size for smooth movement */
-        width: 90vw;
+        width: 95%;
         height: auto;
         max-height: 50%;
         color: var(--text-color);
         caret-color: var(--caret-color);
         font-weight: 700;
-        font-size: clamp(15vh, 30vw, 30dvh);
+        font-size: 30cqh;
+        /* Use cqh (Container Query Height) to scale relative to the <main> box, not the browser window*/
         font-family: "Lexend", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         text-align: center;
         text-transform: uppercase;
@@ -156,15 +158,13 @@
       }
 
       #big-input.hide-caret {
-        margin-top: 2rem;
-        margin-bottom: 6rem;
         caret-color: transparent;
-        font-size: clamp(15vh, 40vw, 45dvh);
+        font-size: 50cqh;
       }
 
       .typing-title {
         position: absolute;
-        top: 10%;
+        top: 10cqh;
         left: 50%;
         transform: translateX(-50%);
         opacity: 0.8;
@@ -261,15 +261,15 @@
       /* Mobile style*/
       @media (max-width: 768px) {
         .typing-title {
-          top: 5%;
-          font-size: 1.5rem;
+          top: 10cqh;
+          font-size: 1.2rem;
         }
 
         #big-input {
           filter: drop-shadow(1px 2px 5px rgba(0, 0, 0, 0.5));
           margin-bottom: 0;
           overflow: visible;
-          font-size: 20dvh;
+          font-size: 20cqh;
         }
         #big-input.hide-caret {
           font-size: 34dvh;

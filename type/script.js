@@ -8,9 +8,9 @@ let isComposing = false;
 
 // Configuration for text size scaling
 const SCALE_CONFIG = {
-  minFontSize: 10,     // Minimum font size in vh
-  maxFontSize: 45,     // Maximum font size in vh (matches your CSS clamp)
-  threshold: 1,        // Start shrinking after this many graphemes
+  minFontSizeRatio: 0.15, // 15% of container height
+  maxFontSizeRatio: 0.85, // 85% of container height
+  shrinkFactor: 0.9, // How much to shrink per extra character
 };
 
 // Check Unicode support once at startup
@@ -24,23 +24,39 @@ const isUnicodeSupported = (() => {
 })();
 
 /**
- * Dynamic Font Resizer
- * Shrinks the font as the character count grows to prevent overflow.
+ * Improved Dynamic Font Resizer
+ * Scales based on the ACTUAL pixels of the input element.
  */
-const adjustFontSize = (charCount) => {
-  if (charCount > SCALE_CONFIG.threshold) {
-    // Inverse relationship: more characters = smaller font
-    // This formula scales down based on character count
-    const newSize = Math.max(
-      SCALE_CONFIG.minFontSize, 
-      SCALE_CONFIG.maxFontSize - (charCount * 5) 
-    );
-    inputEl.style.fontSize = `${newSize}dvh`;
+const adjustFontSize = () => {
+  const charCount = inputEl.value.length;
+  // Get actual height of the input in pixels
+  const containerHeight = inputEl.clientHeight;
+
+  if (charCount > 0) {
+    // Calculate a base size as a percentage of the box height
+    let targetSize = containerHeight * SCALE_CONFIG.maxFontSizeRatio;
+
+    // Apply a smoother reduction for multiple characters
+    if (charCount > 1) {
+      // Exponential decay feels more natural than linear subtraction
+      targetSize =
+        targetSize * Math.pow(SCALE_CONFIG.shrinkFactor, charCount - 1);
+    }
+
+    // Ensure it doesn't get too tiny
+    const minSize = containerHeight * SCALE_CONFIG.minFontSizeRatio;
+    const finalSize = Math.max(minSize, targetSize);
+
+    inputEl.style.fontSize = `${finalSize}px`;
   } else {
-    // Reset to default (let CSS clamp handle it)
-    inputEl.style.fontSize = ""; 
+    inputEl.style.fontSize = ""; // Revert to CSS default
   }
 };
+
+const resizeObserver = new ResizeObserver(() => {
+  // Re-render and re-scale whenever the box changes
+  renderUI(); 
+});
 
 /**
  * CORE LOGIC (Validation & Cleaning)
@@ -85,7 +101,7 @@ const renderUI = () => {
   inputEl.classList.toggle("hide-caret", hasValue);
 
   if (hasValue) {
-    adjustFontSize(val.length);
+    adjustFontSize();
     // Restart "pop" animation by forcing a reflow
     inputEl.classList.remove("animate-pop");
     void inputEl.offsetWidth;
@@ -154,6 +170,9 @@ const init = () => {
   inputEl.addEventListener("keydown", handleKeyDown);
   inputEl.addEventListener("input", handleInput);
   document.addEventListener("click", forceFocus);
+
+  // Start observing the element's size
+  resizeObserver.observe(inputEl);
 
   // Composition Listeners (Crucial for multilingual typing)
   // compositionstart: User starts building a character
