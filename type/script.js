@@ -22,41 +22,32 @@ const isUnicodeSupported = (() => {
  */
 const adjustFontSize = () => {
   try {
-    const charCount = inputEl.value.length;
-    const parentHeight = inputEl.parentElement.clientHeight;
-    const parentWidth = inputEl.parentElement.clientWidth;
+    const val = inputEl.value;
+    if (!val) {
+      inputEl.style.fontSize = "";
+      return;
+    }
 
-    // Detect Screen Type
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const parent = inputEl.parentElement;
+    const maxWidth = parent.clientWidth * 0.9; // 90% of width for "breathing room"
+    const maxHeight = parent.clientHeight * 0.8; // 80% of height
 
-    // Set Variable Ratios
-    // Mobile: Big and bold (80% height)
-    // Desktop: Elegant and contained (50% height)
-    const heightRatio = isMobile ? 0.8 : 0.5;
+    //  Start with a very large "ideal" size
+    let fontSize = maxHeight;
+    inputEl.style.fontSize = `${fontSize}px`;
 
-    // Mobile needs to shrink faster because the screen is narrow
-    const shrinkFactor = isMobile ? 0.75 : 0.9;
-
-    if (charCount > 0) {
-      // Calculate base size using our context-aware ratio
-      let targetSize = parentHeight * heightRatio;
-      // Apply shrinkage for multiple characters
-      if (charCount > 1) {
-        targetSize = targetSize * Math.pow(shrinkFactor, charCount - 1);
-      }
-
-      // Width Protection: Prevents horizontal scrolling
-      // Mobile uses 95% width, Desktop uses 80% width for padding
-      const widthLimit = isMobile ? 0.95 : 0.8;
-      const maxWidthFontSize = (parentWidth * widthLimit) / (charCount * 0.8);
-
-      // Pick the safest (smallest) size to ensure NO overflow
-      const finalSize = Math.min(targetSize, maxWidthFontSize);
-
-      inputEl.style.fontSize = `${finalSize}px`;
-    } else {
-      // Caret size when empty
-      inputEl.style.fontSize = isMobile ? "25vh" : "15vh";
+    // The "Safety Loop"
+    // Keep shrinking until the text fits inside the container's width AND height
+    // We check scrollWidth (the text) vs maxWidth (the box)
+    let safetyNet = 0;
+    while (
+      (inputEl.scrollWidth > maxWidth || fontSize > maxHeight) &&
+      fontSize > 20 &&
+      safetyNet < 100
+    ) {
+      fontSize -= 5; // Step down by 5px
+      inputEl.style.fontSize = `${fontSize}px`;
+      safetyNet++; // Prevent infinite loops
     }
   } catch {
     console.error("Error scaling text size!");

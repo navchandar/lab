@@ -116,7 +116,7 @@
         flex-direction: column;
         justify-content: center; /* Center vertically */
         align-items: center; /* Center horizontally */
-        width: 100vw;
+        width: 100%;
         height: 100dvh;
         overflow: hidden;
       }
@@ -128,7 +128,7 @@
         /* Prepare for animation */
         transition: font-size 0.2s ease-out;
         will-change: transform;
-        margin: 0;
+        margin: 0 auto;
         outline: none;
         border: none;
         background: transparent;
@@ -139,7 +139,9 @@
         padding: 0;
         /* Large size for smooth movement */
         width: 90%;
+        max-width: 100vw;
         height: 60%;
+        overflow: visible;
         color: var(--text-color);
         caret-color: var(--caret-color);
         font-weight: 700;
@@ -148,9 +150,11 @@
         font-family: "Lexend", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         text-align: center;
         text-transform: uppercase;
+        white-space: nowrap;
         -webkit-background-clip: text;
         filter: drop-shadow(2px 4px 10px rgba(0, 0, 0, 0.8));
         animation: gradient-move 16s ease infinite;
+        box-sizing: border-box;
         background-clip: text;
         /* Make original text transparent so gradient shows through */
         -webkit-text-fill-color: transparent;
@@ -268,7 +272,7 @@
           filter: drop-shadow(1px 2px 5px rgba(0, 0, 0, 0.5));
           font-size: 20cqh;
         }
-        
+
         #big-input.hide-caret {
           font-size: 34dvh;
         }
