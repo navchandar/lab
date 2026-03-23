@@ -29,26 +29,33 @@ const adjustFontSize = () => {
     }
 
     const parent = inputEl.parentElement;
-    const maxWidth = parent.clientWidth * 0.9; // 90% of width for "breathing room"
-    const maxHeight = parent.clientHeight * 0.8; // 80% of height
+    // Use a slightly tighter margin for mobile to prevent clipping
+    const isMobile = window.innerWidth <= 768;
+    const maxWidth = parent.clientWidth * (isMobile ? 0.85 : 0.9);
+    const maxHeight = parent.clientHeight * (isMobile ? 0.7 : 0.8);
 
-    //  Start with a very large "ideal" size
-    let fontSize = maxHeight;
-    inputEl.style.fontSize = `${fontSize}px`;
+    // Binary Search for the perfect font size
+    let min = 10;
+    let max = 500;
+    let perfectSize = min;
 
-    // The "Safety Loop"
-    // Keep shrinking until the text fits inside the container's width AND height
-    // We check scrollWidth (the text) vs maxWidth (the box)
-    let safetyNet = 0;
-    while (
-      (inputEl.scrollWidth > maxWidth || fontSize > maxHeight) &&
-      fontSize > 20 &&
-      safetyNet < 100
-    ) {
-      fontSize -= 5; // Step down by 5px
-      inputEl.style.fontSize = `${fontSize}px`;
-      safetyNet++; // Prevent infinite loops
+    // temporarily disable transitions to get instant measurements
+    inputEl.style.transition = "none";
+
+    while (min <= max) {
+      let mid = Math.floor((min + max) / 2);
+      inputEl.style.fontSize = mid + "px";
+
+      // Check if it fits in BOTH width and height
+      // use scrollWidth for text width and mid for height
+      if (inputEl.scrollWidth <= maxWidth && mid <= maxHeight) {
+        perfectSize = mid; // This size works, but let's try bigger
+        min = mid + 1;
+      } else {
+        max = mid - 1; // Too big, go smaller
+      }
     }
+    inputEl.style.fontSize = perfectSize + "px";
   } catch {
     console.error("Error scaling text size!");
   }

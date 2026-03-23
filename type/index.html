@@ -125,8 +125,7 @@
       #big-input {
         display: flex;
         transform-origin: center;
-        /* Prepare for animation */
-        transition: font-size 0.2s ease-out;
+        transition: none;
         will-change: transform;
         margin: 0 auto;
         outline: none;
@@ -249,7 +248,7 @@
       #big-input.animate-pop {
         backface-visibility: hidden;
         animation:
-          popIn 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+          popIn 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
           gradient-move 16s ease infinite;
         will-change: transform, opacity, background-position;
       }
