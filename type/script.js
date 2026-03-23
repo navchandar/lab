@@ -18,7 +18,7 @@ const isUnicodeSupported = (() => {
 
 /**
  * Improved Context-Aware Dynamic Font Resizer
- * Measures the PARENT container so the font always fits the screen.
+ * Uses Canvas measurement to ensure the character fits the container
  */
 const adjustFontSize = () => {
   try {
@@ -29,33 +29,36 @@ const adjustFontSize = () => {
     }
 
     const parent = inputEl.parentElement;
-    // Use a slightly tighter margin for mobile to prevent clipping
-    const isMobile = window.innerWidth <= 768;
-    const maxWidth = parent.clientWidth * (isMobile ? 0.85 : 0.9);
-    const maxHeight = parent.clientHeight * (isMobile ? 0.7 : 0.8);
+    // Get the actual available space in the container
+    const boxWidth = parent.clientWidth * 0.9; // 90% of width
+    const boxHeight = parent.clientHeight * 0.7; // 70% of height
 
-    // Binary Search for the perfect font size
-    let min = 10;
-    let max = 500;
-    let perfectSize = min;
+    // Create a "virtual ruler" to measure the text
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
 
-    // temporarily disable transitions to get instant measurements
+    // Measure based on your specific font
+    context.font = `700 100px Lexend, sans-serif`;
+    const metrics = context.measureText(val);
+    const textWidthAt100px = metrics.width;
+
+    // Calculate the best fit
+    // How big can we go based on Height?
+    const sizeByHeight = boxHeight;
+    // How big can we go based on Width? (Width of box / width of 1 char) * 100
+    const sizeByWidth = (boxWidth / textWidthAt100px) * 100;
+
+    // Pick the smaller of the two to ensure it fits both ways
+    let finalSize = Math.min(sizeByHeight, sizeByWidth);
+
+    // Safety Floor: Never let it get smaller than a readable size
+    // On mobile (narrow), we ensure it's at least 15% of the screen height
+    const minFloor = parent.clientHeight * 0.15;
+    finalSize = Math.max(finalSize, minFloor);
+
+    // Apply instantly (no transitions to prevent "jumping")
     inputEl.style.transition = "none";
-
-    while (min <= max) {
-      let mid = Math.floor((min + max) / 2);
-      inputEl.style.fontSize = mid + "px";
-
-      // Check if it fits in BOTH width and height
-      // use scrollWidth for text width and mid for height
-      if (inputEl.scrollWidth <= maxWidth && mid <= maxHeight) {
-        perfectSize = mid; // This size works, but let's try bigger
-        min = mid + 1;
-      } else {
-        max = mid - 1; // Too big, go smaller
-      }
-    }
-    inputEl.style.fontSize = perfectSize + "px";
+    inputEl.style.fontSize = `${finalSize}px`;
   } catch {
     console.error("Error scaling text size!");
   }
