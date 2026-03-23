@@ -98,7 +98,6 @@
 
       body,
       html {
-        display: flex;
         position: fixed;
         /* Prevents the whole page from being pushed up */
         justify-content: center;
@@ -117,13 +116,14 @@
         flex-direction: column;
         justify-content: center; /* Center vertically */
         align-items: center; /* Center horizontally */
-        container-type: size;
-        width: 100%;
-        height: 100%;
+        width: 100vw;
+        height: 100dvh;
+        overflow: hidden;
       }
 
       /* Font Stack: Lexend first, Comic Sans as reliable backup */
       #big-input {
+        display: flex;
         transform-origin: center;
         /* Prepare for animation */
         transition: font-size 0.2s ease-out;
@@ -138,9 +138,8 @@
         background-size: 400% 400%;
         padding: 0;
         /* Large size for smooth movement */
-        width: 95%;
-        height: auto;
-        max-height: 50%;
+        width: 90%;
+        height: 60%;
         color: var(--text-color);
         caret-color: var(--caret-color);
         font-weight: 700;
@@ -261,16 +260,15 @@
       /* Mobile style*/
       @media (max-width: 768px) {
         .typing-title {
-          top: 10cqh;
-          font-size: 1.2rem;
+          top: 15%;
+          font-size: 1.5rem;
         }
 
         #big-input {
           filter: drop-shadow(1px 2px 5px rgba(0, 0, 0, 0.5));
-          margin-bottom: 0;
-          overflow: visible;
           font-size: 20cqh;
         }
+        
         #big-input.hide-caret {
           font-size: 34dvh;
         }

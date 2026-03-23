@@ -6,13 +6,6 @@ const titleEl = document.querySelector(".typing-title");
 // Track if the user is currently "composing" a character
 let isComposing = false;
 
-// Configuration for text size scaling
-const SCALE_CONFIG = {
-  minFontSizeRatio: 0.15, // 15% of container height
-  maxFontSizeRatio: 0.85, // 85% of container height
-  shrinkFactor: 0.9, // How much to shrink per extra character
-};
-
 // Check Unicode support once at startup
 const isUnicodeSupported = (() => {
   try {
@@ -24,38 +17,52 @@ const isUnicodeSupported = (() => {
 })();
 
 /**
- * Improved Dynamic Font Resizer
- * Scales based on the ACTUAL pixels of the input element.
+ * Improved Context-Aware Dynamic Font Resizer
+ * Measures the PARENT container so the font always fits the screen.
  */
 const adjustFontSize = () => {
   const charCount = inputEl.value.length;
-  // Get actual height of the input in pixels
-  const containerHeight = inputEl.clientHeight;
+  const charCount = inputEl.value.length;
+  const parentHeight = inputEl.parentElement.clientHeight;
+  const parentWidth = inputEl.parentElement.clientWidth;
+
+  // Detect Screen Type
+  const isMobile = window.matchMedia("(max-width: 768px)").matches;
+
+  // Set Variable Ratios
+  // Mobile: Big and bold (80% height)
+  // Desktop: Elegant and contained (50% height)
+  const heightRatio = isMobile ? 0.8 : 0.5;
+
+  // Mobile needs to shrink faster because the screen is narrow
+  const shrinkFactor = isMobile ? 0.75 : 0.9;
 
   if (charCount > 0) {
-    // Calculate a base size as a percentage of the box height
-    let targetSize = containerHeight * SCALE_CONFIG.maxFontSizeRatio;
-
-    // Apply a smoother reduction for multiple characters
+    // Calculate base size using our context-aware ratio
+    let targetSize = parentHeight * heightRatio;
+    // Apply shrinkage for multiple characters
     if (charCount > 1) {
-      // Exponential decay feels more natural than linear subtraction
-      targetSize =
-        targetSize * Math.pow(SCALE_CONFIG.shrinkFactor, charCount - 1);
+      targetSize = targetSize * Math.pow(shrinkFactor, charCount - 1);
     }
 
-    // Ensure it doesn't get too tiny
-    const minSize = containerHeight * SCALE_CONFIG.minFontSizeRatio;
-    const finalSize = Math.max(minSize, targetSize);
+    // Width Protection: Prevents horizontal scrolling
+    // Mobile uses 95% width, Desktop uses 80% width for padding
+    const widthLimit = isMobile ? 0.95 : 0.8;
+    const maxWidthFontSize = (parentWidth * widthLimit) / (charCount * 0.8);
+
+    // Pick the safest (smallest) size to ensure NO overflow
+    const finalSize = Math.min(targetSize, maxWidthFontSize);
 
     inputEl.style.fontSize = `${finalSize}px`;
   } else {
-    inputEl.style.fontSize = ""; // Revert to CSS default
+    // Caret size when empty
+    inputEl.style.fontSize = isMobile ? "25vh" : "15vh";
   }
 };
 
 const resizeObserver = new ResizeObserver(() => {
   // Re-render and re-scale whenever the box changes
-  renderUI(); 
+  renderUI();
 });
 
 /**
