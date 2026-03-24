@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Words Learner</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50%' y='50%' style='dominant-baseline:central; text-anchor:middle; font-size:80px;'>📚</text></svg>"
+      type="image/svg+xml"
+    />
+
+    <meta
+      name="description"
+      content="An interactive app to help children learn the 100 most common words in different languages"
+    />
+    <meta name="theme-color" content="#4e4e4e" />
+
+    <link rel="stylesheet" href="../static/settings.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <main role="main">
+      <div
+        id="word-display"
+        style="color: lightgray"
+        aria-label="Current word"
+      ></div>
+
+      <button
+        id="muteButton"
+        aria-label="Mute sound"
+        disabled
+        title="Mute sound"
+      ></button>
+
+      <button
+        id="fullscreen-btn"
+        aria-label="Toggle fullscreen mode"
+        title="Toggle fullscreen"
+      >
+        <svg
+          id="fullscreen-icon"
+          fill="none"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        ></svg>
+      </button>
+
+      <button id="settings-btn" aria-label="Settings" title="Settings Menu">
+        <img
+          id="settings-icon"
+          src="../static/icons/settings.svg"
+          width="24"
+          height="24"
+          alt="Settings"
+          aria-hidden="true"
+        />
+      </button>
+
+      <div
+        id="settings-menu"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-label"
+      >
+        <span id="settings-label" class="sr-only" style="display: none"
+          >Settings Menu</span
+        >
+
+        <label for="language-select" id="language-label"
+          >Choose Language:</label
+        >
+        <select id="language-select">
+          <!-- Options to be populated by JS -->
+        </select>
+
+        <div class="randomize-checkbox">
+          <label for="randomize-words" id="randomize-label"
+            >Randomize Words:</label
+          >
+          <input type="checkbox" id="randomize-words" />
+        </div>
+      </div>
+    </main>
+
+    <script src="data.js"></script>
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
