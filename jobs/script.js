@@ -23,6 +23,16 @@ let currentChartInstance = null; // Store the Chart.js instance
 let jobsTable = null;
 let lastETag = null;
 
+// detects mobile / touch devices
+const isMobile =
+  window.innerWidth <= 768 ||
+  (window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+if (isMobile) {
+  let p = DATA_TABLE_CONFIG.language.searchPlaceholder;
+  p = p.replace("[ / ]", "").trim();
+  DATA_TABLE_CONFIG.language.searchPlaceholder = p;
+}
+
 // --- Function to safely initialize DataTable ---
 function initializeJobsTable() {
   if (typeof jQuery !== "undefined" && jQuery.fn.dataTable) {
@@ -1583,9 +1593,7 @@ function initializeTippyOnVisibleRows() {
   const isDarkMode =
     window.matchMedia &&
     window.matchMedia("(prefers-color-scheme: dark)").matches;
-  // detects touch devices
-  const isMobile =
-    window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
+
   // Calculate maxWidth based on viewport size
   const viewportWidth = window.innerWidth;
   const maxWidth = viewportWidth < 768 ? 250 : viewportWidth < 1200 ? 500 : 900;
@@ -2179,9 +2187,9 @@ async function main() {
       }
 
       // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
-        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
-          return;
-        }
+      if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+        return;
+      }
 
       const info = jobsTable.page.info();
 

@@ -9,8 +9,11 @@ let trendChartInst = null;
 let ownershipChartInst = null;
 
 document.getElementById("year").textContent = new Date().getFullYear();
-// Check if the screen width is mobile-sized
-const isMobile = () => window.innerWidth <= 768;
+// detects mobile / touch devices
+const isMobile =
+  window.innerWidth <= 768 ||
+  (window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
+
 Chart.register(ChartDataLabels);
 
 // HELPER: Generate Public/Private Icons with Financial Links
@@ -107,7 +110,7 @@ function getBucketName(count) {
  * Maps a bucket key (e.g., "1-10") to a descriptive label
  */
 function getBucketLabel(bucketKey) {
-  if (isMobile()) {
+  if (isMobile) {
     return bucketKey;
   }
   const labels = {
@@ -302,8 +305,8 @@ function renderMarketCharts() {
   // SHARED CONFIGURATION
   const commonOptions = {
     responsive: true,
-    maintainAspectRatio: !isMobile(),
-    aspectRatio: isMobile() ? 1.2 : 2, // Higher number = wider chart
+    maintainAspectRatio: !isMobile,
+    aspectRatio: isMobile ? 1.2 : 2, // Higher number = wider chart
     interaction: {
       intersect: false,
       mode: "index", // Shows the tooltip for the nearest x-axis value
@@ -320,8 +323,8 @@ function renderMarketCharts() {
         borderColor: "rgba(255, 255, 255, 0.1)",
       },
       datalabels: {
-        // If isMobile() is true, display is false. Otherwise, it's true.
-        display: (context) => !isMobile(),
+        // If isMobile is true, display is false. Otherwise, it's true.
+        display: (context) => !isMobile,
         anchor: "end",
         align: "top",
         color: textColor,
@@ -380,7 +383,7 @@ function renderMarketCharts() {
           borderWidth: 2,
           borderRadius: 6,
           hoverBackgroundColor: "#025b4b",
-          pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
+          pointHitRadius: isMobile ? 15 : 5, // Larger tap target for mobile
         },
       ],
     },
@@ -486,11 +489,11 @@ function renderMarketCharts() {
           borderColor: "#0bb495",
           borderWidth: 2,
           borderRadius: 6,
-          pointRadius: isMobile() ? 2 : 5,
+          pointRadius: isMobile ? 2 : 5,
           pointHoverRadius: 7,
           pointBackgroundColor: "#025b4b",
           tension: 0.4,
-          pointHitRadius: isMobile() ? 15 : 5, // Larger tap target for mobile
+          pointHitRadius: isMobile ? 15 : 5, // Larger tap target for mobile
           segment: {
             // Dynamic styling: Dash the line for historical (aggregated) data
             borderDash: (ctx) =>
@@ -722,7 +725,7 @@ async function loadData() {
       // Build Row with data
       const row = document.createElement("tr");
       row.innerHTML = `
-              <td title="${item.name}">${isMobile() ? mobileName : name}</td>
+              <td title="${item.name}">${isMobile ? mobileName : name}</td>
               <td data-order="${sortRank}"><div class="emp-cell">
                   <span>${displayCount}</span>
                   ${sparklineHtml}
@@ -771,8 +774,10 @@ async function loadData() {
         autoWidth: false,
         dom: '<"top-wrapper"lf>rtip',
         language: {
-          search: isMobile() ? "" : "Search",
-          searchPlaceholder: "Search Companies   [ / ]",
+          search: isMobile ? "" : "Search",
+          searchPlaceholder: isMobile
+            ? "Search Companies"
+            : "Search Companies   [ / ]",
           lengthMenu: "Show _MENU_ companies",
           info: "Showing _START_ to _END_ of _TOTAL_ companies",
         },
