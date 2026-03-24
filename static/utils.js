@@ -54,7 +54,7 @@ export function addListeners(button, callback) {
       e.stopPropagation();
       callback();
     },
-    { passive: false }
+    { passive: false },
   );
 }
 
@@ -129,7 +129,7 @@ export function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch((err) => {
       console.log(
-        `Error attempting to enable full-screen mode: ${err.message}`
+        `Error attempting to enable full-screen mode: ${err.message}`,
       );
     });
   } else {
@@ -247,7 +247,7 @@ export function bodyAction(callback) {
         callback();
       }
     },
-    { passive: false }
+    { passive: false },
   );
 }
 
@@ -348,6 +348,19 @@ export function toggleSettings() {
   const settingsMenu = document.getElementById("settings-menu");
   settingsMenu.classList.toggle("show");
   settingsBtn.classList.toggle("show");
+  const isOpen = settingsMenu.classList.contains("show");
+  if (isOpen) {
+    // Focus the first radio button or select dropdown found in the menu
+    const firstInput = settingsMenu.querySelector(
+      'input[type="radio"], select',
+    );
+    if (firstInput) {
+      firstInput.focus();
+    }
+  } else {
+    // Move focus back to body when closed via toggle
+    document.body.focus();
+  }
 }
 
 /**
@@ -358,14 +371,16 @@ export function hideSettings() {
   const settingsBtn = document.querySelector("#settings-btn.show");
   const settingsMenu = document.querySelector("#settings-menu.show");
 
-  if (settingsBtn) {
+  if (settingsMenu && settingsMenu.classList.contains("show")) {
     settingsBtn.classList.remove("show");
-  }
-  if (settingsMenu) {
     settingsMenu.classList.remove("show");
-  }
 
-  updateSettingsIcon();
+    // Ensure the body can receive focus and shift it there
+    document.body.setAttribute("tabindex", "-1");
+    document.body.focus();
+
+    updateSettingsIcon();
+  }
 }
 
 /**

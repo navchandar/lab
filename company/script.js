@@ -639,7 +639,7 @@ async function loadData() {
   const handleSwipe = (touchstartX, touchendX, table) => {
     const info = table.page.info();
     const distance = touchendX - touchstartX;
-    const minSwipeDistance = 30;
+    const minSwipeDistance = 50;
 
     if (distance < -minSwipeDistance) {
       if (info.page < info.pages - 1) {
@@ -819,10 +819,6 @@ async function loadData() {
 
       // --- KEYBOARD NAVIGATION ---
       $(document).on("keydown", function (e) {
-        // IGNORE if typing in an input
-        if ($(e.target).is("input, textarea, .select2-search__field")) {
-          return;
-        }
 
         // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
         if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
@@ -853,6 +849,12 @@ async function loadData() {
           }
           return;
         }
+
+        // IGNORE if typing in an input
+        if ($(e.target).is("input, textarea, .select2-search__field")) {
+          return;
+        }
+
 
         // ARROW & NUMBER NAVIGATION
         const info = table.page.info();

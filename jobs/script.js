@@ -2181,37 +2181,9 @@ async function main() {
 
     // --- Keyboard Navigation ---
     $(document).on("keydown", function (e) {
-      // Safety: Ignore if user is typing in a search/filter input
-      if ($(e.target).is("input, textarea, .select2-search__field")) {
-        return;
-      }
-
       // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
       if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
         return;
-      }
-
-      const info = jobsTable.page.info();
-
-      if (e.which === 39) {
-        // Right Arrow -> Next
-        if (info.page < info.pages - 1) {
-          jobsTable.page("next").draw("page");
-          scrollToTableTop();
-        }
-      } else if (e.which === 37) {
-        // Left Arrow -> Previous
-        if (info.page > 0) {
-          jobsTable.page("previous").draw("page");
-          scrollToTableTop();
-        }
-      } else if (e.which >= 49 && e.which <= 57) {
-        // Numbers 1-9
-        const pageNum = e.which - 49;
-        if (pageNum < info.pages) {
-          jobsTable.page(pageNum).draw("page");
-          scrollToTableTop();
-        }
       }
 
       if (e.key === "/") {
@@ -2248,6 +2220,32 @@ async function main() {
           searchInput.val("");
           // Update the URL to remove the 's' parameter
           updateURL();
+        }
+      }
+      // Safety: Ignore if user is typing in a search/filter input
+      if ($(e.target).is("input, textarea, .select2-search__field")) {
+        return;
+      }
+      const info = jobsTable.page.info();
+
+      if (e.which === 39) {
+        // Right Arrow -> Next
+        if (info.page < info.pages - 1) {
+          jobsTable.page("next").draw("page");
+          scrollToTableTop();
+        }
+      } else if (e.which === 37) {
+        // Left Arrow -> Previous
+        if (info.page > 0) {
+          jobsTable.page("previous").draw("page");
+          scrollToTableTop();
+        }
+      } else if (e.which >= 49 && e.which <= 57) {
+        // Numbers 1-9
+        const pageNum = e.which - 49;
+        if (pageNum < info.pages) {
+          jobsTable.page(pageNum).draw("page");
+          scrollToTableTop();
         }
       }
     });
