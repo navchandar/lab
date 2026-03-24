@@ -17,7 +17,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🔠 <a href="https://navchandar.github.io/lab/alphabet/?lang=tamil" target="_blank">**Tamil Alphabet**</a> | Display and increment tamil alphabet with random colors on key press or tap. | 🟩🟩🟩🟩🟩 100% |
 | 🔼 <a href="https://navchandar.github.io/lab/shapes/" target="_blank">**Shape Explorer**</a> | Identify and learn basic shapes with color and sound effects. | 🟩🟩🟩🟩🟩 100% |
 | 🐾 <a href="https://navchandar.github.io/lab/animals/" target="_blank">**Animals**</a> | Tap on animals to view the animals, hear their sounds and see their names. | 🟩🟩🟩🟩🟩 100% |
-| 📚  <a href="https://navchandar.github.io/lab/words/" target="_blank">**Words**</a> | Learn 100 most common words in different languages. | 🟩🟩🟩⬜⬜ 60% |
+| 📚  <a href="https://navchandar.github.io/lab/words/" target="_blank">**Words**</a> | Learn 100 most common words in different languages. | 🟩🟩🟩🟩🟩 100% |
 | 🚗 **Vehicles** | Learn names and sounds of different types of vehicles. | ⬜⬜⬜⬜⬜ 0% |
 | 🍎 **Fruits And Veggies** | Learn names and colors of fruits and vegetables with illustrations. | ⬜⬜⬜⬜⬜ 0% |
 | 🕒 <a href="https://navchandar.github.io/lab/clock/" target="_blank">**Learn the Clock**</a> | Interactive analog and digital clock to teach time-telling. | 🟩🟩🟩🟩🟩 100% |
