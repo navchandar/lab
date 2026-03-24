@@ -772,7 +772,7 @@ async function loadData() {
         dom: '<"top-wrapper"lf>rtip',
         language: {
           search: isMobile() ? "" : "Search",
-          searchPlaceholder: "Company name",
+          searchPlaceholder: "Search Companies   [ / ]",
           lengthMenu: "Show _MENU_ companies",
           info: "Showing _START_ to _END_ of _TOTAL_ companies",
         },
@@ -815,7 +815,7 @@ async function loadData() {
       // --- KEYBOARD NAVIGATION ---
       $(document).on("keydown", function (e) {
         // IGNORE if typing in an input
-        if ($(e.target).is("input, textarea")) {
+        if ($(e.target).is("input, textarea, .select2-search__field")) {
           return;
         }
 
@@ -824,8 +824,33 @@ async function loadData() {
           return;
         }
 
-        const info = table.page.info();
+        const searchInput = $("input[type='search']");
+        const modalOpen = document.querySelector(".modal.show");
+        // HANDLE "/" KEY (Focus Search)
+        if (e.key === "/" && !modalOpen) {
+          e.preventDefault();
+          searchInput.focus();
+          searchInput.select();
+          return;
+        }
 
+        // HANDLE "ESCAPE" KEY (Clear Search)
+        if (e.key === "Escape") {
+          // If a modal is open, let setupModals listener handle it
+          if (modalOpen) {
+            return;
+          }
+
+          // If search has text, clear it and blur
+          if (table.search() !== "" || searchInput.val() !== "") {
+            e.preventDefault();
+            table.search("").draw();
+          }
+          return;
+        }
+
+        // ARROW & NUMBER NAVIGATION
+        const info = table.page.info();
         if (e.which === 39) {
           // Right Arrow
           if (info.page < info.pages - 1) {

@@ -114,22 +114,12 @@ const asArray = (v) => (Array.isArray(v) ? v : v ? [v] : []);
 /**
  * Converts a UTC ISO 8601 date string to the user's local time.
  * * @param {string} utcDateString - Input date string (e.g., '2025-10-22T07:14:43.184Z')
- * @returns {string} The formatted local date string (formatted as 'yyyy-mm-dd hh:mm TZ').
+ * @returns {string} The formatted local date string (formatted as 'yyyy-mm-dd').
  */
 function convertToLocalTime(utcDateString) {
   try {
     const date = new Date(utcDateString);
-    const formatter = new Intl.DateTimeFormat("en-CA", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-
-    const parts = formatter.formatToParts(date);
-    const get = (type) => parts.find((p) => p.type === type)?.value || "";
-
-    const formatted = `${get("year")}-${get("month")}-${get("day")}`;
-    return formatted.trim();
+    return date.toISOString().split("T")[0];
   } catch {
     console.log("Error converting to local timezone");
     return null;
@@ -1699,6 +1689,7 @@ async function main() {
 
       allJobs.forEach((job) => {
         const originalDate = job.datePosted;
+        job.originalDate = originalDate;
         const localTime = convertToLocalTime(originalDate);
         if (localTime) {
           job.datePosted = localTime;
@@ -1823,7 +1814,7 @@ async function main() {
         ? `<div title="${job.location}">${job.location}</div>`
         : "—";
       let datePosted = job.datePosted
-        ? `<div title="${job.datePosted}">${job.datePosted}</div>`
+        ? `<div title="${job.originalDate || job.datePosted}">${job.datePosted}</div>`
         : "—";
       let employeeCount = job.employeeCount
         ? `<div data-order="${job.employeeRank}">${job.employeeCount}</div>`
@@ -2182,15 +2173,15 @@ async function main() {
 
     // --- Keyboard Navigation ---
     $(document).on("keydown", function (e) {
-      // 1. Safety: Ignore if user is typing in a search/filter input
+      // Safety: Ignore if user is typing in a search/filter input
       if ($(e.target).is("input, textarea, .select2-search__field")) {
         return;
       }
 
-      // 2. Safety: Ignore if modifier keys (Ctrl, Alt, Shift, Cmd) are held
-      if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
-        return;
-      }
+      // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
+        if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
+          return;
+        }
 
       const info = jobsTable.page.info();
 
@@ -2212,6 +2203,43 @@ async function main() {
         if (pageNum < info.pages) {
           jobsTable.page(pageNum).draw("page");
           scrollToTableTop();
+        }
+      }
+
+      if (e.key === "/") {
+        e.preventDefault();
+        // Check if the disclaimer modal is currently open
+        const modal = document.getElementById("disclaimerModal");
+        if (modal && modal.classList.contains("show")) {
+          // Skip focus if modal is open
+          return;
+        }
+        const searchInput = document.getElementById("dt-search-0");
+        if (searchInput) {
+          searchInput.focus();
+          // Optional: selects existing text for easy overwriting
+          searchInput.select();
+        }
+      }
+      // --- Escape Key to Clear Search ---
+      if (e.key === "Escape") {
+        // Check if the disclaimer modal is currently open
+        const modal = document.getElementById("disclaimerModal");
+        if (modal && modal.classList.contains("show")) {
+          // Let the setupDisclaimer listener handle it
+          return;
+        }
+
+        const searchInput = $("#dt-search-0");
+        // Check if the search actually has a value before running reset logic
+        if (jobsTable.search() !== "" || searchInput.val() !== "") {
+          e.preventDefault();
+          // Clear the DataTables internal search state
+          jobsTable.search("").draw();
+          // Clear the physical input text
+          searchInput.val("");
+          // Update the URL to remove the 's' parameter
+          updateURL();
         }
       }
     });
