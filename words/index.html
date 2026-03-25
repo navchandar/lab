@@ -12,15 +12,61 @@
 
     <meta
       name="description"
-      content="An interactive app to help children learn the 100 most common words in different languages"
+      content="An interactive app to help children learn to spell and speak the 100 most common words in different languages"
     />
+
+    <meta
+      name="keywords"
+      content="language learning, kids learning spelling, words, english words, tamil words, hindi words, flash, colors, increment, interactive, JavaScript, mobile-friendly, kid-friendly"
+    />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+    <meta
+      property="article:author"
+      content="https://www.linkedin.com/in/naveenchandar"
+    />
+
+    <meta name="title" property="og:title" content="Words Learner" />
+    <meta
+      name="description"
+      property="og:description"
+      content="An interactive app to help children learn to spell and speak the 100 most common words in different languages."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/words/" />
+    <meta
+      name="image"
+      property="og:image"
+      content="https://navchandar.github.io/lab/words/preview.png"
+    />
+
     <meta name="theme-color" content="#4e4e4e" />
 
     <link rel="stylesheet" href="../static/settings.css" />
     <link rel="stylesheet" href="style.css" />
+
+    <link rel="preload" as="image" href="../static/icons/settings.svg" />
+    <link rel="prefetch" href="../static/icons/settings-open.svg" as="image" />
   </head>
 
   <body>
+    <noscript>
+      <div class="noscript-overlay">
+        <div class="noscript-content">
+          <h2>JavaScript is Required</h2>
+          <p>We rely on JavaScript to render the interactive website.</p>
+          <p>
+            Please enable JavaScript in your browser settings and reload the
+            page.
+          </p>
+          <a href="https://www.enable-javascript.com/" target="_blank"
+            >How to enable JavaScript
+          </a>
+        </div>
+      </div>
+    </noscript>
+
     <main role="main">
       <div
         id="word-display"
@@ -77,6 +123,11 @@
         <select id="language-select">
           <!-- Options to be populated by JS -->
         </select>
+
+        <div class="spelling-toggle">
+          <label for="spell-words-toggle">Spell Words:</label>
+          <input type="checkbox" id="spell-words-toggle" checked />
+        </div>
 
         <div class="randomize-checkbox">
           <label for="randomize-words" id="randomize-label"

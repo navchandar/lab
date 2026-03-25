@@ -10,6 +10,7 @@ const settingsBtn = document.getElementById("settings-btn");
 const settingsIcon = document.getElementById("settings-icon");
 const randomizeCheckbox = document.getElementById("randomize-words");
 const languageSelect = document.getElementById("language-select");
+const spellWordsCheckbox = document.getElementById("spell-words-toggle");
 
 // --- Application State & Configuration ---
 // Read language from URL, default to English
@@ -84,9 +85,18 @@ function updateWord() {
     history = [];
   }
 
-  wordElement.textContent = wordToDisplay;
-  wordElement.style.color = currentColor;
+  wordElement.innerHTML = "";
+  // Intl.Segmenter ensures combo letters like "கௌ" stays as one unit
+  const segmenter = new Intl.Segmenter(Locale, { granularity: "grapheme" });
+  const segments = segmenter.segment(wordToDisplay);
 
+  for (const { segment } of segments) {
+    const span = document.createElement("span");
+    span.textContent = segment;
+    span.className = "letter";
+    wordElement.appendChild(span);
+  }
+  wordElement.style.color = currentColor;
   setTimeout(() => {
     speaker();
     locked = false;
@@ -105,15 +115,44 @@ function incrementWord() {
 // =========================================================================
 // SPEECH SYNTHESIS
 // =========================================================================
-
-function speaker() {
-  if (!utils.isMuted()) {
-    ttsInstance.speakElement(wordElement.textContent, {
-      directSpeech: true,
-      rate: 0.8, // Slightly slower for clearer pronunciation of sight words
-      locale: Locale,
-    });
+async function speaker() {
+  if (utils.isMuted()) {
+    return;
   }
+  const spellEnabled = spellWordsCheckbox ? spellWordsCheckbox.checked : false;
+  const spans = wordElement.querySelectorAll(".letter");
+  const fullWord = wordElement.textContent;
+
+  if (spellEnabled) {
+    // Spell the word letter by letter (or grapheme by grapheme)
+    for (let i = 0; i < spans.length; i++) {
+      const char = spans[i].textContent;
+      spans[i].classList.add("active");
+
+      await new Promise((resolve) => {
+        ttsInstance.speakElement(char, {
+          directSpeech: true,
+          chunk: false,
+          rate: 0.75,
+          locale: Locale,
+          onEnd: resolve, // Callback when the letter sound finishes
+        });
+        // Safety timeout in case TTS engine hangs
+        setTimeout(resolve, 2000);
+      });
+      spans[i].classList.remove("active");
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    // Tiny pause before the final word delivery
+    await new Promise((r) => setTimeout(r, 300));
+  }
+
+  // Speak the full word everytime (unless muted)
+  ttsInstance.speakElement(fullWord, {
+    directSpeech: true,
+    rate: 0.7, // Clear pronunciation
+    locale: Locale,
+  });
 }
 
 // =========================================================================
@@ -213,4 +252,11 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     utils.disableMuteBtn();
   }
+
+  spellWordsCheckbox.addEventListener("change", (e) => {
+    e.stopPropagation();
+    if (spellWordsCheckbox.checked) {
+      speaker();
+    }
+  });
 });
