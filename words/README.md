@@ -1,17 +1,15 @@
+# 📚 Words Learner
 
-# 🔼 Shape Explorer
-
-A fun and interactive way for kids to learn and identify basic shapes with random colors.
+A fun and responsive Words learner that spells each letter and changes color with each interaction.
 
 
-[https://navchandar.github.io/lab/shapes/](https://navchandar.github.io/lab/shapes/)
-
+[https://navchandar.github.io/lab/words/](https://navchandar.github.io/lab/words/)
 
 
 ## Features
-- Interactive shapes display
-- Random color generation for each shape
-- Educational tool for learning basic shapes
+- Interactive words display and spell each letter
+- Changes color on key press or tap
+- Supports multiple languages including English, Tamil, and Hindi
 - Mobile-friendly and kid-friendly design
 
 

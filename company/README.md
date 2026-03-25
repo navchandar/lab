@@ -6,7 +6,7 @@ This script is designed to gather and visualize company data from public sources
 
 ## Features
 
-1. **Fetch Company URLs**: The script fetches a list of jobs from LinkedIn
+1. **Fetch Company URLs**: The script fetches data about a list of companies from LinkedIn
 2. **Extract Company Data**: For each company, it fetches website link, LinkedIn link, employee count.
 3. **Store Data**: The collected data is stored in a JSON file for visualization.
 4. **Compare Employee Count**: The script compares the change in employee count with previous data.
@@ -16,7 +16,7 @@ This script is designed to gather and visualize company data from public sources
 
 ```
 cd company
-pip install curl-cffi beautifulsoup4
+pip install -r requirements.txt
 python company_data_parser.py
 ```
 

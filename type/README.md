@@ -6,7 +6,7 @@ A fun and simple place to type and view just one character at a time!
 
 ## Features
 
-- Allows typing alpha numeric characters
+- Allows typing alpha numeric characters and multi-lingual text characters
 - Always displays only one character at a time
 - Mobile-friendly and kid-friendly design
 
