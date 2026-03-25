@@ -99,7 +99,6 @@ function updateWord() {
   wordElement.style.color = currentColor;
   setTimeout(() => {
     speaker();
-    locked = false;
   }, 700); // Gives time for the color transition before speaking
 }
 
@@ -146,6 +145,7 @@ async function speaker() {
     }
     // Tiny pause before the final word delivery
     await new Promise((r) => setTimeout(r, 300));
+    locked = false;
   }
 
   // Speak the full word everytime (unless muted)
