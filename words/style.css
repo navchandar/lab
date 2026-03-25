@@ -21,6 +21,7 @@ body {
         opacity 0.5s ease;
     cursor: pointer;
     box-sizing: border-box;
+    container-type: size;
     box-shadow:
         0 1px 1px rgba(0, 0, 0, 0.1),
         0 8px 16px rgba(0, 0, 0, 0.3);
@@ -43,7 +44,6 @@ body {
     -webkit-text-stroke: 2px #333;
     overflow: hidden;
     color: black;
-    font-size: 10vw;
     /* Scales with viewport width to accommodate words */
     line-height: 1;
     letter-spacing: 0.1em;
@@ -54,6 +54,7 @@ body {
 .letter {
     display: inline-block;
     transition: transform 0.2s ease-in-out, color 0.2s ease-in-out, text-shadow 0.2s ease-in-out;
+    font-size: clamp(2rem, 15cqw, 8rem);
 }
 
 /* The style applied when a letter is being spoken */
