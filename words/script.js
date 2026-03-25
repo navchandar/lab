@@ -108,6 +108,7 @@ function incrementWord() {
     return;
   }
   locked = true;
+  ttsInstance.cancel();
   setTimeout(updateWord, 100);
   utils.hideSettings();
 }
