@@ -171,10 +171,8 @@ class LnSearch:
                         if "linkedin.com" not in link:
                             continue
                         handle = LnSearch.get_handle(link)
-                        if not handle:
-                            continue
                         # If handle is already in seen, we skip it entirely.
-                        if handle in seen:
+                        if not handle or handle in seen:
                             continue
                         comp_list.append({"name": name, "linkedin": link})
                         seen.add(handle)
@@ -1106,16 +1104,16 @@ class DataCoordinator:
             with open(TEMP_FILE, "r") as f:
                 temp_data = json.load(f)
             master_list = DataCoordinator._load_data_file()
-            master_map = {c["name"]: c for c in master_list}
+            master_map = {LnSearch.get_handle(c.get("linkedin")): c for c in master_list if LnSearch.get_handle(c.get("linkedin"))}
             updated_count = 0
             for item in temp_data:
-                name = item.get("name")
-                if name in master_map:
+                handle = LnSearch.get_handle(item.get("linkedin"))
+                if handle in master_map:
                     # Only update these specific fields if they exist in the temp file
                     if "ticker" in item:
-                        master_map[name]["ticker"] = item["ticker"]
+                        master_map[handle]["ticker"] = item["ticker"]
                     if "public" in item:
-                        master_map[name]["public"] = item["public"]
+                        master_map[handle]["public"] = item["public"]
                     updated_count += 1
 
             if updated_count > 0:
@@ -1144,18 +1142,24 @@ class DataCoordinator:
         # Read history file
         history = GrowthAnalytics._load_history_file()
 
-        # map each entry based on company name
-        data_map = {c["name"]: c for c in current_data}
+        # map each entry based on LinkedIn HANDLE
+        data_map = {}
+        for c in current_data:
+            handle = LnSearch.get_handle(c.get("linkedin", ""))
+            if handle:
+                data_map[handle] = c
 
         for item in new_batch:
             # Clean the item: Remove keys where value is None or "null" string
             clean = {k: v for k, v in item.items() if v is not None}
+            handle = LnSearch.get_handle(clean.get("linkedin", ""))
+            if not handle:
+                logger.warning(f"Skipping item with no LinkedIn handle: {item.get('name')}")
+                continue
 
-            handle = LnSearch.get_handle(clean.get("linkedin"))
             ln_count = clean.get("ln_count")
-
             # Log History & Calculate Trends
-            if handle and ln_count and ln_count.isdigit():
+            if handle and ln_count and str(ln_count).isdigit():
                 history = GrowthAnalytics.log_headcount(history, handle, int(ln_count))
                 if trend_30 := GrowthAnalytics.get_trend(history, handle, 30):
                     clean["Δ_30d"] = trend_30
@@ -1165,16 +1169,15 @@ class DataCoordinator:
                     clean["Δ_365d"] = trend_365
                 clean["sparkline"] = GrowthAnalytics.generate_sparkline_svg(clean)
 
-            # Merge
-            name = item["name"]
-            if name in data_map:
-                data_map[name].update(clean)
+            # Merge based on Handle
+            if handle in data_map:
+                data_map[handle].update(clean)
                 if last_updated_date:
-                    data_map[name]["last_updated"] = datetime.now().isoformat()
+                    data_map[handle]["last_updated"] = datetime.now().isoformat()
             else:
                 if last_updated_date:
-                    item["last_updated"] = datetime.now().isoformat()
-                data_map[name] = item
+                    clean["last_updated"] = datetime.now().isoformat()
+                data_map[handle] = clean
 
         # Save headcount history file
         GrowthAnalytics._save_history_file(history)
@@ -1217,7 +1220,7 @@ class DataCoordinator:
         final = sorted(final_list, key=sort_logic)
         with open(DATA_FILE, "w") as f:
             json.dump(final, f, indent=2)
-        logger.info(f"Saved {len(final)} companies to {DATA_FILE}")
+        logger.info(f"Saved {len(final)} unique companies to {DATA_FILE}")
 
 
 if __name__ == "__main__":
