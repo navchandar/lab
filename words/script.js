@@ -226,6 +226,10 @@ function handleKeydown(event) {
       utils.hideSettings();
       utils.hideSidebar();
       break;
+    case "Equal":
+      event.preventDefault();
+      utils.handleSidebar();
+      break;
   }
 }
 

@@ -562,6 +562,7 @@ function handleKeydown(event) {
     case "Escape":
       utils.hideSettings();
       utils.hideSidebar();
+      resetMap();
       break;
     case "Equal":
       event.preventDefault();
