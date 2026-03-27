@@ -239,16 +239,6 @@ function getHybridTrendData(rawData) {
 
 // --- Chart Rendering Logic ---
 function renderMarketCharts() {
-  // Crucial for performance and bug-free re-renders
-  if (sizeChartInst) {
-    sizeChartInst.destroy();
-  }
-  if (trendChartInst) {
-    trendChartInst.destroy();
-  }
-  if (ownershipChartInst) {
-    ownershipChartInst.destroy();
-  }
   if (!marketSnapshot) {
     return;
   }
@@ -292,14 +282,23 @@ function renderMarketCharts() {
     }
     if (pct > 10) {
       // High Impact
-      return "rgba(11, 180, 149, 0.8)";
+      return "rgba(17, 182, 152, 0.8)";
     }
     if (pct > 1) {
       // Minor Impact
-      return "rgba(11, 180, 149, 0.5)";
+      return "rgba(44, 205, 175, 0.5)";
     }
     // Low Impact (Pale)
-    return "rgba(11, 180, 149, 0.25)";
+    return "rgba(0, 205, 168, 0.25)";
+  });
+
+  const hoverColors = backgroundColors.map((color) => {
+    // If it's already solid (1.0), shift to darker RGB
+    if (color.includes("1.0")) {
+      return "rgba(9, 140, 116, 1.0)";
+    }
+    // For others, just bump the opacity to 1.0
+    return color.replace(/[\d.]+\)$/g, "1.0)");
   });
 
   // SHARED CONFIGURATION
@@ -328,10 +327,7 @@ function renderMarketCharts() {
         anchor: "end",
         align: "top",
         color: textColor,
-        font: {
-          size: 14,
-          weight: "600",
-        },
+        font: { size: 14, weight: "600" },
         formatter: (value) => {
           if (value >= 1000000) {
             return (value / 1000000).toFixed(1).replace(/\.0$/, "") + "M";
@@ -366,175 +362,201 @@ function renderMarketCharts() {
     },
   };
 
-  // RENDER CHART 1: Size Distribution (including Company Counts)
-  sizeChartInst = new Chart(ctxSize, {
-    type: "bar",
-    data: {
-      // Transform keys like "1-10" into "Micro (1-10)"
-      labels: Object.keys(companyDistributionData).map((key) =>
-        getBucketLabel(key),
-      ),
-      datasets: [
-        {
-          label: "Number of Companies",
-          data: Object.values(companyDistributionData),
-          backgroundColor: backgroundColors,
-          borderColor: "#0bb495",
-          borderWidth: 2,
-          borderRadius: 6,
-          hoverBackgroundColor: "#025b4b",
-          pointHitRadius: isMobile ? 15 : 5, // Larger tap target for mobile
-        },
-      ],
-    },
-    options: {
-      ...commonOptions,
-      plugins: {
-        ...commonOptions.plugins,
-        title: {
-          display: true,
-          text: "COMPANIES BY SIZE",
-          color: accentColor,
-          font: { weight: "600" },
-        },
-        tooltip: {
-          ...commonOptions.plugins.tooltip,
-          callbacks: {
-            label: (ctx) => {
-              const bucketKey = Object.keys(companyDistributionData)[
-                ctx.dataIndex
-              ];
-              const count = ctx.parsed.y;
-              const pct = sizeDistributionData[bucketKey] || 0;
-              return [
-                ` Companies: ${count}`,
-                ` Market Share: ${pct}% of total workforce`,
-              ];
+  // ---------------------------------------------------------
+  // CHART 1: Size Distribution (Update or Create)
+  // ---------------------------------------------------------
+  const sizeData = {
+    labels: Object.keys(companyDistributionData).map((key) =>
+      getBucketLabel(key),
+    ),
+    datasets: [
+      {
+        label: "Number of Companies",
+        data: Object.values(companyDistributionData),
+        backgroundColor: backgroundColors,
+        borderColor: "#0bb495",
+        borderWidth: 2,
+        borderRadius: 6,
+        hoverBackgroundColor: hoverColors,
+        pointHitRadius: isMobile ? 15 : 5,
+      },
+    ],
+  };
+
+  if (sizeChartInst) {
+    sizeChartInst.data = sizeData;
+    sizeChartInst.update();
+  } else {
+    sizeChartInst = new Chart(ctxSize, {
+      type: "bar",
+      data: sizeData,
+      options: {
+        ...commonOptions,
+        plugins: {
+          ...commonOptions.plugins,
+          title: {
+            display: true,
+            text: "COMPANIES BY SIZE",
+            color: accentColor,
+            font: { weight: "600" },
+          },
+          tooltip: {
+            ...commonOptions.plugins.tooltip,
+            callbacks: {
+              label: (ctx) => {
+                const bucketKey = Object.keys(companyDistributionData)[
+                  ctx.dataIndex
+                ];
+                const count = ctx.parsed.y;
+                const pct = sizeDistributionData[bucketKey] || 0;
+                return [
+                  ` Companies: ${count}`,
+                  ` Market Share: ${pct}% of total workforce`,
+                ];
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  }
 
-  // RENDER CHART 2: Public vs Private Split
-  ownershipChartInst = new Chart(ctxOwnership, {
-    type: "doughnut",
-    data: {
-      labels: ["Publicly listed Companies", "Privately owned Companies"],
-      datasets: [
-        {
-          data: [
-            marketSnapshot.ownership_split.public_emp_pct,
-            marketSnapshot.ownership_split.private_emp_pct,
-          ],
-          backgroundColor: ["#0bb495", "#38bdf8"],
-          spacing: 5,
-          hoverOffset: 10,
-          borderRadius: 4,
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      layout: {
-        padding: 30,
-      },
-      plugins: {
-        datalabels: {
-          display: true,
-          color: textColor,
-          font: {
-            size: 14, // Change font size
-            weight: "bold", // Make it stand out
-          },
-          formatter: (value) => {
-            // Add the % symbol to the raw value
-            return value + "%";
-          },
-          // Anchor and Align keep the text centered in the slice
-          anchor: "center",
-          align: "center",
-          // Add a subtle text shadow for better readability
-          textStrokeColor: "rgba(0, 0, 0, 0.3)",
-          textStrokeWidth: 1,
-        },
-        legend: { position: "top", labels: { color: textColor } },
-        title: {
-          display: true,
-          text: "EMPLOYMENT SHARE: PUBLIC VS PRIVATE",
-          color: accentColor,
-        },
-        tooltip: {
-          callbacks: {
-            label: (ctx) =>
-              `${ctx.raw}% of total workforce employed in ${ctx.label}`,
-          },
-        },
-      },
-    },
-  });
+  // ---------------------------------------------------------
+  // CHART 2: Public vs Private Split (Update or Create)
+  // ---------------------------------------------------------
+  const ownershipDataArr = [
+    marketSnapshot.ownership_split.public_emp_pct,
+    marketSnapshot.ownership_split.private_emp_pct,
+  ];
 
-  // RENDER CHART 3: Employment Trend
+  if (ownershipChartInst) {
+    ownershipChartInst.data.datasets[0].data = ownershipDataArr;
+    ownershipChartInst.update();
+  } else {
+    ownershipChartInst = new Chart(ctxOwnership, {
+      type: "doughnut",
+      data: {
+        labels: ["Publicly listed Companies", "Privately owned Companies"],
+        datasets: [
+          {
+            data: ownershipDataArr,
+            backgroundColor: ["#0bb495", "#38bdf8"],
+            spacing: 5,
+            hoverOffset: 10,
+            borderRadius: 4,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        layout: { padding: 30 },
+        plugins: {
+          datalabels: {
+            display: true,
+            color: textColor,
+            font: { size: 14, weight: "bold" },
+            formatter: (value) => value + "%",
+            anchor: "center",
+            align: "center",
+            textStrokeColor: "rgba(0, 0, 0, 0.3)",
+            textStrokeWidth: 1,
+          },
+          legend: { position: "top", labels: { color: textColor } },
+          title: {
+            display: true,
+            text: "EMPLOYMENT SHARE: PUBLIC VS PRIVATE",
+            color: accentColor,
+          },
+          tooltip: {
+            callbacks: {
+              label: (ctx) =>
+                `${ctx.raw}% of total workforce employed in ${ctx.label}`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  // ---------------------------------------------------------
+  // CHART 3: Employment Trend (Update or Create)
+  // ---------------------------------------------------------
   const hybridData = getHybridTrendData(employmentTrendData);
-  trendChartInst = new Chart(ctxTrend, {
-    type: "line",
-    data: {
-      labels: hybridData.map((item) => item.d),
-      datasets: [
-        {
-          data: hybridData.map((item) => item.ma),
-          fill: true,
-          backgroundColor: trendGrad,
-          borderColor: "#0bb495",
-          borderWidth: 2,
-          borderRadius: 6,
-          pointRadius: isMobile ? 2 : 5,
-          pointHoverRadius: 7,
-          pointBackgroundColor: "#025b4b",
-          tension: 0.4,
-          pointHitRadius: isMobile ? 15 : 5, // Larger tap target for mobile
-          segment: {
-            // Dynamic styling: Dash the line for historical (aggregated) data
-            borderDash: (ctx) =>
-              hybridData[ctx.p1DataIndex].isAggregated ? [5, 5] : [],
+  const trendDataObj = {
+    labels: hybridData.map((item) => item.d),
+    datasets: [
+      {
+        data: hybridData.map((item) => item.ma),
+        fill: true,
+        backgroundColor: trendGrad,
+        borderColor: "#0bb495",
+        borderWidth: 2,
+        borderRadius: 6,
+        pointRadius: isMobile ? 2 : 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: "#025b4b",
+        tension: 0.4,
+        pointHitRadius: isMobile ? 15 : 5,
+        segment: {
+          borderDash: (ctx) =>
+            hybridData[ctx.p1DataIndex].isAggregated ? [5, 5] : [],
+        },
+      },
+    ],
+  };
+
+  if (trendChartInst) {
+    trendChartInst.data = trendDataObj;
+    // Update tooltip callbacks to ensure they reference the latest hybridData array
+    trendChartInst.options.plugins.tooltip.callbacks.title = (items) => {
+      const item = hybridData[items[0].dataIndex];
+      return item.isAggregated ? `Period: ${item.d}` : `Date: ${item.d}`;
+    };
+    trendChartInst.options.plugins.tooltip.callbacks.label = (ctx) => {
+      const item = hybridData[ctx.dataIndex];
+      const prefix = item.isAggregated ? "Avg. Employed" : "Total Employed";
+      const changeText = item.chg >= 0 ? `(+${item.chg}%)` : `(${item.chg}%)`;
+      return ` ${prefix}: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
+    };
+    trendChartInst.update();
+  } else {
+    trendChartInst = new Chart(ctxTrend, {
+      type: "line",
+      data: trendDataObj,
+      options: {
+        ...commonOptions,
+        plugins: {
+          ...commonOptions.plugins,
+          title: {
+            display: true,
+            text: "TOTAL EMPLOYMENT VELOCITY",
+            color: accentColor,
+            font: { weight: "600" },
           },
-        },
-      ],
-    },
-    options: {
-      ...commonOptions,
-      plugins: {
-        ...commonOptions.plugins,
-        title: {
-          display: true,
-          text: "TOTAL EMPLOYMENT VELOCITY",
-          color: accentColor,
-          font: { weight: "600" },
-        },
-        tooltip: {
-          ...commonOptions.plugins.tooltip,
-          callbacks: {
-            title: (items) => {
-              const item = hybridData[items[0].dataIndex];
-              return item.isAggregated
-                ? `Period: ${item.d}`
-                : `Date: ${item.d}`;
-            },
-            label: (ctx) => {
-              const item = hybridData[ctx.dataIndex];
-              const prefix = item.isAggregated
-                ? "Avg. Employed"
-                : "Total Employed";
-              const changeText =
-                item.chg >= 0 ? `(+${item.chg}%)` : `(${item.chg}%)`;
-              return ` ${prefix}: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
+          tooltip: {
+            ...commonOptions.plugins.tooltip,
+            callbacks: {
+              title: (items) => {
+                const item = hybridData[items[0].dataIndex];
+                return item.isAggregated
+                  ? `Period: ${item.d}`
+                  : `Date: ${item.d}`;
+              },
+              label: (ctx) => {
+                const item = hybridData[ctx.dataIndex];
+                const prefix = item.isAggregated
+                  ? "Avg. Employed"
+                  : "Total Employed";
+                const changeText =
+                  item.chg >= 0 ? `(+${item.chg}%)` : `(${item.chg}%)`;
+                return ` ${prefix}: ${IN_Format.format(ctx.parsed.y)} ${changeText}`;
+              },
             },
           },
         },
       },
-    },
-  });
+    });
+  }
 
   updateMomentumUI(marketSnapshot.aggregate_momentum);
 }
@@ -659,15 +681,16 @@ async function loadData() {
     }
 
     const data = await response.json();
-    // We use a Map to store { displayValue: numericalRank }
-    // This automatically handles duplicates and gives us sorting data.
     const filterOptionsMap = new Map();
+    const processedData = [];
 
-    const fragment = document.createDocumentFragment(); // Efficient DOM manipulation
-
+    // Pre-process Data Array instead of building 11,000 DOM elements
     data.forEach((item) => {
       // Data Quality Gate: Ignore row if BOTH critical fields are missing
       if (!item.emp_count && !item.website && !item.ln_count) {
+        return;
+      }
+      if ("active" in item && item.active === false) {
         return;
       }
 
@@ -695,78 +718,55 @@ async function loadData() {
         }
       }
 
-      let domain = "";
-      let linkedin_link = "";
-      let status = "";
+      let domain = "-";
+      let linkedin_link = "#";
+      let status = "Private";
+
       try {
-        domain = item.website
-          ? new URL(item.website).hostname.replace("www.", "")
-          : "-";
-        linkedin_link = item.linkedin ? item.linkedin.split("?")[0] : "#";
+        if (item.website)
+          domain = new URL(item.website).hostname.replace("www.", "");
+        if (item.linkedin) linkedin_link = item.linkedin.split("?")[0];
         status = item.public ? "Public" : "Private";
       } catch (error) {
         console.warn(
           `${item.name} Website:'${item.website}' LinkedIn:'${item.linkedin}'`,
         );
-        console.error(error);
       }
-      const name = `<strong>${item.name}</strong>`;
-      const mobileName = item.website
-        ? `<a href="${item.website}" class="mobile-only-link" target="_blank">${item.name}</a>`
-        : "";
-      const desktopLink = item.website
-        ? `<a href="${item.website}" class="desktop-only-link" target="_blank">${domain}</a>`
-        : "-";
-      const tooltipText = getGrowthTitle(item);
-      const sparklineHtml = item.sparkline
-        ? `<div class="sparkline-wrapper" title="${tooltipText}">${item.sparkline}</div>`
-        : ``;
 
-      // Build Row with data
-      const row = document.createElement("tr");
-      row.innerHTML = `
-              <td title="${item.name}">${isMobile ? mobileName : name}</td>
-              <td data-order="${sortRank}"><div class="emp-cell">
-                  <span>${displayCount}</span>
-                  ${sparklineHtml}
-              </div>
-              </td>
-              <td>${desktopLink}</td>
-              <td class="text-center">${getLinkedInIcon(linkedin_link)}</td>
-              <td class="text-center" data-search="${status}">${getStatusIcon(item.public, item.ticker)}</td>
-              <td>${item.last_updated ? new Date(item.last_updated).toLocaleDateString() : "-"}</td>
-            `;
-      fragment.appendChild(row);
+      processedData.push({
+        ...item,
+        displayCount,
+        sortRank,
+        domain,
+        linkedin_link,
+        status,
+      });
     });
 
-    // Push the "heavy lifting" to the end of the browser's execution queue
-    // and gives the charts display priority.
+    // Custom search function updated to read directly from the row data (not DOM)
+    $.fn.dataTable.ext.search.push(function (settings, searchData, dataIndex) {
+      const selectedRange = $("#empFilter").val();
+      if (!selectedRange) {
+        return true;
+      }
+
+      // Read the pre-processed sortRank from the underlying data object
+      const rowData = settings.aoData[dataIndex]._aData;
+      const sortRank = rowData.sortRank || 0;
+
+      const [min, max] = selectedRange.split("-").map(Number);
+
+      if (isNaN(max)) {
+        return sortRank >= min; // Handle "500+" cases
+      }
+      return sortRank >= min && sortRank <= max; // Handle "50-100" cases
+    });
+
+    // DataTable Initialization
     requestAnimationFrame(() => {
-      tableBody.appendChild(fragment);
-      // This is a custom search function that allows us to filter by numeric ranges
-      $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-        const selectedRange = $("#empFilter").val(); // Get the selected value from dropdown
-        // If "All Values", show everything
-        if (!selectedRange) {
-          return true;
-        }
-
-        // use the data-order attribute directly if available
-        const sortRank =
-          parseFloat(
-            settings.aoData[dataIndex].anCells[1].getAttribute("data-order"),
-          ) || 0;
-
-        const [min, max] = selectedRange.split("-").map(Number);
-
-        if (isNaN(max)) {
-          return sortRank >= min; // Handle "500+" cases
-        }
-        return sortRank >= min && sortRank <= max; // Handle "50-100" cases
-      });
-
-      // DataTable Initialization
       const table = $("#companyTable").DataTable({
+        data: processedData, // Direct Array Injection
+        deferRender: true, // Critical Optimization for 10k+ rows
         responsive: true,
         pageLength: 10,
         order: [[1, "desc"]],
@@ -781,26 +781,101 @@ async function loadData() {
           lengthMenu: "Show _MENU_ companies",
           info: "Showing _START_ to _END_ of _TOTAL_ companies",
         },
+        columns: [
+          {
+            // Name Column
+            data: null,
+            render: function (data, type, row) {
+              const name = `<strong title="${row.name}">${row.name}</strong>`;
+              const mobileName = row.website
+                ? `<a href="${row.website}" class="mobile-only-link" target="_blank" title="${row.name}">${row.name}</a>`
+                : "";
+              return isMobile ? mobileName : name;
+            },
+          },
+          {
+            // Employee Count Column (Sorts by sortRank, Displays formatted HTML)
+            data: "sortRank",
+            render: function (data, type, row) {
+              if (type === "display" || type === "filter") {
+                const tooltipText = getGrowthTitle(row);
+                const sparklineHtml = row.sparkline
+                  ? `<div class="sparkline-wrapper" title="${tooltipText}">${row.sparkline}</div>`
+                  : ``;
+                return `<div class="emp-cell">
+                          <span>${row.displayCount}</span>
+                          ${sparklineHtml}
+                        </div>`;
+              }
+              return data; // Returns the raw sortRank number for sorting operations
+            },
+          },
+          {
+            // Website Domain Column
+            data: "domain",
+            render: function (data, type, row) {
+              return row.website
+                ? `<a href="${row.website}" class="desktop-only-link" target="_blank">${data}</a>`
+                : "-";
+            },
+          },
+          {
+            // LinkedIn Column
+            data: "linkedin_link",
+            className: "text-center",
+            render: function (data) {
+              return getLinkedInIcon(data);
+            },
+          },
+          {
+            // Public/Private Status Column
+            data: "status",
+            className: "text-center",
+            render: function (data, type, row) {
+              // Allows textual searching by "Public" or "Private"
+              if (type === "filter" || type === "sort") {
+                return data;
+              }
+              return getStatusIcon(row.public, row.ticker);
+            },
+          },
+          {
+            // Last Updated Column
+            data: "last_updated",
+            render: function (data) {
+              if (!data) {
+                return "-";
+              }
+              const dateObj = new Date(data);
+              // Format for the visible cell (e.g., "3/26/2026")
+              const displayDate = dateObj.toLocaleDateString();
+              // Format for the hover tooltip (e.g., "3/26/2026, 6:06:25 AM")
+              // to automatically use the user's local timezone (like IST)
+              const fullTimestamp = dateObj.toLocaleString();
+              return `<span title="${fullTimestamp}">${displayDate}</span>`;
+            },
+          },
+        ],
         initComplete: function () {
           const api = this.api();
 
           // 1. Create the Range-Based Dropdown
           const filterHtml = `
-    <div class="emp-filter-wrapper">
-      <label for="empFilter">Company Size:</label>
-      <select id="empFilter">
-        <option value="">All Sizes</option>
-        <option value="1-10">Micro (1-10)</option>
-        <option value="11-50">Small (11-50)</option>
-        <option value="51-200">Medium (51-200)</option>
-        <option value="201-1000">Large (201-1000)</option>
-        <option value="1001-5000">Enterprise (1001-5000)</option>
-        <option value="5001-10000">Giant (5001-10000)</option>
-        <option value="10001-50000">Conglomerate (10001-50000)</option>
-        <option value="50001-100000">Global Corp (50001-100000)</option>
-        <option value="100001">Mega Corp (100000+)</option>
-      </select>
-    </div>`;
+            <div class="emp-filter-wrapper">
+              <label for="empFilter">Company Size:</label>
+              <select id="empFilter">
+                <option value="">All Sizes</option>
+                <option value="1-10">Micro (1-10)</option>
+                <option value="11-50">Small (11-50)</option>
+                <option value="51-200">Medium (51-200)</option>
+                <option value="201-1000">Large (201-1000)</option>
+                <option value="1001-5000">Enterprise (1001-5000)</option>
+                <option value="5001-10000">Giant (5001-10000)</option>
+                <option value="10001-50000">Conglomerate (10001-50000)</option>
+                <option value="50001-100000">Global Corp (50001-100000)</option>
+                <option value="100001">Mega Corp (100000+)</option>
+              </select>
+            </div>`;
 
           // 2. Inject into the DOM
           $(".dataTables_length").after(filterHtml);
@@ -819,7 +894,6 @@ async function loadData() {
 
       // --- KEYBOARD NAVIGATION ---
       $(document).on("keydown", function (e) {
-
         // IGNORE if Ctrl, Alt, Shift, or Command(Meta) are pressed
         if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey) {
           return;
@@ -827,6 +901,7 @@ async function loadData() {
 
         const searchInput = $("input[type='search']");
         const modalOpen = document.querySelector(".modal.show");
+
         // HANDLE "/" KEY (Focus Search)
         if (e.key === "/" && !modalOpen) {
           e.preventDefault();
@@ -845,8 +920,11 @@ async function loadData() {
           // If search has text, clear it and blur
           if (table.search() !== "" || searchInput.val() !== "") {
             e.preventDefault();
+            searchInput.val("");
             table.search("").draw();
           }
+          // Remove focus from the search box!
+          searchInput.blur();
           return;
         }
 
@@ -854,7 +932,6 @@ async function loadData() {
         if ($(e.target).is("input, textarea, .select2-search__field")) {
           return;
         }
-
 
         // ARROW & NUMBER NAVIGATION
         const info = table.page.info();
@@ -889,9 +966,21 @@ async function loadData() {
 
       tableContainer.addEventListener("touchend", (e) => {
         touchendX = e.changedTouches[0].screenX;
-        // Call the helper
         handleSwipe(touchstartX, touchendX, table);
       });
+
+      // Clear out the loading spinner immediately after DataTable mounts
+      loadingSpinner.classList.add("spinner-hidden");
+      loadingSpinner.addEventListener(
+        "transitionend",
+        () => {
+          loadingSpinner.style.display = "none";
+        },
+        { once: true },
+      );
+      const dataTableWrapper = document.querySelector(".table-card");
+      dataTableWrapper.style.display = "block";
+      dataTableWrapper.style.opacity = 1;
     });
   } catch (error) {
     // ERROR HANDLING: Show message in table
@@ -899,18 +988,12 @@ async function loadData() {
     tableBody.innerHTML = `
             <tr>
               <td colspan="6" class="error">
-                <strong>⚠️ Error loading data:</strong> ${error.message}. Please refresh or try again later.
+                <br><strong>⚠️ Error loading data:</strong><br> ${error.message}.<br><br> Please refresh or try again later!
               </td>
             </tr>`;
   } finally {
     loadingSpinner.classList.add("spinner-hidden");
-    loadingSpinner.addEventListener(
-      "transitionend",
-      () => {
-        loadingSpinner.style.display = "none";
-      },
-      { once: true },
-    );
+    loadingSpinner.style.display = "none";
     const dataTable = document.querySelector(".table-card");
     // Show the table card regardless of success or failure
     dataTable.style.display = "block";
@@ -931,7 +1014,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // Load company info
-  (loadData(),
-    // Trigger initial check for hash
-    handleHashChange());
+  loadData();
+
+  // Trigger initial check for hash
+  handleHashChange();
 });

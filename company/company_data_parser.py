@@ -4,7 +4,7 @@ import logging
 import random
 import re
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 from urllib.parse import urljoin, urlparse
@@ -392,6 +392,9 @@ class GrowthAnalytics:
             )
             if count == 0:
                 continue
+            # Skip inactive companies from charts
+            if not c.get("active", True):
+                continue
 
             stats["total_emp"] += count
 
@@ -428,6 +431,7 @@ class GrowthAnalytics:
         # Finalize the "Snapshot"
         snapshot = {
             "company_distribution": stats["comp_counts"],
+            "company_employees": stats["buckets"],
             "concentration_pct": {
                 k: round((v / stats["total_emp"]) * 100, 2)
                 for k, v in stats["buckets"].items()
@@ -685,38 +689,14 @@ class DataCoordinator:
     @staticmethod
     def run() -> None:
         # Set the timer to under 6 hours (Github actions limit)
-        start_time = time.time()
-        MAX_RUNTIME_SECONDS = int(5.75 * 60 * 60)
-        SAFETY_BUFFER = 300
-        TIME_LIMIT = MAX_RUNTIME_SECONDS - SAFETY_BUFFER
+        MAX_RUNTIME_SECONDS = int(6 * 60 * 60)
+        # safety buffer for 10 mins
+        TIME_LIMIT = MAX_RUNTIME_SECONDS - 600
 
-        # Parse data & Enrich
-        processed = []
         # Discover URLs
         url_list = DataCoordinator._get_target_urls()
-        logger.info(f"Started run with total: {len(url_list)} targets")
-        logger.info("------------------------------------------------")
-
-        for i, target in enumerate(url_list):
-            # Check the clock at the start of every iteration
-            elapsed = time.time() - start_time
-            if elapsed > TIME_LIMIT:
-                logger.warning(
-                    f"Time limit reached ({round(elapsed/3600, 2)}h). Stopping run!"
-                )
-                break
-
-            enriched = CompanyParser.get_company_details(i, target)
-            if enriched:
-                processed.append(enriched)
-
-            # save periodically
-            if (i + 1) % 10 == 0:
-                DataCoordinator._save_to_disk(processed)
-                processed = []
-
-        # Final save for the remaining processed data
-        DataCoordinator._save_to_disk(processed)
+        # Process URLs and save data
+        DataCoordinator.process_urls(url_list, TIME_LIMIT)
 
         # Calculate the Global Index after all companies are updated
         GrowthAnalytics.aggregate_global_history()
@@ -725,8 +705,36 @@ class DataCoordinator:
         # Sync data if missing or removed during run
         DataCoordinator._sync_temp_data()
 
+    @staticmethod
+    def process_urls(url_list, TIME_LIMIT) -> None:
+        """Get Data for each URL and save it in JSON"""
+        logger.info(f"Started run with total: {len(url_list)} targets")
+        logger.info("------------------------------------------------")
+        start_time = time.time()
+        # Parse data & Enrich
+        processed = []
+        for i, target in enumerate(url_list):
+            # Check the clock at the start of every iteration
+            elapsed = time.time() - start_time
+            if elapsed > TIME_LIMIT:
+                limit = f"({round(elapsed/3600, 2)} hours)"
+                logger.warning(f"Time limit reached :{limit}. Stopping run!")
+                break
+
+            enriched = CompanyParser.get_company_details(i, target)
+            if enriched:
+                processed.append(enriched)
+
+            # save periodically to json file
+            if (i + 1) % 10 == 0:
+                DataCoordinator._save_to_disk(processed)
+                processed = []
+        # Final save for the remaining processed data
+        DataCoordinator._save_to_disk(processed)
+        logger.info("------------------------------------------------")
         total_time = time.time() - start_time
         logger.info(f"Run completed in {round(total_time/3600, 2)} hours.")
+        logger.info("------------------------------------------------")
 
     @staticmethod
     def _get_target_urls() -> List[Dict]:
@@ -1104,7 +1112,11 @@ class DataCoordinator:
             with open(TEMP_FILE, "r") as f:
                 temp_data = json.load(f)
             master_list = DataCoordinator._load_data_file()
-            master_map = {LnSearch.get_handle(c.get("linkedin")): c for c in master_list if LnSearch.get_handle(c.get("linkedin"))}
+            master_map = {
+                LnSearch.get_handle(c.get("linkedin")): c
+                for c in master_list
+                if LnSearch.get_handle(c.get("linkedin"))
+            }
             updated_count = 0
             for item in temp_data:
                 handle = LnSearch.get_handle(item.get("linkedin"))
@@ -1154,7 +1166,9 @@ class DataCoordinator:
             clean = {k: v for k, v in item.items() if v is not None}
             handle = LnSearch.get_handle(clean.get("linkedin", ""))
             if not handle:
-                logger.warning(f"Skipping item with no LinkedIn handle: {item.get('name')}")
+                logger.warning(
+                    f"Skipping item with no LinkedIn handle: {item.get('name')}"
+                )
                 continue
 
             ln_count = clean.get("ln_count")
@@ -1173,10 +1187,12 @@ class DataCoordinator:
             if handle in data_map:
                 data_map[handle].update(clean)
                 if last_updated_date:
-                    data_map[handle]["last_updated"] = datetime.now().isoformat()
+                    t = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                    data_map[handle]["last_updated"] = t
             else:
                 if last_updated_date:
-                    clean["last_updated"] = datetime.now().isoformat()
+                    t = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                    clean["last_updated"] = t
                 data_map[handle] = clean
 
         # Save headcount history file

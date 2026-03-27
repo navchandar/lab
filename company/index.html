@@ -224,6 +224,13 @@
         table-layout: fixed;
       }
 
+      #companyTable td {
+        max-width: 150px; /* Adjust as needed */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
       table.dataTable {
         border: none !important;
         border-collapse: collapse !important;
@@ -594,6 +601,13 @@
         overflow-y: auto;
       }
 
+      #sizeDistChart,
+      #ownershipSplitChart,
+      #employmentTrendChart {
+        backface-visibility: hidden;
+        will-change: transform;
+      }
+
       .modal-header h2 {
         background: var(--title-gradient);
         -webkit-background-clip: text;
@@ -629,6 +643,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 5px;
         width: 95%;
       }
 
