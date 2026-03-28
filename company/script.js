@@ -723,9 +723,12 @@ async function loadData() {
       let status = "Private";
 
       try {
-        if (item.website)
+        if (item.website) {
           domain = new URL(item.website).hostname.replace("www.", "");
-        if (item.linkedin) linkedin_link = item.linkedin.split("?")[0];
+        }
+        if (item.linkedin) {
+          linkedin_link = item.linkedin.split("?")[0];
+        }
         status = item.public ? "Public" : "Private";
       } catch (error) {
         console.warn(
