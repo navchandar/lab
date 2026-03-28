@@ -11,6 +11,7 @@ const settingsIcon = document.getElementById("settings-icon");
 const randomizeCheckbox = document.getElementById("randomize-words");
 const languageSelect = document.getElementById("language-select");
 const spellWordsCheckbox = document.getElementById("spell-words-toggle");
+const quizCheckbox = document.getElementById("quiz-words");
 
 // --- Application State & Configuration ---
 // Read language from URL, default to English
@@ -242,6 +243,7 @@ randomizeCheckbox.addEventListener("change", (e) => {
   e.stopPropagation();
   utils.setIsRandom(randomizeCheckbox.checked);
 });
+
 
 utils.setFullscreenIcon();
 

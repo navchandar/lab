@@ -247,7 +247,7 @@ randomizeCheckbox.addEventListener(
     e.stopPropagation();
     utils.setIsRandom(randomizeCheckbox.checked);
   },
-  { passive: false }
+  { passive: false },
 );
 
 utils.setFullscreenIcon();

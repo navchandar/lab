@@ -1,3 +1,4 @@
+import csv
 import io
 import json
 import logging
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 # --- Configuration & Constants ---
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE = BASE_DIR / "company_data.json"
-HISTORY_FILE = BASE_DIR / "company_history.json"
+HISTORY_FILE = BASE_DIR / "company_history.csv"
 CHARTS_DATA_FILE = BASE_DIR / "charts_data.json"
 TEMP_FILE = BASE_DIR / "comp.json"
 JOBS_DATA = BASE_DIR / "../jobs/jobs.json"
@@ -381,8 +382,8 @@ class GrowthAnalytics:
 
         stats = {
             "total_emp": 0,
-            "pub": {"emp": 0, "chg_sum": 0.0, "count": 0},
-            "priv": {"emp": 0, "chg_sum": 0.0, "count": 0},
+            "pub": {"emp_now": 0, "emp_prev": 0.0, "count": 0},
+            "priv": {"emp_now": 0, "emp_prev": 0.0, "count": 0},
             "buckets": {k: 0 for k in bucket_keys},  # Tracks total headcount
             "comp_counts": {k: 0 for k in bucket_keys},  # Tracks number of companies
         }
@@ -390,21 +391,22 @@ class GrowthAnalytics:
             count = (
                 int(c.get("ln_count", 0)) if str(c.get("ln_count", 0)).isdigit() else 0
             )
-            if count == 0:
+            # Skip blank data or inactive companies from charts
+            if count == 0 or not c.get("active", True):
                 continue
-            # Skip inactive companies from charts
-            if not c.get("active", True):
-                continue
+            
+            # Calculate what the headcount was 30 days ago based on the delta
+            # Formula: Previous = Current / (1 + (Delta / 100))
+            delta_30 = c.get("Δ_30d")
+            prev_count = count
+            if delta_30 is not None:
+                prev_count = count / (1 + (delta_30 / 100))
 
-            stats["total_emp"] += count
-
-            # Identify Ownership & Aggregate Momentum (30d change)
-            is_pub = c.get("public", False)
-            key = "pub" if is_pub else "priv"
-            stats[key]["emp"] += count
+            key = "pub" if c.get("public", False) else "priv"
+            stats[key]["emp_now"] += count
+            stats[key]["emp_prev"] += prev_count
             stats[key]["count"] += 1
-            # Aggregating the 30-day change for comparison
-            stats[key]["chg_sum"] += c.get("Δ_30d") or 0.0
+            stats["total_emp"] += count
 
             # Map to your specific categories
             if count <= 10:
@@ -428,10 +430,33 @@ class GrowthAnalytics:
             stats["buckets"][b] += count
             stats["comp_counts"][b] += 1
 
+        # --- NEW: GROWTH LEADERS ANALYSIS ---
+        # Filter: Active, Public or Private, and size > 500 (to ignore tiny teams)
+        # Sort by: 30-day growth delta (Δ_30d)
+        growth_candidates = [
+            {
+                "name": c.get("name"),
+                "size": int(c.get("ln_count", 0)),
+                "growth_30d": c.get("Δ_30d", 0) or 0,
+                "growth_90d": c.get("Δ_90d", 0) or 0,
+            }
+            for c in current_data
+            if c.get("active", True)
+            and str(c.get("ln_count", "0")).isdigit()
+            and int(c.get("ln_count", 0)) >= 500  # Ignore companies < 500 employees
+            and c.get("Δ_30d") is not None
+        ]
+
+        # Sort by highest 30-day growth and take the Top 10
+        top_hirers = sorted(
+            growth_candidates, key=lambda x: x["growth_30d"], reverse=True
+        )[:10]
+
         # Finalize the "Snapshot"
         snapshot = {
             "company_distribution": stats["comp_counts"],
             "company_employees": stats["buckets"],
+            "top_hirers": top_hirers,
             "concentration_pct": {
                 k: round((v / stats["total_emp"]) * 100, 2)
                 for k, v in stats["buckets"].items()
@@ -439,25 +464,39 @@ class GrowthAnalytics:
             },
             "ownership_split": {
                 "public_emp_pct": (
-                    round((stats["pub"]["emp"] / stats["total_emp"]) * 100, 2)
+                    round((stats["pub"]["emp_now"] / stats["total_emp"]) * 100, 2)
                     if stats["total_emp"] > 0
                     else 0
                 ),
                 "private_emp_pct": (
-                    round((stats["priv"]["emp"] / stats["total_emp"]) * 100, 2)
+                    round((stats["priv"]["emp_now"] / stats["total_emp"]) * 100, 2)
                     if stats["total_emp"] > 0
                     else 0
                 ),
             },
             "aggregate_momentum": {
                 "public_avg_30d_chg": (
-                    round(stats["pub"]["chg_sum"] / stats["pub"]["count"], 3)
-                    if stats["pub"]["count"] > 0
+                    round(
+                        (
+                            (stats["pub"]["emp_now"] - stats["pub"]["emp_prev"])
+                            / stats["pub"]["emp_prev"]
+                        )
+                        * 100,
+                        3,
+                    )
+                    if stats["pub"]["emp_prev"] > 0
                     else 0
                 ),
                 "private_avg_30d_chg": (
-                    round(stats["priv"]["chg_sum"] / stats["priv"]["count"], 3)
-                    if stats["priv"]["count"] > 0
+                    round(
+                        (
+                            (stats["priv"]["emp_now"] - stats["priv"]["emp_prev"])
+                            / stats["priv"]["emp_prev"]
+                        )
+                        * 100,
+                        3,
+                    )
+                    if stats["priv"]["emp_prev"] > 0
                     else 0
                 ),
             },
@@ -519,18 +558,43 @@ class GrowthAnalytics:
 
     @staticmethod
     def _load_history_file() -> dict:
-        if HISTORY_FILE.exists():
-            with open(HISTORY_FILE, "r") as f:
-                return json.load(f)
-        else:
-            logger.warning(f"{HISTORY_FILE} file not found")
-        return {}
+        """Reads CSV and converts it back into the dictionary format used by the script."""
+        history = {}
+        if not HISTORY_FILE.exists():
+            logger.warning(f"{HISTORY_FILE.name} not found!")
+            return {}
+
+        try:
+            with open(HISTORY_FILE, mode="r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    handle = row["handle"]
+                    if handle not in history:
+                        history[handle] = []
+                    history[handle].append({"d": row["date"], "c": int(row["count"])})
+            return history
+        except Exception as e:
+            logger.error(f"Failed to read CSV history: {e}")
+            return {}
 
     @staticmethod
-    def _save_history_file(data) -> None:
-        # sort_keys=True - alphabetical ordering companies
-        HISTORY_FILE.write_text(json.dumps(data, indent=2, sort_keys=True))
-        logger.info(f"Saved {HISTORY_FILE.name} file")
+    def _save_history_file(data: dict) -> None:
+        """Flattens the dictionary and saves it into a compact CSV format, sorted by Handle and Date."""
+        try:
+            with open(HISTORY_FILE, mode="w", encoding="utf-8", newline="") as f:
+                writer = csv.writer(f, quoting=csv.QUOTE_ALL)
+                # Header row for csv file
+                writer.writerow(["handle", "date", "count"])
+
+                # Sort handles to keep CSV organized
+                for handle in sorted(data.keys()):
+                    # Sort the records per handle by the date string "d"
+                    sorted_records = sorted(data[handle], key=lambda x: x["d"])
+                    for record in sorted_records:
+                        writer.writerow([handle, record["d"], record["c"]])
+            logger.info(f"Saved history to {HISTORY_FILE.name}")
+        except Exception as e:
+            logger.error(f"Failed to save CSV history: {e}")
 
 
 class CompanyParser:
