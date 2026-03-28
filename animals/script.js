@@ -354,7 +354,8 @@ document.addEventListener("DOMContentLoaded", () => {
   function setupEventListeners() {
     function handleKeydown(event) {
       const target = event.target;
-
+      utils.hideSidebar();
+      
       switch (event.code) {
         case "Space":
         case "Enter":
@@ -385,7 +386,6 @@ document.addEventListener("DOMContentLoaded", () => {
           break;
         case "Escape":
           utils.hideSettings();
-          utils.hideSidebar();
           break;
         case "Equal":
           event.preventDefault();

@@ -128,6 +128,7 @@ const renderUI = () => {
  */
 const handleKeyDown = (e) => {
   const { code } = e;
+  utils.hideSidebar();
 
   // Clear Input Keys
   if (["Space", "Enter", "Escape"].includes(code)) {

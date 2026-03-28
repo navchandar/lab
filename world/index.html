@@ -78,7 +78,8 @@
         --country-active: #ff6347;
         --country-active2: #a6412f;
         --panel-bg: rgba(255, 255, 255, 0.8);
-        --map-shadow: drop-shadow(1px 5px 1px rgba(0, 0, 0, 0.5));
+        --map-shadow: drop-shadow(1px 4px 1px rgba(0, 0, 0, 0.5));
+        --box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
       }
 
       /* Dark Mode Support */
@@ -93,7 +94,8 @@
           --country-active: #ff851b;
           --country-active2: #bd5f0d;
           --panel-bg: rgba(0, 0, 0, 0.8);
-          --map-shadow: drop-shadow(1px 5px 1px rgba(0, 0, 0, 1));
+          --map-shadow: drop-shadow(1px 4px 1px rgba(0, 0, 0, 1));
+          --box-shadow: 0 15px 25px rgba(0, 0, 0, 0.5);
         }
 
         .extra-info {
@@ -158,9 +160,9 @@
         font-size: 2.5rem;
         text-align: center;
         -webkit-backdrop-filter: blur(12px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        box-shadow: var(--box-shadow);
         border: 1px solid rgba(255, 255, 255, 0.3);
-        border-radius: 40px;
+        border-radius: 20px;
       }
 
       #name-display.show {
@@ -335,6 +337,10 @@
 
       /* Mobile adjustments */
       @media (max-width: 768px) {
+        :root {
+          --map-shadow: drop-shadow(1px 2px 3px rgba(0, 0, 0, 0.8));
+        }
+
         #name-display {
           top: 10%;
           padding: 10px 20px;

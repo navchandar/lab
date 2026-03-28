@@ -521,6 +521,8 @@ function updateSettingsMenu() {
 // =========================
 function handleKeydown(event) {
   const target = event.target;
+  utils.hideSidebar();
+  
   switch (event.code) {
     case "Space":
       // Ignore key presses if focused on an interactive element
@@ -561,7 +563,6 @@ function handleKeydown(event) {
       break;
     case "Escape":
       utils.hideSettings();
-      utils.hideSidebar();
       resetMap();
       break;
     case "Equal":

@@ -148,12 +148,14 @@ async function speaker() {
     locked = false;
   }
 
-  // Speak the full word everytime (unless muted)
-  ttsInstance.speakElement(fullWord, {
-    directSpeech: true,
-    rate: 0.7, // Clear pronunciation
-    locale: Locale,
-  });
+  // Speak the full word everytime (unless muted or word length is one)
+  if (spans && spans.length > 1) {
+    ttsInstance.speakElement(fullWord, {
+      directSpeech: true,
+      rate: 0.7, // Clear pronunciation
+      locale: Locale,
+    });
+  }
 }
 
 // =========================================================================
@@ -192,7 +194,8 @@ document
 
 function handleKeydown(event) {
   const target = event.target;
-
+  utils.hideSidebar();
+  
   switch (event.code) {
     case "Space":
     case "Enter":
@@ -224,7 +227,6 @@ function handleKeydown(event) {
       break;
     case "Escape":
       utils.hideSettings();
-      utils.hideSidebar();
       break;
     case "Equal":
       event.preventDefault();
