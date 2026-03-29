@@ -55,7 +55,7 @@ body {
 .letter {
     display: inline-block;
     transition: transform 0.2s ease-in-out, color 0.2s ease-in-out, text-shadow 0.2s ease-in-out;
-    font-size: clamp(2rem, 15cqw, 8rem);
+    font-size: clamp(3rem, 15cqw, 10rem);
 }
 
 /* The style applied when a letter is being spoken */
@@ -73,10 +73,20 @@ body {
         width: 250px;
         height: 400px;
         -webkit-text-stroke: 1px #333;
-        font-size: 15vw;
+        font-size: 20vw;
         /* Slightly larger scale on mobile */
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     }
+
+    .letter {
+        font-size: clamp(4rem, 15cqw, 6rem);
+    }
+
+    .letter.active {
+        transform: scale(1.15) translateX(2px) translateY(-10px);
+        text-shadow: 2px 8px 10px rgba(0, 0, 0, 0.7);
+    }
+
 }
 
 /* Styles for desktop */
