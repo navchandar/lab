@@ -117,10 +117,13 @@ function incrementWord() {
 // SPEECH SYNTHESIS
 // =========================================================================
 async function speaker() {
+  const spellEnabled = spellWordsCheckbox ? spellWordsCheckbox.checked : false;
   if (utils.isMuted()) {
+    if (spellEnabled) {
+      locked = false;
+    }
     return;
   }
-  const spellEnabled = spellWordsCheckbox ? spellWordsCheckbox.checked : false;
   const spans = wordElement.querySelectorAll(".letter");
   const fullWord = wordElement.textContent;
 
@@ -196,7 +199,7 @@ document
 function handleKeydown(event) {
   const target = event.target;
   utils.hideSidebar();
-  
+
   switch (event.code) {
     case "Space":
     case "Enter":
@@ -243,7 +246,6 @@ randomizeCheckbox.addEventListener("change", (e) => {
   e.stopPropagation();
   utils.setIsRandom(randomizeCheckbox.checked);
 });
-
 
 utils.setFullscreenIcon();
 
