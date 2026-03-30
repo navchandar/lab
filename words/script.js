@@ -133,11 +133,15 @@ function incrementWord() {
 
 // Helper to shuffle an array, ensuring it never matches the original
 function shuffleArray(array) {
-  if (array.length <= 1) return [...array];
+  if (array.length <= 1) {
+    return [...array];
+  }
 
   // Safety check: Prevent infinite loop if all letters are identical (e.g., "OO")
   const allSame = array.every((val) => val === array[0]);
-  if (allSame) return [...array];
+  if (allSame) {
+    return [...array];
+  }
 
   let shuffled;
   let isIdentical = true;
