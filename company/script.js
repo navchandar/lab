@@ -39,9 +39,9 @@ function getStatusIcon(isPublic, ticker) {
   return `<span class="icon no-link" title="${title}">${icon}</span>`;
 }
 
-function getLinkedInIcon(link) {
+function getLinkedInIcon(link, alt) {
   return `<div class="icon-link ln-icon-container" title="LinkedIn Profile">
-    <a href="${link}" target="_blank" class="icon linkedin-icon"></a></div>`;
+    <a href="${link}" target="_blank" class="icon linkedin-icon" alt="${alt}"></a></div>`;
 }
 
 /**
@@ -713,9 +713,13 @@ function loadData() {
     const minSwipeDistance = 50;
 
     if (distance < -minSwipeDistance) {
-      if (info.page < info.pages - 1) table.page("next").draw("page");
+      if (info.page < info.pages - 1) {
+        table.page("next").draw("page");
+      }
     } else if (distance > minSwipeDistance) {
-      if (info.page > 0) table.page("previous").draw("page");
+      if (info.page > 0) {
+        table.page("previous").draw("page");
+      }
     }
   };
 
@@ -794,7 +798,7 @@ function loadData() {
             render: function (data, type, row) {
               const name = `<strong title="${row.name}">${row.name}</strong>`;
               const mobileName = row.website
-                ? `<a href="${row.website}" class="mobile-only-link" target="_blank" title="${row.name}">${row.name}</a>`
+                ? `<a href="${row.website}" class="mobile-only-link" target="_blank" alt="${row.name} website" title="${row.name}">${row.name}</a>`
                 : "";
               return isMobile ? mobileName : name;
             },
@@ -818,7 +822,7 @@ function loadData() {
             data: "domain",
             render: function (data, type, row) {
               return row.website
-                ? `<a href="${row.website}" class="desktop-only-link" target="_blank">${data}</a>`
+                ? `<a href="${row.website}" class="desktop-only-link" target="_blank" alt="${row.name} website">${data}</a>`
                 : "-";
             },
           },
@@ -826,8 +830,8 @@ function loadData() {
             // LinkedIn Column
             data: "linkedin_link",
             className: "text-center",
-            render: function (data) {
-              return getLinkedInIcon(data);
+            render: function (data, type, row) {
+              return getLinkedInIcon(data, "${row.name} linkedin page");
             },
           },
           {
