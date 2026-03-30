@@ -831,7 +831,7 @@ function loadData() {
             data: "linkedin_link",
             className: "text-center",
             render: function (data, type, row) {
-              return getLinkedInIcon(data, "${row.name} linkedin page");
+              return getLinkedInIcon(data, `${row.name} linkedin page`);
             },
           },
           {
