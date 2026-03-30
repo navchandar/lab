@@ -44,37 +44,6 @@ function getLinkedInIcon(link) {
     <a href="${link}" target="_blank" class="icon linkedin-icon"></a></div>`;
 }
 
-function normalizeEmployeeSize(countStr) {
-  const count = parseInt(countStr.replace(/,/g, ""), 10);
-  if (isNaN(count) || count <= 0) {
-    return { display: "-", rank: 0 };
-  }
-
-  // For very small companies, keep it simple
-  if (count < 10) {
-    return { display: "1-10", rank: 10 };
-  }
-
-  // Logic: Find the scale (10, 100, 1000...)
-  const magnitude = Math.pow(10, Math.floor(Math.log10(count)));
-
-  // Find how many of that magnitude (e.g., 400 for 434)
-  // We use a factor of 0.5 to allow for mid-steps like "50" if preferred,
-  // but sticking to your "closest power" request:
-  let rounded = Math.floor(count / magnitude) * magnitude;
-
-  // Special case: if it lands on something like 73, and we want 50+,
-  // we can add a mid-tier check for 5s
-  if (count >= 50 && count < 100) {
-    rounded = 50;
-  }
-
-  return {
-    display: `${rounded.toLocaleString()}+`,
-    rank: count, // Use the actual count for perfect sorting
-  };
-}
-
 /**
  * Maps a numeric count to the specific string keys used in sizeBuckets
  */
@@ -124,27 +93,7 @@ function getBucketLabel(bucketKey) {
     "50001-100000": "Global Corp (50001-100000)",
     "100001+": "Mega Corp (100000+)",
   };
-
-  return labels[bucketKey] || bucketKey; // Fallback to key if not found
-}
-
-// HELPER: Build a dynamic tooltip string for growth trends
-function getGrowthTitle(item) {
-  const parts = [];
-
-  // Check each value and add to the list if it's not null
-  if (item["Δ_30d"] !== null) {
-    parts.push(`30d: ${item["Δ_30d"]}%`);
-  }
-  if (item["Δ_90d"] !== null) {
-    parts.push(`90d: ${item["Δ_90d"]}%`);
-  }
-  if (item["Δ_365d"] !== null) {
-    parts.push(`1yr: ${item["Δ_365d"]}%`);
-  }
-
-  // Join the existing parts with a separator, or return a default
-  return parts.length > 0 ? `Growth Trend | ${parts.join(" • ")}` : "";
+  return labels[bucketKey] || bucketKey;
 }
 
 async function fetchTrendData() {
@@ -557,7 +506,6 @@ function renderMarketCharts() {
       },
     });
   }
-
   updateMomentumUI(marketSnapshot.aggregate_momentum);
 }
 
@@ -570,7 +518,6 @@ function updateMomentumUI(momentum) {
 
   const pub = momentum.public_avg_30d_chg;
   const priv = momentum.private_avg_30d_chg;
-
   if (pub && pub > 0 && priv && priv > 0) {
     container.innerHTML = `
         <div class="momentum-card">
@@ -613,7 +560,6 @@ function handleHashChange() {
         setTimeout(tryRender, 3000);
       }
     };
-
     tryRender();
   } else if (hash === "#disclaimer") {
     discModal.classList.add("show");
@@ -654,99 +600,157 @@ function setupModals() {
   });
 }
 
-async function loadData() {
+// =========================================================================
+// INLINE WEB WORKER CREATION
+// =========================================================================
+const workerLogic = `
+  // Helper functions scoped to the worker
+  function normalizeEmployeeSize(countStr) {
+    const count = parseInt(countStr.replace(/,/g, ""), 10);
+    if (isNaN(count) || count <= 0) return { display: "-", rank: 0 };
+    if (count < 10) return { display: "1-10", rank: 10 };
+    const magnitude = Math.pow(10, Math.floor(Math.log10(count)));
+    let rounded = Math.floor(count / magnitude) * magnitude;
+    if (count >= 50 && count < 100) rounded = 50;
+    return { display: rounded.toLocaleString() + "+", rank: count };
+  }
+
+  function getGrowthTitle(item) {
+    const parts = [];
+    if (item["Δ_30d"] !== null && item["Δ_30d"] !== undefined) parts.push("30d: " + item["Δ_30d"] + "%");
+    if (item["Δ_90d"] !== null && item["Δ_90d"] !== undefined) parts.push("90d: " + item["Δ_90d"] + "%");
+    if (item["Δ_365d"] !== null && item["Δ_365d"] !== undefined) parts.push("1yr: " + item["Δ_365d"] + "%");
+    return parts.length > 0 ? "Growth Trend | " + parts.join(" • ") : "";
+  }
+
+  self.onmessage = async function(e) {
+    if (e.data && e.data.command === "start") {
+      try {
+      console.log("Worker: URL is ->", e.data.url);
+        // The worker fetches the file, totally bypassing the Main Thread
+        // Fetch the full URL passed from the main thread
+        const response = await fetch(e.data.url);
+        console.log("Worker: Response status is ->", response.status);
+        if (!response.ok) {
+          throw new Error("HTTP Error: " + response.status);
+        }
+        const data = await response.json();
+        console.log("Worker: Successfully downloaded " + data.length + " items!");
+        
+        const processedData = [];
+
+        data.forEach((item) => {
+          // Data Quality Gate: Ignore row if BOTH critical fields are missing
+          if (!item.emp_count && !item.website && !item.ln_count) {
+            return;
+          }
+          if ("active" in item && item.active === false) {
+            return;
+          }
+
+          let displayCount = "-";
+          let sortRank = 0;
+
+          // Normalize Count Size & Rank
+          if (item.ln_count && item.ln_count !== "0") {
+            const normalized = normalizeEmployeeSize(item.ln_count);
+            displayCount = normalized.display;
+            sortRank = normalized.rank;
+          } else if (item.emp_count && item.emp_count !== "-") {
+            displayCount = item.emp_count;
+            sortRank = parseInt(displayCount.split(/[-+]/)[0]) || 0;
+          }
+
+          let domain = "-";
+          let linkedin_link = "#";
+          let status = item.public ? "Public" : "Private";
+
+          try {
+            if (item.website) domain = new URL(item.website).hostname.replace("www.", "");
+            if (item.linkedin) linkedin_link = item.linkedin.split("?")[0];
+          } catch (error) {}
+
+          // PRE-CALCULATE DATES (Saves Main Thread 10k+ new Date() calls)
+          let displayDate = "-";
+          let fullTimestamp = "";
+          if (item.last_updated) {
+            const dateObj = new Date(item.last_updated);
+            displayDate = dateObj.toLocaleDateString();
+            fullTimestamp = dateObj.toLocaleString();
+          }
+
+          // PRE-CALCULATE TOOLTIPS
+          const tooltipText = getGrowthTitle(item);
+
+          processedData.push({
+            ...item,
+            displayCount,
+            sortRank,
+            domain,
+            linkedin_link,
+            status,
+            displayDate,
+            fullTimestamp,
+            tooltipText
+          });
+        });
+
+        // Send the finished array back to the Main Thread
+        self.postMessage({ success: true, processedData });
+      } catch (error) {
+        self.postMessage({ success: false, error: error.message });
+      }
+    }
+  };
+`;
+
+function loadData() {
   const tableBody = document.getElementById("tableBody");
 
-  // Define helper functions at the top of the main function scope
   const handleSwipe = (touchstartX, touchendX, table) => {
     const info = table.page.info();
     const distance = touchendX - touchstartX;
     const minSwipeDistance = 50;
 
     if (distance < -minSwipeDistance) {
-      if (info.page < info.pages - 1) {
-        table.page("next").draw("page");
-      }
+      if (info.page < info.pages - 1) table.page("next").draw("page");
     } else if (distance > minSwipeDistance) {
-      if (info.page > 0) {
-        table.page("previous").draw("page");
-      }
+      if (info.page > 0) table.page("previous").draw("page");
     }
   };
 
-  try {
-    const response = await fetch("company_data.json");
-    if (!response.ok) {
-      throw new Error(`HTTP Error: ${response.status}`);
+  // Convert the worker string into a Blob URL
+  const blob = new Blob([workerLogic], { type: "application/javascript" });
+  const workerUrl = URL.createObjectURL(blob);
+  const dataWorker = new Worker(workerUrl);
+
+  // Tell the worker to start fetching and processing
+  // Calculate the exact, full URL based on the current page's location
+  const absoluteUrl = new URL("company_data.json", document.baseURI).href;
+  console.log(absoluteUrl);
+  // Send the command AND the full URL to the worker
+  dataWorker.postMessage({
+    command: "start",
+    url: absoluteUrl,
+  });
+
+  // Listen for the completed data
+  dataWorker.onmessage = function (event) {
+    if (!event.data.success) {
+      // Handle Worker Error
+      console.error("Worker Error:", event.data.error);
+      tableBody.innerHTML = `<tr><td colspan="6" class="error"><br><strong>⚠️ Error loading data:</strong><br> ${event.data.error}.<br><br> Please refresh or try again later!</td></tr>`;
+      loadingSpinner.classList.add("spinner-hidden");
+      loadingSpinner.style.display = "none";
+      const dataTableWrapper = document.querySelector(".table-card");
+      dataTableWrapper.style.display = "block";
+      dataTableWrapper.style.opacity = 1;
+      return;
     }
 
-    const data = await response.json();
-    const filterOptionsMap = new Map();
-    const processedData = [];
+    const processedData = event.data.processedData;
 
-    // Pre-process Data Array instead of building 11,000 DOM elements
-    data.forEach((item) => {
-      // Data Quality Gate: Ignore row if BOTH critical fields are missing
-      if (!item.emp_count && !item.website && !item.ln_count) {
-        return;
-      }
-      if ("active" in item && item.active === false) {
-        return;
-      }
-
-      let displayCount = "-";
-      let sortRank = 0;
-
-      // Normalize Count Size & Rank
-      if (item.ln_count && item.ln_count !== "0") {
-        const normalized = normalizeEmployeeSize(item.ln_count);
-        displayCount = normalized.display;
-        sortRank = normalized.rank;
-      } else if (item.emp_count && item.emp_count !== "-") {
-        displayCount = item.emp_count;
-        sortRank = parseInt(displayCount.split(/[-+]/)[0]) || 0;
-      }
-
-      // Add to Filter Map (O(1) complexity for duplicates)
-      if (displayCount !== "-") {
-        // We store the lowest possible rank for this category to help sort the dropdown
-        if (
-          !filterOptionsMap.has(displayCount) ||
-          sortRank < filterOptionsMap.get(displayCount)
-        ) {
-          filterOptionsMap.set(displayCount, sortRank);
-        }
-      }
-
-      let domain = "-";
-      let linkedin_link = "#";
-      let status = "Private";
-
-      try {
-        if (item.website) {
-          domain = new URL(item.website).hostname.replace("www.", "");
-        }
-        if (item.linkedin) {
-          linkedin_link = item.linkedin.split("?")[0];
-        }
-        status = item.public ? "Public" : "Private";
-      } catch (error) {
-        console.warn(
-          `${item.name} Website:'${item.website}' LinkedIn:'${item.linkedin}'`,
-        );
-      }
-
-      processedData.push({
-        ...item,
-        displayCount,
-        sortRank,
-        domain,
-        linkedin_link,
-        status,
-      });
-    });
-
-    // Custom search function updated to read directly from the row data (not DOM)
+    // Custom search function updated to read directly from the row data
     $.fn.dataTable.ext.search.push(function (settings, searchData, dataIndex) {
       const selectedRange = $("#empFilter").val();
       if (!selectedRange) {
@@ -756,7 +760,6 @@ async function loadData() {
       // Read the pre-processed sortRank from the underlying data object
       const rowData = settings.aoData[dataIndex]._aData;
       const sortRank = rowData.sortRank || 0;
-
       const [min, max] = selectedRange.split("-").map(Number);
 
       if (isNaN(max)) {
@@ -801,16 +804,13 @@ async function loadData() {
             data: "sortRank",
             render: function (data, type, row) {
               if (type === "display" || type === "filter") {
-                const tooltipText = getGrowthTitle(row);
+                // uses the pre-calculated tooltip string
                 const sparklineHtml = row.sparkline
-                  ? `<div class="sparkline-wrapper" title="${tooltipText}">${row.sparkline}</div>`
+                  ? `<div class="sparkline-wrapper" title="${row.tooltipText}">${row.sparkline}</div>`
                   : ``;
-                return `<div class="emp-cell">
-                          <span>${row.displayCount}</span>
-                          ${sparklineHtml}
-                        </div>`;
+                return `<div class="emp-cell"><span>${row.displayCount}</span>${sparklineHtml}</div>`;
               }
-              return data; // Returns the raw sortRank number for sorting operations
+              return data;
             },
           },
           {
@@ -845,24 +845,19 @@ async function loadData() {
           {
             // Last Updated Column
             data: "last_updated",
-            render: function (data) {
+            render: function (data, type, row) {
               if (!data) {
                 return "-";
               }
-              const dateObj = new Date(data);
-              // Format for the visible cell (e.g., "3/26/2026")
-              const displayDate = dateObj.toLocaleDateString();
-              // Format for the hover tooltip (e.g., "3/26/2026, 6:06:25 AM")
-              // to automatically use the user's local timezone (like IST)
-              const fullTimestamp = dateObj.toLocaleString();
-              return `<span title="${fullTimestamp}">${displayDate}</span>`;
+              // Uses the pre-calculated date strings
+              return `<span title="${row.fullTimestamp}">${row.displayDate}</span>`;
             },
           },
         ],
         initComplete: function () {
           const api = this.api();
 
-          // 1. Create the Range-Based Dropdown
+          // Create the Range-Based Dropdown
           const filterHtml = `
             <div class="emp-filter-wrapper">
               <label for="empFilter">Company Size:</label>
@@ -880,15 +875,15 @@ async function loadData() {
               </select>
             </div>`;
 
-          // 2. Inject into the DOM
+          // Inject into the DOM
           $(".dataTables_length").after(filterHtml);
 
-          // 3. Trigger Redraw on Change
+          // Trigger Redraw on Change
           $(document).on("change", "#empFilter", function () {
             api.draw(); // This triggers the $.fn.dataTable.ext.search.push function above
           });
 
-          // 4. Fixed Header Adjust
+          // Fixed Header Adjust
           setTimeout(() => {
             api.fixedHeader.adjust();
           }, 150);
@@ -960,19 +955,25 @@ async function loadData() {
       // --- SWIPE NAVIGATION ---
       let touchstartX = 0;
       let touchendX = 0;
-
-      // Attach listeners to the table container
       const tableContainer = document.getElementById("companyTable");
-      tableContainer.addEventListener("touchstart", (e) => {
-        touchstartX = e.changedTouches[0].screenX;
-      });
 
-      tableContainer.addEventListener("touchend", (e) => {
-        touchendX = e.changedTouches[0].screenX;
-        handleSwipe(touchstartX, touchendX, table);
-      });
+      tableContainer.addEventListener(
+        "touchstart",
+        (e) => {
+          touchstartX = e.changedTouches[0].screenX;
+        },
+        { passive: true },
+      );
+      tableContainer.addEventListener(
+        "touchend",
+        (e) => {
+          touchendX = e.changedTouches[0].screenX;
+          handleSwipe(touchstartX, touchendX, table);
+        },
+        { passive: true },
+      );
 
-      // Clear out the loading spinner immediately after DataTable mounts
+      // Show UI
       loadingSpinner.classList.add("spinner-hidden");
       loadingSpinner.addEventListener(
         "transitionend",
@@ -984,39 +985,18 @@ async function loadData() {
       const dataTableWrapper = document.querySelector(".table-card");
       dataTableWrapper.style.display = "block";
       dataTableWrapper.style.opacity = 1;
+
+      // Clean up worker memory
+      dataWorker.terminate();
+      URL.revokeObjectURL(workerUrl);
     });
-  } catch (error) {
-    // ERROR HANDLING: Show message in table
-    console.error("Critical Error:", error);
-    tableBody.innerHTML = `
-            <tr>
-              <td colspan="6" class="error">
-                <br><strong>⚠️ Error loading data:</strong><br> ${error.message}.<br><br> Please refresh or try again later!
-              </td>
-            </tr>`;
-  } finally {
-    loadingSpinner.classList.add("spinner-hidden");
-    loadingSpinner.style.display = "none";
-    const dataTable = document.querySelector(".table-card");
-    // Show the table card regardless of success or failure
-    dataTable.style.display = "block";
-    dataTable.style.opacity = 1;
-  }
+  };
 }
 
 // Call this inside your DOMContentLoaded or init function
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   setupModals();
-
-  // Get the trend info
-  fetchTrendData().then(() => {
-    // If the user arrived at #charts, render them the moment data arrives
-    if (window.location.hash === "#charts") {
-      renderMarketCharts();
-    }
-  });
-
-  // Load company info
+  fetchTrendData();
   loadData();
 
   // Trigger initial check for hash
