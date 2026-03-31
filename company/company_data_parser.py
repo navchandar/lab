@@ -50,7 +50,7 @@ NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 BSE_URL = "https://www.bseindia.com/downloads1/List_of_companies.csv"
 
 
-now = datetime.now()
+now = datetime.now(timezone.utc)
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 # Discovery: Only crawl for NEW companies on Mon, Wed (0,2)
 CHECK_JOB_POSTS = day_of_week in [0, 2]
@@ -394,7 +394,7 @@ class GrowthAnalytics:
             # Skip blank data or inactive companies from charts
             if count == 0 or not c.get("active", True):
                 continue
-            
+
             # Calculate what the headcount was 30 days ago based on the delta
             # Formula: Previous = Current / (1 + (Delta / 100))
             delta_30 = c.get("Δ_30d")
@@ -819,6 +819,10 @@ class DataCoordinator:
         if FIND_LISTED:
             targets, seen = DataCoordinator._get_indian_listed_companies(targets, seen)
 
+        # TODO:Get linkedin page links from
+        # https://www.linkedin.com/hubs/top-companies
+        # https://www.linkedin.com/hubs/top-startups/
+
         return targets
 
     @staticmethod
@@ -887,8 +891,22 @@ class DataCoordinator:
     def _should_refresh(company: dict) -> bool:
         """Return True if a specific company needs data refreshed today"""
         # Default to a long time ago if no date exists so it definitely refreshes
-        last_upd = datetime.fromisoformat(company.get("last_updated", "1970-01-01"))
-        days_old = (now - last_upd).days
+        last_upd_str = company.get("last_updated")
+        # Handle missing date: Refresh immediately
+        if not last_upd_str:
+            return True
+        try:
+            # Parse the date string and replace 'Z' with '+00:00' for older Python compatibility
+            last_upd = datetime.fromisoformat(last_upd_str.replace("Z", "+00:00"))
+            # Ensure last_upd is aware
+            if last_upd.tzinfo is None:
+                last_upd = last_upd.replace(tzinfo=timezone.utc)
+            # date now has timezone.utc
+            days_old = (now - last_upd).days
+        except ValueError:
+            # If date is corrupted, refresh the data
+            logger.warning("last_updated date may be invalid")
+            return True
 
         # Get employee count (default to 0 if missing)
         ln_count_str = str(company.get("ln_count", 0))
