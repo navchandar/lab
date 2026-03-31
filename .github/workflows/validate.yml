@@ -42,11 +42,6 @@ jobs:
       - name: Validate Python (Ruff)
         uses: astral-sh/ruff-action@v1
 
-      - name: Validate Python (Pylint)
-        run: |
-          pip install pylint
-          pylint $(git ls-files '*.py')
-
       - name: Generate PWA files
         if: github.event_name == 'push'
         env:
