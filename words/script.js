@@ -194,9 +194,17 @@ function initQuizWord(word) {
     const jSpan = document.createElement("span");
     jSpan.textContent = segment;
     jSpan.className = "jumbled-letter";
-    jSpan.addEventListener("click", (e) =>
-      handleJumbledClick(e, jSpan, segment),
-    );
+
+    const interactionHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleJumbledClick(e, jSpan, segment);
+    };
+
+    jSpan.addEventListener("click", interactionHandler);
+    jSpan.addEventListener("touchstart", interactionHandler, {
+      passive: false,
+    });
     jumbledContainer.appendChild(jSpan);
   });
 
