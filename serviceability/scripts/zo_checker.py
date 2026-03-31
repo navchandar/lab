@@ -95,7 +95,7 @@ async def check_pincode_worker(context, pincode, retries=0, is_pincode=True):
                 LCTR["header_location_btn"], state="visible", timeout=5000
             )
             await page.click(LCTR["header_location_btn"])
-        except:
+        except Exception:
             # If button not found, we might already be in a session or stuck
             if retries < MAX_RETRIES:
                 logger.warning(f"[{pincode}] Header button missing. Retrying...")

@@ -79,7 +79,7 @@ def get_avg_latitude(geo, topo_data):
             coords.append(lat)
 
         return sum(coords) / len(coords) if coords else 0
-    except:
+    except Exception:
         return 0
 
 

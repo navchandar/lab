@@ -116,7 +116,7 @@ def check_serviceability(session, city_name):
         if is_serviceable and is_pharma:
             return 1
         return 0
-    except:
+    except Exception:
         return 0
 
 

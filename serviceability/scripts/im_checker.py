@@ -52,7 +52,7 @@ def check_instamart(lat, lng):
         # 1. Check HTTP Status Codes
         if response.status_code == 400:
             logger.warning(
-                f"   -> API returned 400 (Bad Request). coordinates might be invalid."
+                "   -> API returned 400 (Bad Request). coordinates might be invalid."
             )
             return 0
 
@@ -63,7 +63,7 @@ def check_instamart(lat, lng):
         # 2. Parse JSON
         try:
             data = response.json()
-        except:
+        except Exception:
             print(response.text)
             logger.error("   -> Failed to parse response JSON")
             return None
@@ -96,7 +96,7 @@ def check_instamart(lat, lng):
                     or status == "SERVICEABILITY_STATUS_SERVICEABLE"
                 ):
                     return 1
-        except:
+        except Exception:
             pass
 
         # Default fallback: If we got a valid 200 JSON but no explicit "Not Present" flag,

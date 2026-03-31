@@ -340,7 +340,7 @@ class MapRenderer:
 
             # Load into PIL
             with Image.open(buf) as img:
-                logger.info(f"Rendering Webp image")
+                logger.info("Rendering Webp image")
                 # Ensure RGBA mode for transparency consistency
                 img = img.convert("RGBA")
 
@@ -362,7 +362,7 @@ class MapRenderer:
 
                 # --- SAVE LOW-RES PNG ---
                 # Calculate dimensions
-                logger.info(f"Rendering Png image")
+                logger.info("Rendering Png image")
                 w = max(1, int(img.width * self.cfg.PNG_SCALE_FACTOR))
                 h = max(1, int(img.height * self.cfg.PNG_SCALE_FACTOR))
 

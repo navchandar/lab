@@ -120,7 +120,7 @@ def fetch_pdf_url(session: requests.Session, url: str) -> Optional[str]:
 
 
 def download_pdf(session: requests.Session, url: str) -> Optional[bytes]:
-    logger.info(f"Downloading PDF...")
+    logger.info("Downloading PDF...")
     try:
         response = session.get(url, timeout=60)
         response.raise_for_status()

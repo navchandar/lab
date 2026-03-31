@@ -184,7 +184,7 @@ def get_pin_places(session, pin):
                         status = check_pincode(session, lat, lng, pin)
                         print(f"{lat=} {lng=} {status=}")
                         if status == 1:
-                            logger.info(f"   -> Found Serviceable Location")
+                            logger.info("   -> Found Serviceable Location")
                             return 1
             return 0
     except Exception as e:

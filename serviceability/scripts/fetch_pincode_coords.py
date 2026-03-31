@@ -1,10 +1,9 @@
 import json
 import logging
 import os
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 import googlemaps
 import pandas as pd

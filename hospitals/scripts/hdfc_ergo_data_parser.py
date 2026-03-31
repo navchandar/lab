@@ -108,7 +108,7 @@ def get_standard_header_name(raw_header: str) -> str:
     Returns the raw header (normalized) if no alias matches.
     """
     if not raw_header:
-        return f"Extra_Col"
+        return "Extra_Col"
 
     # Normalize input: "Provider_Name" -> "PROVIDERNAME"
     clean_input = re.sub(r"[^A-Z0-9]", "", str(raw_header).upper())

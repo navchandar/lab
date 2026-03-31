@@ -45,7 +45,7 @@ def check_jiomart(pincode):
         data = response.json()
         result = data.get("result", {})
         if not result:
-            logger.error(f"   -> No result found for {pincode}: {e}")
+            logger.error(f"   -> No result found for {pincode}")
             return None
 
         # 1. Extract Master Codes (Standard Delivery indicators)

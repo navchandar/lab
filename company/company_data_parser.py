@@ -739,7 +739,7 @@ class CompanyParser:
                         else:
                             CompanyParser.ticker_error_count += 1
                     else:
-                        logger.info(f"Skipping ticker lookup!")
+                        logger.info("Skipping ticker lookup!")
                 else:
                     logger.info(f"Ticker exists for {name}: {ticker}")
         if existing_ticker and not ticker:
@@ -1019,7 +1019,7 @@ class DataCoordinator:
                 seen.add(handle)
                 seen_websites.add(web_domain)
                 logger.info(f"Added: {company_data['name']} | Ticker: {sym}")
-            except Exception as e:
+            except Exception:
                 continue
 
         return targets, seen

@@ -88,7 +88,7 @@ def check_pincode(session, lat, lng, pin):
             return 1
 
         # 4. Fallback: Serviceable=True, but neither Hyperlocal nor Courier is True?
-        logger.warning(f"   -> ⚠️ Serviceable=True, but no delivery mode found")
+        logger.warning("   -> ⚠️ Serviceable=True, but no delivery mode found")
         return 0
 
     except Exception as e:

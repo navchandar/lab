@@ -70,7 +70,7 @@ def check_pincode(session, lat, lng, pin):
                     return 0
                 if "Error" in data.get("statusMessage", ""):
                     return 0
-            except:
+            except Exception:
                 pass
 
             if "hub-ids" in cookies or "current-city-id" in cookies:

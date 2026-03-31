@@ -8,7 +8,7 @@ import time
 import uuid
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -408,7 +408,7 @@ class GeocodingPipeline:
                 logger.info(f"BB Text Match: {full_address}")
                 accuracy = "HIGH"
             else:
-                logger.info(f"BB No Match. Using Raw Address.")
+                logger.info("BB No Match. Using Raw Address.")
                 full_address = f"{address}, {city}, {state}"
                 accuracy = "LOW"
         except Exception as e:
@@ -740,7 +740,7 @@ class GeocodingPipeline:
                             ):
                                 source["excluded_count"] = count
                                 updated = True
-                            if not "excluded_count" in source.keys():
+                            if "excluded_count" not in source.keys():
                                 source["excluded_count"] = count
                                 updated = True
                             logger.info(f"{company} Excluded Count: {count}")
@@ -763,7 +763,7 @@ class GeocodingPipeline:
                             ):
                                 source["network_count"] = count
                                 updated = True
-                            if not "network_count" in source.keys():
+                            if "network_count" not in source.keys():
                                 source["network_count"] = count
                                 updated = True
                             logger.info(f"{company} Network Count: {count}")

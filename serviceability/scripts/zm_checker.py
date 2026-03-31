@@ -237,7 +237,7 @@ def main():
         if place_id:
             status = check_zomato_serviceability(session, lat, lng, place_id)
         else:
-            logger.warning(f"   -> Could not get Place ID. Skipping.")
+            logger.warning("   -> Could not get Place ID. Skipping.")
             status = None
 
         # Save Result

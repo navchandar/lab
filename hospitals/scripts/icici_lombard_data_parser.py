@@ -1,10 +1,9 @@
 import json
 import logging
 import math
-import os
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import requests
 from bs4 import BeautifulSoup

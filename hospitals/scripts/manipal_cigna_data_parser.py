@@ -141,7 +141,7 @@ def fetch_pdf_url(session: requests.Session, url: str) -> Optional[str]:
 
 
 def download_pdf(session: requests.Session, url: str) -> Optional[bytes]:
-    logger.info(f"Downloading PDF...")
+    logger.info("Downloading PDF...")
     try:
         response = session.get(url, timeout=60)
         response.raise_for_status()
@@ -219,13 +219,6 @@ def parse_pdf_content(pdf_bytes: bytes) -> List[Dict]:
 
                         # Extract relative to Pincode
                         pincode = clean_row[pin_idx]
-
-                        # Date is usually after Pin
-                        date = (
-                            clean_row[pin_idx + 1]
-                            if (pin_idx + 1) < len(clean_row)
-                            else ""
-                        )
 
                         # Address is before Pin
                         address = clean_row[pin_idx - 1] if (pin_idx - 1) >= 0 else ""

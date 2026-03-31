@@ -4,7 +4,7 @@ import math
 import random
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import requests
 from requests.adapters import HTTPAdapter

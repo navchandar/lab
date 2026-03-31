@@ -312,7 +312,7 @@ def main():
     pdf_url = fetch_pdf_url(session, target_url)
     if not pdf_url:
         return
-
+    time.sleep(2)
     # 2. Download
     pdf_content = download_pdf(session, pdf_url)
     if not pdf_content:

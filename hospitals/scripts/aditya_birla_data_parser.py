@@ -4,7 +4,7 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pdfplumber
 from playwright.sync_api import sync_playwright
@@ -74,6 +74,7 @@ def download_pdf_via_browser(url) -> bool:
         try:
             logger.info(f"Navigating to {url}")
             page.goto(url, timeout=60000, wait_until="domcontentloaded")
+            time.sleep(2)
 
             # 1. Locate the Link
             # Using a robust text selector
@@ -85,11 +86,13 @@ def download_pdf_via_browser(url) -> bool:
             # This context manager waits for the 'download' event to fire after the click
             with page.expect_download(timeout=60000) as download_info:
                 page.click(link_selector)
+                time.sleep(2)
             download = download_info.value
 
             # 3. Save to Disk
             logger.info(f"Download started: {download.suggested_filename}")
             download.save_as(TEMP_PDF_PATH)
+            time.sleep(2)
 
         except Exception as e:
             logger.error(f"Error during download: {e}")
