@@ -380,7 +380,8 @@
         color: var(--diff-remove-text);
       }
       .diff-separator {
-        opacity: 0.7;
+        flex: 1;
+        opacity: 0.8;
         background: var(--border-color);
         padding: 4px;
         color: var(--text-main);
@@ -403,8 +404,6 @@
         user-select: none; /* Prevents copying the +/- signs */
         -webkit-user-select: none;
         display: inline-block;
-        opacity: 0.5;
-        width: 1.5em;
         text-align: center;
       }
 
@@ -428,6 +427,18 @@
         border-right: 1px solid var(--border-color);
       }
 
+      /* --- Smart Selection Isolation Styles --- */
+      .selecting-left .half-row:last-child,
+      .selecting-left .half-row:last-child * {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
+
+      .selecting-right .half-row:first-child,
+      .selecting-right .half-row:first-child * {
+        user-select: none !important;
+        -webkit-user-select: none !important;
+      }
       #loader {
         display: none;
         margin: 40px 0;
@@ -517,6 +528,10 @@
       }
 
       @media (prefers-color-scheme: dark) {
+        button {
+          color: #1a202c;
+        }
+
         #diff-output {
           background: rgba(0, 0, 0, 0.2);
         }
@@ -1171,6 +1186,30 @@
             document
               .querySelectorAll(`[data-link="${linkId}"]`)
               .forEach((el) => el.classList.remove("word-hover"));
+          });
+
+          // --- Smart Text Selection Isolation for Side-by-Side View ---
+          diffOutput.addEventListener("mousedown", (e) => {
+            if (this.currentView !== "split") {
+              return;
+            }
+
+            const halfRow = e.target.closest(".half-row");
+            if (!halfRow) {
+              return;
+            }
+
+            // Check if the user clicked the left pane or the right pane
+            if (halfRow === halfRow.parentElement.firstElementChild) {
+              diffOutput.classList.add("selecting-left");
+            } else {
+              diffOutput.classList.add("selecting-right");
+            }
+          });
+
+          // Clear the selection locks when the mouse is released anywhere on the page
+          document.addEventListener("mouseup", () => {
+            diffOutput.classList.remove("selecting-left", "selecting-right");
           });
         },
 
