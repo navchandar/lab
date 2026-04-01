@@ -240,6 +240,79 @@
         #diff-output {
           background: rgba(0, 0, 0, 0.2);
         }
+        .diff-row:hover {
+          background-color: rgba(255, 255, 255, 0.02);
+        }
+        .line-num {
+          background: rgba(255, 255, 255, 0.03);
+        }
+      }
+
+      .line-num {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-right: 12px;
+        border-right: 1px solid var(--border-color);
+        background: rgba(0, 0, 0, 0.03);
+        padding-right: 10px;
+        width: 45px;
+        min-width: 45px;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        user-select: none;
+        text-align: right;
+      }
+
+      .line-text {
+        flex: 1;
+        padding: 2px 16px 2px 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .diff-added {
+        background-color: var(--diff-add-bg);
+        color: var(--diff-add-text);
+      }
+      .diff-removed {
+        background-color: var(--diff-remove-bg);
+        color: var(--diff-remove-text);
+      }
+
+      .diff-separator {
+        opacity: 0.7;
+        background: var(--border-color);
+        padding: 4px;
+        width: 100%;
+        color: var(--text-main);
+        font-weight: bold;
+        font-size: 0.8rem;
+        text-align: center;
+      }
+
+      /* Side-by-Side Specific Styles */
+      .side-by-side-container {
+        display: flex;
+        width: 100%;
+      }
+      .side-pane {
+        width: 50%;
+        overflow-x: auto;
+      }
+      .side-pane:first-child {
+        border-right: 1px solid var(--border-color);
+      }
+
+      /* --- Context Diff & Line Number Styles --- */
+      .diff-row {
+        display: flex;
+        border-bottom: 1px solid transparent;
+        width: 100%;
+      }
+
+      .diff-row:hover {
+        background-color: rgba(0, 0, 0, 0.02);
       }
 
       .diff-line {
@@ -425,6 +498,73 @@
               })[tag],
           );
         },
+
+        // NEW: Flattens diff and extracts only changes + context lines
+        buildContextDiff(diffArray, contextSize = 2) {
+          let lines = [];
+          let oldLine = 1;
+          let newLine = 1;
+
+          // 1. Flatten the jsdiff output into individual line objects
+          diffArray.forEach((part) => {
+            const partLines = part.value.replace(/\n$/, "").split("\n");
+            partLines.forEach((text) => {
+              if (part.added) {
+                lines.push({
+                  type: "added",
+                  oldLine: "",
+                  newLine: newLine++,
+                  text,
+                });
+              } else if (part.removed) {
+                lines.push({
+                  type: "removed",
+                  oldLine: oldLine++,
+                  newLine: "",
+                  text,
+                });
+              } else {
+                lines.push({
+                  type: "unchanged",
+                  oldLine: oldLine++,
+                  newLine: newLine++,
+                  text,
+                });
+              }
+            });
+          });
+
+          // 2. Mark which indices to keep based on context size
+          let keepIndices = new Set();
+          for (let i = 0; i < lines.length; i++) {
+            if (lines[i].type !== "unchanged") {
+              for (
+                let j = Math.max(0, i - contextSize);
+                j <= Math.min(lines.length - 1, i + contextSize);
+                j++
+              ) {
+                keepIndices.add(j);
+              }
+            }
+          }
+
+          // 3. Rebuild the array, inserting separators where there are gaps
+          let finalLines = [];
+          let lastIndex = -1;
+          let sortedIndices = Array.from(keepIndices).sort((a, b) => a - b);
+
+          if (sortedIndices.length === 0) return []; // No changes at all
+
+          sortedIndices.forEach((idx) => {
+            if (lastIndex !== -1 && idx > lastIndex + 1) {
+              finalLines.push({ type: "separator" });
+            }
+            finalLines.push(lines[idx]);
+            lastIndex = idx;
+          });
+
+          return finalLines;
+        },
       };
 
       // 2. UI Module: DOM interactions & Animations
@@ -474,60 +614,74 @@
         },
 
         renderInlineDiff(diffArray) {
-          let html = "";
-          diffArray.forEach((part) => {
-            const colorClass = part.added
-              ? "diff-added"
-              : part.removed
-                ? "diff-removed"
-                : "";
-            const prefix = part.added ? "+ " : part.removed ? "- " : "  ";
+          const contextLines = Utils.buildContextDiff(diffArray);
 
-            const lines = part.value.replace(/\n$/, "").split("\n");
-            lines.forEach((line) => {
-              html += `<div class="diff-line ${colorClass}">${prefix}${Utils.escapeHTML(line)}</div>`;
-            });
+          if (contextLines.length === 0) {
+            this.els.output.innerHTML =
+              '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found. Pages are identical!</div></div>';
+            return;
+          }
+
+          let html = "";
+          contextLines.forEach((line) => {
+            if (line.type === "separator") {
+              html += `<div class="diff-separator">@@ ... @@</div>`;
+              return;
+            }
+
+            const colorClass =
+              line.type === "added"
+                ? "diff-added"
+                : line.type === "removed"
+                  ? "diff-removed"
+                  : "";
+            const prefix =
+              line.type === "added" ? "+" : line.type === "removed" ? "-" : " ";
+
+            html += `
+              <div class="diff-row ${colorClass}">
+                <div class="line-num">${line.oldLine}</div>
+                <div class="line-num">${line.newLine}</div>
+                <div class="line-text">${prefix} ${Utils.escapeHTML(line.text)}</div>
+              </div>
+            `;
           });
-          this.els.output.innerHTML =
-            html ||
-            '<div class="diff-line">No differences found. Pages are identical!</div>';
+
+          this.els.output.innerHTML = html;
         },
 
         renderSplitDiff(diffArray) {
+          const contextLines = Utils.buildContextDiff(diffArray);
+
+          if (contextLines.length === 0) {
+            this.els.output.innerHTML =
+              '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found. Pages are identical!</div></div>';
+            return;
+          }
+
           let leftHtml = '<div class="side-pane">';
           let rightHtml = '<div class="side-pane">';
 
-          let hasChanges = false;
-
-          diffArray.forEach((part) => {
-            const lines = part.value.replace(/\n$/, "").split("\n");
-
-            lines.forEach((line) => {
-              const escapedLine = Utils.escapeHTML(line);
-              if (part.added) {
-                rightHtml += `<div class="diff-line diff-added">+ ${escapedLine}</div>`;
-                leftHtml += `<div class="diff-line">&nbsp;</div>`;
-                hasChanges = true;
-              } else if (part.removed) {
-                leftHtml += `<div class="diff-line diff-removed">- ${escapedLine}</div>`;
-                rightHtml += `<div class="diff-line">&nbsp;</div>`;
-                hasChanges = true;
-              } else {
-                leftHtml += `<div class="diff-line">  ${escapedLine}</div>`;
-                rightHtml += `<div class="diff-line">  ${escapedLine}</div>`;
-              }
-            });
+          contextLines.forEach((line) => {
+            if (line.type === "separator") {
+              leftHtml += `<div class="diff-separator">@@ ... @@</div>`;
+              rightHtml += `<div class="diff-separator">@@ ... @@</div>`;
+            } else if (line.type === "removed") {
+              leftHtml += `<div class="diff-row diff-removed"><div class="line-num">${line.oldLine}</div><div class="line-text">- ${Utils.escapeHTML(line.text)}</div></div>`;
+              rightHtml += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
+            } else if (line.type === "added") {
+              leftHtml += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
+              rightHtml += `<div class="diff-row diff-added"><div class="line-num">${line.newLine}</div><div class="line-text">+ ${Utils.escapeHTML(line.text)}</div></div>`;
+            } else {
+              leftHtml += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
+              rightHtml += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
+            }
           });
 
           leftHtml += "</div>";
           rightHtml += "</div>";
 
-          if (!hasChanges) {
-            this.els.output.innerHTML =
-              '<div class="diff-line">No differences found. Pages are identical!</div>';
-          } else {
-            this.els.output.innerHTML = `<div class="side-by-side-container">${leftHtml}${rightHtml}</div>`;
-          }
+          this.els.output.innerHTML = `<div class="side-by-side-container">${leftHtml}${rightHtml}</div>`;
         },
       };
 
