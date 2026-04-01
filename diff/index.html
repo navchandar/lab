@@ -341,40 +341,6 @@
         color: white;
       }
 
-      @media (prefers-color-scheme: light) {
-        .word-added {
-          background-color: #acf2bd;
-          color: #055d20;
-        }
-        .word-removed {
-          background-color: #ffc4c1;
-          color: #82071e;
-        }
-        .word-hover.word-added {
-          background-color: #7ae49b;
-          color: #02240c;
-        }
-        .word-hover.word-removed {
-          background-color: #ff9490;
-          color: #41030e;
-        }
-      }
-
-      @media (prefers-color-scheme: dark) {
-        #diff-output {
-          background: rgba(0, 0, 0, 0.2);
-        }
-        .diff-row:hover {
-          background-color: rgba(255, 255, 255, 0.02);
-        }
-        .line-num {
-          background: rgba(255, 255, 255, 0.03);
-        }
-        .view-toggle {
-          background: rgba(255, 255, 255, 0.05);
-        }
-      }
-
       .diff-row {
         display: flex;
         border-bottom: 1px solid transparent;
@@ -430,6 +396,35 @@
         overflow-x: auto;
       }
       .side-pane:first-child {
+        border-right: 1px solid var(--border-color);
+      }
+      /* --- Diff Output Enhancements --- */
+      .diff-prefix {
+        user-select: none; /* Prevents copying the +/- signs */
+        -webkit-user-select: none;
+        display: inline-block;
+        opacity: 0.5;
+        width: 1.5em;
+        text-align: center;
+      }
+
+      /* Side-by-Side Row Layout (Fixes alignment) */
+      .split-row {
+        display: flex;
+        border-bottom: 1px solid transparent;
+        width: 100%;
+      }
+
+      .split-row:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+
+      .half-row {
+        display: flex;
+        width: 50%;
+      }
+
+      .half-row:first-child {
         border-right: 1px solid var(--border-color);
       }
 
@@ -501,6 +496,42 @@
         justify-content: center;
         align-items: center;
         gap: 12px;
+      }
+      @media (prefers-color-scheme: light) {
+        .word-added {
+          background-color: #acf2bd;
+          color: #055d20;
+        }
+        .word-removed {
+          background-color: #ffc4c1;
+          color: #82071e;
+        }
+        .word-hover.word-added {
+          background-color: #7ae49b;
+          color: #02240c;
+        }
+        .word-hover.word-removed {
+          background-color: #ff9490;
+          color: #41030e;
+        }
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #diff-output {
+          background: rgba(0, 0, 0, 0.2);
+        }
+        .diff-row:hover {
+          background-color: rgba(255, 255, 255, 0.02);
+        }
+        .line-num {
+          background: rgba(255, 255, 255, 0.03);
+        }
+        .view-toggle {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .split-row:hover {
+          background-color: rgba(255, 255, 255, 0.02);
+        }
       }
     </style>
   </head>
@@ -931,8 +962,16 @@
                   ? "diff-removed"
                   : "";
             const prefix =
-              line.type === "added" ? "+" : line.type === "removed" ? "-" : " ";
-            html += `<div class="diff-row ${color}"><div class="line-num">${line.oldLine}</div><div class="line-num">${line.newLine}</div><div class="line-text">${prefix} ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
+              line.type === "added"
+                ? "+"
+                : line.type === "removed"
+                  ? "-"
+                  : "&nbsp;";
+            html += `<div class="diff-row ${color}">
+                       <div class="line-num">${line.oldLine}</div>
+                       <div class="line-num">${line.newLine}</div>
+                       <div class="line-text"><span class="diff-prefix">${prefix}</span>${line.html || Utils.escapeHTML(line.text)}</div>
+                     </div>`;
           });
           this.els.output.innerHTML = html;
         },
@@ -949,18 +988,22 @@
               '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found!</div></div>');
           }
 
-          let l = '<div class="side-pane">';
-          let r = '<div class="side-pane">';
+          // Change to a column-direction container holding individual rows
+          let html =
+            '<div style="display: flex; flex-direction: column; width: 100%;">';
 
           for (let i = 0; i < contextLines.length; i++) {
             const line = contextLines[i];
 
             if (line.type === "separator") {
-              l += `<div class="diff-separator">@@ ... @@</div>`;
-              r += `<div class="diff-separator">@@ ... @@</div>`;
+              html += `<div class="split-row"><div class="diff-separator">@@ ... @@</div></div>`;
             } else if (line.type === "unchanged") {
-              l += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
-              r += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
+              html += `<div class="split-row">
+                         <div class="half-row"><div class="line-num">${line.oldLine}</div>
+                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${line.html || Utils.escapeHTML(line.text)}</div></div>
+                         <div class="half-row"><div class="line-num">${line.newLine}</div>
+                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${line.html || Utils.escapeHTML(line.text)}</div></div>
+                       </div>`;
             } else {
               // It is either a "removed" or "added" line.
               // We look ahead to group consecutive removals and additions so we can pair them up horizontally.
@@ -990,28 +1033,33 @@
               // Render them side-by-side, padding the shorter side with empty rows
               const maxLen = Math.max(rmLines.length, addLines.length);
 
+              // Build row by row to guarantee height alignment
               for (let j = 0; j < maxLen; j++) {
-                // Render Left Pane (Removals)
+                html += `<div class="split-row">`;
+
+                // Left Pane (Removals)
                 if (rmLines[j]) {
-                  l += `<div class="diff-row diff-removed"><div class="line-num">${rmLines[j].oldLine}</div><div class="line-text">- ${rmLines[j].html || Utils.escapeHTML(rmLines[j].text)}</div></div>`;
+                  html += `<div class="half-row diff-removed"><div class="line-num">${rmLines[j].oldLine}</div>
+                  <div class="line-text"><span class="diff-prefix">-</span>${rmLines[j].html || Utils.escapeHTML(rmLines[j].text)}</div></div>`;
                 } else {
-                  l += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`; // Filler row
+                  html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
                 }
 
-                // Render Right Pane (Additions)
+                // Right Pane (Additions)
                 if (addLines[j]) {
-                  r += `<div class="diff-row diff-added"><div class="line-num">${addLines[j].newLine}</div><div class="line-text">+ ${addLines[j].html || Utils.escapeHTML(addLines[j].text)}</div></div>`;
+                  html += `<div class="half-row diff-added"><div class="line-num">${addLines[j].newLine}</div>
+                  <div class="line-text"><span class="diff-prefix">+</span>${addLines[j].html || Utils.escapeHTML(addLines[j].text)}</div></div>`;
                 } else {
-                  r += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`; // Filler row
+                  html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
                 }
+
+                html += `</div>`;
               }
             }
           }
 
-          l += "</div>";
-          r += "</div>";
-
-          this.els.output.innerHTML = `<div class="side-by-side-container">${l}${r}</div>`;
+          html += "</div>";
+          this.els.output.innerHTML = html;
         },
       };
 
