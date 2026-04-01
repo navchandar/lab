@@ -1045,7 +1045,9 @@
           const diffOutput = UI.els.output;
           diffOutput.addEventListener("mouseover", (e) => {
             const target = e.target.closest(".word-linked");
-            if (!target) return;
+            if (!target) {
+              return;
+            }
             const linkId = target.getAttribute("data-link");
             document
               .querySelectorAll(`[data-link="${linkId}"]`)
@@ -1054,7 +1056,9 @@
 
           diffOutput.addEventListener("mouseout", (e) => {
             const target = e.target.closest(".word-linked");
-            if (!target) return;
+            if (!target) {
+              return;
+            }
             const linkId = target.getAttribute("data-link");
             document
               .querySelectorAll(`[data-link="${linkId}"]`)
@@ -1091,6 +1095,24 @@
             const f1 = document.getElementById("file1").files[0];
             const f2 = document.getElementById("file2").files[0];
             if (!f1 || !f2) throw new Error("Select two files.");
+
+            // --- Size & Type Validation ---
+            const MAX_SIZE = 20 * 1024 * 1024; // 20MB Limit
+            if (f1.size > MAX_SIZE || f2.size > MAX_SIZE) {
+              throw new Error(
+                "File too large. Maximum allowed size is 20MB per file.",
+              );
+            }
+
+            // Reject obvious binary formats
+            const isBinary = (type) =>
+              /image|video|audio|pdf|zip|octet-stream/.test(type);
+            if (isBinary(f1.type) || isBinary(f2.type)) {
+              throw new Error(
+                "Invalid file type. Please upload text, code, or data files.",
+              );
+            }
+
             const [txt1, txt2] = await Promise.all([
               Utils.readFileAsText(f1),
               Utils.readFileAsText(f2),
@@ -1102,6 +1124,57 @@
           }
         },
 
+        // --- Inline Web Worker to process Diff in background ---
+        runDiffInWorker(text1, text2) {
+          return new Promise((resolve, reject) => {
+            // Helper to stringify our existing Utils methods so the worker can use them
+            const fnToStr = (obj, name) => {
+              let str = obj[name].toString();
+              return str.startsWith(name) ? "function " + str : str;
+            };
+
+            const workerCode = `
+              importScripts('https://cdn.jsdelivr.net/npm/diff@8.0.4/dist/diff.min.js');
+
+              // Inject our Utils methods into the worker scope
+              ${fnToStr(Utils, "escapeHTML")}
+              ${fnToStr(Utils, "enhanceWithWordDiffs").replace(/this\.escapeHTML/g, "escapeHTML")}
+              ${fnToStr(Utils, "flattenAndEnhanceDiff").replace(/this\.enhanceWithWordDiffs/g, "enhanceWithWordDiffs")}
+
+              self.onmessage = function(e) {
+                try {
+                  const diffArray = Diff.diffLines(e.data.text1, e.data.text2);
+                  const processedLines = flattenAndEnhanceDiff(diffArray);
+                  postMessage({ success: true, processedLines });
+                } catch(err) {
+                  postMessage({ success: false, error: err.message });
+                }
+              };
+            `;
+
+            const blob = new Blob([workerCode], {
+              type: "application/javascript",
+            });
+            const worker = new Worker(URL.createObjectURL(blob));
+
+            worker.onmessage = (e) => {
+              if (e.data.success) {
+                resolve(e.data.processedLines);
+              } else {
+                reject(new Error(e.data.error));
+              }
+              worker.terminate();
+            };
+
+            worker.onerror = () => {
+              reject(new Error("Error occurred in the background web worker!"));
+              worker.terminate();
+            };
+
+            worker.postMessage({ text1, text2 });
+          });
+        },
+
         async executeComparison() {
           if (this.inputMode === "url" && !navigator.onLine) {
             return UI.showToast("You are offline.", true);
@@ -1109,17 +1182,14 @@
 
           UI.setLoading(true);
           try {
-            // Fetch the texts
             const [text1, text2] = await this.getInputs();
-            // Update UI to warn about the freeze
-            UI.els.loader.innerHTML =
-              '<div class="spinner"></div><span style="color: var(--text-muted); font-weight: 500">Diffing (the page may freeze briefly)</span>';
-            await new Promise((resolve) => setTimeout(resolve, 50));
-            // Run the synchronous diff calculation
-            this.currentDiff = Diff.diffLines(text1, text2);
 
-            // perform the heavy word-diff calculations ONCE and cache them
-            this.processedLines = Utils.flattenAndEnhanceDiff(this.currentDiff);
+            // UI Update: Let user know the background worker is running
+            UI.els.loader.innerHTML =
+              '<div class="spinner"></div><span style="color: var(--text-muted); font-weight: 500">Diffing...</span>';
+
+            // --- Await the Web Worker ---
+            this.processedLines = await this.runDiffInWorker(text1, text2);
 
             UI.els.controls.style.display = "flex";
             this.renderCurrentView();
@@ -1134,7 +1204,9 @@
         },
 
         switchView(viewMode) {
-          if (this.currentView === viewMode) return;
+          if (this.currentView === viewMode) {
+            return;
+          }
           this.currentView = viewMode;
           UI.els.viewBtns.forEach((b) => b.classList.remove("active"));
           document
