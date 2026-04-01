@@ -55,7 +55,7 @@
       content="https://navchandar.github.io/lab/diff/preview.png"
     />
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/7.0.0/diff.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff@8.0.4/dist/diff.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
@@ -456,7 +456,23 @@
     </style>
   </head>
   <body>
-    <div class="container">
+    <noscript>
+      <div class="noscript-overlay">
+        <div class="noscript-content">
+          <h2>JavaScript is Required</h2>
+          <p>We rely on JavaScript to render the interactive website.</p>
+          <p>
+            Please enable JavaScript in your browser settings and reload the
+            page.
+          </p>
+          <a href="https://www.enable-javascript.com/" target="_blank"
+            >How to enable JavaScript
+          </a>
+        </div>
+      </div>
+    </noscript>
+
+    <main role="main" class="container">
       <h1>Diff Check</h1>
 
       <div class="mode-selector">
@@ -526,7 +542,7 @@
       </div>
 
       <div id="diff-output"></div>
-    </div>
+    </main>
 
     <div id="toast-container"></div>
 
