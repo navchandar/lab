@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webpage Diff Tool</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/7.0.0/diff.min.js"></script>
+    <style>
+      :root {
+        /* Light Theme */
+        --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --surface-color: rgba(255, 255, 255, 0.9);
+        --text-main: #2d3748;
+        --text-muted: #718096;
+        --border-color: rgba(226, 232, 240, 0.8);
+
+        /* Gradients & Accents */
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --primary-hover: linear-gradient(135deg, #5a6fd6 0%, #663d91 100%);
+        --error-gradient: linear-gradient(135deg, #fc8181 0%, #e53e3e 100%);
+
+        /* Diff Colors */
+        --diff-add-bg: #f0fff4;
+        --diff-add-text: #276749;
+        --diff-add-border: #9ae6b4;
+        --diff-remove-bg: #fff5f5;
+        --diff-remove-text: #9b2c2c;
+        --diff-remove-border: #feb2b2;
+
+        /* UI Elements */
+        --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
+        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+        --radius: 12px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* Dark Theme Override */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+          --surface-color: rgba(26, 32, 44, 0.85);
+          --text-main: #f7fafc;
+          --text-muted: #a0aec0;
+          --border-color: rgba(74, 85, 104, 0.6);
+
+          --primary-gradient: linear-gradient(135deg, #7f9cf5 0%, #9f7aea 100%);
+          --primary-hover: linear-gradient(135deg, #667eea 0%, #805ad5 100%);
+
+          --diff-add-bg: rgba(72, 187, 120, 0.15);
+          --diff-add-text: #68d391;
+          --diff-add-border: rgba(104, 211, 145, 0.3);
+          --diff-remove-bg: rgba(245, 101, 101, 0.15);
+          --diff-remove-text: #fc8181;
+          --diff-remove-border: rgba(252, 129, 129, 0.3);
+        }
+      }
+
+      /* --- Global Styles --- */
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+
+      body {
+        background: var(--bg-gradient);
+        /* Smooth background attachment for mobile */
+        background-attachment: fixed;
+        padding: 24px 16px;
+        min-height: 100vh;
+        color: var(--text-main);
+        line-height: 1.6;
+      }
+
+      .container {
+        backdrop-filter: blur(10px);
+        margin: 0 auto;
+        background: var(--surface-color);
+        max-width: 1200px;
+        -webkit-backdrop-filter: blur(10px);
+        transition: var(--transition);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 32px;
+      }
+
+      h1 {
+        margin-bottom: 32px;
+        background: var(--primary-gradient);
+        font-weight: 800;
+        font-size: 2rem;
+        text-align: center;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* --- Input & Form Styles --- */
+      .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 32px;
+      }
+
+      @media (min-width: 768px) {
+        .input-group {
+          flex-direction: row;
+        }
+      }
+
+      input[type="url"] {
+        flex: 1;
+        transition: var(--transition);
+        outline: none;
+        border: 2px solid var(--border-color);
+        border-radius: var(--radius);
+        background-color: transparent;
+        padding: 14px 20px;
+        color: var(--text-main);
+        font-size: 1rem;
+      }
+
+      input[type="url"]:focus {
+        box-shadow: 0 0 0 2px #7f9cf5;
+        border-color: transparent;
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      button {
+        transition: var(--transition);
+        cursor: pointer;
+        box-shadow: var(--shadow-sm);
+        border: none;
+        border-radius: var(--radius);
+        background: var(--primary-gradient);
+        padding: 14px 28px;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+        background: var(--primary-hover);
+      }
+
+      button:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      button:disabled {
+        transform: none;
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+
+      /* --- Diff Controls --- */
+      .controls {
+        display: flex;
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        /* Hidden initially */
+        animation: fadeIn 0.5s ease forwards;
+        margin-bottom: 20px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 20px;
+      }
+
+      .controls span {
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+
+      .view-toggle {
+        display: flex;
+        border-radius: var(--radius);
+        background: rgba(0, 0, 0, 0.05);
+        padding: 4px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .view-toggle {
+          background: rgba(255, 255, 255, 0.05);
+        }
+      }
+
+      .view-btn {
+        box-shadow: none;
+        border-radius: 8px;
+        background: transparent;
+        padding: 8px 16px;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+
+      .view-btn:hover:not(.active) {
+        transform: none;
+        box-shadow: none;
+        background: transparent;
+        color: var(--text-main);
+      }
+
+      .view-btn.active {
+        box-shadow: var(--shadow-sm);
+        background: var(--surface-color);
+        color: var(--text-main);
+      }
+
+      /* --- Diff Output Area --- */
+      #diff-output {
+        transition: var(--transition);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        background: rgba(0, 0, 0, 0.02);
+        overflow-x: auto;
+        font-size: 0.875rem;
+        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #diff-output {
+          background: rgba(0, 0, 0, 0.2);
+        }
+      }
+
+      .diff-line {
+        display: block;
+        transition: background-color 0.2s;
+        border-left: 4px solid transparent;
+        padding: 4px 16px;
+      }
+
+      .diff-line:hover {
+        filter: brightness(0.95);
+      }
+
+      .diff-added {
+        border-left-color: var(--diff-add-border);
+        background-color: var(--diff-add-bg);
+        color: var(--diff-add-text);
+      }
+
+      .diff-removed {
+        border-left-color: var(--diff-remove-border);
+        background-color: var(--diff-remove-bg);
+        color: var(--diff-remove-text);
+      }
+
+      /* Side-by-Side Specific Styles */
+      .side-by-side-container {
+        display: flex;
+        width: 100%;
+      }
+
+      .side-pane {
+        width: 50%;
+        overflow-x: auto;
+      }
+
+      .side-pane:first-child {
+        border-right: 1px solid var(--border-color);
+      }
+
+      /* --- Loading Spinner --- */
+      #loader {
+        display: none;
+        margin: 40px 0;
+        text-align: center;
+      }
+
+      .spinner {
+        animation: spin 1s linear infinite;
+        margin: 0 auto 16px auto;
+        border: 4px solid var(--border-color);
+        border-top-color: #7f9cf5;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+      }
+
+      @keyframes spin {
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          transform: translateY(10px);
+          opacity: 0;
+        }
+
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* --- Toast Notification --- */
+      #toast-container {
+        display: flex;
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        flex-direction: column;
+        gap: 12px;
+        transform: translateX(-50%);
+        z-index: 1000;
+      }
+
+      .toast {
+        transform: translateY(20px) scale(0.95);
+        opacity: 0;
+        transition: var(--transition);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-color);
+        border-radius: 30px;
+        background: var(--surface-color);
+        padding: 14px 24px;
+        color: var(--text-main);
+        font-weight: 500;
+        font-size: 0.9rem;
+      }
+
+      .toast.show {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+      }
+
+      .toast.error {
+        border: none;
+        background: var(--error-gradient);
+        color: white;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Diff Check</h1>
+
+      <div class="input-group">
+        <input
+          type="url"
+          id="url1"
+          placeholder="https://example.com/original"
+          required
+          autocomplete="off"
+        />
+        <input
+          type="url"
+          id="url2"
+          placeholder="https://example.com/modified"
+          required
+          autocomplete="off"
+        />
+        <button id="compare-btn">Compare Pages</button>
+      </div>
+
+      <div id="loader">
+        <div class="spinner"></div>
+        <span style="color: var(--text-muted); font-weight: 500"
+          >Fetching and analyzing content...</span
+        >
+      </div>
+
+      <div class="controls" id="diff-controls">
+        <span>Comparison Results</span>
+        <div class="view-toggle">
+          <button class="view-btn active" data-view="inline">Inline</button>
+          <button class="view-btn" data-view="split">Side-by-Side</button>
+        </div>
+      </div>
+
+      <div id="diff-output"></div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+      /**
+       * --- MODULAR JAVASCRIPT ---
+       * Handles UI transitions, CORS proxy fetching, and diff rendering.
+       */
+
+      // 1. Utils Module: Helpers
+      const Utils = {
+        isValidUrl(string) {
+          try {
+            new URL(string);
+            return true;
+          } catch (err) {
+            return false;
+          }
+        },
+        escapeHTML(str) {
+          return str.replace(
+            /[&<>'"]/g,
+            (tag) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                "'": "&#39;",
+                '"': "&quot;",
+              })[tag],
+          );
+        },
+      };
+
+      // 2. UI Module: DOM interactions & Animations
+      const UI = {
+        els: {
+          url1: document.getElementById("url1"),
+          url2: document.getElementById("url2"),
+          btn: document.getElementById("compare-btn"),
+          loader: document.getElementById("loader"),
+          output: document.getElementById("diff-output"),
+          controls: document.getElementById("diff-controls"),
+          viewBtns: document.querySelectorAll(".view-btn"),
+          toastContainer: document.getElementById("toast-container"),
+        },
+
+        showToast(message, isError = false) {
+          console.log(`[UI] Toast: ${message}`);
+          const toast = document.createElement("div");
+          toast.className = `toast ${isError ? "error" : ""}`;
+          toast.textContent = message;
+
+          this.els.toastContainer.appendChild(toast);
+
+          // Trigger animation frame for CSS transition
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => toast.classList.add("show"));
+          });
+
+          // Remove after 4 seconds
+          setTimeout(() => {
+            toast.classList.remove("show");
+            setTimeout(() => toast.remove(), 300); // Wait for transition out
+          }, 4000);
+        },
+
+        setLoading(isLoading) {
+          this.els.btn.disabled = isLoading;
+          this.els.btn.textContent = isLoading
+            ? "Comparing..."
+            : "Compare Pages";
+          this.els.loader.style.display = isLoading ? "block" : "none";
+
+          if (isLoading) {
+            this.els.output.innerHTML = "";
+            this.els.controls.style.display = "none";
+          }
+        },
+
+        renderInlineDiff(diffArray) {
+          let html = "";
+          diffArray.forEach((part) => {
+            const colorClass = part.added
+              ? "diff-added"
+              : part.removed
+                ? "diff-removed"
+                : "";
+            const prefix = part.added ? "+ " : part.removed ? "- " : "  ";
+
+            const lines = part.value.replace(/\n$/, "").split("\n");
+            lines.forEach((line) => {
+              html += `<div class="diff-line ${colorClass}">${prefix}${Utils.escapeHTML(line)}</div>`;
+            });
+          });
+          this.els.output.innerHTML =
+            html ||
+            '<div class="diff-line">No differences found. Pages are identical!</div>';
+        },
+
+        renderSplitDiff(diffArray) {
+          let leftHtml = '<div class="side-pane">';
+          let rightHtml = '<div class="side-pane">';
+
+          let hasChanges = false;
+
+          diffArray.forEach((part) => {
+            const lines = part.value.replace(/\n$/, "").split("\n");
+
+            lines.forEach((line) => {
+              const escapedLine = Utils.escapeHTML(line);
+              if (part.added) {
+                rightHtml += `<div class="diff-line diff-added">+ ${escapedLine}</div>`;
+                leftHtml += `<div class="diff-line">&nbsp;</div>`;
+                hasChanges = true;
+              } else if (part.removed) {
+                leftHtml += `<div class="diff-line diff-removed">- ${escapedLine}</div>`;
+                rightHtml += `<div class="diff-line">&nbsp;</div>`;
+                hasChanges = true;
+              } else {
+                leftHtml += `<div class="diff-line">  ${escapedLine}</div>`;
+                rightHtml += `<div class="diff-line">  ${escapedLine}</div>`;
+              }
+            });
+          });
+
+          leftHtml += "</div>";
+          rightHtml += "</div>";
+
+          if (!hasChanges) {
+            this.els.output.innerHTML =
+              '<div class="diff-line">No differences found. Pages are identical!</div>';
+          } else {
+            this.els.output.innerHTML = `<div class="side-by-side-container">${leftHtml}${rightHtml}</div>`;
+          }
+        },
+      };
+
+      // 3. Network Module: Handles corsproxy.io integration
+      const Network = {
+        initConnectivity() {
+          window.addEventListener("offline", () => {
+            console.warn("[Network] Offline detected");
+            UI.showToast(
+              "You are offline. Please check your connection.",
+              true,
+            );
+          });
+          window.addEventListener("online", () => {
+            console.log("[Network] Online detected");
+            UI.showToast("Connection restored!");
+          });
+        },
+
+        async fetchPage(url) {
+          // Using corsproxy.io specifically
+          const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
+          console.log(`[Network] Fetching via proxy: ${proxyUrl}`);
+
+          try {
+            const response = await fetch(proxyUrl);
+
+            if (!response.ok) {
+              // corsproxy.io forwards HTTP status codes.
+              throw new Error(
+                `Server returned status ${response.status} for ${url}`,
+              );
+            }
+
+            const htmlText = await response.text();
+            if (!htmlText || htmlText.trim() === "") {
+              throw new Error(`Received empty response from ${url}`);
+            }
+            return this.extractVisibleText(htmlText);
+          } catch (error) {
+            console.error(`[Network] Fetch failed:`, error);
+            // Differentiate between generic network errors and specific proxy/server errors
+            if (error.message.includes("status")) {
+              throw error;
+            } else {
+              throw new Error(
+                `Network/Proxy error while fetching ${url}. The site might block proxies.`,
+              );
+            }
+          }
+        },
+
+        extractVisibleText(htmlString) {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(htmlString, "text/html");
+
+          // Strip out tags that don't represent visible text
+          const tagsToRemove = [
+            "script",
+            "style",
+            "noscript",
+            "iframe",
+            "svg",
+            "meta",
+            "link",
+          ];
+          tagsToRemove.forEach((tag) => {
+            doc.querySelectorAll(tag).forEach((el) => el.remove());
+          });
+
+          // Get innerText and clean up excessive whitespace/newlines
+          let text = doc.body.innerText || doc.body.textContent || "";
+          return text.replace(/\n\s*\n/g, "\n").trim();
+        },
+      };
+
+      // 4. Core App Module
+      const App = {
+        currentDiff: null,
+        currentView: "inline",
+
+        init() {
+          Network.initConnectivity();
+          this.bindEvents();
+          console.log("[App] Booted up successfully.");
+        },
+
+        bindEvents() {
+          UI.els.btn.addEventListener("click", () => this.executeComparison());
+
+          UI.els.viewBtns.forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              this.switchView(e.target.dataset.view);
+            });
+          });
+        },
+
+        async executeComparison() {
+          if (!navigator.onLine) {
+            UI.showToast("Action blocked: You are currently offline.", true);
+            return;
+          }
+
+          const url1 = UI.els.url1.value.trim();
+          const url2 = UI.els.url2.value.trim();
+
+          if (!url1 || !url2) {
+            UI.showToast("Please provide both URLs before comparing.", true);
+            return;
+          }
+          if (!Utils.isValidUrl(url1) || !Utils.isValidUrl(url2)) {
+            UI.showToast(
+              "One or both URLs are invalid. Ensure they include http:// or https://",
+              true,
+            );
+            return;
+          }
+
+          UI.setLoading(true);
+
+          try {
+            // Fetch in parallel for better performance
+            const [text1, text2] = await Promise.all([
+              Network.fetchPage(url1),
+              Network.fetchPage(url2),
+            ]);
+
+            console.log("[App] Text fetched successfully. Generating diff...");
+
+            // Diff.diffLines comes from the included jsdiff CDN
+            this.currentDiff = Diff.diffLines(text1, text2);
+
+            UI.els.controls.style.display = "flex";
+            this.renderCurrentView();
+          } catch (error) {
+            UI.showToast(`Error: ${error.message}`, true);
+          } finally {
+            UI.setLoading(false);
+          }
+        },
+
+        switchView(viewMode) {
+          if (this.currentView === viewMode) return;
+
+          this.currentView = viewMode;
+          UI.els.viewBtns.forEach((b) => b.classList.remove("active"));
+          document
+            .querySelector(`[data-view="${viewMode}"]`)
+            .classList.add("active");
+
+          // Small visual feedback during switch
+          UI.els.output.style.opacity = "0";
+          setTimeout(() => {
+            this.renderCurrentView();
+            UI.els.output.style.opacity = "1";
+          }, 150);
+        },
+
+        renderCurrentView() {
+          if (!this.currentDiff) return;
+
+          if (this.currentView === "inline") {
+            UI.renderInlineDiff(this.currentDiff);
+          } else {
+            UI.renderSplitDiff(this.currentDiff);
+          }
+        },
+      };
+
+      // Initialize App on load
+      document.addEventListener("DOMContentLoaded", () => App.init());
+    </script>
+  </body>
+</html>
