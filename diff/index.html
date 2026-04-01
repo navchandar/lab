@@ -314,12 +314,12 @@
       /* --- Word-Level Diff Styles --- */
       .word-added {
         border-radius: 2px;
-        background-color: #acf2bd;
+        background-color: #3e91535b;
         color: #055d20;
       }
       .word-removed {
         border-radius: 2px;
-        background-color: #ffc4c1;
+        background-color: #ff847e63;
         color: #82071e;
       }
 
@@ -338,10 +338,10 @@
         }
         /* --- Word-Level Diff Styles --- */
         .word-added {
-          background-color: rgba(46, 160, 67, 0.4);
+          background-color: #9be8ae5b;
         }
         .word-removed {
-          background-color: rgba(248, 81, 73, 0.4);
+          background-color: #f7a7a363;
         }
       }
 
@@ -686,46 +686,62 @@
 
                 const wordDiff = Diff.diffWordsWithSpace(rmText, addText);
 
-                let rmHtmlLines = [],
-                  currentRmLine = "";
-                let addHtmlLines = [],
-                  currentAddLine = "";
-
+                // --- Calculate Similarity ---
+                let unchangedChars = 0;
                 wordDiff.forEach((part) => {
-                  const splitLines = part.value.split("\n");
-                  splitLines.forEach((str, idx) => {
-                    const escaped = this.escapeHTML(str);
-                    if (!part.added) {
-                      currentRmLine += part.removed
-                        ? `<span class="word-removed">${escaped}</span>`
-                        : escaped;
-                      if (idx < splitLines.length - 1) {
-                        rmHtmlLines.push(currentRmLine);
-                        currentRmLine = "";
-                      }
-                    }
-                    if (!part.removed) {
-                      currentAddLine += part.added
-                        ? `<span class="word-added">${escaped}</span>`
-                        : escaped;
-                      if (idx < splitLines.length - 1) {
-                        addHtmlLines.push(currentAddLine);
-                        currentAddLine = "";
-                      }
-                    }
-                  });
+                  if (!part.added && !part.removed) {
+                    unchangedChars += part.value.length;
+                  }
                 });
-                rmHtmlLines.push(currentRmLine);
-                addHtmlLines.push(currentAddLine);
 
-                // Inject the HTML strings back into the line objects
-                for (let j = 0; j <= rmEnd - rmStart; j++) {
-                  if (lines[rmStart + j])
-                    lines[rmStart + j].html = rmHtmlLines[j];
-                }
-                for (let j = 0; j <= addEnd - addStart; j++) {
-                  if (lines[addStart + j])
-                    lines[addStart + j].html = addHtmlLines[j];
+                const maxLength = Math.max(rmText.length, addText.length);
+                const similarity =
+                  maxLength === 0 ? 0 : unchangedChars / maxLength;
+
+                // Threshold: At least 50% of the characters must be identical.
+                // Otherwise, it's a completely rewritten block, so skip word highlights.
+                if (similarity >= 0.5) {
+                  let rmHtmlLines = [],
+                    currentRmLine = "";
+                  let addHtmlLines = [],
+                    currentAddLine = "";
+
+                  wordDiff.forEach((part) => {
+                    const splitLines = part.value.split("\n");
+                    splitLines.forEach((str, idx) => {
+                      const escaped = this.escapeHTML(str);
+                      if (!part.added) {
+                        currentRmLine += part.removed
+                          ? `<span class="word-removed">${escaped}</span>`
+                          : escaped;
+                        if (idx < splitLines.length - 1) {
+                          rmHtmlLines.push(currentRmLine);
+                          currentRmLine = "";
+                        }
+                      }
+                      if (!part.removed) {
+                        currentAddLine += part.added
+                          ? `<span class="word-added">${escaped}</span>`
+                          : escaped;
+                        if (idx < splitLines.length - 1) {
+                          addHtmlLines.push(currentAddLine);
+                          currentAddLine = "";
+                        }
+                      }
+                    });
+                  });
+                  rmHtmlLines.push(currentRmLine);
+                  addHtmlLines.push(currentAddLine);
+
+                  // Inject the HTML strings back into the line objects
+                  for (let j = 0; j <= rmEnd - rmStart; j++) {
+                    if (lines[rmStart + j])
+                      lines[rmStart + j].html = rmHtmlLines[j];
+                  }
+                  for (let j = 0; j <= addEnd - addStart; j++) {
+                    if (lines[addStart + j])
+                      lines[addStart + j].html = addHtmlLines[j];
+                  }
                 }
               }
             } else {
@@ -735,12 +751,12 @@
           return lines;
         },
 
-        buildContextDiff(diffArray, contextSize = 2, contextOnly = true) {
+        //  Flattens the jsdiff output and runs the heavy word diffs ONCE
+        flattenAndEnhanceDiff(diffArray) {
           let lines = [];
           let oldLine = 1;
           let newLine = 1;
 
-          // Flatten the jsdiff output into individual line objects
           diffArray.forEach((part) => {
             const partLines = part.value.replace(/\n$/, "").split("\n");
             partLines.forEach((text) => {
@@ -769,34 +785,42 @@
             });
           });
 
-          // Mark which indices to keep based on context size
+          return this.enhanceWithWordDiffs(lines);
+        },
+
+        // Fast filter for the UI to toggle context lines
+        filterContext(lines, contextSize = 2, contextOnly = true) {
+          // Return everything instantly
+          if (!contextOnly) {
+            return lines;
+          }
+
           let keepIndices = new Set();
           for (let i = 0; i < lines.length; i++) {
-            if (!contextOnly) {
-              keepIndices.add(i); // If context is off, keep every line
-            } else if (lines[i].type !== "unchanged") {
+            if (lines[i].type !== "unchanged") {
               for (
                 let j = Math.max(0, i - contextSize);
                 j <= Math.min(lines.length - 1, i + contextSize);
                 j++
-              )
+              ) {
                 keepIndices.add(j);
+              }
             }
           }
 
-          // Rebuild the array, inserting separators where there are gaps
           let finalLines = [];
           let lastIndex = -1;
           Array.from(keepIndices)
             .sort((a, b) => a - b)
             .forEach((idx) => {
-              if (contextOnly && lastIndex !== -1 && idx > lastIndex + 1)
+              if (lastIndex !== -1 && idx > lastIndex + 1) {
                 finalLines.push({ type: "separator" });
+              }
               finalLines.push(lines[idx]);
               lastIndex = idx;
             });
 
-          return this.enhanceWithWordDiffs(finalLines);
+          return finalLines;
         },
 
         readFileAsText(file) {
@@ -848,12 +872,13 @@
           }
         },
 
-        renderInlineDiff(diffArray, contextOnly) {
-          const contextLines = Utils.buildContextDiff(
-            diffArray,
+        renderInlineDiff(processedLines, contextOnly) {
+          const contextLines = Utils.filterContext(
+            processedLines,
             2,
             contextOnly,
           );
+
           if (contextLines.length === 0)
             return (this.els.output.innerHTML =
               '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found!</div></div>');
@@ -875,9 +900,9 @@
           this.els.output.innerHTML = html;
         },
 
-        renderSplitDiff(diffArray, contextOnly) {
-          const contextLines = Utils.buildContextDiff(
-            diffArray,
+        renderSplitDiff(processedLines, contextOnly) {
+          const contextLines = Utils.filterContext(
+            processedLines,
             2,
             contextOnly,
           );
@@ -909,6 +934,7 @@
       // App Controller
       const App = {
         currentDiff: null,
+        processedLines: null,
         currentView: "inline",
         inputMode: "url",
 
@@ -1035,6 +1061,9 @@
             // Run the synchronous diff calculation
             this.currentDiff = Diff.diffLines(text1, text2);
 
+            // perform the heavy word-diff calculations ONCE and cache them
+            this.processedLines = Utils.flattenAndEnhanceDiff(this.currentDiff);
+
             UI.els.controls.style.display = "flex";
             this.renderCurrentView();
           } catch (error) {
@@ -1058,12 +1087,14 @@
         },
 
         renderCurrentView() {
-          if (!this.currentDiff) return;
+          if (!this.processedLines) {
+            return;
+          }
           const contextOnly = UI.els.contextCb.checked;
           if (this.currentView === "inline") {
-            UI.renderInlineDiff(this.currentDiff, contextOnly);
+            UI.renderInlineDiff(this.processedLines, contextOnly);
           } else {
-            UI.renderSplitDiff(this.currentDiff, contextOnly);
+            UI.renderSplitDiff(this.processedLines, contextOnly);
           }
         },
       };
