@@ -57,10 +57,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
     <style>
+      /* --- Modern CSS Variables & Theming --- */
       :root {
-        /* Light Theme */
         --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        --surface-color: rgba(255, 255, 255, 0.9);
+        --surface-color: rgba(255, 255, 255, 0.95);
         --text-main: #2d3748;
         --text-muted: #718096;
         --border-color: rgba(226, 232, 240, 0.8);
@@ -73,36 +73,27 @@
         /* Diff Colors */
         --diff-add-bg: #f0fff4;
         --diff-add-text: #276749;
-        --diff-add-border: #9ae6b4;
         --diff-remove-bg: #fff5f5;
         --diff-remove-text: #9b2c2c;
-        --diff-remove-border: #feb2b2;
-
-        /* UI Elements */
-        --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.05);
-        --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
         --radius: 12px;
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition: all 0.3s ease;
       }
 
       /* Dark Theme Override */
       @media (prefers-color-scheme: dark) {
         :root {
           --bg-gradient: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-          --surface-color: rgba(26, 32, 44, 0.85);
+          --surface-color: rgba(26, 32, 44, 0.95);
           --text-main: #f7fafc;
           --text-muted: #a0aec0;
           --border-color: rgba(74, 85, 104, 0.6);
-
           --primary-gradient: linear-gradient(135deg, #7f9cf5 0%, #9f7aea 100%);
           --primary-hover: linear-gradient(135deg, #667eea 0%, #805ad5 100%);
 
           --diff-add-bg: rgba(72, 187, 120, 0.15);
           --diff-add-text: #68d391;
-          --diff-add-border: rgba(104, 211, 145, 0.3);
           --diff-remove-bg: rgba(245, 101, 101, 0.15);
           --diff-remove-text: #fc8181;
-          --diff-remove-border: rgba(252, 129, 129, 0.3);
         }
       }
 
@@ -121,31 +112,26 @@
           Arial,
           sans-serif;
       }
-
       body {
         background: var(--bg-gradient);
-        background-attachment: fixed;
         padding: 24px 16px;
         min-height: 100vh;
         color: var(--text-main);
-        line-height: 1.6;
       }
 
       .container {
         backdrop-filter: blur(10px);
-        margin: 0 auto;
-        background: var(--surface-color);
-        max-width: 1200px;
         -webkit-backdrop-filter: blur(10px);
-        transition: var(--transition);
-        box-shadow: var(--shadow-lg);
-        border: 1px solid var(--border-color);
+        margin: 0 auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         border-radius: var(--radius);
+        background: var(--surface-color);
         padding: 32px;
+        max-width: 1200px;
       }
 
       h1 {
-        margin-bottom: 32px;
+        margin-bottom: 24px;
         background: var(--primary-gradient);
         font-weight: 800;
         font-size: 2rem;
@@ -155,84 +141,133 @@
         -webkit-text-fill-color: transparent;
       }
 
-      /* --- Input & Form Styles --- */
-      .input-group {
+      /* --- Mode Selector --- */
+      .mode-selector {
         display: flex;
-        flex-direction: column;
-        gap: 16px;
-        margin-bottom: 32px;
+        justify-content: center;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+      .mode-label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.2s;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-weight: 500;
+      }
+      .mode-label:hover {
+        color: var(--text-main);
+      }
+      .mode-label input {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
       }
 
+      /* --- Inputs --- */
+      .input-group {
+        display: none;
+        flex-direction: column;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .input-group.active {
+        display: flex;
+      }
       @media (min-width: 768px) {
         .input-group {
           flex-direction: row;
         }
       }
 
-      input[type="url"] {
+      .compare-input {
         flex: 1;
         transition: var(--transition);
         outline: none;
         border: 2px solid var(--border-color);
         border-radius: var(--radius);
-        background-color: transparent;
+        background: transparent;
         padding: 14px 20px;
         color: var(--text-main);
         font-size: 1rem;
       }
-
-      input[type="url"]:focus {
+      textarea.compare-input {
+        min-height: 120px;
+        resize: vertical;
+        font-size: 0.875rem;
+        font-family: monospace;
+      }
+      input[type="file"].compare-input {
+        cursor: pointer;
+        padding: 10px;
+      }
+      .compare-input:focus {
         box-shadow: 0 0 0 2px #7f9cf5;
         border-color: transparent;
-        background-color: rgba(255, 255, 255, 0.05);
+        background: rgba(255, 255, 255, 0.05);
       }
 
+      .btn-container {
+        margin-bottom: 32px;
+        text-align: center;
+      }
       button {
         transition: var(--transition);
         cursor: pointer;
-        box-shadow: var(--shadow-sm);
         border: none;
         border-radius: var(--radius);
         background: var(--primary-gradient);
-        padding: 14px 28px;
+        padding: 14px 32px;
         color: white;
         font-weight: 600;
         font-size: 1rem;
       }
-
       button:hover:not(:disabled) {
         transform: translateY(-2px);
         box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
-        background: var(--primary-hover);
       }
-
-      button:active:not(:disabled) {
-        transform: translateY(0);
-      }
-
       button:disabled {
-        transform: none;
         opacity: 0.6;
         cursor: not-allowed;
-        box-shadow: none;
       }
 
-      /* --- Diff Controls --- */
+      /* --- Controls & Context Checkbox --- */
       .controls {
-        display: flex;
         display: none;
+        flex-wrap: wrap;
         justify-content: space-between;
         align-items: center;
-        /* Hidden initially */
-        animation: fadeIn 0.5s ease forwards;
+        gap: 16px;
         margin-bottom: 20px;
         border-bottom: 1px solid var(--border-color);
         padding-bottom: 20px;
       }
-
-      .controls span {
-        color: var(--text-muted);
+      .controls-left {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+      .controls-left span {
         font-weight: 600;
+      }
+
+      .context-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        user-select: none;
+      }
+      .context-toggle input {
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
+        accent-color: #667eea;
       }
 
       .view-toggle {
@@ -241,13 +276,11 @@
         background: rgba(0, 0, 0, 0.05);
         padding: 4px;
       }
-
       @media (prefers-color-scheme: dark) {
         .view-toggle {
           background: rgba(255, 255, 255, 0.05);
         }
       }
-
       .view-btn {
         box-shadow: none;
         border-radius: 8px;
@@ -265,24 +298,20 @@
       }
 
       .view-btn.active {
-        box-shadow: var(--shadow-sm);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         background: var(--surface-color);
         color: var(--text-main);
       }
 
       /* --- Diff Output Area --- */
       #diff-output {
-        transition: var(--transition);
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         background: rgba(0, 0, 0, 0.02);
         overflow-x: auto;
         font-size: 0.875rem;
-        font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
-        white-space: collapse;
-        word-break: break-all;
+        font-family: monospace;
       }
-
       @media (prefers-color-scheme: dark) {
         #diff-output {
           background: rgba(0, 0, 0, 0.2);
@@ -295,6 +324,15 @@
         }
       }
 
+      .diff-row {
+        display: flex;
+        border-bottom: 1px solid transparent;
+        width: 100%;
+      }
+      .diff-row:hover {
+        background-color: rgba(0, 0, 0, 0.03);
+      }
+
       .line-num {
         display: flex;
         justify-content: flex-end;
@@ -302,22 +340,19 @@
         margin-right: 12px;
         border-right: 1px solid var(--border-color);
         background: rgba(0, 0, 0, 0.03);
-        padding-right: 8px;
-        width: 50px;
+        padding-right: 10px;
+        width: 45px;
         min-width: 45px;
         color: var(--text-muted);
-        font-size: 0.75rem;
         user-select: none;
         text-align: right;
       }
-
       .line-text {
         flex: 1;
         padding: 2px 16px 2px 0;
         white-space: pre-wrap;
         word-break: break-all;
       }
-
       .diff-added {
         background-color: var(--diff-add-bg);
         color: var(--diff-add-text);
@@ -326,19 +361,14 @@
         background-color: var(--diff-remove-bg);
         color: var(--diff-remove-text);
       }
-
       .diff-separator {
         opacity: 0.7;
         background: var(--border-color);
         padding: 4px;
-        width: 100%;
         color: var(--text-main);
-        font-weight: bold;
         font-size: 0.8rem;
         text-align: center;
       }
-
-      /* Side-by-Side Specific Styles */
       .side-by-side-container {
         display: flex;
         width: 100%;
@@ -351,91 +381,12 @@
         border-right: 1px solid var(--border-color);
       }
 
-      /* --- Context Diff & Line Number Styles --- */
-      .diff-row {
-        display: flex;
-        border-bottom: 1px solid transparent;
-        width: 100%;
-      }
-
-      .diff-row:hover {
-        background-color: rgba(0, 0, 0, 0.02);
-      }
-
-      .diff-line {
-        display: block;
-        transition: background-color 0.2s;
-        border-left: 4px solid transparent;
-        padding: 4px 16px;
-      }
-
-      .diff-line:hover {
-        filter: brightness(0.95);
-      }
-
-      .diff-added {
-        border-left-color: var(--diff-add-border);
-        background-color: var(--diff-add-bg);
-        color: var(--diff-add-text);
-      }
-
-      .diff-removed {
-        border-left-color: var(--diff-remove-border);
-        background-color: var(--diff-remove-bg);
-        color: var(--diff-remove-text);
-      }
-
-      /* Side-by-Side Specific Styles */
-      .side-by-side-container {
-        display: flex;
-        width: 100%;
-      }
-
-      .side-pane {
-        width: 50%;
-        overflow-x: auto;
-      }
-
-      .side-pane:first-child {
-        border-right: 1px solid var(--border-color);
-      }
-
-      /* --- Loading Spinner --- */
       #loader {
         display: none;
         margin: 40px 0;
+        color: var(--text-muted);
         text-align: center;
       }
-
-      .spinner {
-        animation: spin 1s linear infinite;
-        margin: 0 auto 16px auto;
-        border: 4px solid var(--border-color);
-        border-top-color: #7f9cf5;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-      }
-
-      @keyframes spin {
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      @keyframes fadeIn {
-        from {
-          transform: translateY(10px);
-          opacity: 0;
-        }
-
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      /* --- Toast Notification --- */
       #toast-container {
         display: flex;
         position: fixed;
@@ -446,7 +397,6 @@
         transform: translateX(-50%);
         z-index: 1000;
       }
-
       .toast {
         transform: translateY(20px) scale(0.95);
         opacity: 0;
@@ -456,16 +406,11 @@
         border-radius: 30px;
         background: var(--surface-color);
         padding: 14px 24px;
-        color: var(--text-main);
-        font-weight: 500;
-        font-size: 0.9rem;
       }
-
       .toast.show {
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
         opacity: 1;
       }
-
       .toast.error {
         border: none;
         background: var(--error-gradient);
@@ -473,38 +418,70 @@
       }
     </style>
   </head>
-
   <body>
     <div class="container">
       <h1>Diff Check</h1>
 
-      <div class="input-group">
+      <div class="mode-selector">
+        <label class="mode-label"
+          ><input type="radio" name="input-mode" value="url" checked />
+          URL</label
+        >
+        <label class="mode-label"
+          ><input type="radio" name="input-mode" value="text" /> Text</label
+        >
+        <label class="mode-label"
+          ><input type="radio" name="input-mode" value="file" /> File</label
+        >
+      </div>
+
+      <div id="group-url" class="input-group active">
         <input
           type="url"
           id="url1"
+          class="compare-input"
           placeholder="https://example.com/original"
-          required
-          autocomplete="off"
         />
         <input
           type="url"
           id="url2"
+          class="compare-input"
           placeholder="https://example.com/modified"
-          required
-          autocomplete="off"
         />
-        <button id="compare-btn">Compare Pages</button>
       </div>
 
-      <div id="loader">
-        <div class="spinner"></div>
-        <span style="color: var(--text-muted); font-weight: 500"
-          >Fetching and analyzing content...</span
-        >
+      <div id="group-text" class="input-group">
+        <textarea
+          id="text1"
+          class="compare-input"
+          placeholder="Paste original text/code here..."
+        ></textarea>
+        <textarea
+          id="text2"
+          class="compare-input"
+          placeholder="Paste modified text/code here..."
+        ></textarea>
       </div>
+
+      <div id="group-file" class="input-group">
+        <input type="file" id="file1" class="compare-input" />
+        <input type="file" id="file2" class="compare-input" />
+      </div>
+
+      <div class="btn-container">
+        <button id="compare-btn">Compare</button>
+      </div>
+
+      <div id="loader">Fetching and analyzing content...</div>
 
       <div class="controls" id="diff-controls">
-        <span>Comparison Results</span>
+        <div class="controls-left">
+          <span>Comparison Results</span>
+          <label class="context-toggle">
+            <input type="checkbox" id="context-only-cb" /> Show only changes
+            (Context)
+          </label>
+        </div>
         <div class="view-toggle">
           <button class="view-btn active" data-view="inline">Inline</button>
           <button class="view-btn" data-view="split">Side-by-Side</button>
@@ -517,42 +494,77 @@
     <div id="toast-container"></div>
 
     <script>
-      /**
-       * --- MODULAR JAVASCRIPT ---
-       * Handles UI transitions, CORS proxy fetching, and diff rendering.
-       */
-
-      // 1. Utils Module: Helpers
+      // 1. Utils Module: Parsing, Diffing, Formatting
       const Utils = {
         isValidUrl(string) {
           try {
             new URL(string);
             return true;
-          } catch (err) {
+          } catch (e) {
             return false;
           }
         },
         escapeHTML(str) {
           return str.replace(
             /[&<>'"]/g,
-            (tag) =>
+            (t) =>
               ({
                 "&": "&amp;",
                 "<": "&lt;",
                 ">": "&gt;",
                 "'": "&#39;",
                 '"': "&quot;",
-              })[tag],
+              })[t],
           );
         },
 
-        // NEW: Flattens diff and extracts only changes + context lines
-        buildContextDiff(diffArray, contextSize = 2) {
+        // Smart content parser (used for URLs, Files, and Direct Text)
+        processContent(text, identifier = "") {
+          const trimmed = text.trim();
+          const lowerId = identifier.toLowerCase();
+
+          try {
+            if (
+              (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+              (trimmed.startsWith("[") && trimmed.endsWith("]"))
+            ) {
+              return JSON.stringify(JSON.parse(trimmed), null, 2);
+            }
+          } catch (e) {}
+
+          if (lowerId.endsWith(".js") && typeof js_beautify === "function")
+            return js_beautify(text, { indent_size: 2 });
+          if (lowerId.endsWith(".css") && typeof css_beautify === "function")
+            return css_beautify(text, { indent_size: 2 });
+
+          const lowerText = trimmed.toLowerCase();
+          if (
+            lowerText.startsWith("<!doctype html>") ||
+            lowerText.includes("<html") ||
+            lowerText.includes("<body")
+          ) {
+            const doc = new DOMParser().parseFromString(text, "text/html");
+            doc
+              .querySelectorAll(
+                "script, style, noscript, iframe, svg, meta, link",
+              )
+              .forEach((el) => el.remove());
+            return (doc.body.innerText || doc.body.textContent || "")
+              .replace(/\n\s*\n/g, "\n")
+              .trim();
+          }
+
+          if (!text.includes("\n") && text.length > 500)
+            return text.replace(/([{};,])/g, "$1\n");
+          return text.replace(/\r\n/g, "\n");
+        },
+
+        buildContextDiff(diffArray, contextSize = 2, contextOnly = true) {
           let lines = [];
           let oldLine = 1;
           let newLine = 1;
 
-          // 1. Flatten the jsdiff output into individual line objects
+          // Flatten the jsdiff output into individual line objects
           diffArray.forEach((part) => {
             const partLines = part.value.replace(/\n$/, "").split("\n");
             partLines.forEach((text) => {
@@ -581,102 +593,100 @@
             });
           });
 
-          // 2. Mark which indices to keep based on context size
+          // Mark which indices to keep based on context size
           let keepIndices = new Set();
           for (let i = 0; i < lines.length; i++) {
-            if (lines[i].type !== "unchanged") {
+            if (!contextOnly) {
+              keepIndices.add(i); // If context is off, keep every line
+            } else if (lines[i].type !== "unchanged") {
               for (
                 let j = Math.max(0, i - contextSize);
                 j <= Math.min(lines.length - 1, i + contextSize);
                 j++
-              ) {
+              )
                 keepIndices.add(j);
-              }
             }
           }
 
-          // 3. Rebuild the array, inserting separators where there are gaps
+          // Rebuild the array, inserting separators where there are gaps
           let finalLines = [];
           let lastIndex = -1;
-          let sortedIndices = Array.from(keepIndices).sort((a, b) => a - b);
-
-          if (sortedIndices.length === 0) return []; // No changes at all
-
-          sortedIndices.forEach((idx) => {
-            if (lastIndex !== -1 && idx > lastIndex + 1) {
-              finalLines.push({ type: "separator" });
-            }
-            finalLines.push(lines[idx]);
-            lastIndex = idx;
-          });
+          Array.from(keepIndices)
+            .sort((a, b) => a - b)
+            .forEach((idx) => {
+              if (contextOnly && lastIndex !== -1 && idx > lastIndex + 1)
+                finalLines.push({ type: "separator" });
+              finalLines.push(lines[idx]);
+              lastIndex = idx;
+            });
 
           return finalLines;
         },
+
+        readFileAsText(file) {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () =>
+              reject(new Error(`Failed to read ${file.name}`));
+            reader.readAsText(file);
+          });
+        },
       };
 
-      // 2. UI Module: DOM interactions & Animations
+      // UI Module: DOM interactions & Animations
       const UI = {
         els: {
-          url1: document.getElementById("url1"),
-          url2: document.getElementById("url2"),
           btn: document.getElementById("compare-btn"),
           loader: document.getElementById("loader"),
           output: document.getElementById("diff-output"),
           controls: document.getElementById("diff-controls"),
           viewBtns: document.querySelectorAll(".view-btn"),
+          modeRadios: document.querySelectorAll('input[name="input-mode"]'),
+          inputGroups: document.querySelectorAll(".input-group"),
+          contextCb: document.getElementById("context-only-cb"),
           toastContainer: document.getElementById("toast-container"),
         },
 
-        showToast(message, isError = false) {
-          console.log(`[UI] Toast: ${message}`);
+        showToast(msg, isError = false) {
           const toast = document.createElement("div");
           toast.className = `toast ${isError ? "error" : ""}`;
-          toast.textContent = message;
-
+          toast.textContent = msg;
           this.els.toastContainer.appendChild(toast);
-
-          // Trigger animation frame for CSS transition
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => toast.classList.add("show"));
-          });
-
-          // Remove after 4 seconds
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => toast.classList.add("show")),
+          );
           setTimeout(() => {
             toast.classList.remove("show");
-            setTimeout(() => toast.remove(), 300); // Wait for transition out
+            setTimeout(() => toast.remove(), 300);
           }, 4000);
         },
 
         setLoading(isLoading) {
           this.els.btn.disabled = isLoading;
-          this.els.btn.textContent = isLoading
-            ? "Comparing..."
-            : "Compare Pages";
+          this.els.btn.textContent = isLoading ? "Analyzing..." : "Compare";
           this.els.loader.style.display = isLoading ? "block" : "none";
-
           if (isLoading) {
             this.els.output.innerHTML = "";
             this.els.controls.style.display = "none";
           }
         },
 
-        renderInlineDiff(diffArray) {
-          const contextLines = Utils.buildContextDiff(diffArray);
-
-          if (contextLines.length === 0) {
-            this.els.output.innerHTML =
-              '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found. Pages are identical!</div></div>';
-            return;
-          }
+        renderInlineDiff(diffArray, contextOnly) {
+          const contextLines = Utils.buildContextDiff(
+            diffArray,
+            2,
+            contextOnly,
+          );
+          if (contextLines.length === 0)
+            return (this.els.output.innerHTML =
+              '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found!</div></div>');
 
           let html = "";
           contextLines.forEach((line) => {
-            if (line.type === "separator") {
-              html += `<div class="diff-separator">@@ ... @@</div>`;
-              return;
-            }
-
-            const colorClass =
+            if (line.type === "separator")
+              return (html += `<div class="diff-separator">@@ ... @@</div>`);
+            const color =
               line.type === "added"
                 ? "diff-added"
                 : line.type === "removed"
@@ -684,233 +694,144 @@
                   : "";
             const prefix =
               line.type === "added" ? "+" : line.type === "removed" ? "-" : " ";
-
-            html += `
-              <div class="diff-row ${colorClass}">
-                <div class="line-num">${line.oldLine}</div>
-                <div class="line-num">${line.newLine}</div>
-                <div class="line-text">${prefix} ${Utils.escapeHTML(line.text)}</div>
-              </div>
-            `;
+            html += `<div class="diff-row ${color}"><div class="line-num">${line.oldLine}</div><div class="line-num">${line.newLine}</div><div class="line-text">${prefix} ${Utils.escapeHTML(line.text)}</div></div>`;
           });
-
           this.els.output.innerHTML = html;
         },
 
-        renderSplitDiff(diffArray) {
-          const contextLines = Utils.buildContextDiff(diffArray);
+        renderSplitDiff(diffArray, contextOnly) {
+          const contextLines = Utils.buildContextDiff(
+            diffArray,
+            2,
+            contextOnly,
+          );
+          if (contextLines.length === 0)
+            return (this.els.output.innerHTML =
+              '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found!</div></div>');
 
-          if (contextLines.length === 0) {
-            this.els.output.innerHTML =
-              '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found. Pages are identical!</div></div>';
-            return;
-          }
-
-          let leftHtml = '<div class="side-pane">';
-          let rightHtml = '<div class="side-pane">';
-
+          let l = '<div class="side-pane">',
+            r = '<div class="side-pane">';
           contextLines.forEach((line) => {
             if (line.type === "separator") {
-              leftHtml += `<div class="diff-separator">@@ ... @@</div>`;
-              rightHtml += `<div class="diff-separator">@@ ... @@</div>`;
+              l += `<div class="diff-separator">@@ ... @@</div>`;
+              r += `<div class="diff-separator">@@ ... @@</div>`;
             } else if (line.type === "removed") {
-              leftHtml += `<div class="diff-row diff-removed"><div class="line-num">${line.oldLine}</div><div class="line-text">- ${Utils.escapeHTML(line.text)}</div></div>`;
-              rightHtml += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
+              l += `<div class="diff-row diff-removed"><div class="line-num">${line.oldLine}</div><div class="line-text">- ${Utils.escapeHTML(line.text)}</div></div>`;
+              r += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
             } else if (line.type === "added") {
-              leftHtml += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
-              rightHtml += `<div class="diff-row diff-added"><div class="line-num">${line.newLine}</div><div class="line-text">+ ${Utils.escapeHTML(line.text)}</div></div>`;
+              l += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
+              r += `<div class="diff-row diff-added"><div class="line-num">${line.newLine}</div><div class="line-text">+ ${Utils.escapeHTML(line.text)}</div></div>`;
             } else {
-              leftHtml += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
-              rightHtml += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
+              l += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
+              r += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
             }
           });
-
-          leftHtml += "</div>";
-          rightHtml += "</div>";
-
-          this.els.output.innerHTML = `<div class="side-by-side-container">${leftHtml}${rightHtml}</div>`;
+          this.els.output.innerHTML = `<div class="side-by-side-container">${l}</div>${r}</div>`;
         },
       };
 
-      // 3. Network Module: Handles corsproxy.io integration
-      const Network = {
-        initConnectivity() {
-          window.addEventListener("offline", () => {
-            console.warn("[Network] Offline detected");
-            UI.showToast(
-              "You are offline. Please check your connection.",
-              true,
-            );
-          });
-          window.addEventListener("online", () => {
-            console.log("[Network] Online detected");
-            UI.showToast("Connection restored!");
-          });
-        },
-
-        async fetchPage(url) {
-          // Using corsproxy.io specifically
-          const proxyUrl = `https://corsproxy.io/?url=${encodeURIComponent(url)}`;
-          console.log(`[Network] Fetching via proxy: ${proxyUrl}`);
-
-          try {
-            const response = await fetch(proxyUrl);
-
-            if (!response.ok) {
-              // corsproxy.io forwards HTTP status codes.
-              throw new Error(
-                `Server returned status ${response.status} for ${url}`,
-              );
-            }
-
-            const rawText = await response.text();
-            if (!rawText || rawText.trim() === "") {
-              throw new Error(`Received empty response from ${url}`);
-            }
-
-            return this.processContent(rawText, url);
-          } catch (error) {
-            console.error(`[Network] Fetch failed:`, error);
-            // Differentiate between generic network errors and specific proxy/server errors
-            if (error.message.includes("status")) {
-              throw error;
-            } else {
-              throw new Error(
-                `Network/Proxy error while fetching ${url}. The site might block proxies.`,
-              );
-            }
-          }
-        },
-
-        processContent(text, url) {
-          const trimmed = text.trim();
-          const lowerUrl = url.toLowerCase();
-
-          // 1. JSON handling
-          try {
-            if (
-              (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
-              (trimmed.startsWith("[") && trimmed.endsWith("]"))
-            ) {
-              return JSON.stringify(JSON.parse(trimmed), null, 2);
-            }
-          } catch (e) {}
-
-          // 2. JavaScript Un-minification (using js-beautify)
-          if (lowerUrl.endsWith(".js") && typeof js_beautify === "function") {
-            return js_beautify(text, { indent_size: 2 });
-          }
-
-          // 3. CSS Un-minification (using css_beautify)
-          if (lowerUrl.endsWith(".css") && typeof css_beautify === "function") {
-            return css_beautify(text, { indent_size: 2 });
-          }
-
-          // 4. HTML handling
-          const lowerText = trimmed.toLowerCase();
-          if (
-            lowerText.startsWith("<!doctype html>") ||
-            lowerText.includes("<html") ||
-            lowerText.includes("<body")
-          ) {
-            return this.extractVisibleText(text);
-          }
-
-          // 5. The Fallback for unknown minified files
-          // If it's not a standard JS/CSS file but is just one massive string without line breaks
-          if (!text.includes("\n") && text.length > 500) {
-            // Force crude line breaks after common delimiters to make it readable
-            return text.replace(/([{};,])/g, "$1\n");
-          }
-
-          // 6. Standard text
-          return text.replace(/\r\n/g, "\n");
-        },
-
-        extractVisibleText(htmlString) {
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(htmlString, "text/html");
-
-          // Strip out tags that don't represent visible text
-          const tagsToRemove = [
-            "script",
-            "style",
-            "noscript",
-            "iframe",
-            "svg",
-            "meta",
-            "link",
-          ];
-          tagsToRemove.forEach((tag) => {
-            doc.querySelectorAll(tag).forEach((el) => el.remove());
-          });
-
-          // Get innerText and clean up excessive whitespace/newlines
-          let text = doc.body.innerText || doc.body.textContent || "";
-          return text.replace(/\n\s*\n/g, "\n").trim();
-        },
-      };
-
-      // 4. Core App Module
+      // App Controller
       const App = {
         currentDiff: null,
         currentView: "inline",
+        inputMode: "url",
 
         init() {
-          Network.initConnectivity();
+          this.loadPreferences();
           this.bindEvents();
-          console.log("[App] Booted up successfully.");
+          window.addEventListener("offline", () =>
+            UI.showToast("Offline mode.", true),
+          );
+          window.addEventListener("online", () => UI.showToast("Back online."));
+        },
+
+        loadPreferences() {
+          // Load Context Checkbox state from local storage
+          const savedContext = localStorage.getItem("diffContextOnly");
+          if (savedContext !== null) {
+            UI.els.contextCb.checked = savedContext === "true";
+          } else {
+            UI.els.contextCb.checked = true; // Default state
+          }
         },
 
         bindEvents() {
           UI.els.btn.addEventListener("click", () => this.executeComparison());
+          UI.els.viewBtns.forEach((btn) =>
+            btn.addEventListener("click", (e) =>
+              this.switchView(e.target.dataset.view),
+            ),
+          );
 
-          UI.els.viewBtns.forEach((btn) => {
-            btn.addEventListener("click", (e) => {
-              this.switchView(e.target.dataset.view);
+          UI.els.modeRadios.forEach((radio) => {
+            radio.addEventListener("change", (e) => {
+              this.inputMode = e.target.value;
+              UI.els.inputGroups.forEach((g) => g.classList.remove("active"));
+              document
+                .getElementById(`group-${this.inputMode}`)
+                .classList.add("active");
             });
+          });
+
+          // Save preference on change and re-render if a diff exists
+          UI.els.contextCb.addEventListener("change", (e) => {
+            localStorage.setItem("diffContextOnly", e.target.checked);
+            if (this.currentDiff) this.renderCurrentView();
           });
         },
 
+        async getInputs() {
+          if (this.inputMode === "url") {
+            const u1 = document.getElementById("url1").value.trim();
+            const u2 = document.getElementById("url2").value.trim();
+            if (!u1 || !u2) throw new Error("Provide both URLs.");
+            if (!Utils.isValidUrl(u1) || !Utils.isValidUrl(u2))
+              throw new Error("Invalid URLs.");
+
+            const fetchProxy = async (url) => {
+              const res = await fetch(
+                `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+              );
+              if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
+              return Utils.processContent(await res.text(), url);
+            };
+            return await Promise.all([fetchProxy(u1), fetchProxy(u2)]);
+          }
+
+          if (this.inputMode === "text") {
+            const t1 = document.getElementById("text1").value;
+            const t2 = document.getElementById("text2").value;
+            if (!t1 && !t2) throw new Error("Provide text to compare.");
+            return [Utils.processContent(t1), Utils.processContent(t2)];
+          }
+
+          if (this.inputMode === "file") {
+            const f1 = document.getElementById("file1").files[0];
+            const f2 = document.getElementById("file2").files[0];
+            if (!f1 || !f2) throw new Error("Select two files.");
+            const [txt1, txt2] = await Promise.all([
+              Utils.readFileAsText(f1),
+              Utils.readFileAsText(f2),
+            ]);
+            return [
+              Utils.processContent(txt1, f1.name),
+              Utils.processContent(txt2, f2.name),
+            ];
+          }
+        },
+
         async executeComparison() {
-          if (!navigator.onLine) {
-            UI.showToast("Action blocked: You are currently offline.", true);
-            return;
-          }
-
-          const url1 = UI.els.url1.value.trim();
-          const url2 = UI.els.url2.value.trim();
-
-          if (!url1 || !url2) {
-            UI.showToast("Please provide both URLs before comparing.", true);
-            return;
-          }
-          if (!Utils.isValidUrl(url1) || !Utils.isValidUrl(url2)) {
-            UI.showToast(
-              "One or both URLs are invalid. Ensure they include http:// or https://",
-              true,
-            );
-            return;
-          }
+          if (this.inputMode === "url" && !navigator.onLine)
+            return UI.showToast("You are offline.", true);
 
           UI.setLoading(true);
-
           try {
-            // Fetch in parallel for better performance
-            const [text1, text2] = await Promise.all([
-              Network.fetchPage(url1),
-              Network.fetchPage(url2),
-            ]);
-
-            console.log("[App] Text fetched successfully. Generating diff...");
-
-            // Diff.diffLines comes from the included jsdiff CDN
+            const [text1, text2] = await this.getInputs();
             this.currentDiff = Diff.diffLines(text1, text2);
-
             UI.els.controls.style.display = "flex";
             this.renderCurrentView();
           } catch (error) {
-            UI.showToast(`Error: ${error.message}`, true);
+            UI.showToast(error.message, true);
           } finally {
             UI.setLoading(false);
           }
@@ -918,28 +839,21 @@
 
         switchView(viewMode) {
           if (this.currentView === viewMode) return;
-
           this.currentView = viewMode;
           UI.els.viewBtns.forEach((b) => b.classList.remove("active"));
           document
             .querySelector(`[data-view="${viewMode}"]`)
             .classList.add("active");
-
-          // Small visual feedback during switch
-          UI.els.output.style.opacity = "0";
-          setTimeout(() => {
-            this.renderCurrentView();
-            UI.els.output.style.opacity = "1";
-          }, 150);
+          this.renderCurrentView();
         },
 
         renderCurrentView() {
           if (!this.currentDiff) return;
-
+          const contextOnly = UI.els.contextCb.checked;
           if (this.currentView === "inline") {
-            UI.renderInlineDiff(this.currentDiff);
+            UI.renderInlineDiff(this.currentDiff, contextOnly);
           } else {
-            UI.renderSplitDiff(this.currentDiff);
+            UI.renderSplitDiff(this.currentDiff, contextOnly);
           }
         },
       };
