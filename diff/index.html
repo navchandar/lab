@@ -312,12 +312,22 @@
         font-family: monospace;
       }
 
+      /* --- Word-Level Diff Styles --- */
+      .word-added {
+        border-radius: 2px;
+        background-color: rgba(46, 160, 67, 0.4);
+      }
+      .word-removed {
+        border-radius: 2px;
+        background-color: rgba(248, 81, 73, 0.4);
+      }
+
       /* --- Word Linking Hover Styles --- */
       .word-linked {
         display: inline-block;
         transition:
-          background-color 0.15s ease,
-          transform 0.15s ease;
+          background-color 0.1s linear,
+          transform 0.1s linear;
         cursor: pointer;
       }
 
@@ -332,13 +342,21 @@
       }
 
       @media (prefers-color-scheme: light) {
+        .word-added {
+          background-color: #acf2bd;
+          color: #055d20;
+        }
+        .word-removed {
+          background-color: #ffc4c1;
+          color: #82071e;
+        }
         .word-hover.word-added {
           background-color: #7ae49b;
-          color: #055d20;
+          color: #02240c;
         }
         .word-hover.word-removed {
           background-color: #ff9490;
-          color: #82071e;
+          color: #41030e;
         }
       }
 
@@ -709,8 +727,8 @@
                 const similarity =
                   maxLength === 0 ? 0 : unchangedChars / maxLength;
 
-                // Skip the 50% threshold if the block is short (< 50 chars)
-                if (similarity >= 0.5 || maxLength < 50) {
+                // Skip the 40% threshold if the block is short (< 50 chars)
+                if (similarity >= 0.4 || maxLength < 50) {
                   let rmHtmlLines = [],
                     currentRmLine = "";
                   let addHtmlLines = [],
