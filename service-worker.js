@@ -1,4 +1,4 @@
-// version=v2026.03.31
+// version=v2026.04.01
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","company","smart-dom-inspector","serviceability","hospitals","pm-e-drive"];
 
@@ -33,6 +33,7 @@ const urlsToCache = [
   'color/preview.png',
   'color/script.js',
   'color/style.css',
+  'diff/index.html',
   'number/index.html',
   'number/preview.png',
   'number/script.js',
