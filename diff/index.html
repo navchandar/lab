@@ -3,8 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Webpage Diff Tool</title>
+    <title>Diff Tool</title>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/7.0.0/diff.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
     <style>
       :root {
         /* Light Theme */
@@ -73,7 +77,6 @@
 
       body {
         background: var(--bg-gradient);
-        /* Smooth background attachment for mobile */
         background-attachment: fixed;
         padding: 24px 16px;
         min-height: 100vh;
@@ -559,11 +562,12 @@
               );
             }
 
-            const htmlText = await response.text();
-            if (!htmlText || htmlText.trim() === "") {
+            const rawText = await response.text();
+            if (!rawText || rawText.trim() === "") {
               throw new Error(`Received empty response from ${url}`);
             }
-            return this.extractVisibleText(htmlText);
+
+            return this.processContent(rawText, url);
           } catch (error) {
             console.error(`[Network] Fetch failed:`, error);
             // Differentiate between generic network errors and specific proxy/server errors
@@ -575,6 +579,51 @@
               );
             }
           }
+        },
+
+        processContent(text, url) {
+          const trimmed = text.trim();
+          const lowerUrl = url.toLowerCase();
+
+          // 1. JSON handling
+          try {
+            if (
+              (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+              (trimmed.startsWith("[") && trimmed.endsWith("]"))
+            ) {
+              return JSON.stringify(JSON.parse(trimmed), null, 2);
+            }
+          } catch (e) {}
+
+          // 2. JavaScript Un-minification (using js-beautify)
+          if (lowerUrl.endsWith(".js") && typeof js_beautify === "function") {
+            return js_beautify(text, { indent_size: 2 });
+          }
+
+          // 3. CSS Un-minification (using css_beautify)
+          if (lowerUrl.endsWith(".css") && typeof css_beautify === "function") {
+            return css_beautify(text, { indent_size: 2 });
+          }
+
+          // 4. HTML handling
+          const lowerText = trimmed.toLowerCase();
+          if (
+            lowerText.startsWith("<!doctype html>") ||
+            lowerText.includes("<html") ||
+            lowerText.includes("<body")
+          ) {
+            return this.extractVisibleText(text);
+          }
+
+          // 5. The Fallback for unknown minified files
+          // If it's not a standard JS/CSS file but is just one massive string without line breaks
+          if (!text.includes("\n") && text.length > 500) {
+            // Force crude line breaks after common delimiters to make it readable
+            return text.replace(/([{};,])/g, "$1\n");
+          }
+
+          // 6. Standard text
+          return text.replace(/\r\n/g, "\n");
         },
 
         extractVisibleText(htmlString) {
