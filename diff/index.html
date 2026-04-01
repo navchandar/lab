@@ -943,28 +943,75 @@
             2,
             contextOnly,
           );
-          if (contextLines.length === 0)
+
+          if (contextLines.length === 0) {
             return (this.els.output.innerHTML =
               '<div class="diff-row"><div class="line-text" style="padding:16px;">No differences found!</div></div>');
+          }
 
-          let l = '<div class="side-pane">',
-            r = '<div class="side-pane">';
-          contextLines.forEach((line) => {
+          let l = '<div class="side-pane">';
+          let r = '<div class="side-pane">';
+
+          for (let i = 0; i < contextLines.length; i++) {
+            const line = contextLines[i];
+
             if (line.type === "separator") {
               l += `<div class="diff-separator">@@ ... @@</div>`;
               r += `<div class="diff-separator">@@ ... @@</div>`;
-            } else if (line.type === "removed") {
-              l += `<div class="diff-row diff-removed"><div class="line-num">${line.oldLine}</div><div class="line-text">- ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
-              r += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
-            } else if (line.type === "added") {
-              l += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
-              r += `<div class="diff-row diff-added"><div class="line-num">${line.newLine}</div><div class="line-text">+ ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
-            } else {
+            } else if (line.type === "unchanged") {
               l += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
               r += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
+            } else {
+              // It is either a "removed" or "added" line.
+              // We look ahead to group consecutive removals and additions so we can pair them up horizontally.
+              let rmLines = [];
+              let addLines = [];
+
+              // Collect consecutive removed lines
+              while (
+                i < contextLines.length &&
+                contextLines[i].type === "removed"
+              ) {
+                rmLines.push(contextLines[i]);
+                i++;
+              }
+              // Collect consecutive added lines immediately following
+              while (
+                i < contextLines.length &&
+                contextLines[i].type === "added"
+              ) {
+                addLines.push(contextLines[i]);
+                i++;
+              }
+
+              // Step back one index because the outer 'for' loop will increment it automatically
+              i--;
+
+              // Render them side-by-side, padding the shorter side with empty rows
+              const maxLen = Math.max(rmLines.length, addLines.length);
+
+              for (let j = 0; j < maxLen; j++) {
+                // Render Left Pane (Removals)
+                if (rmLines[j]) {
+                  l += `<div class="diff-row diff-removed"><div class="line-num">${rmLines[j].oldLine}</div><div class="line-text">- ${rmLines[j].html || Utils.escapeHTML(rmLines[j].text)}</div></div>`;
+                } else {
+                  l += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`; // Filler row
+                }
+
+                // Render Right Pane (Additions)
+                if (addLines[j]) {
+                  r += `<div class="diff-row diff-added"><div class="line-num">${addLines[j].newLine}</div><div class="line-text">+ ${addLines[j].html || Utils.escapeHTML(addLines[j].text)}</div></div>`;
+                } else {
+                  r += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`; // Filler row
+                }
+              }
             }
-          });
-          this.els.output.innerHTML = `<div class="side-by-side-container">${l}</div>${r}</div>`;
+          }
+
+          l += "</div>";
+          r += "</div>";
+
+          this.els.output.innerHTML = `<div class="side-by-side-container">${l}${r}</div>`;
         },
       };
 
@@ -1012,6 +1059,19 @@
               .getElementById(`group-${savedMode}`)
               .classList.add("active");
           }
+
+          // --- Load View Mode state ---
+          const savedView = localStorage.getItem("diffViewMode");
+          if (savedView) {
+            this.currentView = savedView;
+            UI.els.viewBtns.forEach((b) => b.classList.remove("active"));
+            const targetBtn = document.querySelector(
+              `[data-view="${savedView}"]`,
+            );
+            if (targetBtn) {
+              targetBtn.classList.add("active");
+            }
+          }
         },
 
         bindEvents() {
@@ -1036,7 +1096,7 @@
           // Save preference on change and re-render if a diff exists
           UI.els.contextCb.addEventListener("change", (e) => {
             localStorage.setItem("diffContextOnly", e.target.checked);
-            if (this.currentDiff) {
+            if (this.processedLines) {
               this.renderCurrentView();
             }
           });
@@ -1208,6 +1268,9 @@
             return;
           }
           this.currentView = viewMode;
+          // --- Save view preference to local storage ---
+          localStorage.setItem("diffViewMode", this.currentView);
+
           UI.els.viewBtns.forEach((b) => b.classList.remove("active"));
           document
             .querySelector(`[data-view="${viewMode}"]`)
