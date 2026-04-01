@@ -279,11 +279,7 @@
         background: rgba(0, 0, 0, 0.05);
         padding: 4px;
       }
-      @media (prefers-color-scheme: dark) {
-        .view-toggle {
-          background: rgba(255, 255, 255, 0.05);
-        }
-      }
+
       .view-btn {
         box-shadow: none;
         border-radius: 8px;
@@ -315,6 +311,18 @@
         font-size: 0.875rem;
         font-family: monospace;
       }
+      /* --- Word-Level Diff Styles --- */
+      .word-added {
+        border-radius: 2px;
+        background-color: #acf2bd;
+        color: #055d20;
+      }
+      .word-removed {
+        border-radius: 2px;
+        background-color: #ffc4c1;
+        color: #82071e;
+      }
+
       @media (prefers-color-scheme: dark) {
         #diff-output {
           background: rgba(0, 0, 0, 0.2);
@@ -324,6 +332,16 @@
         }
         .line-num {
           background: rgba(255, 255, 255, 0.03);
+        }
+        .view-toggle {
+          background: rgba(255, 255, 255, 0.05);
+        }
+        /* --- Word-Level Diff Styles --- */
+        .word-added {
+          background-color: rgba(46, 160, 67, 0.4);
+        }
+        .word-removed {
+          background-color: rgba(248, 81, 73, 0.4);
         }
       }
 
@@ -356,6 +374,7 @@
         white-space: pre-wrap;
         word-break: break-all;
       }
+
       .diff-added {
         background-color: var(--diff-add-bg);
         color: var(--diff-add-text);
@@ -642,6 +661,80 @@
           return text.replace(/\r\n/g, "\n");
         },
 
+        enhanceWithWordDiffs(lines) {
+          let i = 0;
+          while (i < lines.length) {
+            if (lines[i].type === "removed") {
+              let rmStart = i;
+              while (i < lines.length && lines[i].type === "removed") i++;
+              let rmEnd = i - 1;
+
+              let addStart = i;
+              while (i < lines.length && lines[i].type === "added") i++;
+              let addEnd = i - 1;
+
+              // If we found a replaced block, run a word-level diff on it
+              if (addStart <= addEnd) {
+                const rmText = lines
+                  .slice(rmStart, rmEnd + 1)
+                  .map((l) => l.text)
+                  .join("\n");
+                const addText = lines
+                  .slice(addStart, addEnd + 1)
+                  .map((l) => l.text)
+                  .join("\n");
+
+                const wordDiff = Diff.diffWordsWithSpace(rmText, addText);
+
+                let rmHtmlLines = [],
+                  currentRmLine = "";
+                let addHtmlLines = [],
+                  currentAddLine = "";
+
+                wordDiff.forEach((part) => {
+                  const splitLines = part.value.split("\n");
+                  splitLines.forEach((str, idx) => {
+                    const escaped = this.escapeHTML(str);
+                    if (!part.added) {
+                      currentRmLine += part.removed
+                        ? `<span class="word-removed">${escaped}</span>`
+                        : escaped;
+                      if (idx < splitLines.length - 1) {
+                        rmHtmlLines.push(currentRmLine);
+                        currentRmLine = "";
+                      }
+                    }
+                    if (!part.removed) {
+                      currentAddLine += part.added
+                        ? `<span class="word-added">${escaped}</span>`
+                        : escaped;
+                      if (idx < splitLines.length - 1) {
+                        addHtmlLines.push(currentAddLine);
+                        currentAddLine = "";
+                      }
+                    }
+                  });
+                });
+                rmHtmlLines.push(currentRmLine);
+                addHtmlLines.push(currentAddLine);
+
+                // Inject the HTML strings back into the line objects
+                for (let j = 0; j <= rmEnd - rmStart; j++) {
+                  if (lines[rmStart + j])
+                    lines[rmStart + j].html = rmHtmlLines[j];
+                }
+                for (let j = 0; j <= addEnd - addStart; j++) {
+                  if (lines[addStart + j])
+                    lines[addStart + j].html = addHtmlLines[j];
+                }
+              }
+            } else {
+              i++;
+            }
+          }
+          return lines;
+        },
+
         buildContextDiff(diffArray, contextSize = 2, contextOnly = true) {
           let lines = [];
           let oldLine = 1;
@@ -703,7 +796,7 @@
               lastIndex = idx;
             });
 
-          return finalLines;
+          return this.enhanceWithWordDiffs(finalLines);
         },
 
         readFileAsText(file) {
@@ -777,7 +870,7 @@
                   : "";
             const prefix =
               line.type === "added" ? "+" : line.type === "removed" ? "-" : " ";
-            html += `<div class="diff-row ${color}"><div class="line-num">${line.oldLine}</div><div class="line-num">${line.newLine}</div><div class="line-text">${prefix} ${Utils.escapeHTML(line.text)}</div></div>`;
+            html += `<div class="diff-row ${color}"><div class="line-num">${line.oldLine}</div><div class="line-num">${line.newLine}</div><div class="line-text">${prefix} ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
           });
           this.els.output.innerHTML = html;
         },
@@ -799,14 +892,14 @@
               l += `<div class="diff-separator">@@ ... @@</div>`;
               r += `<div class="diff-separator">@@ ... @@</div>`;
             } else if (line.type === "removed") {
-              l += `<div class="diff-row diff-removed"><div class="line-num">${line.oldLine}</div><div class="line-text">- ${Utils.escapeHTML(line.text)}</div></div>`;
+              l += `<div class="diff-row diff-removed"><div class="line-num">${line.oldLine}</div><div class="line-text">- ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
               r += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
             } else if (line.type === "added") {
               l += `<div class="diff-row"><div class="line-num"></div><div class="line-text">&nbsp;</div></div>`;
-              r += `<div class="diff-row diff-added"><div class="line-num">${line.newLine}</div><div class="line-text">+ ${Utils.escapeHTML(line.text)}</div></div>`;
+              r += `<div class="diff-row diff-added"><div class="line-num">${line.newLine}</div><div class="line-text">+ ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
             } else {
-              l += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
-              r += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${Utils.escapeHTML(line.text)}</div></div>`;
+              l += `<div class="diff-row"><div class="line-num">${line.oldLine}</div><div class="line-text">  ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
+              r += `<div class="diff-row"><div class="line-num">${line.newLine}</div><div class="line-text">  ${line.html || Utils.escapeHTML(line.text)}</div></div>`;
             }
           });
           this.els.output.innerHTML = `<div class="side-by-side-container">${l}</div>${r}</div>`;
@@ -927,18 +1020,29 @@
         },
 
         async executeComparison() {
-          if (this.inputMode === "url" && !navigator.onLine)
+          if (this.inputMode === "url" && !navigator.onLine) {
             return UI.showToast("You are offline.", true);
+          }
 
           UI.setLoading(true);
           try {
+            // Fetch the texts
             const [text1, text2] = await this.getInputs();
+            // Update UI to warn about the freeze
+            UI.els.loader.innerHTML =
+              '<div class="spinner"></div><span style="color: var(--text-muted); font-weight: 500">Diffing (the page may freeze briefly)</span>';
+            await new Promise((resolve) => setTimeout(resolve, 50));
+            // Run the synchronous diff calculation
             this.currentDiff = Diff.diffLines(text1, text2);
+
             UI.els.controls.style.display = "flex";
             this.renderCurrentView();
           } catch (error) {
             UI.showToast(error.message, true);
           } finally {
+            // Reset loader text for the next run
+            UI.els.loader.innerHTML =
+              '<div class="spinner"></div><span style="color: var(--text-muted); font-weight: 500">Fetching and analyzing content...</span>';
             UI.setLoading(false);
           }
         },
