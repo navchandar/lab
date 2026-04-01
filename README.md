@@ -36,6 +36,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🗺️ <a href="https://navchandar.github.io/lab/serviceability/" target="_blank">**Serviceability Map**</a> | Identify and visualize the delivery coverage for major platforms using an interactive Map | 🟩🟩🟩🟩⬜ 80% |
 | 🏥 <a href="https://navchandar.github.io/lab/hospitals/" target="_blank">**Hospitals Network**</a> | Identify and visualize the in-network and excluded hospitals using an interactive Map | 🟩🟩⬜⬜⬜ 40% |
 | ⚡️ <a href="https://navchandar.github.io/lab/pm-e-drive/" target="_blank">**PM E-Drive EV Comparison**</a> | Compare EV models from different OEMs that are actively incentivized by Indian Govt. | 🟩🟩🟩🟩🟩 100% |
+| 𝜟 <a href="https://navchandar.github.io/lab/diff/" target="_blank">**URL Diff Tool**</a> | Data comparison tool that shows the differences between two websites or files with URLs. | 🟩🟩⬜⬜⬜ 40% |
 
 
 ### Status 

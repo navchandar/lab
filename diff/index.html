@@ -3,7 +3,54 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Diff Tool</title>
+    <title>Webpage Diff Tool</title>
+
+    <meta name="title" content="Webpage Diff Tool | Compare Code & Text" />
+
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>𝜟</text></svg>"
+    />
+    <link rel="canonical" href="https://navchandar.github.io/lab/diff/" />
+
+    <meta
+      name="description"
+      content="A fast, client-side tool to compare webpages, JSON, CSS, and JS files. Features GitHub-style inline and side-by-side diffing."
+    />
+    <meta
+      name="keywords"
+      content="url diff, simple diff, diff tool, text compare, html diff, json compare, offline diff, web developer tools, text differ"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://navchandar.github.io/lab/diff/" />
+    <meta
+      property="og:title"
+      content="Webpage Diff Tool | Compare Code & Text"
+    />
+    <meta
+      property="og:description"
+      content="A fast, client-side tool to compare webpages, JSON, CSS, and JS files. Features GitHub-style inline and side-by-side diffing."
+    />
+    <meta
+      property="og:image"
+      content="https://navchandar.github.io/lab/diff/preview.png"
+    />
+
+    <meta
+      property="twitter:title"
+      content="Webpage Diff Tool | Compare Code & Text"
+    />
+    <meta
+      property="twitter:description"
+      content="A fast, client-side tool to compare webpages, JSON, CSS, and JS files. Features GitHub-style inline and side-by-side diffing."
+    />
+    <meta
+      property="twitter:image"
+      content="https://navchandar.github.io/lab/diff/preview.png"
+    />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsdiff/7.0.0/diff.min.js"></script>
 
@@ -232,7 +279,7 @@
         overflow-x: auto;
         font-size: 0.875rem;
         font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
-        white-space: pre-wrap;
+        white-space: collapse;
         word-break: break-all;
       }
 
@@ -255,8 +302,8 @@
         margin-right: 12px;
         border-right: 1px solid var(--border-color);
         background: rgba(0, 0, 0, 0.03);
-        padding-right: 10px;
-        width: 45px;
+        padding-right: 8px;
+        width: 50px;
         min-width: 45px;
         color: var(--text-muted);
         font-size: 0.75rem;
