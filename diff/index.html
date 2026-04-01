@@ -3,9 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Webpage Diff Tool</title>
+    <title>Diff Tool</title>
 
-    <meta name="title" content="Webpage Diff Tool | Compare Code & Text" />
+    <meta
+      name="title"
+      content="Diff Tool | Compare URLs, Webpages, Code & Text"
+    />
 
     <link
       rel="icon"
@@ -28,7 +31,7 @@
     <meta property="og:url" content="https://navchandar.github.io/lab/diff/" />
     <meta
       property="og:title"
-      content="Webpage Diff Tool | Compare Code & Text"
+      content="Diff Tool | Compare URLs, Webpages, Code & Text"
     />
     <meta
       property="og:description"
@@ -41,7 +44,7 @@
 
     <meta
       property="twitter:title"
-      content="Webpage Diff Tool | Compare Code & Text"
+      content="Diff Tool | Compare URLs, Webpages, Code & Text"
     />
     <meta
       property="twitter:description"
@@ -416,6 +419,40 @@
         background: var(--error-gradient);
         color: white;
       }
+      /* --- Footer Styles --- */
+      footer {
+        margin-top: 48px;
+        border-top: 1px solid var(--border-color);
+        padding: 24px 16px;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      footer p {
+        margin-bottom: 8px;
+      }
+
+      footer a {
+        transition: var(--transition);
+        color: #7f9cf5;
+        font-weight: 500;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        color: #9f7aea;
+        text-decoration: underline;
+      }
+
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+      }
     </style>
   </head>
   <body>
@@ -492,6 +529,36 @@
     </div>
 
     <div id="toast-container"></div>
+
+    <footer role="contentinfo">
+      <p>
+        Powered by
+        <a
+          href="https://github.com/navchandar/lab/tree/main/diff/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >GitHub</a
+        >
+        and
+        <a
+          href="https://corsproxy.io/"
+          target="_blank"
+          rel="noopener noreferrer"
+          >CORSPROXY</a
+        >
+        | Copyright &copy; <span id="year"></span> Naveenchandar
+      </p>
+      <div class="footer-links">
+        <small>
+          This work is licensed under the
+          <a
+            href="https://github.com/navchandar/lab/blob/main/LICENSE"
+            target="_blank"
+            >GNU GPLv3</a
+          >
+        </small>
+      </div>
+    </footer>
 
     <script>
       // 1. Utils Module: Parsing, Diffing, Formatting
@@ -739,6 +806,9 @@
         init() {
           this.loadPreferences();
           this.bindEvents();
+          document.getElementById("year").textContent =
+            new Date().getFullYear();
+
           window.addEventListener("offline", () =>
             UI.showToast("Offline mode.", true),
           );
@@ -746,12 +816,29 @@
         },
 
         loadPreferences() {
-          // Load Context Checkbox state from local storage
+          // Load Context Checkbox state
           const savedContext = localStorage.getItem("diffContextOnly");
           if (savedContext !== null) {
             UI.els.contextCb.checked = savedContext === "true";
           } else {
             UI.els.contextCb.checked = true; // Default state
+          }
+
+          // Load Input Mode state
+          const savedMode = localStorage.getItem("diffInputMode");
+          if (savedMode) {
+            this.inputMode = savedMode;
+
+            // Check the correct radio button
+            UI.els.modeRadios.forEach((radio) => {
+              radio.checked = radio.value === savedMode;
+            });
+
+            // Display the correct input group
+            UI.els.inputGroups.forEach((g) => g.classList.remove("active"));
+            document
+              .getElementById(`group-${savedMode}`)
+              .classList.add("active");
           }
         },
 
@@ -766,6 +853,7 @@
           UI.els.modeRadios.forEach((radio) => {
             radio.addEventListener("change", (e) => {
               this.inputMode = e.target.value;
+              localStorage.setItem("diffInputMode", this.inputMode);
               UI.els.inputGroups.forEach((g) => g.classList.remove("active"));
               document
                 .getElementById(`group-${this.inputMode}`)
@@ -776,7 +864,9 @@
           // Save preference on change and re-render if a diff exists
           UI.els.contextCb.addEventListener("change", (e) => {
             localStorage.setItem("diffContextOnly", e.target.checked);
-            if (this.currentDiff) this.renderCurrentView();
+            if (this.currentDiff) {
+              this.renderCurrentView();
+            }
           });
         },
 
