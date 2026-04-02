@@ -59,6 +59,12 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.9/beautify-css.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
     <style>
       /* --- Modern CSS Variables & Theming --- */
       :root {
@@ -115,7 +121,7 @@
           Arial,
           sans-serif;
       }
-      
+
       html,
       body {
         margin: 0;
@@ -993,10 +999,16 @@
                 : line.type === "removed"
                   ? "-"
                   : "&nbsp;";
+            const lineOutput = line.html
+              ? line.html
+              : hljs.highlight(line.text, {
+                  language: App.detectedLanguage,
+                  ignoreIllegals: true,
+                }).value;
             html += `<div class="diff-row ${color}">
                        <div class="line-num">${line.oldLine}</div>
                        <div class="line-num">${line.newLine}</div>
-                       <div class="line-text"><span class="diff-prefix">${prefix}</span>${line.html || Utils.escapeHTML(line.text)}</div>
+                       <div class="line-text"><span class="diff-prefix">${prefix}</span>${lineOutput}</div>
                      </div>`;
           });
           this.els.output.innerHTML = html;
@@ -1020,15 +1032,21 @@
 
           for (let i = 0; i < contextLines.length; i++) {
             const line = contextLines[i];
+            const lineOutput = line.html
+              ? line.html
+              : hljs.highlight(line.text, {
+                  language: App.detectedLanguage,
+                  ignoreIllegals: true,
+                }).value;
 
             if (line.type === "separator") {
               html += `<div class="split-row"><div class="diff-separator">@@ ... @@</div></div>`;
             } else if (line.type === "unchanged") {
               html += `<div class="split-row">
                          <div class="half-row"><div class="line-num">${line.oldLine}</div>
-                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${line.html || Utils.escapeHTML(line.text)}</div></div>
+                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${lineOutput}</div></div>
                          <div class="half-row"><div class="line-num">${line.newLine}</div>
-                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${line.html || Utils.escapeHTML(line.text)}</div></div>
+                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${lineOutput}</div></div>
                        </div>`;
             } else {
               // It is either a "removed" or "added" line.
@@ -1095,6 +1113,7 @@
         processedLines: null,
         currentView: "inline",
         inputMode: "url",
+        detectedLanguage: "plaintext",
 
         init() {
           this.loadPreferences();
@@ -1345,6 +1364,12 @@
             // UI Update: Let user know the background worker is running
             UI.els.loader.innerHTML =
               '<div class="spinner"></div><span style="color: var(--text-muted); font-weight: 500">Diffing...</span>';
+
+            // Detect content type for highlighting:
+            this.detectedLanguage =
+              hljs.highlightAuto(text2).language ||
+              hljs.highlightAuto(text1).language ||
+              "plaintext";
 
             // --- Await the Web Worker ---
             this.processedLines = await this.runDiffInWorker(text1, text2);
