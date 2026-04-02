@@ -753,7 +753,7 @@ class DataCoordinator:
     @staticmethod
     def run() -> None:
         # Set the timer to under 6 hours (Github actions limit)
-        MAX_RUNTIME_SECONDS = int(6 * 60 * 60)
+        MAX_RUNTIME_SECONDS = int(5.75 * 60 * 60)
         # safety buffer for 10 mins
         TIME_LIMIT = MAX_RUNTIME_SECONDS - 600
 
