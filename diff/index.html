@@ -1083,16 +1083,30 @@
 
                 // Left Pane (Removals)
                 if (rmLines[j]) {
+                  const rmOutput = rmLines[j].html
+                    ? rmLines[j].html
+                    : hljs.highlight(rmLines[j].text, {
+                        language: App.detectedLanguage,
+                        ignoreIllegals: true,
+                      }).value;
+
                   html += `<div class="half-row diff-removed"><div class="line-num">${rmLines[j].oldLine}</div>
-                  <div class="line-text"><span class="diff-prefix">-</span>${rmLines[j].html || Utils.escapeHTML(rmLines[j].text)}</div></div>`;
+    <div class="line-text"><span class="diff-prefix">-</span>${rmOutput}</div></div>`;
                 } else {
                   html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
                 }
 
                 // Right Pane (Additions)
                 if (addLines[j]) {
+                  const addOutput = addLines[j].html
+                    ? addLines[j].html
+                    : hljs.highlight(addLines[j].text, {
+                        language: App.detectedLanguage,
+                        ignoreIllegals: true,
+                      }).value;
+
                   html += `<div class="half-row diff-added"><div class="line-num">${addLines[j].newLine}</div>
-                  <div class="line-text"><span class="diff-prefix">+</span>${addLines[j].html || Utils.escapeHTML(addLines[j].text)}</div></div>`;
+                        <div class="line-text"><span class="diff-prefix">+</span>${addOutput}</div></div>`;
                 } else {
                   html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
                 }
@@ -1370,6 +1384,8 @@
               hljs.highlightAuto(text2).language ||
               hljs.highlightAuto(text1).language ||
               "plaintext";
+
+            console.log("Autodetected content type:", this.detectedLanguage);
 
             // --- Await the Web Worker ---
             this.processedLines = await this.runDiffInWorker(text1, text2);
