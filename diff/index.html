@@ -975,10 +975,7 @@
 
         getSyntaxHighlightedHTML(line) {
           // Guard against undefined, null, or empty strings
-          if (!line) {
-            return "";
-          }
-          if (undefined == line || null == line) {
+          if (!line || line.text == null) {
             return "";
           }
           if (line.html) {
@@ -990,9 +987,20 @@
           }
 
           try {
+            let lang = App.detectedLanguage || "plaintext";
+            // Check if the CDN actually loaded the language highlighter
+            if (lang !== "plaintext" && !hljs.getLanguage(lang)) {
+              console.warn(
+                `Highlight.js: '${lang}' is not in the loaded bundle. Falling back to 'ini'.`,
+              );
+              // 'ini' is in the default CDN bundle and formats .env files perfectly
+              lang = hljs.getLanguage("ini") ? "ini" : "plaintext";
+              App.detectedLanguage = lang;
+            }
+
             // Attempt to apply syntax highlighting safely
             return hljs.highlight(text, {
-              language: App.detectedLanguage || "plaintext",
+              language: lang,
               ignoreIllegals: true,
             }).value;
           } catch (error) {
@@ -1414,6 +1422,45 @@
           }
         },
 
+        async loadLanguageCDN(lang) {
+          // If we don't have a language, or Highlight.js already has it loaded, do nothing
+          if (!lang || lang === "plaintext" || hljs.getLanguage(lang)) {
+            return;
+          }
+
+          // Map certain identifiers to their actual Highlight.js filenames if needed
+          // (Most match exactly, but add exceptions here)
+          const fileMap = {
+            properties: "properties",
+            env: "properties", // Map .env to properties
+            yaml: "yaml",
+            yml: "yaml",
+            dockerfile: "dockerfile",
+          };
+
+          const fileName = fileMap[lang] || lang;
+          const url = `https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/${fileName}.min.js`;
+
+          // Dynamically create the script and wait for it to load
+          return new Promise((resolve) => {
+            console.log(`Dynamically loading syntax for: ${fileName}...`);
+            const script = document.createElement("script");
+            script.src = url;
+            script.onload = () => {
+              console.log(`Successfully loaded ${fileName}.`);
+              resolve();
+            };
+            script.onerror = () => {
+              console.warn(
+                `Could not find a Highlight.js CDN for: ${fileName}. Falling back to plaintext.`,
+              );
+              // Resolve so the app doesn't freeze
+              resolve();
+            };
+            document.head.appendChild(script);
+          });
+        },
+
         // --- Inline Web Worker to process Diff in background ---
         runDiffInWorker(text1, text2) {
           return new Promise((resolve, reject) => {
@@ -1484,6 +1531,9 @@
               this.detectLanguage(text2, id2) ||
               this.detectLanguage(text1, id1);
             console.log("Autodetected content type:", this.detectedLanguage);
+
+            // Fetch the language highlighter dynamically if needed <---
+            await this.loadLanguageCDN(this.detectedLanguage);
 
             // --- Await the Web Worker ---
             this.processedLines = await this.runDiffInWorker(text1, text2);
