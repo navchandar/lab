@@ -972,6 +972,38 @@
           }
         },
 
+        getSyntaxHighlightedHTML(line) {
+          // Guard against undefined, null, or empty strings
+          if (!line) {
+            return "";
+          }
+          if (undefined == line || null == line) {
+            return "";
+          }
+          if (line.html) {
+            return line.html;
+          }
+          let text = line.text;
+          if (undefined == text || null == text) {
+            return "";
+          }
+
+          try {
+            // Attempt to apply syntax highlighting safely
+            return hljs.highlight(text, {
+              language: App.detectedLanguage || "plaintext",
+              ignoreIllegals: true,
+            }).value;
+          } catch (error) {
+            // Graceful handling if highlight fails
+            console.warn(
+              "Highlight.js encountered an error parsing a line:",
+              error,
+            );
+            return Utils.escapeHTML(text);
+          }
+        },
+
         renderInlineDiff(processedLines, contextOnly) {
           const contextLines = Utils.filterContext(
             processedLines,
@@ -999,12 +1031,7 @@
                 : line.type === "removed"
                   ? "-"
                   : "&nbsp;";
-            const lineOutput = line.html
-              ? line.html
-              : hljs.highlight(line.text, {
-                  language: App.detectedLanguage,
-                  ignoreIllegals: true,
-                }).value;
+            const lineOutput = this.getSyntaxHighlightedHTML(line);
             html += `<div class="diff-row ${color}">
                        <div class="line-num">${line.oldLine}</div>
                        <div class="line-num">${line.newLine}</div>
@@ -1032,12 +1059,7 @@
 
           for (let i = 0; i < contextLines.length; i++) {
             const line = contextLines[i];
-            const lineOutput = line.html
-              ? line.html
-              : hljs.highlight(line.text, {
-                  language: App.detectedLanguage,
-                  ignoreIllegals: true,
-                }).value;
+            const lineOutput = this.getSyntaxHighlightedHTML(line);
 
             if (line.type === "separator") {
               html += `<div class="split-row"><div class="diff-separator">@@ ... @@</div></div>`;
@@ -1083,14 +1105,9 @@
 
                 // Left Pane (Removals)
                 if (rmLines[j]) {
-                  const rmOutput = rmLines[j].html
-                    ? rmLines[j].html
-                    : hljs.highlight(rmLines[j].text, {
-                        language: App.detectedLanguage,
-                        ignoreIllegals: true,
-                      }).value;
-
-                  html += `<div class="half-row diff-removed"><div class="line-num">${rmLines[j].oldLine}</div>
+                  const line = rmLines[j];
+                  const rmOutput = this.getSyntaxHighlightedHTML(line);
+                  html += `<div class="half-row diff-removed"><div class="line-num">${line.oldLine}</div>
     <div class="line-text"><span class="diff-prefix">-</span>${rmOutput}</div></div>`;
                 } else {
                   html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
@@ -1098,14 +1115,9 @@
 
                 // Right Pane (Additions)
                 if (addLines[j]) {
-                  const addOutput = addLines[j].html
-                    ? addLines[j].html
-                    : hljs.highlight(addLines[j].text, {
-                        language: App.detectedLanguage,
-                        ignoreIllegals: true,
-                      }).value;
-
-                  html += `<div class="half-row diff-added"><div class="line-num">${addLines[j].newLine}</div>
+                  const line = addLines[j];
+                  const addOutput = this.getSyntaxHighlightedHTML(line);
+                  html += `<div class="half-row diff-added"><div class="line-num">${line.newLine}</div>
                         <div class="line-text"><span class="diff-prefix">+</span>${addOutput}</div></div>`;
                 } else {
                   html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
