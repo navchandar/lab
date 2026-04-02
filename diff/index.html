@@ -1153,6 +1153,58 @@
           window.addEventListener("online", () => UI.showToast("Back online."));
         },
 
+        detectLanguage(text, identifier = "") {
+          const lowerId = identifier.toLowerCase();
+
+          // Extension-based detection (Highly Reliable)
+          if (lowerId.endsWith(".json")) return "json";
+          if (lowerId.endsWith(".js")) return "javascript";
+          if (lowerId.endsWith(".py")) return "python";
+          if (lowerId.endsWith(".html") || lowerId.endsWith(".htm"))
+            return "xml";
+          if (lowerId.endsWith(".css")) return "css";
+          if (lowerId.endsWith(".sh") || lowerId.endsWith(".bash"))
+            return "bash";
+          if (lowerId.endsWith(".env")) return "properties";
+          if (lowerId.endsWith(".xml")) return "xml";
+          if (lowerId.endsWith(".yaml") || lowerId.endsWith(".yml"))
+            return "yaml";
+          if (lowerId.endsWith(".md")) return "markdown";
+          if (lowerId.endsWith(".ts")) return "typescript";
+          if (lowerId.endsWith(".sql")) return "sql";
+
+          // Content-Based Heuristics
+          const trimmed = text.trim();
+
+          // Check if it is JSON
+          if (
+            (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+            (trimmed.startsWith("[") && trimmed.endsWith("]"))
+          ) {
+            try {
+              JSON.parse(trimmed);
+              return "json";
+            } catch (e) {}
+          }
+
+          // Check if it is HTML/XML
+          if (
+            trimmed.startsWith("<!doctype html") ||
+            trimmed.startsWith("<html") ||
+            trimmed.startsWith("<?xml")
+          ) {
+            return "xml";
+          }
+
+          // Fallback to Highlight.js Auto-Detect
+          try {
+            const autoDetect = hljs.highlightAuto(text);
+            return autoDetect.language || "plaintext";
+          } catch (e) {
+            return "plaintext";
+          }
+        },
+
         loadPreferences() {
           // Load Context Checkbox state
           const savedContext = localStorage.getItem("diffContextOnly");
@@ -1284,14 +1336,22 @@
               if (!res.ok) throw new Error(`HTTP ${res.status} from ${url}`);
               return Utils.processContent(await res.text(), url);
             };
-            return await Promise.all([fetchProxy(u1), fetchProxy(u2)]);
+            const [text1, text2] = await Promise.all([
+              fetchProxy(u1),
+              fetchProxy(u2),
+            ]);
+            // Return texts AND identifiers
+            return [text1, text2, u1, u2];
           }
 
           if (this.inputMode === "text") {
             const t1 = document.getElementById("text1").value;
             const t2 = document.getElementById("text2").value;
-            if (!t1 && !t2) throw new Error("Provide text to compare.");
-            return [Utils.processContent(t1), Utils.processContent(t2)];
+            if (!t1 && !t2) {
+              throw new Error("Paste text to compare.");
+            }
+            // No identifiers for pasted text
+            return [Utils.processContent(t1), Utils.processContent(t2), "", ""];
           }
 
           if (this.inputMode === "file") {
@@ -1320,9 +1380,12 @@
               Utils.readFileAsText(f1),
               Utils.readFileAsText(f2),
             ]);
+            // Return texts AND filenames as identifiers
             return [
               Utils.processContent(txt1, f1.name),
               Utils.processContent(txt2, f2.name),
+              f1.name,
+              f2.name,
             ];
           }
         },
@@ -1385,18 +1448,17 @@
 
           UI.setLoading(true);
           try {
-            const [text1, text2] = await this.getInputs();
+            const [text1, text2, id1, id2] = await this.getInputs();
 
             // UI Update: Let user know the background worker is running
             UI.els.loader.innerHTML =
               '<div class="spinner"></div><span style="color: var(--text-muted); font-weight: 500">Diffing...</span>';
 
             // Detect content type for highlighting:
+            // Detect content type intelligently
             this.detectedLanguage =
-              hljs.highlightAuto(text2).language ||
-              hljs.highlightAuto(text1).language ||
-              "plaintext";
-
+              this.detectLanguage(text2, id2) ||
+              this.detectLanguage(text1, id1);
             console.log("Autodetected content type:", this.detectedLanguage);
 
             // --- Await the Web Worker ---
