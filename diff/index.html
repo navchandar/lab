@@ -421,6 +421,7 @@
         user-select: none; /* Prevents copying the +/- signs */
         -webkit-user-select: none;
         display: inline-block;
+        padding: 0 3px 0 0;
         text-align: center;
       }
 
@@ -1035,7 +1036,7 @@
             html += `<div class="diff-row ${color}">
                        <div class="line-num">${line.oldLine}</div>
                        <div class="line-num">${line.newLine}</div>
-                       <div class="line-text"><span class="diff-prefix">${prefix}</span>${lineOutput}</div>
+                       <span class="diff-prefix">${prefix}</span><div class="line-text">${lineOutput}</div>
                      </div>`;
           });
           this.els.output.innerHTML = html;
@@ -1066,9 +1067,9 @@
             } else if (line.type === "unchanged") {
               html += `<div class="split-row">
                          <div class="half-row"><div class="line-num">${line.oldLine}</div>
-                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${lineOutput}</div></div>
+                          <span class="diff-prefix">&nbsp;</span><div class="line-text">${lineOutput}</div></div>
                          <div class="half-row"><div class="line-num">${line.newLine}</div>
-                          <div class="line-text"><span class="diff-prefix">&nbsp;</span>${lineOutput}</div></div>
+                          <span class="diff-prefix">&nbsp;</span><div class="line-text">${lineOutput}</div></div>
                        </div>`;
             } else {
               // It is either a "removed" or "added" line.
@@ -1108,7 +1109,7 @@
                   const line = rmLines[j];
                   const rmOutput = this.getSyntaxHighlightedHTML(line);
                   html += `<div class="half-row diff-removed"><div class="line-num">${line.oldLine}</div>
-    <div class="line-text"><span class="diff-prefix">-</span>${rmOutput}</div></div>`;
+                        <span class="diff-prefix">-</span><div class="line-text">${rmOutput}</div></div>`;
                 } else {
                   html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
                 }
@@ -1118,7 +1119,7 @@
                   const line = addLines[j];
                   const addOutput = this.getSyntaxHighlightedHTML(line);
                   html += `<div class="half-row diff-added"><div class="line-num">${line.newLine}</div>
-                        <div class="line-text"><span class="diff-prefix">+</span>${addOutput}</div></div>`;
+                        <span class="diff-prefix">+</span><div class="line-text">${addOutput}</div></div>`;
                 } else {
                   html += `<div class="half-row"><div class="line-num"></div><div class="line-text"></div></div>`;
                 }
@@ -1194,6 +1195,29 @@
             trimmed.startsWith("<?xml")
           ) {
             return "xml";
+          }
+
+          // Check if it is a .env or properties file (KEY=VALUE format)
+          const lines = trimmed
+            .split("\n")
+            .map((l) => l.trim())
+            .filter((l) => l.length > 0);
+          if (lines.length > 0) {
+            let envLineCount = 0;
+            // Regex matches lines like "KEY=VALUE", "KEY = VALUE", "export KEY=VALUE", or "# comment"
+            const envRegex = /^(?:export\s+)?[a-zA-Z_][a-zA-Z0-9_]*\s*=/;
+            const commentRegex = /^#/;
+            // Sample up to the first 10 non-empty lines for speed
+            const sampleSize = Math.min(lines.length, 10);
+            for (let i = 0; i < sampleSize; i++) {
+              if (envRegex.test(lines[i]) || commentRegex.test(lines[i])) {
+                envLineCount++;
+              }
+            }
+            // If 70% or more of the sampled lines look like .env, lock it in
+            if (envLineCount / sampleSize >= 0.7) {
+              return "properties";
+            }
           }
 
           // Fallback to Highlight.js Auto-Detect
