@@ -3,6 +3,7 @@ module.exports = {
     browser: true,
     es2021: true,
   },
+  ignorePatterns: ["dist/", "config/", "node_modules/", "world/js/*.js"],
   extends: "eslint:recommended",
   parserOptions: {
     ecmaVersion: "latest",

@@ -59,7 +59,7 @@ jobs:
           done
 
       - name: Validate JS
-        run: eslint -c config/.eslintrc.js "**/*.js" --ignore-pattern config/.eslintrc.js
+        run: eslint -c config/.eslintrc.js "**/*.js"
 
       - name: Validate Spelling
         uses: rojopolis/spellcheck-github-actions@0.60.0
