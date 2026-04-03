@@ -1,4 +1,4 @@
-// version=v2026.04.02
+// version=v2026.04.03
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","company","smart-dom-inspector","serviceability","hospitals","pm-e-drive","diff"];
 
@@ -9,11 +9,11 @@ const urlsToCache = [
   'manifest.json',
   'static/icons/icon-192x192.png',
   'static/icons/icon-512x512.png',
-  '.ruff_cache/0.15.8/13011088721115212773',
-  '.ruff_cache/0.15.8/1767267420881710138',
-  '.ruff_cache/0.15.8/2717982635699940150',
-  '.ruff_cache/0.15.8/5882379242723067489',
-  '.ruff_cache/0.15.8/8194116454979306627',
+  '.ruff_cache/0.15.9/15274789502473331778',
+  '.ruff_cache/0.15.9/16745208805549297326',
+  '.ruff_cache/0.15.9/2091048453285411571',
+  '.ruff_cache/0.15.9/8001291954108900101',
+  '.ruff_cache/0.15.9/9665642407308259011',
   '.ruff_cache/CACHEDIR.TAG',
   'alphabet/data.js',
   'alphabet/index.html',
