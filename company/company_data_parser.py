@@ -364,6 +364,7 @@ class GrowthAnalytics:
         if not DATA_FILE.exists():
             logger.warning(f"{DATA_FILE} missing. No existing data found!")
             return
+
         # Load existing data
         current_data = DataCoordinator._load_data_file()
 
@@ -387,6 +388,9 @@ class GrowthAnalytics:
             "buckets": {k: 0 for k in bucket_keys},  # Tracks total headcount
             "comp_counts": {k: 0 for k in bucket_keys},  # Tracks number of companies
         }
+        breadth = {"hiring": 0, "stable": 0, "shrinking": 0}
+        bucket_stats = {k: {"emp_now": 0, "emp_prev": 0.0} for k in bucket_keys}
+
         for c in current_data:
             count = (
                 int(c.get("ln_count", 0)) if str(c.get("ln_count", 0)).isdigit() else 0
@@ -401,6 +405,13 @@ class GrowthAnalytics:
             prev_count = count
             if delta_30 is not None:
                 prev_count = count / (1 + (delta_30 / 100))
+                # Track market overall status
+                if delta_30 > 0.5:
+                    breadth["hiring"] += 1
+                elif delta_30 < -0.5:
+                    breadth["shrinking"] += 1
+                else:
+                    breadth["stable"] += 1
 
             key = "pub" if c.get("public", False) else "priv"
             stats[key]["emp_now"] += count
@@ -430,7 +441,11 @@ class GrowthAnalytics:
             stats["buckets"][b] += count
             stats["comp_counts"][b] += 1
 
-        # --- NEW: GROWTH LEADERS ANALYSIS ---
+            if b in bucket_stats and delta_30 is not None:
+                bucket_stats[b]["emp_now"] += count
+                bucket_stats[b]["emp_prev"] += prev_count
+
+        # --- GROWTH LEADERS ANALYSIS ---
         # Filter: Active, Public or Private, and size > 500 (to ignore tiny teams)
         # Sort by: 30-day growth delta (Δ_30d)
         growth_candidates = [
@@ -452,59 +467,63 @@ class GrowthAnalytics:
             growth_candidates, key=lambda x: x["growth_30d"], reverse=True
         )[:10]
 
+        # Formula: Absolute Change = Current - (Current / (1 + (Delta/100)))
+        abs_growth_candidates = []
+        for c in current_data:
+            delta_30 = c.get("Δ_30d")
+            count = int(c.get("ln_count", 0))
+            if delta_30 and count >= 500:
+                prev_count = count / (1 + (delta_30 / 100))
+                added = round(count - prev_count)
+                abs_growth_candidates.append(
+                    {"name": c.get("name"), "added": added, "total": count}
+                )
+
+        top_job_creators = sorted(
+            abs_growth_candidates, key=lambda x: x["added"], reverse=True
+        )[:10]
+
+        def get_pct(current, previous, ndigits=2):
+            """Calculates percentage change with safety check for zero."""
+            if not previous or previous <= 0:
+                return 0.0
+            return round(((current - previous) / previous) * 100, ndigits)
+
+        def get_share(part, total, ndigits=2):
+            """Calculates share of total with safety check for zero."""
+            if not total or total <= 0:
+                return 0.0
+            return round((part / total) * 100, ndigits)
+
         # Finalize the "Snapshot"
+        total = stats["total_emp"]
+        pub, priv = stats["pub"], stats["priv"]
         snapshot = {
             "company_distribution": stats["comp_counts"],
             "company_employees": stats["buckets"],
+            "market_breadth": breadth,
             "top_hirers": top_hirers,
-            "concentration_pct": {
-                k: round((v / stats["total_emp"]) * 100, 2)
-                for k, v in stats["buckets"].items()
-                if stats["total_emp"] > 0
-            },
-            "ownership_split": {
-                "public_emp_pct": (
-                    round((stats["pub"]["emp_now"] / stats["total_emp"]) * 100, 2)
-                    if stats["total_emp"] > 0
-                    else 0
-                ),
-                "private_emp_pct": (
-                    round((stats["priv"]["emp_now"] / stats["total_emp"]) * 100, 2)
-                    if stats["total_emp"] > 0
-                    else 0
-                ),
+            "top_job_creators": top_job_creators,
+            "bucket_momentum": {
+                k: get_pct(v["emp_now"], v["emp_prev"]) for k, v in bucket_stats.items()
             },
             "aggregate_momentum": {
-                "public_avg_30d_chg": (
-                    round(
-                        (
-                            (stats["pub"]["emp_now"] - stats["pub"]["emp_prev"])
-                            / stats["pub"]["emp_prev"]
-                        )
-                        * 100,
-                        3,
-                    )
-                    if stats["pub"]["emp_prev"] > 0
-                    else 0
-                ),
-                "private_avg_30d_chg": (
-                    round(
-                        (
-                            (stats["priv"]["emp_now"] - stats["priv"]["emp_prev"])
-                            / stats["priv"]["emp_prev"]
-                        )
-                        * 100,
-                        3,
-                    )
-                    if stats["priv"]["emp_prev"] > 0
-                    else 0
-                ),
+                "public_avg_30d_chg": get_pct(pub["emp_now"], pub["emp_prev"], 3),
+                "private_avg_30d_chg": get_pct(priv["emp_now"], priv["emp_prev"], 3),
+            },
+            "concentration_pct": {
+                k: get_share(v, total) for k, v in stats["buckets"].items()
+            },
+            "ownership_split": {
+                "public_emp_pct": get_share(pub["emp_now"], total),
+                "private_emp_pct": get_share(priv["emp_now"], total),
             },
         }
 
         # --- MOVING AVERAGE LOGIC ---
         # Pre-parse dates once to avoid repeated string-to-date conversion in the loop
         parsed_history = []
+        chart_points = []
         for item in raw_history:
             try:
                 parsed_history.append(
@@ -516,8 +535,6 @@ class GrowthAnalytics:
                 )
             except (ValueError, KeyError):
                 continue
-
-        chart_points = []
 
         for i, current in enumerate(parsed_history):
             # Define the 7-day calendar window ending at the current date
@@ -749,25 +766,6 @@ class CompanyParser:
 
 class DataCoordinator:
     """Manages data flow, merging, and trend calculation and injection."""
-
-    @staticmethod
-    def run() -> None:
-        # Set the timer to under 6 hours (Github actions limit)
-        MAX_RUNTIME_SECONDS = int(5.75 * 60 * 60)
-        # safety buffer for 10 mins
-        TIME_LIMIT = MAX_RUNTIME_SECONDS - 600
-
-        # Discover URLs
-        url_list = DataCoordinator._get_target_urls()
-        # Process URLs and save data
-        DataCoordinator.process_urls(url_list, TIME_LIMIT)
-
-        # Calculate the Global Index after all companies are updated
-        GrowthAnalytics.aggregate_global_history()
-        # Generate the frontend-ready chart data
-        GrowthAnalytics.generate_market_chart_data()
-        # Sync data if missing or removed during run
-        DataCoordinator._sync_temp_data()
 
     @staticmethod
     def process_urls(url_list, TIME_LIMIT) -> None:
@@ -1319,6 +1317,25 @@ class DataCoordinator:
         with open(DATA_FILE, "w") as f:
             json.dump(final, f, indent=2)
         logger.info(f"Saved {len(final)} unique companies to {DATA_FILE}")
+
+    @staticmethod
+    def run() -> None:
+        # Set the timer to under 6 hours (Github actions limit)
+        MAX_RUNTIME_SECONDS = int(5.75 * 60 * 60)
+        # safety buffer for 10 mins
+        TIME_LIMIT = MAX_RUNTIME_SECONDS - 600
+
+        # Discover URLs
+        url_list = DataCoordinator._get_target_urls()
+        # Process URLs and save data
+        DataCoordinator.process_urls(url_list, TIME_LIMIT)
+
+        # Calculate the Global Index after all companies are updated
+        GrowthAnalytics.aggregate_global_history()
+        # Generate the frontend-ready chart data
+        GrowthAnalytics.generate_market_chart_data()
+        # Sync data if missing or removed during run
+        DataCoordinator._sync_temp_data()
 
 
 if __name__ == "__main__":
