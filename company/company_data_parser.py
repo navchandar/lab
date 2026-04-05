@@ -62,7 +62,6 @@ logger.info(f"Schedule | Day of Week: {day_of_week}")
 logger.info(
     f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
 )
-summaryContent = "## Results\n\n\n"
 
 
 GEO_IDs = [
@@ -767,6 +766,7 @@ class CompanyParser:
 
 class DataCoordinator:
     """Manages data flow, merging, and trend calculation and injection."""
+    summaryContent = "## Results\n\n\n"
 
     @staticmethod
     def process_urls(url_list, TIME_LIMIT) -> None:
