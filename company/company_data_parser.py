@@ -766,12 +766,12 @@ class CompanyParser:
 
 class DataCoordinator:
     """Manages data flow, merging, and trend calculation and injection."""
-    summaryContent = "## Results\n\n\n"
+    summary = "## Results\n\n\n"
 
     @staticmethod
     def process_urls(url_list, TIME_LIMIT) -> None:
         """Get Data for each URL and save it in JSON"""
-        summaryContent += f"Total target companies: {len(url_list)}"
+        DataCoordinator.summary += f"Total target companies: {len(url_list)}"
         logger.info(f"Started run with total: {len(url_list)} targets")
         logger.info("------------------------------------------------")
         start_time = time.time()
@@ -798,13 +798,13 @@ class DataCoordinator:
         # Final save for the remaining processed data
         total_saved = DataCoordinator._save_to_disk(processed)
         processed_count += len(processed)
-        summaryContent += f"Total updated companies: {processed_count}"
+        DataCoordinator.summary += f"Total updated companies: {processed_count}"
         if total_saved:
-            summaryContent += f"Final saved company count: {total_saved}"
+            DataCoordinator.summary += f"Final saved company count: {total_saved}"
         logger.info("------------------------------------------------")
         total_time = round((time.time() - start_time)/3600, 2)
         logger.info(f"Run completed in {total_time} hours.")
-        summaryContent += f"Run completed in {total_time} hours."
+        DataCoordinator.summary += f"Run completed in {total_time} hours."
         logger.info("------------------------------------------------")
 
     @staticmethod
@@ -886,7 +886,7 @@ class DataCoordinator:
 
         if refresh:
             logger.info(f"Added {len(targets)} existing companies to Refresh")
-        summaryContent += f"Initial existing company count: {len(seen)}"
+        DataCoordinator.summary += f"Initial existing company count: {len(seen)}"
 
         mid = len(targets) // 2
         bottom_half = targets[mid:]
@@ -1332,12 +1332,12 @@ class DataCoordinator:
 
 
     @staticmethod
-    def append_github_step_summary(content: str) -> None:
+    def append_github_step_summary() -> None:
         """Append Markdown or plain text to the GitHub Actions job summary"""
         path = os.environ.get("GITHUB_STEP_SUMMARY")
         if path:
             try:
-                Path(path).open("a", encoding="utf-8").write(content)
+                Path(path).open("a", encoding="utf-8").write(DataCoordinator.summary)
             except OSError as e:
                 print(f"Error writing summary: {e}", flush=True)
                 print("Summary Content:", content, flush=True)
@@ -1363,7 +1363,7 @@ class DataCoordinator:
         GrowthAnalytics.generate_market_chart_data()
         # Sync data if missing or removed during run
         DataCoordinator._sync_temp_data()
-        DataCoordinator.append_github_step_summary(summaryContent)
+        DataCoordinator.append_github_step_summary()
 
 
 if __name__ == "__main__":
