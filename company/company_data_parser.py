@@ -4,6 +4,7 @@ import json
 import logging
 import random
 import re
+import os
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -49,7 +50,6 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 BSE_URL = "https://www.bseindia.com/downloads1/List_of_companies.csv"
 
-
 now = datetime.now(timezone.utc)
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 # Discovery: Only crawl for NEW companies on Mon, Wed (0,2)
@@ -62,6 +62,7 @@ logger.info(f"Schedule | Day of Week: {day_of_week}")
 logger.info(
     f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
 )
+summaryContent = "## Results\n\n\n"
 
 
 GEO_IDs = [
@@ -770,11 +771,13 @@ class DataCoordinator:
     @staticmethod
     def process_urls(url_list, TIME_LIMIT) -> None:
         """Get Data for each URL and save it in JSON"""
+        summaryContent += f"Total target companies: {len(url_list)}"
         logger.info(f"Started run with total: {len(url_list)} targets")
         logger.info("------------------------------------------------")
         start_time = time.time()
         # Parse data & Enrich
         processed = []
+        processed_count = 0
         for i, target in enumerate(url_list):
             # Check the clock at the start of every iteration
             elapsed = time.time() - start_time
@@ -790,12 +793,18 @@ class DataCoordinator:
             # save periodically to json file
             if (i + 1) % 10 == 0:
                 DataCoordinator._save_to_disk(processed)
+                processed_count += len(processed)
                 processed = []
         # Final save for the remaining processed data
-        DataCoordinator._save_to_disk(processed)
+        total_saved = DataCoordinator._save_to_disk(processed)
+        processed_count += len(processed)
+        summaryContent += f"Total updated companies: {processed_count}"
+        if total_saved:
+            summaryContent += f"Final saved company count: {total_saved}"
         logger.info("------------------------------------------------")
-        total_time = time.time() - start_time
-        logger.info(f"Run completed in {round(total_time/3600, 2)} hours.")
+        total_time = round((time.time() - start_time)/3600, 2)
+        logger.info(f"Run completed in {total_time} hours.")
+        summaryContent += f"Run completed in {total_time} hours."
         logger.info("------------------------------------------------")
 
     @staticmethod
@@ -853,6 +862,7 @@ class DataCoordinator:
 
     @staticmethod
     def _get_existing_comp(refresh, targets, seen) -> tuple:
+
         if not DATA_FILE.exists():
             logger.warning(f"{DATA_FILE} missing. No existing data found!")
             return targets, seen
@@ -876,6 +886,7 @@ class DataCoordinator:
 
         if refresh:
             logger.info(f"Added {len(targets)} existing companies to Refresh")
+        summaryContent += f"Initial existing company count: {len(seen)}"
 
         mid = len(targets) // 2
         bottom_half = targets[mid:]
@@ -1225,9 +1236,9 @@ class DataCoordinator:
         return []
 
     @staticmethod
-    def _save_to_disk(new_batch: List[Dict], last_updated_date=True) -> None:
+    def _save_to_disk(new_batch: List[Dict], last_updated_date=True) -> int:
         if not new_batch:
-            return
+            return 0
 
         # Load existing data
         current_data = DataCoordinator._load_data_file()
@@ -1317,7 +1328,23 @@ class DataCoordinator:
         with open(DATA_FILE, "w") as f:
             json.dump(final, f, indent=2)
         logger.info(f"Saved {len(final)} unique companies to {DATA_FILE}")
+        return len(final)
 
+
+    @staticmethod
+    def append_github_step_summary(content: str) -> None:
+        """Append Markdown or plain text to the GitHub Actions job summary"""
+        path = os.environ.get("GITHUB_STEP_SUMMARY")
+        if path:
+            try:
+                Path(path).open("a", encoding="utf-8").write(content)
+            except OSError as e:
+                print(f"Error writing summary: {e}", flush=True)
+                print("Summary Content:", content, flush=True)
+        else:
+            print("\n--- SUMMARY ---", flush=True)
+            print(content.replace("## ", ""), flush=True)
+            
     @staticmethod
     def run() -> None:
         # Set the timer to under 6 hours (Github actions limit)
@@ -1336,6 +1363,7 @@ class DataCoordinator:
         GrowthAnalytics.generate_market_chart_data()
         # Sync data if missing or removed during run
         DataCoordinator._sync_temp_data()
+        DataCoordinator.append_github_step_summary(summaryContent)
 
 
 if __name__ == "__main__":
