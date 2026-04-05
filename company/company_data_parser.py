@@ -1340,10 +1340,8 @@ class DataCoordinator:
                 Path(path).open("a", encoding="utf-8").write(DataCoordinator.summary)
             except OSError as e:
                 print(f"Error writing summary: {e}", flush=True)
-                print("Summary Content:", content, flush=True)
         else:
-            print("\n--- SUMMARY ---", flush=True)
-            print(content.replace("## ", ""), flush=True)
+            print("GITHUB_STEP_SUMMARY not found")
             
     @staticmethod
     def run() -> None:
