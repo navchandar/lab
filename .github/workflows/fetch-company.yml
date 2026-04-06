@@ -2,8 +2,9 @@ name: Fetch Company Data
 
 on:
   schedule:
-    # Runs at 03 AM IST Mon-Fri
-    - cron: "30 17 * * 0-4"
+    # Runs at 02 AM IST Mon-Fri
+    - cron: "30 2 * * 0-4"
+      timezone: "Asia/Kolkata"
   workflow_dispatch:
 
 permissions:

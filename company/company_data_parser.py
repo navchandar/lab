@@ -55,7 +55,7 @@ day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 # Discovery: Only crawl for NEW companies on Mon, Wed (0,2)
 CHECK_JOB_POSTS = day_of_week in [0, 2]
 # Deep Refresh: Update EVERYTHING during week days
-REFRESH_ALL = day_of_week in [0, 1, 2, 3, 4]
+REFRESH_ALL = True
 # Search and update Listed companies once a wekk
 FIND_LISTED = day_of_week in [1, 3]
 logger.info(f"Schedule | Day of Week: {day_of_week}")
