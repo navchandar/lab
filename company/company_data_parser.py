@@ -2,9 +2,9 @@ import csv
 import io
 import json
 import logging
+import os
 import random
 import re
-import os
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -320,31 +320,47 @@ class GrowthAnalytics:
 
     @staticmethod
     def aggregate_global_history() -> None:
-        """Aggregates headcount for all companies into a global daily index."""
+        """Aggregates headcount for all companies into a global daily index by carrying values forward."""
         logger.info("Calculating Global Headcount Index")
         history = GrowthAnalytics._load_history_file()
         if not history:
             return
-        # Use a temporary dict to sum counts by date
-        # key: date string, value: total count
-        global_map = {}
+
+        # Collect all unique dates and map updates by date
+        # date_updates = { "2026-04-01": { "handle1": 100, "handle2": 200 } }
+        all_dates = set()
+        date_updates = {}
 
         for handle, records in history.items():
-            # Skip the aggregate key itself if it already exists
             if handle == "history":
                 continue
             for entry in records:
-                date = entry.get("d")
-                count = entry.get("c")
-                if date and count:
-                    global_map[date] = global_map.get(date, 0) + count
+                d, c = entry.get("d"), entry.get("c")
+                if d and c is not None:
+                    all_dates.add(d)
+                    if d not in date_updates:
+                        date_updates[d] = {}
+                    date_updates[d][handle] = c
 
-        # Convert back format: list of {"c": total, "d": date}
-        # Sorted by date ascending
-        sorted_dates = sorted(global_map.keys())
-        global_records = [{"c": global_map[d], "d": d} for d in sorted_dates]
+        # Sort dates chronologically
+        sorted_dates = sorted(list(all_dates))
 
-        # Save back to the main history object
+        # Track the "Current State" of the entire market
+        # This keeps the last known count for EVERY company
+        last_known_market_state = {}
+        global_records = []
+
+        for d in sorted_dates:
+            # Update our market state with companies scraped ON this specific date
+            if d in date_updates:
+                last_known_market_state.update(date_updates[d])
+
+            # The total for today is the sum of EVERY company's last known count
+            total_employment_today = sum(last_known_market_state.values())
+
+            global_records.append({"d": d, "c": total_employment_today})
+
+        # Save the "Smooth" history back
         history["history"] = global_records
         GrowthAnalytics._save_history_file(history)
         logger.info(
@@ -766,6 +782,7 @@ class CompanyParser:
 
 class DataCoordinator:
     """Manages data flow, merging, and trend calculation and injection."""
+
     summary = "## Results\n\n\n"
 
     @staticmethod
@@ -802,7 +819,7 @@ class DataCoordinator:
         if total_saved:
             DataCoordinator.summary += f"Final saved company count: **{total_saved}**\n"
         logger.info("------------------------------------------------")
-        total_time = round((time.time() - start_time)/3600, 2)
+        total_time = round((time.time() - start_time) / 3600, 2)
         logger.info(f"Run completed in {total_time} hours.")
         DataCoordinator.summary += f"Run completed in {total_time} hours.\n"
         logger.info("------------------------------------------------")
@@ -1330,7 +1347,6 @@ class DataCoordinator:
         logger.info(f"Saved {len(final)} unique companies to {DATA_FILE}")
         return len(final)
 
-
     @staticmethod
     def append_github_step_summary() -> None:
         """Append Markdown or plain text to the GitHub Actions job summary"""
@@ -1342,7 +1358,7 @@ class DataCoordinator:
                 print(f"Error writing summary: {e}", flush=True)
         else:
             print("GITHUB_STEP_SUMMARY not found")
-            
+
     @staticmethod
     def run() -> None:
         # Set the timer to under 6 hours (Github actions limit)
