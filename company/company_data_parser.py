@@ -771,7 +771,7 @@ class DataCoordinator:
     @staticmethod
     def process_urls(url_list, TIME_LIMIT) -> None:
         """Get Data for each URL and save it in JSON"""
-        DataCoordinator.summary += f"Total target companies: {len(url_list)}"
+        DataCoordinator.summary += f"Total target companies: {len(url_list)}\n"
         logger.info(f"Started run with total: {len(url_list)} targets")
         logger.info("------------------------------------------------")
         start_time = time.time()
@@ -798,13 +798,13 @@ class DataCoordinator:
         # Final save for the remaining processed data
         total_saved = DataCoordinator._save_to_disk(processed)
         processed_count += len(processed)
-        DataCoordinator.summary += f"Total updated companies: {processed_count}"
+        DataCoordinator.summary += f"Total updated companies: {processed_count}\n"
         if total_saved:
-            DataCoordinator.summary += f"Final saved company count: {total_saved}"
+            DataCoordinator.summary += f"Final saved company count: **{total_saved}**\n"
         logger.info("------------------------------------------------")
         total_time = round((time.time() - start_time)/3600, 2)
         logger.info(f"Run completed in {total_time} hours.")
-        DataCoordinator.summary += f"Run completed in {total_time} hours."
+        DataCoordinator.summary += f"Run completed in {total_time} hours.\n"
         logger.info("------------------------------------------------")
 
     @staticmethod
@@ -886,7 +886,7 @@ class DataCoordinator:
 
         if refresh:
             logger.info(f"Added {len(targets)} existing companies to Refresh")
-        DataCoordinator.summary += f"Initial existing company count: {len(seen)}"
+        DataCoordinator.summary += f"Initial existing company count: **{len(seen)}**\n"
 
         mid = len(targets) // 2
         bottom_half = targets[mid:]
