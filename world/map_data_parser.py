@@ -17,7 +17,7 @@ SCRIPT_DIR = (
     if "__file__" in globals()
     else Path(Path.cwd()).resolve()
 )
-topo_url = "https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@0.1.0/world/50m.json"
+topo_url = "https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@1/world/50m.json"
 rc_url = "https://restcountries.com/v3.1/all?fields=ccn3,cca2,name,capital,region,languages,currencies"
 
 
