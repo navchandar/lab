@@ -795,6 +795,7 @@ class DataCoordinator:
         # Parse data & Enrich
         processed = []
         processed_count = 0
+        total_saved = 0
         for i, target in enumerate(url_list):
             # Check the clock at the start of every iteration
             elapsed = time.time() - start_time
@@ -809,15 +810,17 @@ class DataCoordinator:
 
             # save periodically to json file
             if (i + 1) % 10 == 0:
-                DataCoordinator._save_to_disk(processed)
+                total_saved = DataCoordinator._save_to_disk(processed)
                 processed_count += len(processed)
                 processed = []
+
         # Final save for the remaining processed data
-        total_saved = DataCoordinator._save_to_disk(processed)
-        processed_count += len(processed)
+        if processed and len(processed) > 0:
+            total_saved = DataCoordinator._save_to_disk(processed)
+            processed_count += len(processed)
+
         DataCoordinator.summary += f"Total updated companies: {processed_count}\n"
-        if total_saved:
-            DataCoordinator.summary += f"Final saved company count: **{total_saved}**\n"
+        DataCoordinator.summary += f"Final saved company count: **{total_saved}**\n"
         logger.info("------------------------------------------------")
         total_time = round((time.time() - start_time) / 3600, 2)
         logger.info(f"Run completed in {total_time} hours.")
