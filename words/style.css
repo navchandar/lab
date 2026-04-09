@@ -57,6 +57,7 @@ body {
     transition:
         transform 0.2s ease-in-out,
         color 0.2s ease-in-out,
+        opacity 0.2s ease-in-out,
         text-shadow 0.2s ease-in-out;
     font-size: clamp(3rem, 15cqw, 10rem);
 }
@@ -152,14 +153,14 @@ body {
 /* Hint Animation for Space/Enter */
 @keyframes hintGlow {
     0% {
-        transform: scale(1.05);
+        transform: scale(1);
         box-shadow:
             0 0 10px #ffeb3b,
             0 6px 12px rgba(0, 0, 0, 0.15);
     }
 
     100% {
-        transform: scale(1.15);
+        transform: scale(1.2);
         box-shadow:
             0 0 25px #ff9800,
             0 6px 12px rgba(0, 0, 0, 0.15);

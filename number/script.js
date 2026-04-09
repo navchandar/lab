@@ -39,37 +39,34 @@ function speaker() {
 }
 
 function incrementNumber() {
+  utils.hideSettings();
   // If locked, stop immediately
   if (locked) {
     return;
   }
 
+  locked = true;
   // Determine which mode to use (random or sequential)
   const isRandomEnabled = utils.getIsRandomEnabled();
   previousColor = currentColor;
-  locked = true;
 
+  if (isRandomEnabled) {
+    // select random number between 1 and 100.
+    const randomValue = Math.floor(Math.random() * 100) + 1;
+    numberElement.textContent = randomValue;
+    currentColor = utils.getRandomColor(previousColor, currentColor);
+  } else {
+    number++;
+    numberElement.textContent = number;
+    currentColor = utils.getNextColor(previousColor, currentColor);
+  }
+  numberElement.style.color = currentColor;
+
+  // Unlock after the speech delay
   setTimeout(() => {
-    if (isRandomEnabled) {
-      // select random number between 1 and 100.
-      const randomValue = Math.floor(Math.random() * 100) + 1;
-      numberElement.textContent = randomValue;
-      currentColor = utils.getRandomColor(previousColor, currentColor);
-    } else {
-      number++;
-      numberElement.textContent = number;
-      currentColor = utils.getNextColor(previousColor, currentColor);
-    }
-    numberElement.style.color = currentColor;
-
-    // Unlock after the speech delay
-    setTimeout(() => {
-      speaker();
-      locked = false;
-    }, 700);
-  }, 200);
-
-  utils.hideSettings();
+    speaker();
+    locked = false;
+  }, 700);
 }
 
 // Function to set the randomize state in localStorage
@@ -125,14 +122,14 @@ function updateSettingsMenu() {
 function handleKeydown(event) {
   const target = event.target;
   utils.hideSidebar();
+  // Ignore key presses if focused on an interactive element
+  if (utils.isInteractiveElement(target)) {
+    return;
+  }
 
   switch (event.code) {
     case "Space":
     case "Enter":
-      // Ignore key presses if focused on an interactive element
-      if (utils.isInteractiveElement(target)) {
-        return;
-      }
       event.preventDefault();
       incrementNumber();
       break;

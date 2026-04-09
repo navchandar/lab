@@ -81,12 +81,14 @@ const g = svg.append("g");
 const maxZoomLimit = 4;
 
 function updateGradientPos(event, gradientId) {
-  const [mx, my] = d3.pointer(event, g.node());
-  d3.select(gradientId)
-    .attr("cx", mx)
-    .attr("cy", my)
-    .attr("fx", mx)
-    .attr("fy", my);
+  requestAnimationFrame(() => {
+    const [mx, my] = d3.pointer(event, g.node());
+    d3.select(gradientId)
+      .attr("cx", mx)
+      .attr("cy", my)
+      .attr("fx", mx)
+      .attr("fy", my);
+  });
 }
 
 function hideLoading() {
@@ -140,7 +142,10 @@ const dataUrl = "map_data.json";
 const country = "country_data.json";
 
 // Check if the screen width is mobile-sized
-const isMobile = () => window.innerWidth <= 768;
+let isMobileDevice = window.innerWidth <= 768;
+window.addEventListener("resize", () => {
+  isMobileDevice = window.innerWidth <= 768;
+});
 
 Promise.all([d3.json(dataUrl), d3.json(country)])
   .then(([topoData, countryData]) => {
@@ -160,36 +165,37 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
       .attr("d", path)
       .attr("class", "country")
       .style("opacity", 0) // Start completely invisible
+      .style("will-change", "fill, opacity")
       .on("pointermove", function (event) {
         // --- DISABLE HOVER ON MOBILE ---
-        if (isMobile()) {
+        if (isMobile) {
           return;
         }
 
         const el = d3.select(this);
 
         if (!el.classed("active")) {
-          // Temporarily set the fill to the gradient URL
-          el.style("fill", "url(#hoverGradient)");
+          // Only update attributes if necessary to avoid layout thrashing
+          if (!el.classed("hovering")) {
+            el.style("fill", "url(#hoverGradient)");
+            el.classed("hovering", true);
+            hoverStop1.transition().duration(100).attr("stop-opacity", 1);
+            hoverStop2.transition().duration(200).attr("stop-opacity", 1);
+          }
           updateGradientPos(event, "#hoverGradient");
-          el.classed("hovering", true);
-
-          // Animate the opacity of the gradient stops to fade it in
-          hoverStop1.transition().duration(100).attr("stop-opacity", 1);
-          hoverStop2.transition().duration(200).attr("stop-opacity", 1);
         }
       })
       .on("pointerout", function () {
         // --- DISABLE HOVER ON MOBILE ---
-        if (isMobile()) {
+        if (isMobile) {
           return;
         }
         const el = d3.select(this);
         el.classed("hovering", false);
 
         // Fade the shared gradient out
-        hoverStop1.transition().duration(50).attr("stop-opacity", 0.75);
-        hoverStop2.transition().duration(50).attr("stop-opacity", 0.75);
+        hoverStop1.interrupt().transition().duration(150).attr("stop-opacity", 0);
+        hoverStop2.interrupt().transition().duration(150).attr("stop-opacity", 0);
 
         // Using setTimeout securely locks the context to THIS specific country path
         setTimeout(() => {
@@ -197,7 +203,7 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
           if (!el.classed("hovering") && !el.classed("active")) {
             el.style("fill", null); // Remove the url(#hoverGradient)
           }
-        }, 100);
+        }, 150);
       })
       .on("click", function (event, d) {
         // stops the click from "falling through" the country into the ocean
@@ -335,12 +341,11 @@ function handleInteraction(element, data, info) {
   // --- Mobile Optimization Logic ---
   // Check if the screen width is mobile-sized
   // Dynamic Max Zoom: Allow deeper zooming on small screens
-  const isMobileSize = isMobile();
-  const dynamicMaxZoom = isMobileSize ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
+  const dynamicMaxZoom = isMobile ? 8 : maxZoomLimit; // 8x on mobile, 4x on desktop
 
   // Dynamic Padding: Countries should take up more of the screen on mobile
   // 0.7 means it fills 70% of the screen, 0.4 means 40%
-  const paddingFactor = isMobileSize ? 0.8 : 0.5;
+  const paddingFactor = isMobile ? 0.8 : 0.5;
 
   // Calculate the perfect scale based on dynamic variables
   const scale = Math.max(
@@ -350,7 +355,7 @@ function handleInteraction(element, data, info) {
 
   // Y-Axis Offset: Shift the center down on mobile so the popup doesn't cover the country
   // Shifts the camera focus UP by 10% of the SVG height (which moves the map DOWN on screen)
-  const yOffset = isMobileSize ? height * 0.1 : 0;
+  const yOffset = isMobile ? height * 0.1 : 0;
 
   // Calculate the target translation
   const targetX = width / 2 - x * scale;
@@ -522,7 +527,7 @@ function updateSettingsMenu() {
 function handleKeydown(event) {
   const target = event.target;
   utils.hideSidebar();
-  
+
   switch (event.code) {
     case "Space":
       // Ignore key presses if focused on an interactive element

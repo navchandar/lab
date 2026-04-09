@@ -52,30 +52,23 @@ function getNextSequentialChar() {
  * @returns {string} A random character.
  */
 function getNextRandomChar() {
+  if (Alphabet.length <= 1) {
+    return Alphabet[0];
+  }
+
   let newChar;
-  let randomIndex;
   let attempts = 0;
-  const maxAttempts = Alphabet.length * 2; // Safeguard against infinite loops
+  // Reduce max history size if alphabet is tiny to prevent deadlocks
+  const maxHistory = Math.min(Alphabet.length - 1, 3);
 
-  // Find a new character that is not in the recent history.
   do {
-    randomIndex = Math.floor(Math.random() * Alphabet.length);
-    newChar = Alphabet[randomIndex];
+    newChar = Alphabet[Math.floor(Math.random() * Alphabet.length)];
     attempts++;
-  } while (
-    Alphabet.length > 1 &&
-    history.includes(newChar) &&
-    attempts < maxAttempts
-  );
+  } while (history.includes(newChar) && attempts < 10);
 
-  // Update history: Add the new character and remove the oldest if history is too long.
-  // The history size is capped to ensure variety.
-  const maxHistorySize = Math.min(Alphabet.length - 1, 3);
-  if (Alphabet.length > 1) {
-    history.push(newChar);
-    if (history.length > maxHistorySize) {
-      history.shift(); // Remove the oldest character from the front
-    }
+  history.push(newChar);
+  if (history.length > maxHistory) {
+    history.shift();
   }
 
   return newChar;
@@ -101,16 +94,19 @@ function updateCharacter() {
   }
 
   // Update the DOM element with the new character
-  numberElement.textContent = charToDisplay;
+  // Use requestAnimationFrame to ensure the style change hits the next paint cycle
+  requestAnimationFrame(() => {
+    numberElement.textContent = charToDisplay;
 
-  // Change and apply a new color
-  numberElement.style.color = currentColor;
+    // Change and apply a new color
+    numberElement.style.color = currentColor;
 
-  // Speak the new character
-  setTimeout(() => {
-    speaker();
-    locked = false;
-  }, 700);
+    // Speak character after visual change
+    setTimeout(() => {
+      speaker();
+      isLocked = false;
+    }, 500);
+  });
 }
 
 /**
@@ -169,14 +165,14 @@ numberElement.textContent = Alphabet[0];
 function handleKeydown(event) {
   const target = event.target;
   utils.hideSidebar();
+  // Ignore key presses if focused on an interactive element
+  if (utils.isInteractiveElement(target)) {
+    return;
+  }
 
   switch (event.code) {
     case "Space":
     case "Enter":
-      // Ignore key presses if focused on an interactive element
-      if (utils.isInteractiveElement(target)) {
-        return;
-      }
       event.preventDefault();
       incrementAlphabet();
       break;
@@ -233,10 +229,15 @@ document
   });
 
 // --- Randomize Checkbox Listeners ---
-randomizeCheckbox.addEventListener("change", (e) => {
-  e.stopPropagation();
-  utils.setIsRandom(randomizeCheckbox.checked);
-});
+randomizeCheckbox.addEventListener(
+  "change",
+  (e) => {
+    e.stopPropagation();
+    utils.setIsRandom(randomizeCheckbox.checked);
+  },
+  { passive: true },
+);
+
 randomizeCheckbox.addEventListener("click", (e) => {
   e.stopPropagation();
   utils.setIsRandom(randomizeCheckbox.checked);

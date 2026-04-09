@@ -32,11 +32,12 @@ const shapes = [
 ];
 
 let intervalID = null;
-let currentShapeIndex = 0;
+let currentShapeIndex = -1;
 let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;
 let locked = false;
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Speaks the given text displayed on the screen.
@@ -48,16 +49,17 @@ function speaker() {
 }
 
 function updateShape() {
+  utils.hideSettings();
   // If locked, stop immediately
   if (locked) {
     return;
   }
+  locked = true;
 
   // --- LOGIC: Determine next shape & color ---
   const isRandomEnabled = utils.getIsRandomEnabled();
   previousColor = currentColor;
   let newShape = null;
-  locked = true;
 
   if (isRandomEnabled) {
     let randomIndex;
@@ -93,7 +95,6 @@ function updateShape() {
     // Reset class list to base "shape" plus the new shape name
     shapeElement.className = "shape " + newShape;
     shapeElement.style.backgroundColor = currentColor;
-    utils.hideSettings();
 
     setTimeout(() => {
       // Update Text of shape

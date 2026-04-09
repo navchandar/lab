@@ -197,6 +197,7 @@
         transition:
           opacity 0.5s ease,
           visibility 0.5s ease;
+        will-change: opacity, visibility;
         inset: 0;
         background-color: var(--bg-color);
       }
@@ -206,6 +207,8 @@
         position: relative;
         justify-content: center;
         align-items: center;
+        transform: translateZ(0);
+        backface-visibility: hidden;
         width: 100px;
         height: 100px;
       }
@@ -213,9 +216,10 @@
       /* The central Earth with a gentle pulse */
       .earth-circle {
         z-index: 2;
-        animation: earth-pulse 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3));
+        animation: earth-pulse 2.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+        will-change: transform;
         font-size: 5rem;
-        text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
       }
 
       /* The invisible ring that handles the rotation */
@@ -223,11 +227,11 @@
         position: absolute;
         z-index: 3;
         /* Pure mathematical rotation - no frames! */
-        animation: smooth-rotate 3s linear infinite;
+        animation: smooth-rotate 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        will-change: transform;
         border-radius: 50%;
-        /* Slightly larger than the Earth */
-        width: 130px;
-        height: 130px;
+        width: 140px;
+        height: 140px;
       }
 
       /* The little icon traveling around the world */
@@ -236,7 +240,9 @@
         top: 0;
         left: 50%;
         transform: translateX(-50%) rotate(45deg);
-        font-size: 1.5rem;
+        /* Add a slight trail effect via shadow */
+        filter: drop-shadow(-2px 2px 2px rgba(0, 0, 0, 0.2));
+        font-size: 1.8rem;
       }
 
       /* --- Animations --- */
@@ -254,12 +260,9 @@
         0%,
         100% {
           transform: scale(1);
-          filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
         }
-
         50% {
-          transform: scale(1.05);
-          filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.5));
+          transform: scale(1.1);
         }
       }
 
@@ -316,7 +319,7 @@
           fill 0.3s ease,
           stroke 0.3s ease,
           opacity 1s ease-in-out;
-        will-change: fill;
+        will-change: fill, stroke-width;
         cursor: pointer;
         fill: var(--country-fill);
         stroke: var(--country-stroke);

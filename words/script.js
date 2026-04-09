@@ -29,7 +29,7 @@ const Locale = languageData.locale;
 
 let currentColor = null;
 let previousColor = null;
-let currentIndex = 0;
+let currentIndex = -1;
 let history = [];
 let locked = false;
 
@@ -50,30 +50,20 @@ function getNextSequentialWord() {
 }
 
 function getNextRandomWord() {
-  let newWord;
-  let randomIndex;
-  let attempts = 0;
-  const maxAttempts = WordList.length * 2;
+  // If pool is empty, refill and shuffle it
+  if (history.length === 0) {
+    history = shuffleArray([...WordList]);
 
-  do {
-    randomIndex = Math.floor(Math.random() * WordList.length);
-    newWord = WordList[randomIndex];
-    attempts++;
-  } while (
-    WordList.length > 1 &&
-    history.includes(newWord) &&
-    attempts < maxAttempts
-  );
-
-  const maxHistorySize = Math.min(WordList.length - 1, 10); // Keep last 10 words out of rotation
-  if (WordList.length > 1) {
-    history.push(newWord);
-    if (history.length > maxHistorySize) {
-      history.shift();
+    // Prevent the last word of the previous cycle
+    // from being the first word of the new cycle
+    if (history.length > 1 && history[history.length - 1] === previousWord) {
+      const last = history.pop();
+      history.unshift(last);
     }
   }
 
-  return newWord;
+  const nextWord = history.pop();
+  return nextWord;
 }
 
 function updateWord() {
@@ -88,8 +78,9 @@ function updateWord() {
   } else {
     wordToDisplay = getNextSequentialWord();
     currentColor = utils.getNextColor(previousColor, currentColor);
-    history = [];
+    history = []; // Clear the pool when switching to sequential
   }
+
   if (isQuizMode) {
     // Let the quiz handle the DOM injection
     initQuizWord(wordToDisplay);
@@ -394,7 +385,7 @@ Object.keys(window.wordsData).forEach((langKey) => {
 });
 
 languageSelect.value = lang;
-wordElement.textContent = WordList[0];
+// wordElement.textContent = WordList[0];
 
 // --- Dropdown Event Listeners ---
 languageSelect.addEventListener("change", (e) => {
@@ -473,13 +464,13 @@ document.addEventListener("DOMContentLoaded", () => {
   settingsBtn.style.display = "block";
 
   document.addEventListener("keydown", handleKeydown);
-  utils.bodyAction(incrementWord);
   utils.updateMuteBtn();
   utils.updateFullScreenBtn();
+  utils.bodyAction(incrementWord);
+  updateWord();
 
   if (ttsInstance.isSpeechReady()) {
     utils.enableMuteBtn();
-    speaker();
   } else {
     utils.disableMuteBtn();
   }

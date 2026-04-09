@@ -114,6 +114,7 @@
         flex-direction: column;
         justify-content: center; /* Center vertically */
         align-items: center; /* Center horizontally */
+        contain: strict; /* Optimization: Tells the browser this area is isolated */
         width: 100%;
         height: 100dvh;
         overflow: hidden;
@@ -124,7 +125,7 @@
         display: flex;
         transform-origin: center;
         transition: none;
-        will-change: transform;
+        will-change: transform, opacity;
         margin: 0;
         outline: none;
         border: none;
@@ -132,7 +133,7 @@
         /* Define the Gradient */
         background-image: var(--text-gradient);
         /* Make the background fill the text */
-        background-size: 400% 400%;
+        background-size: 200% 200%;
         padding: 0;
         /* Large size for smooth movement */
         width: 90%;
@@ -215,12 +216,6 @@
           transform: scale(0.8);
           opacity: 0;
         }
-
-        50% {
-          transform: scale(1.1);
-          opacity: 1;
-        }
-
         100% {
           transform: scale(1);
           opacity: 1;

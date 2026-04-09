@@ -2,11 +2,13 @@ import * as utils from "../static/utils.js";
 
 const inputEl = document.getElementById("big-input");
 const titleEl = document.querySelector(".typing-title");
-
-// Track if the user is currently "composing" a character
 let isComposing = false;
 
-// Check Unicode support once at startup
+// --- OPTIMIZATION: Cache expensive objects globally ---
+const canvas = document.createElement("canvas");
+const context = canvas.getContext("2d", { alpha: false }); // alpha: false for slight speed boost
+const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+
 const isUnicodeSupported = (() => {
   try {
     new RegExp("\\p{L}", "u");
@@ -16,10 +18,6 @@ const isUnicodeSupported = (() => {
   }
 })();
 
-/**
- * Improved Context-Aware Dynamic Font Resizer
- * Uses Canvas measurement to ensure the character fits the container
- */
 const adjustFontSize = () => {
   try {
     const val = inputEl.value;
@@ -29,138 +27,74 @@ const adjustFontSize = () => {
     }
 
     const parent = inputEl.parentElement;
-    // Get the actual available space in the container
-    const boxWidth = parent.clientWidth * 0.9; // 90% of width
-    const boxHeight = parent.clientHeight * 0.7; // 70% of height
+    const boxWidth = parent.clientWidth * 0.9;
+    const boxHeight = parent.clientHeight * 0.7;
 
-    // Create a "virtual ruler" to measure the text
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
-
-    // Measure based on your specific font
+    // --- OPTIMIZATION: Use the cached context ---
     context.font = `700 100px Lexend, sans-serif`;
-    const metrics = context.measureText(val);
-    const textWidthAt100px = metrics.width;
+    const textWidthAt100px = context.measureText(val).width;
 
-    // Calculate the best fit
-    // How big can we go based on Height?
-    const sizeByHeight = boxHeight;
-    // How big can we go based on Width? (Width of box / width of 1 char) * 100
     const sizeByWidth = (boxWidth / textWidthAt100px) * 100;
+    let finalSize = Math.min(boxHeight, sizeByWidth);
 
-    // Pick the smaller of the two to ensure it fits both ways
-    let finalSize = Math.min(sizeByHeight, sizeByWidth);
-
-    // Safety Floor: Never let it get smaller than a readable size
-    // On mobile (narrow), we ensure it's at least 15% of the screen height
     const minFloor = parent.clientHeight * 0.15;
     finalSize = Math.max(finalSize, minFloor);
 
-    // Apply instantly (no transitions to prevent "jumping")
-    inputEl.style.transition = "none";
     inputEl.style.fontSize = `${finalSize}px`;
-  } catch {
-    console.error("Error scaling text size!");
+  } catch (e) {
+    console.error("Scaling error", e);
   }
 };
 
-const resizeObserver = new ResizeObserver(() => {
-  // Re-render and re-scale whenever the box changes
-  renderUI();
-});
+// --- OPTIMIZATION: Use requestAnimationFrame to prevent layout thrashing ---
+let renderPending = false;
+const renderUI = () => {
+  if (renderPending) return;
+  renderPending = true;
 
-/**
- * CORE LOGIC (Validation & Cleaning)
- * Extracts the single last "visual" character and removes unwanted symbols.
- */
-const sanitizeInput = (rawVal) => {
-  if (!rawVal) {
-    return "";
-  }
+  requestAnimationFrame(() => {
+    const val = inputEl.value;
+    const hasValue = val.length > 0;
 
-  // Use Intl.Segmenter to handle "Grapheme Clusters" (e.g., Tamil 'மெ' is one unit)
-  // Use undefined to detect the user's system locale automatically.
-  const segmenter = new Intl.Segmenter(undefined, {
-    granularity: "grapheme",
+    titleEl.style.display = hasValue ? "none" : "block";
+    inputEl.classList.toggle("hide-caret", hasValue);
+
+    if (hasValue) {
+      adjustFontSize();
+      inputEl.classList.remove("animate-pop");
+      // This is the one "expensive" line kept to restart the CSS animation
+      void inputEl.offsetWidth;
+      inputEl.classList.add("animate-pop");
+    } else {
+      inputEl.classList.remove("animate-pop");
+      inputEl.style.fontSize = "";
+    }
+    renderPending = false;
   });
-  const segments = Array.from(segmenter.segment(rawVal));
+};
 
-  // Get the very last visual character entered
+const resizeObserver = new ResizeObserver(renderUI);
+
+const sanitizeInput = (rawVal) => {
+  if (!rawVal) return "";
+
+  // --- OPTIMIZATION: Use the cached segmenter ---
+  const segments = Array.from(segmenter.segment(rawVal));
   let val = segments.length > 0 ? segments[segments.length - 1].segment : "";
 
-  // Filter based on browser capability
   if (isUnicodeSupported) {
-    // \p{L} = Letters, \p{N} = Numbers, \p{M} = Combining Marks (Vital for Tamil vowel signs)
     return val.replace(/[^\p{L}\p{N}\p{M}]/gu, "");
-  } else {
-    // Fallback for very old browsers
-    return val.replace(/[^a-zA-Z0-9]/g, "");
   }
-};
-
-/**
- * UI RENDERING
- */
-const renderUI = () => {
-  const val = inputEl.value;
-  const hasValue = val.length > 0;
-
-  // Toggle Title visibility
-  titleEl.style.display = hasValue ? "none" : "block";
-
-  // Toggle Caret visibility
-  inputEl.classList.toggle("hide-caret", hasValue);
-
-  if (hasValue) {
-    adjustFontSize();
-    // Restart "pop" animation by forcing a reflow
-    inputEl.classList.remove("animate-pop");
-    void inputEl.offsetWidth;
-    inputEl.classList.add("animate-pop");
-  } else {
-    inputEl.classList.remove("animate-pop");
-    inputEl.style.fontSize = ""; // Reset
-  }
-};
-
-/**
- * EVENT HANDLERS
- */
-const handleKeyDown = (e) => {
-  const { code } = e;
-  utils.hideSidebar();
-
-  // Clear Input Keys
-  if (["Space", "Enter", "Escape"].includes(code)) {
-    e.preventDefault();
-    inputEl.value = "";
-    renderUI();
-    return;
-  }
-
-  // Block navigation within the single-character input
-  if (code.startsWith("Arrow")) {
-    e.preventDefault();
-  }
-
-  // Sidebar Utility
-  if (code === "Equal") {
-    e.preventDefault();
-    utils.handleSidebar();
-  }
+  return val.replace(/[^a-zA-Z0-9]/g, "");
 };
 
 const handleInput = (e) => {
-  // If the user is still building a complex character (IME), don't sanitize yet
-  // This prevents "flickering" or broken characters in languages like Tamil.
-  if (isComposing) {
-    return;
-  }
+  if (isComposing) return;
 
   const rawVal = e.target.value;
   const cleanVal = sanitizeInput(rawVal);
 
-  // Update the input field only if the value actually changed
+  // --- OPTIMIZATION: Only update DOM if the value changed ---
   if (inputEl.value !== cleanVal) {
     inputEl.value = cleanVal;
   }
