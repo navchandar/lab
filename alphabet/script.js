@@ -104,7 +104,7 @@ function updateCharacter() {
     // Speak character after visual change
     setTimeout(() => {
       speaker();
-      isLocked = false;
+      locked = false;
     }, 500);
   });
 }

@@ -46,10 +46,39 @@ const adjustFontSize = () => {
   }
 };
 
+/**
+ * EVENT HANDLERS
+ */
+const handleKeyDown = (e) => {
+  const { code } = e;
+  utils.hideSidebar();
+
+  // Clear Input Keys
+  if (["Space", "Enter", "Escape"].includes(code)) {
+    e.preventDefault();
+    inputEl.value = "";
+    renderUI();
+    return;
+  }
+
+  // Block navigation within the single-character input
+  if (code.startsWith("Arrow")) {
+    e.preventDefault();
+  }
+
+  // Sidebar Utility
+  if (code === "Equal") {
+    e.preventDefault();
+    utils.handleSidebar();
+  }
+};
+
 // --- OPTIMIZATION: Use requestAnimationFrame to prevent layout thrashing ---
 let renderPending = false;
 const renderUI = () => {
-  if (renderPending) return;
+  if (renderPending) {
+    return;
+  }
   renderPending = true;
 
   requestAnimationFrame(() => {
@@ -76,7 +105,9 @@ const renderUI = () => {
 const resizeObserver = new ResizeObserver(renderUI);
 
 const sanitizeInput = (rawVal) => {
-  if (!rawVal) return "";
+  if (!rawVal) {
+    return "";
+  }
 
   // --- OPTIMIZATION: Use the cached segmenter ---
   const segments = Array.from(segmenter.segment(rawVal));
@@ -89,7 +120,11 @@ const sanitizeInput = (rawVal) => {
 };
 
 const handleInput = (e) => {
-  if (isComposing) return;
+  // If the user is still building a complex character (IME), don't sanitize yet
+  // This prevents "flickering" or broken characters in languages like Tamil.
+  if (isComposing) {
+    return;
+  }
 
   const rawVal = e.target.value;
   const cleanVal = sanitizeInput(rawVal);

@@ -30,6 +30,7 @@ const Locale = languageData.locale;
 let currentColor = null;
 let previousColor = null;
 let currentIndex = -1;
+let previousWord = null;
 let history = [];
 let locked = false;
 
@@ -63,6 +64,7 @@ function getNextRandomWord() {
   }
 
   const nextWord = history.pop();
+  previousWord = nextWord;
   return nextWord;
 }
 
@@ -79,6 +81,7 @@ function updateWord() {
     wordToDisplay = getNextSequentialWord();
     currentColor = utils.getNextColor(previousColor, currentColor);
     history = []; // Clear the pool when switching to sequential
+    previousWord = null;
   }
 
   if (isQuizMode) {

@@ -10,7 +10,7 @@ const flagImgEl = document.getElementById("flag-img");
 const extrainfoCheckbox = document.getElementById("show-extra-info");
 const extraInfoEl = document.getElementById("extra-info-text");
 const startTime = Date.now();
-const MIN_LOAD_TIME = 3000;
+const MIN_LOAD_TIME = 2500;
 
 // --- Speaker Initiation ---
 const ttsInstance = TTS();
@@ -142,9 +142,9 @@ const dataUrl = "map_data.json";
 const country = "country_data.json";
 
 // Check if the screen width is mobile-sized
-let isMobileDevice = window.innerWidth <= 768;
+let isMobile = window.innerWidth <= 768;
 window.addEventListener("resize", () => {
-  isMobileDevice = window.innerWidth <= 768;
+  isMobile = window.innerWidth <= 768;
 });
 
 Promise.all([d3.json(dataUrl), d3.json(country)])
