@@ -32,7 +32,7 @@ const shapes = [
 ];
 
 let intervalID = null;
-let currentShapeIndex = -1;
+let currentShapeIndex = 0;
 let previousShapeIndex = 0;
 let currentColor = null;
 let previousColor = null;

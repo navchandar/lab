@@ -176,6 +176,38 @@ function setupUpdateNotification() {
   });
 }
 
+/**
+ * Blends a semi-transparent color (top) with a solid color (bottom)
+ * to find the visual result.
+ */
+function blendColors(top, bottom) {
+  // Helper to convert any color string to [r, g, b, a]
+  const parseColor = (color) => {
+    const div = document.createElement("div");
+    div.style.color = color;
+    document.body.appendChild(div);
+    const m = getComputedStyle(div).color.match(/\d+(\.\d+)?/g);
+    div.remove();
+    if (!m) return [0, 0, 0, 1];
+    return [
+      parseInt(m[0]),
+      parseInt(m[1]),
+      parseInt(m[2]),
+      m[3] ? parseFloat(m[3]) : 1,
+    ];
+  };
+
+  const [sR, sG, sB, sA] = parseColor(top);
+  const [bR, bG, bB] = parseColor(bottom);
+
+  // Alpha Blending Formula
+  const r = Math.round(sR * sA + bR * (1 - sA));
+  const g = Math.round(sG * sA + bG * (1 - sA));
+  const b = Math.round(sB * sA + bB * (1 - sA));
+
+  return `rgb(${r}, ${g}, ${b})`;
+}
+
 function updateThemeColorFromIframe() {
   const iframe = document.getElementById("appFrame");
   if (!iframe || !iframe.contentWindow) {
@@ -195,29 +227,46 @@ function updateThemeColorFromIframe() {
       return;
     }
     const computedStyle = window.getComputedStyle(iframeBody);
-    const backgroundColor = computedStyle
-      .getPropertyValue("background-color")
-      .trim();
+    // Try to get the background image (where gradients are set)
+    const backgroundImage = computedStyle.getPropertyValue("background-image");
+    // Get the standard background color as a fallback
+    const backgroundColor = computedStyle.getPropertyValue("background-color");
+    let targetColor = backgroundColor;
 
-    // Check if a color was successfully retrieved
-    if (backgroundColor) {
-      // Find or create the meta theme-color tag in the main document
+    // If there is a gradient, extract the first color stop
+    if (backgroundImage && backgroundImage !== "none") {
+      // RegEx to find hex, rgb, rgba, or hsl colors
+      const colorRegex = /(rgb|hsl)a?\([^)]+\)|#[a-fA-F0-9]{3,8}/i;
+      const match = backgroundImage.match(colorRegex);
+      if (match) {
+        const topGradientColor = match[0];
+        // Blend the gradient's top color with the solid background
+        targetColor = blendColors(topGradientColor, backgroundColor);
+        console.log(`Background Gradient detected: ${targetColor}`);
+      }
+    } else if (backgroundColor) {
+      console.log(`Background Color detected: ${targetColor}`);
+    }
+
+    // Check if a color was successfully retrieved and Update the Meta Tag
+    if (
+      targetColor &&
+      targetColor !== "transparent" &&
+      targetColor !== "rgba(0, 0, 0, 0)"
+    ) {
       let themeMetaTag = document.querySelector('meta[name="theme-color"]');
       if (!themeMetaTag) {
         themeMetaTag = document.createElement("meta");
         themeMetaTag.name = "theme-color";
         document.head.appendChild(themeMetaTag);
         console.log("Created new meta theme-color tag.");
-        themeMetaTag.content = backgroundColor;
-        console.log(`Initialized theme color to: ${backgroundColor}`);
-        return;
       }
 
       // Get the current color from the existing tag and compare
       const currentThemeColor = themeMetaTag.content.trim();
-      if (currentThemeColor !== backgroundColor) {
-        themeMetaTag.content = backgroundColor;
-        console.log(`Updated theme color to: ${backgroundColor}`);
+      if (currentThemeColor !== targetColor) {
+        themeMetaTag.content = targetColor;
+        console.log(`Updated theme color to: ${targetColor}`);
       }
     } else {
       console.warn("Could not retrieve background-color from iframe body.");

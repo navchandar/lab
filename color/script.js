@@ -78,7 +78,9 @@ function changeColor(color, label) {
   colorNameEl.classList.add("fade-out");
   // Wait for fade-out to complete, then change text and fade in
   setTimeout(() => {
-    changeBodyColor(color);
+    if (window.self === window.top) {
+      changeBodyColor(color);
+    }
     setTimeout(() => {
       colorNameEl.style.color = textColor;
       colorNameEl.style.textShadow = textShadow;
@@ -95,7 +97,7 @@ function changeColor(color, label) {
 const lastColors = [];
 function getRandomColorExcludingLast(colorsArray) {
   const availableColors = colorsArray.filter(
-    (c) => !lastColors.includes(c.color)
+    (c) => !lastColors.includes(c.color),
   );
   if (availableColors.length === 0) {
     // If all colors are in the lastColors list, reset the history
@@ -193,7 +195,7 @@ function updateSettingsMenu() {
     (e) => {
       e.stopPropagation();
     },
-    { passive: false }
+    { passive: false },
   );
 
   languageSelect.addEventListener("click", (e) => {
@@ -205,7 +207,7 @@ function updateSettingsMenu() {
     (e) => {
       e.stopPropagation();
     },
-    { passive: false }
+    { passive: false },
   );
 
   document.getElementById("language-label").addEventListener("click", (e) => {
