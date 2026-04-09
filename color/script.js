@@ -63,14 +63,19 @@ function getTextStyleForBrightness(color) {
 }
 
 function changeBodyColor(color) {
-  // Update theme color on supported mobile devices
-  const metaTag = document.getElementById("theme-color");
-  if (metaTag) {
-    metaTag.setAttribute("content", color);
-  }
   // update color with importance to work on devices with Dark viewer
   document.body.style.setProperty("background-color", color, "important");
   console.log("Updated background color to: " + color);
+
+  // Update theme color on supported mobile devices
+  if (window.self === window.top) {
+    setTimeout(() => {
+      const metaTag = document.getElementById("theme-color");
+      if (metaTag) {
+        metaTag.setAttribute("content", color);
+      }
+    }, 750);
+  }
 }
 
 function changeColor(color, label) {
@@ -78,9 +83,7 @@ function changeColor(color, label) {
   colorNameEl.classList.add("fade-out");
   // Wait for fade-out to complete, then change text and fade in
   setTimeout(() => {
-    if (window.self === window.top) {
-      changeBodyColor(color);
-    }
+    changeBodyColor(color);
     setTimeout(() => {
       colorNameEl.style.color = textColor;
       colorNameEl.style.textShadow = textShadow;

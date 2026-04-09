@@ -188,7 +188,9 @@ function blendColors(top, bottom) {
     document.body.appendChild(div);
     const m = getComputedStyle(div).color.match(/\d+(\.\d+)?/g);
     div.remove();
-    if (!m) return [0, 0, 0, 1];
+    if (!m) {
+      return [0, 0, 0, 1];
+    }
     return [
       parseInt(m[0]),
       parseInt(m[1]),
@@ -293,7 +295,6 @@ function monitorIframeBackgroundColor() {
   iframe.dataset.themeSyncInit = "1";
   let debounceTimer = null;
   // Schedule update AFTER iframe click handlers complete (next tick)
-  // Optimization: Use requestAnimationFrame for UI updates instead of setTimeout
   const scheduleUpdate = (() => {
     let scheduled = false;
     clearTimeout(debounceTimer);
