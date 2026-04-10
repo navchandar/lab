@@ -139,13 +139,10 @@ const elements = {
  */
 function init() {
   try {
-    // Populate Select
-    Object.keys(SHAPE_LIB).forEach((name) => {
-      const opt = document.createElement("option");
-      opt.value = name;
-      opt.textContent = name;
-      elements.select.appendChild(opt);
-    });
+    // Populate Select dropdown values
+    const shapeNames = Object.keys(SHAPE_LIB);
+    const options = shapeNames.map((name) => new Option(name, name));
+    elements.select.append(...options);
 
     // Event Listeners
     elements.select.addEventListener("change", handleShapeChange);
@@ -153,8 +150,8 @@ function init() {
     elements.copy.addEventListener("click", copyClipPath);
     elements.copysvg.addEventListener("click", copySvgToClipboard);
 
-    // Default State
-    elements.select.value = "Triangle";
+    // Default State - Use the first key in the object
+    elements.select.value = shapeNames[0];
     handleShapeChange(); // This will trigger the first render
   } catch (e) {
     console.error("Initialization Failed:", e);
@@ -183,7 +180,7 @@ function render() {
   const shape = SHAPE_LIB[elements.select.value];
   let target = parseInt(elements.points.value);
 
-  // Auto-clamp input
+  // Validation & Auto-clamp
   if (isNaN(target) || target < shape.min) {
     target = shape.min;
     elements.points.value = target;
@@ -219,50 +216,103 @@ function render() {
     corners.unshift({ dist: 0, x: start.x, y: start.y });
   }
 
-  // Distribute extra points across segments
-  const finalPoints = [];
-  const extraPointsNeeded = target - corners.length;
-
-  if (extraPointsNeeded <= 0) {
-    // If user asks for fewer points than corners, we just sample the corners
-    // (Clamping usually prevents this, but safety first)
-    for (let i = 0; i < target; i++) {
-      // By using (i / (target)) and taking the point, we ensure
-      // that for a 4-point square, we hit 0, 0.25, 0.5, 0.75 of the length.
-      // These land exactly on the vertices of SVG L commands.
-      const dist = (i / target) * totalLen;
-      const pt = elements.engine.getPointAtLength(dist);
-      finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
-    }
-  } else {
-    // Precise Distribution: Add extra points along the segments proportional to length
-    corners.forEach((corner, idx) => {
-      finalPoints.push(`${corner.x.toFixed(1)}% ${corner.y.toFixed(1)}%`);
-
-      const nextCorner = corners[idx + 1] || { dist: totalLen };
-      const segLen = nextCorner.dist - corner.dist;
-
-      // How many extra points does this specific edge get?
-      const pointsForThisSeg = Math.round(
-        (segLen / totalLen) * extraPointsNeeded,
-      );
-
-      for (let j = 1; j <= pointsForThisSeg; j++) {
-        const subDist = corner.dist + (j / (pointsForThisSeg + 1)) * segLen;
-        const pt = elements.engine.getPointAtLength(subDist);
-        finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
-      }
+  // Segment Preparation
+  const segments = [];
+  for (let i = 0; i < corners.length; i++) {
+    const startDist = corners[i].dist;
+    const endDist = i === corners.length - 1 ? totalLen : corners[i + 1].dist;
+    segments.push({
+      startDist: startDist,
+      endDist: endDist,
+      length: endDist - startDist,
+      pointsToPlace: 0,
+      startX: corners[i].x,
+      startY: corners[i].y,
     });
   }
 
-  // Final validation: Ensure we have EXACTLY the target count
-  const resultStr = `polygon(${finalPoints.slice(0, target).join(", ")})`;
+  // Mathematical Precision: Point Distribution
+  // We subtract the corners we've already "locked in"
+  let pointsLeftToDistribute = target - corners.length;
 
-  // Update UI
+  // First Pass: Assign the floor value (guaranteed points)
+  segments.forEach((seg) => {
+    const share = (seg.length / totalLen) * (target - corners.length);
+    seg.pointsToPlace = Math.floor(share);
+    pointsLeftToDistribute -= seg.pointsToPlace;
+  });
+
+  // Second Pass: Distribute the remainders to the longest segments first
+  // This is the "Self-Healing" part that ensures the count is EXACT
+  const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
+  while (pointsLeftToDistribute > 0) {
+    for (let seg of sortedByLength) {
+      if (pointsLeftToDistribute <= 0) break;
+      seg.pointsToPlace++;
+      pointsLeftToDistribute--;
+    }
+  }
+
+  // Final Array Construction
+  const finalPoints = [];
+  segments.forEach((seg) => {
+    // Add the Anchor/Corner
+    finalPoints.push(
+      `${parseFloat(seg.startX).toFixed(2)}% ${parseFloat(seg.startY).toFixed(2)}%`,
+    );
+
+    // Add the distributed points along this segment
+    for (let j = 1; j <= seg.pointsToPlace; j++) {
+      const subDist =
+        seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
+      const pt = elements.engine.getPointAtLength(subDist);
+      finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
+    }
+  });
+
+  // --- Apply Anti-Twist Alignment ---
+  const alignedPoints = alignToTopCenter(finalPoints);
+
+  // Final Integrity Check
+  if (alignedPoints.length !== target) {
+    console.warn(
+      `Drift detected in Final Points: ${finalPoints.length} vs Input:${target}!`,
+    );
+  }
+
+  // Update UI using the aligned points
+  const resultStr = `polygon(${alignedPoints.join(", ")})`;
   elements.canvas.style.clipPath = resultStr;
   elements.canvas.style.display = "block";
   elements.output.textContent = `clip-path: ${resultStr};`;
   console.log("Rendered Shaped:", elements.select.value);
+}
+
+/**
+ * Aligns the polygon array so the point closest to Top-Center (50% 0%) is at Index 0.
+ * Prevents "twisting" during CSS clip-path morphing animations.
+ */
+function alignToTopCenter(points) {
+  let closestIndex = 0;
+  let minDistance = Infinity;
+
+  for (let i = 0; i < points.length; i++) {
+    // Extract X and Y numbers from the "X% Y%" string
+    const [xStr, yStr] = points[i].replace(/%/g, "").split(" ");
+    const x = parseFloat(xStr);
+    const y = parseFloat(yStr);
+
+    // Calculate distance to 50% 0% (We skip Math.sqrt for performance since we only need relative comparison)
+    const distanceToTopCenter = Math.pow(x - 50, 2) + Math.pow(y - 0, 2);
+
+    if (distanceToTopCenter < minDistance) {
+      minDistance = distanceToTopCenter;
+      closestIndex = i;
+    }
+  }
+
+  // Rotate the array without losing or scrambling points
+  return [...points.slice(closestIndex), ...points.slice(0, closestIndex)];
 }
 
 function copyClipPath() {
