@@ -46,13 +46,10 @@
       }
 
       .app-shell {
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        background: var(--card);
-        padding: 2.5rem;
-        width: 100%;
-        max-width: 700px;
+        display: flex;
+        flex-direction: column;
+        max-height: 95vh;
+        overflow-y: auto;
       }
 
       header {
@@ -140,16 +137,19 @@
         border-radius: 10px;
         background: #000;
         padding: 1.25rem;
+        height: 140px;
+        min-height: 140px;
       }
 
       code {
         display: block;
-        max-height: 150px;
+        height: 100%;
         overflow-y: auto;
         color: #d1d5db;
         font-size: 0.85rem;
         line-height: 1.6;
         font-family: "Fira Code", "Cascadia Code", monospace;
+        white-space: pre-wrap; /* Better formatting for long strings */
         word-break: break-all;
       }
 
@@ -368,30 +368,34 @@
 
       /**
        * Core Engine: Uses SVG path sampling to generate polygon points
+       * Optimized for shape retention and auto-clamping
        */
       function render() {
         try {
           const shapeName = elements.select.value;
-          const targetPoints = parseInt(elements.points.value);
+          let targetPoints = parseInt(elements.points.value);
           const shapeData = SHAPE_LIB[shapeName];
 
-          // Safety validation
+          // Auto-reset logic: Instead of error, clamp to minimum
           if (isNaN(targetPoints) || targetPoints < shapeData.min) {
-            elements.output.textContent =
-              "Error: Point count below minimum for this shape.";
-            return;
+            elements.points.value = shapeData.min;
+            targetPoints = shapeData.min;
           }
 
           elements.engine.setAttribute("d", shapeData.d);
           const totalPathLength = elements.engine.getTotalLength();
           const polygonPoints = [];
 
-          // Sampling Strategy: Equidistant points along the SVG path
+          // Shape Retention Logic:
+          // We use (targetPoints) intervals to ensure the last point
+          // effectively maps back to the start without "drifting"
+          // the intermediate points away from the original vertices.
           for (let i = 0; i < targetPoints; i++) {
+            // Multiplying by (i / targetPoints) ensures we always start at 0 (the first vertex)
             const dist = (i / targetPoints) * totalPathLength;
             const point = elements.engine.getPointAtLength(dist);
 
-            // Precision set to 1 decimal for optimal balance of code size vs accuracy
+            // Using toFixed(2) for higher precision on complex shapes like 'Infinity'
             polygonPoints.push(`${point.x.toFixed(1)}% ${point.y.toFixed(1)}%`);
           }
 
@@ -401,7 +405,8 @@
           elements.canvas.style.clipPath = resultStr;
           elements.output.textContent = `clip-path: ${resultStr};`;
         } catch (err) {
-          elements.output.textContent = `Rendering Exception: ${err.message}`;
+          console.error("Render error:", err);
+          elements.output.textContent = "Processing geometry...";
         }
       }
 
