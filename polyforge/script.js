@@ -4,8 +4,8 @@
 const SHAPE_LIB = {
   // --- Basic Polygons ---
   Triangle: { min: 3, d: "M 50 0 L 100 100 L 0 100 Z" },
-  Square: { min: 8, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
-  Rectangle: { min: 8, d: "M 10 25 H 90 V 75 H 10 Z" },
+  Square: { min: 4, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
+  Rectangle: { min: 4, d: "M 10 25 H 90 V 75 H 10 Z" },
   Pentagon: { min: 5, d: "M 50 0 L 98 35 L 79 90 L 21 90 L 2 35 Z" },
   Hexagon: {
     min: 6,
@@ -188,87 +188,105 @@ function render() {
 
   elements.engine.setAttribute("d", shape.d);
   const totalLen = elements.engine.getTotalLength();
+  let finalPoints = [];
 
-  // Find the "True Vertices" (Corners)
-  // scan the path to find where direction changes significantly
-  const corners = [];
-  const scanResolution = 500;
-  let lastAngle = null;
+  // Check if this path contain curve commands
+  const isCurved = /[CQSATcqsata]/.test(shape.d);
 
-  for (let i = 0; i <= scanResolution; i++) {
-    const dist = (i / scanResolution) * totalLen;
-    const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.1));
-    const p2 = elements.engine.getPointAtLength(Math.min(totalLen, dist + 0.1));
-
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-    // If the angle changed significantly, it's a corner
-    if (lastAngle !== null && Math.abs(angle - lastAngle) > 0.01) {
+  if (isCurved) {
+    // --- STRATEGY A: Curve Handling (Equidistant) ---
+    // Curves constantly change angles. Finding "corners" causes massive drift.
+    // We space points evenly along the entire length.
+    for (let i = 0; i < target; i++) {
+      const dist = (i / target) * totalLen;
       const pt = elements.engine.getPointAtLength(dist);
-      corners.push({ dist, x: pt.x, y: pt.y });
-    }
-    lastAngle = angle;
-  }
-
-  // Always include start and end
-  if (corners.length === 0 || corners[0].dist > 1) {
-    const start = elements.engine.getPointAtLength(0);
-    corners.unshift({ dist: 0, x: start.x, y: start.y });
-  }
-
-  // Segment Preparation
-  const segments = [];
-  for (let i = 0; i < corners.length; i++) {
-    const startDist = corners[i].dist;
-    const endDist = i === corners.length - 1 ? totalLen : corners[i + 1].dist;
-    segments.push({
-      startDist: startDist,
-      endDist: endDist,
-      length: endDist - startDist,
-      pointsToPlace: 0,
-      startX: corners[i].x,
-      startY: corners[i].y,
-    });
-  }
-
-  // Mathematical Precision: Point Distribution
-  // We subtract the corners we've already "locked in"
-  let pointsLeftToDistribute = target - corners.length;
-
-  // First Pass: Assign the floor value (guaranteed points)
-  segments.forEach((seg) => {
-    const share = (seg.length / totalLen) * (target - corners.length);
-    seg.pointsToPlace = Math.floor(share);
-    pointsLeftToDistribute -= seg.pointsToPlace;
-  });
-
-  // Second Pass: Distribute the remainders to the longest segments first
-  // This is the "Self-Healing" part that ensures the count is EXACT
-  const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
-  while (pointsLeftToDistribute > 0) {
-    for (let seg of sortedByLength) {
-      if (pointsLeftToDistribute <= 0) break;
-      seg.pointsToPlace++;
-      pointsLeftToDistribute--;
-    }
-  }
-
-  // Final Array Construction
-  const finalPoints = [];
-  segments.forEach((seg) => {
-    // Add the Anchor/Corner
-    finalPoints.push(
-      `${parseFloat(seg.startX).toFixed(2)}% ${parseFloat(seg.startY).toFixed(2)}%`,
-    );
-
-    // Add the distributed points along this segment
-    for (let j = 1; j <= seg.pointsToPlace; j++) {
-      const subDist =
-        seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
-      const pt = elements.engine.getPointAtLength(subDist);
       finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
     }
-  });
+  } else {
+    // --- STRATEGY B: Polygon Handling (Segment Distribution) ---
+    // Find the "True Vertices" (Corners)
+    const corners = [];
+    const scanResolution = 500;
+    let lastAngle = null;
+
+    for (let i = 0; i <= scanResolution; i++) {
+      const dist = (i / scanResolution) * totalLen;
+      const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.1));
+      const p2 = elements.engine.getPointAtLength(
+        Math.min(totalLen, dist + 0.1),
+      );
+
+      const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+      // If the angle changed significantly, it's a corner
+      if (lastAngle !== null && Math.abs(angle - lastAngle) > 0.01) {
+        const pt = elements.engine.getPointAtLength(dist);
+        corners.push({ dist, x: pt.x, y: pt.y });
+      }
+      lastAngle = angle;
+    }
+
+    // Always include start and end
+    if (corners.length === 0 || corners[0].dist > 1) {
+      const start = elements.engine.getPointAtLength(0);
+      corners.unshift({ dist: 0, x: start.x, y: start.y });
+    }
+
+    // Segment Preparation
+    const segments = [];
+    for (let i = 0; i < corners.length; i++) {
+      const startDist = corners[i].dist;
+      const endDist = i === corners.length - 1 ? totalLen : corners[i + 1].dist;
+      segments.push({
+        startDist: startDist,
+        endDist: endDist,
+        length: endDist - startDist,
+        pointsToPlace: 0,
+        startX: corners[i].x,
+        startY: corners[i].y,
+      });
+    }
+
+    // Mathematical Precision: Point Distribution
+    // We subtract the corners we've already "locked in"
+    let pointsLeftToDistribute = target - corners.length;
+
+    // First Pass: Assign the floor value (guaranteed points)
+    segments.forEach((seg) => {
+      const share = (seg.length / totalLen) * (target - corners.length);
+      seg.pointsToPlace = Math.floor(share);
+      pointsLeftToDistribute -= seg.pointsToPlace;
+    });
+
+    // Second Pass: Distribute the remainders to the longest segments first
+    // This is the "Self-Healing" part that ensures the count is EXACT
+    const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
+    while (pointsLeftToDistribute > 0) {
+      for (let seg of sortedByLength) {
+        if (pointsLeftToDistribute <= 0) {
+          break;
+        }
+        seg.pointsToPlace++;
+        pointsLeftToDistribute--;
+      }
+    }
+
+    // Array Construction for Polygons
+    segments.forEach((seg) => {
+      // Add the Anchor/Corner
+      finalPoints.push(
+        `${parseFloat(seg.startX).toFixed(2)}% ${parseFloat(seg.startY).toFixed(2)}%`,
+      );
+
+      // Add the distributed points along this segment
+      for (let j = 1; j <= seg.pointsToPlace; j++) {
+        const subDist =
+          seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
+        const pt = elements.engine.getPointAtLength(subDist);
+        finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
+      }
+    });
+  }
 
   // --- Apply Anti-Twist Alignment ---
   const alignedPoints = alignToTopCenter(finalPoints);
@@ -276,7 +294,7 @@ function render() {
   // Final Integrity Check
   if (alignedPoints.length !== target) {
     console.warn(
-      `Drift detected in Final Points: ${finalPoints.length} vs Input:${target}!`,
+      `Drift detected in Final Points: ${alignedPoints.length} vs Input:${target}!`,
     );
   }
 
