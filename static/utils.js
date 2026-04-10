@@ -444,7 +444,7 @@ export function addglobalHideSettings() {
       hideSettings();
     });
   } catch (e) {
-    console.warn("Failed to addglobalHideSettings listener!")
+    console.warn("Failed to addglobalHideSettings listener!");
   }
 }
 
