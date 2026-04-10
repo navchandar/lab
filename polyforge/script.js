@@ -426,9 +426,12 @@ class SVGMathEngine {
   }
 
   getPointAtLength(distance) {
-    if (distance <= 0) return this.segments[0].getPoint(0);
-    if (distance >= this.totalLength)
+    if (distance <= 0) {
+      return this.segments[0].getPoint(0);
+    }
+    if (distance >= this.totalLength) {
       return this.segments[this.segments.length - 1].getPoint(1);
+    }
 
     let currentDist = 0;
     for (let seg of this.segments) {
