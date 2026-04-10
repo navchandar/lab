@@ -1,0 +1,282 @@
+/**
+ * Shape Coordinates are based on a 100x100 viewBox
+ */
+const SHAPE_LIB = {
+  // --- Basic Polygons ---
+  Triangle: { min: 3, d: "M 50 0 L 100 100 L 0 100 Z" },
+  Square: { min: 4, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
+  Rectangle: { min: 4, d: "M 10 25 H 90 V 75 H 10 Z" },
+  Pentagon: { min: 5, d: "M 50 0 L 98 35 L 79 90 L 21 90 L 2 35 Z" },
+  Hexagon: {
+    min: 6,
+    d: "M 50 0 L 93 25 L 93 75 L 50 100 L 7 75 L 7 25 Z",
+  },
+  Heptagon: {
+    min: 7,
+    d: "M 50 0 L 89 22 L 100 66 L 72 100 L 28 100 L 0 66 L 11 22 Z",
+  },
+  Octagon: {
+    min: 8,
+    d: "M 30 0 L 70 0 L 100 30 L 100 70 L 70 100 L 30 100 L 0 70 L 0 30 Z",
+  },
+  Nonagon: {
+    min: 9,
+    d: "M 50 0 L 82 11.7 L 100 41.3 L 94 75 L 67.1 97 L 32.9 97 L 6 75 L 0 41.3 L 17.9 11.7 Z",
+  },
+  Decagon: {
+    min: 10,
+    d: "M 50 0 L 79.4 9.5 L 100 34.5 L 100 65.5 L 79.4 90.5 L 50 100 L 20.6 90.5 L 0 65.5 L 0 34.5 L 20.6 9.5 Z",
+  },
+
+  // --- Geometric Variations ---
+  Diamond: { min: 4, d: "M 50 0 L 100 50 L 50 100 L 0 50 Z" },
+  Trapezoid: { min: 4, d: "M 20 20 H 80 L 100 80 H 0 Z" },
+  Parallelogram: { min: 4, d: "M 25 20 H 100 L 75 80 H 0 Z" },
+  Rhombus: { min: 4, d: "M 50 0 L 90 50 L 50 100 L 10 50 Z" },
+
+  // --- Symbols & UI ---
+  Star: {
+    min: 10,
+    d: "M 50 0 L 61 35 L 98 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 2 35 L 39 35 Z",
+  },
+  Heart: {
+    min: 30,
+    d: "M 50 30 C 50 0 0 0 0 40 C 0 70 50 100 50 100 C 50 100 100 70 100 40 C 100 0 50 0 50 30",
+  },
+  Circle: {
+    min: 40,
+    d: "M 50 0 A 50 50 0 1 1 50 100 A 50 50 0 1 1 50 0",
+  },
+  "Arrow Right": {
+    min: 7,
+    d: "M 0 30 L 60 30 L 60 0 L 100 50 L 60 100 L 60 70 L 0 70 Z",
+  },
+  "Arrow Left": {
+    min: 7,
+    d: "M 100 30 L 40 30 L 40 0 L 0 50 L 40 100 L 40 70 L 100 70 Z",
+  },
+  "Arrow Up": {
+    min: 7,
+    d: "M 30 100 V 40 H 0 L 50 0 L 100 40 H 70 V 100 Z",
+  },
+  "Arrow Down": {
+    min: 7,
+    d: "M 30 0 V 60 H 0 L 50 100 L 100 60 H 70 V 0 Z",
+  },
+  Chevron: {
+    min: 6,
+    d: "M 0 0 L 50 50 L 0 100 L 30 100 L 80 50 L 30 0 Z",
+  },
+  Cross: {
+    min: 12,
+    d: "M 35 0 H 65 V 35 H 100 V 65 H 65 V 100 H 35 V 65 H 0 V 35 H 35 Z",
+  },
+  Shield: {
+    min: 15,
+    d: "M 0 0 H 100 V 50 C 100 80 50 100 50 100 C 50 100 0 80 0 50 Z",
+  },
+  Message: { min: 8, d: "M 0 0 H 100 V 75 H 35 L 0 100 Z" },
+  Crescent: {
+    min: 25,
+    d: "M 80 10 C 30 10 30 90 80 90 C 10 110 10 -10 80 10 Z",
+  },
+  Bolt: { min: 6, d: "M 60 0 L 20 50 H 50 L 40 100 L 80 40 H 50 Z" },
+  Badge: {
+    min: 16,
+    d: "M 50 0 L 65 15 H 85 V 35 L 100 50 L 85 65 V 85 H 65 L 50 100 L 35 85 H 15 V 65 L 0 50 L 15 35 V 15 H 35 Z",
+  },
+  Ticket: {
+    min: 12,
+    d: "M 0 0 H 100 V 35 A 15 15 0 0 0 100 65 V 100 H 0 V 65 A 15 15 0 0 0 0 35 Z",
+  },
+  Infinity: {
+    min: 50,
+    d: "M 30 35 C 0 35 0 65 30 65 C 45 65 55 35 70 35 C 100 35 100 65 70 65 C 55 65 45 35 30 35 Z",
+  },
+  Clover: {
+    min: 40,
+    d: "M 50 50 C 50 20 20 20 20 50 C 20 80 50 80 50 50 C 50 80 80 80 80 50 C 80 20 50 20 50 50 M 50 50 V 90",
+  },
+};
+
+// DOM Elements
+const elements = {
+  select: document.getElementById("shape-select"),
+  points: document.getElementById("point-count"),
+  engine: document.getElementById("engine"),
+  canvas: document.getElementById("canvas-shape"),
+  output: document.getElementById("output-code"),
+  copy: document.getElementById("copy-btn"),
+  copysvg: document.getElementById("copy-svg-btn"),
+};
+
+/**
+ * Initialization Logic
+ */
+function init() {
+  try {
+    // Populate Select
+    Object.keys(SHAPE_LIB).forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      elements.select.appendChild(opt);
+    });
+
+    // Event Listeners
+    elements.select.addEventListener("change", handleShapeChange);
+    elements.points.addEventListener("input", render);
+    elements.copy.addEventListener("click", copyClipPath);
+    elements.copysvg.addEventListener("click", copySvgToClipboard);
+
+    // Default State
+    elements.select.value = "Triangle";
+    handleShapeChange(); // This will trigger the first render
+  } catch (e) {
+    console.error("Initialization Failed:", e);
+  }
+}
+
+/**
+ * Handles updating UI when a new shape is chosen
+ */
+function handleShapeChange() {
+  const config = SHAPE_LIB[elements.select.value];
+  elements.points.min = config.min;
+
+  // Only reset value if current value is invalid for new shape
+  if (parseInt(elements.points.value) < config.min || !elements.points.value) {
+    elements.points.value = config.min;
+  }
+  render();
+}
+
+/**
+ * High-Precision Vertex and SVG sampling to generate polygon points
+ * Optimized for shape retention and auto-clamping
+ */
+function render() {
+  const shape = SHAPE_LIB[elements.select.value];
+  let target = parseInt(elements.points.value);
+
+  // Auto-clamp input
+  if (isNaN(target) || target < shape.min) {
+    target = shape.min;
+    elements.points.value = target;
+  }
+
+  elements.engine.setAttribute("d", shape.d);
+  const totalLen = elements.engine.getTotalLength();
+
+  // Find the "True Vertices" (Corners)
+  // scan the path to find where direction changes significantly
+  const corners = [];
+  const scanResolution = 500;
+  let lastAngle = null;
+
+  for (let i = 0; i <= scanResolution; i++) {
+    const dist = (i / scanResolution) * totalLen;
+    const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.1));
+    const p2 = elements.engine.getPointAtLength(Math.min(totalLen, dist + 0.1));
+
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+    // If the angle changed significantly, it's a corner
+    if (lastAngle !== null && Math.abs(angle - lastAngle) > 0.01) {
+      const pt = elements.engine.getPointAtLength(dist);
+      corners.push({ dist, x: pt.x, y: pt.y });
+    }
+    lastAngle = angle;
+  }
+
+  // Always include start and end
+  if (corners.length === 0 || corners[0].dist > 1) {
+    const start = elements.engine.getPointAtLength(0);
+    corners.unshift({ dist: 0, x: start.x, y: start.y });
+  }
+
+  // Distribute extra points across segments
+  const finalPoints = [];
+  const extraPointsNeeded = target - corners.length;
+
+  if (extraPointsNeeded <= 0) {
+    // If user asks for fewer points than corners, we just sample the corners
+    // (Clamping usually prevents this, but safety first)
+    for (let i = 0; i < target; i++) {
+      // By using (i / (target)) and taking the point, we ensure
+      // that for a 4-point square, we hit 0, 0.25, 0.5, 0.75 of the length.
+      // These land exactly on the vertices of SVG L commands.
+      const dist = (i / target) * totalLen;
+      const pt = elements.engine.getPointAtLength(dist);
+      finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
+    }
+  } else {
+    // Precise Distribution: Add extra points along the segments proportional to length
+    corners.forEach((corner, idx) => {
+      finalPoints.push(`${corner.x.toFixed(1)}% ${corner.y.toFixed(1)}%`);
+
+      const nextCorner = corners[idx + 1] || { dist: totalLen };
+      const segLen = nextCorner.dist - corner.dist;
+
+      // How many extra points does this specific edge get?
+      const pointsForThisSeg = Math.round(
+        (segLen / totalLen) * extraPointsNeeded,
+      );
+
+      for (let j = 1; j <= pointsForThisSeg; j++) {
+        const subDist = corner.dist + (j / (pointsForThisSeg + 1)) * segLen;
+        const pt = elements.engine.getPointAtLength(subDist);
+        finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
+      }
+    });
+  }
+
+  // Final validation: Ensure we have EXACTLY the target count
+  const resultStr = `polygon(${finalPoints.slice(0, target).join(", ")})`;
+
+  // Update UI
+  elements.canvas.style.clipPath = resultStr;
+  elements.output.textContent = `clip-path: ${resultStr};`;
+}
+
+function copyClipPath() {
+  try {
+    navigator.clipboard.writeText(elements.output.textContent);
+    elements.copy.textContent = "✅";
+    setTimeout(() => (elements.copy.textContent = "📋"), 1000);
+  } catch (err) {
+    console.error("SVG Copy failed", err);
+  }
+}
+
+/**
+ * Serializes the current clip-path into a standard SVG string
+ */
+async function copySvgToClipboard() {
+  const clipPath = elements.canvas.style.clipPath;
+  if (!clipPath.includes("polygon")) {
+    return;
+  }
+
+  // Extract coordinates: "50% 0%, 100% 100%..." -> "50 0, 100 100..."
+  const pointsRaw = clipPath.replace("polygon(", "").replace(")", "");
+  const svgPoints = pointsRaw
+    .split(",")
+    .map((p) => p.trim().replace(/%/g, ""))
+    .join(" ");
+
+  const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <polygon points="${svgPoints}" fill="currentColor"/>
+</svg>`;
+
+  try {
+    await navigator.clipboard.writeText(svgTemplate);
+    elements.copysvg.textContent = "✅";
+    setTimeout(() => (elements.copysvg.textContent = "📋"), 1000);
+  } catch (err) {
+    console.error("SVG Copy failed", err);
+  }
+}
+
+// Run
+init();
