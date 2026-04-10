@@ -152,11 +152,16 @@
       }
 
       #canvas-shape {
-        transition: clip-path 0.2s ease;
-        background: linear-gradient(135deg, var(--accent), #8b5cf6);
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        transition: clip-path 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        will-change: clip-path;
+        background: radial-gradient(circle at 0% 0%, var(--accent), #8b5cf6);
+        /* background: linear-gradient(135deg, var(--accent), #8b5cf6); */
         width: 180px;
-        max-width: 80%;
         height: 180px;
+        /* Smoother edges during animation */
+        -webkit-font-smoothing: antialiased;
       }
 
       .code-container {
@@ -257,24 +262,52 @@
 
       <div class="grid-layout">
         <div class="control-block">
-          <label for="shape-select">Geometry</label>
-          <select id="shape-select"></select>
+          <label for="shape-select">Shape</label>
+          <select
+            id="shape-select"
+            aria-label="Select a base shape geometry"
+          ></select>
         </div>
         <div class="control-block">
           <label for="point-count">Points</label>
-          <input type="number" id="point-count" step="1" />
+          <input
+            type="number"
+            id="point-count"
+            step="1"
+            aria-label="Enter number of polygon points"
+          />
         </div>
       </div>
 
-      <div class="shape-preview">
-        <div id="canvas-shape"></div>
+      <div class="shape-preview" style="position: relative">
+        <button
+          class="copy-trigger"
+          id="copy-svg-btn"
+          title="Copy as SVG"
+          aria-label="Copy shape as SVG code"
+          style="top: 10px; right: 10px; z-index: 10"
+        >
+          📋
+        </button>
+        <div
+          id="canvas-shape"
+          role="img"
+          aria-label="Polygon preview shape"
+        ></div>
       </div>
 
       <div class="control-block">
         <label>CSS clip-path</label>
         <div class="code-container">
-          <code id="output-code"></code>
-          <button class="copy-trigger" id="copy-btn">📋</button>
+          <code id="output-code" aria-live="polite"></code>
+          <button
+            class="copy-trigger"
+            id="copy-btn"
+            title="Copy CSS clip-path"
+            aria-label="Copy CSS clip-path value"
+          >
+            📋
+          </button>
         </div>
       </div>
     </main>
@@ -288,18 +321,39 @@
        * Shape Coordinates are based on a 100x100 viewBox
        */
       const SHAPE_LIB = {
+        // --- Basic Polygons ---
         Triangle: { min: 3, d: "M 50 0 L 100 100 L 0 100 Z" },
         Square: { min: 4, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
-        Diamond: { min: 4, d: "M 50 0 L 100 50 L 50 100 L 0 50 Z" },
+        Rectangle: { min: 4, d: "M 0 20 H 100 V 80 H 0 Z" },
         Pentagon: { min: 5, d: "M 50 0 L 98 35 L 79 90 L 21 90 L 2 35 Z" },
         Hexagon: {
           min: 6,
           d: "M 50 0 L 93 25 L 93 75 L 50 100 L 7 75 L 7 25 Z",
         },
+        Heptagon: {
+          min: 7,
+          d: "M 50 0 L 89 22 L 100 66 L 72 100 L 28 100 L 0 66 L 11 22 Z",
+        },
         Octagon: {
           min: 8,
           d: "M 30 0 L 70 0 L 100 30 L 100 70 L 70 100 L 30 100 L 0 70 L 0 30 Z",
         },
+        Nonagon: {
+          min: 9,
+          d: "M 50 0 L 82 11.7 L 100 41.3 L 94 75 L 67.1 97 L 32.9 97 L 6 75 L 0 41.3 L 17.9 11.7 Z",
+        },
+        Decagon: {
+          min: 10,
+          d: "M 50 0 L 79.4 9.5 L 100 34.5 L 100 65.5 L 79.4 90.5 L 50 100 L 20.6 90.5 L 0 65.5 L 0 34.5 L 20.6 9.5 Z",
+        },
+
+        // --- Geometric Variations ---
+        Diamond: { min: 4, d: "M 50 0 L 100 50 L 50 100 L 0 50 Z" },
+        Trapezoid: { min: 4, d: "M 20 20 H 80 L 100 80 H 0 Z" },
+        Parallelogram: { min: 4, d: "M 25 20 H 100 L 75 80 H 0 Z" },
+        Rhombus: { min: 4, d: "M 50 0 L 90 50 L 50 100 L 10 50 Z" },
+
+        // --- Symbols & UI ---
         Star: {
           min: 10,
           d: "M 50 0 L 61 35 L 98 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 2 35 L 39 35 Z",
@@ -315,6 +369,18 @@
         "Arrow Right": {
           min: 7,
           d: "M 0 30 L 60 30 L 60 0 L 100 50 L 60 100 L 60 70 L 0 70 Z",
+        },
+        "Arrow Left": {
+          min: 7,
+          d: "M 100 30 L 40 30 L 40 0 L 0 50 L 40 100 L 40 70 L 100 70 Z",
+        },
+        "Arrow Up": {
+          min: 7,
+          d: "M 30 100 V 40 H 0 L 50 0 L 100 40 H 70 V 100 Z",
+        },
+        "Arrow Down": {
+          min: 7,
+          d: "M 30 0 V 60 H 0 L 50 100 L 100 60 H 70 V 0 Z",
         },
         Chevron: {
           min: 6,
@@ -360,6 +426,7 @@
         canvas: document.getElementById("canvas-shape"),
         output: document.getElementById("output-code"),
         copy: document.getElementById("copy-btn"),
+        copysvg: document.getElementById("copy-svg-btn"),
       };
 
       /**
@@ -378,11 +445,8 @@
           // Event Listeners
           elements.select.addEventListener("change", handleShapeChange);
           elements.points.addEventListener("input", render);
-          elements.copy.addEventListener("click", () => {
-            navigator.clipboard.writeText(elements.output.textContent);
-            elements.copy.textContent = "✅";
-            setTimeout(() => (elements.copy.textContent = "📋"), 1000);
-          });
+          elements.copy.addEventListener("click", copyClipPath);
+          elements.copysvg.addEventListener("click", copySvgToClipboard);
 
           // Default State
           elements.select.value = "Triangle";
@@ -463,9 +527,9 @@
           // If user asks for fewer points than corners, we just sample the corners
           // (Clamping usually prevents this, but safety first)
           for (let i = 0; i < target; i++) {
-          // By using (i / (target)) and taking the point, we ensure
-          // that for a 4-point square, we hit 0, 0.25, 0.5, 0.75 of the length.
-          // These land exactly on the vertices of SVG L commands.
+            // By using (i / (target)) and taking the point, we ensure
+            // that for a 4-point square, we hit 0, 0.25, 0.5, 0.75 of the length.
+            // These land exactly on the vertices of SVG L commands.
             const dist = (i / target) * totalLen;
             const pt = elements.engine.getPointAtLength(dist);
             finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
@@ -499,6 +563,46 @@
         elements.canvas.style.clipPath = resultStr;
         elements.output.textContent = `clip-path: ${resultStr};`;
       }
+
+      function copyClipPath() {
+        try {
+          navigator.clipboard.writeText(elements.output.textContent);
+          elements.copy.textContent = "✅";
+          setTimeout(() => (elements.copy.textContent = "📋"), 1000);
+        } catch (err) {
+          console.error("SVG Copy failed", err);
+        }
+      }
+
+      /**
+       * Serializes the current clip-path into a standard SVG string
+       */
+      async function copySvgToClipboard() {
+        const clipPath = elements.canvas.style.clipPath;
+        if (!clipPath.includes("polygon")) {
+          return;
+        }
+
+        // Extract coordinates: "50% 0%, 100% 100%..." -> "50 0, 100 100..."
+        const pointsRaw = clipPath.replace("polygon(", "").replace(")", "");
+        const svgPoints = pointsRaw
+          .split(",")
+          .map((p) => p.trim().replace(/%/g, ""))
+          .join(" ");
+
+        const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <polygon points="${svgPoints}" fill="currentColor"/>
+</svg>`;
+
+        try {
+          await navigator.clipboard.writeText(svgTemplate);
+          elements.copysvg.textContent = "✅";
+          setTimeout(() => (copysvg.textContent = "📋"), 1000);
+        } catch (err) {
+          console.error("SVG Copy failed", err);
+        }
+      }
+
       // Run
       init();
     </script>
