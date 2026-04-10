@@ -206,7 +206,9 @@ function render() {
     if (lastAngle !== null) {
       // Calculate angle difference and normalize it (handle 360-degree wrap-around)
       let delta = Math.abs(angle - lastAngle);
-      if (delta > Math.PI) delta = 2 * Math.PI - delta;
+      if (delta > Math.PI) {
+        delta = 2 * Math.PI - delta;
+      }
 
       // THRESHOLD: 0.25 radians (~14 degrees)
       // Smooth curves change by tiny fractions.
