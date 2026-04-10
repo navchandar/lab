@@ -148,6 +148,8 @@ function updateColor() {
         lastColors.shift();
       }
     }
+  } else {
+    console.error("Color Data not found!")
   }
   utils.hideSettings();
 }
@@ -307,7 +309,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // update mute button if speech supported
   if (ttsInstance.isSpeechReady()) {
     utils.enableMuteBtn();
-    speaker();
   } else {
     utils.disableMuteBtn();
   }
