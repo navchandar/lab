@@ -59,7 +59,7 @@ const SHAPE_LIB = {
   },
   Cloud: {
     min: 30,
-    d: "M 50 25 A 20 20 0 0 1 85 45 A 15 15 0 0 1 75 80 H 25 A 15 15 0 0 1 25 50 A 20 20 0 0 1 50 25 Z",
+    d: "M 50 25 C 65 25 75 35 78 45 C 88 45 95 55 90 70 C 85 80 75 80 75 80 H 25 C 25 80 15 80 10 70 C 5 55 12 45 22 45 C 25 35 35 25 50 25 Z",
   },
   Lightning: {
     min: 7,
@@ -79,11 +79,11 @@ const SHAPE_LIB = {
   },
   Circle: {
     min: 40,
-    d: "M 50 0 A 50 50 0 1 1 50 100 A 50 50 0 1 1 50 0",
+    d: "M 50 0 C 77.6 0 100 22.4 100 50 C 100 77.6 77.6 100 50 100 C 22.4 100 0 77.6 0 50 C 0 22.4 22.4 0 50 0 Z",
   },
   Ellipse: {
     min: 40,
-    d: "M 50 20 A 50 30 0 1 1 50 80 A 50 30 0 1 1 50 20 Z",
+    d: "M 50 20 C 77.6 20 100 33.4 100 50 C 100 66.6 77.6 80 50 80 C 22.4 80 0 66.6 0 50 C 0 33.4 22.4 20 50 20 Z",
   },
   Line: {
     min: 4,
@@ -135,7 +135,7 @@ const SHAPE_LIB = {
   },
   Ticket: {
     min: 12,
-    d: "M 50 0 H 100 V 35 A 15 15 0 0 0 100 65 V 100 H 0 V 65 A 15 15 0 0 0 0 35 V 0 Z",
+    d: "M 50 0 H 100 V 35 C 91.7 35 85 41.7 85 50 C 85 58.3 91.7 65 100 65 V 100 H 0 V 65 C 8.3 65 15 58.3 15 50 C 15 41.7 8.3 35 0 35 V 0 Z",
   },
   Infinity: {
     min: 30,
@@ -211,75 +211,37 @@ function render() {
     elements.points.value = target;
   }
 
-  elements.engine.setAttribute("d", shape.d);
-  const totalLen = elements.engine.getTotalLength();
+  // Initialize our Pure Math Engine
+  const mathEngine = new SVGMathEngine(shape.d);
+  const totalLen = mathEngine.totalLength;
 
-  // Advanced Corner Detection (The Hybrid Heuristic)
-  const corners = [];
-  const scanResolution = 600; // Higher resolution for better curve analysis
-  let lastAngle = null;
-
-  for (let i = 0; i <= scanResolution; i++) {
-    const dist = (i / scanResolution) * totalLen;
-    // Step slightly backward and forward to find the tangent angle
-    const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.5));
-    const p2 = elements.engine.getPointAtLength(Math.min(totalLen, dist + 0.5));
-
-    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-
-    if (lastAngle !== null) {
-      // Calculate angle difference and normalize it (handle 360-degree wrap-around)
-      let delta = Math.abs(angle - lastAngle);
-      if (delta > Math.PI) {
-        delta = 2 * Math.PI - delta;
-      }
-
-      // THRESHOLD: 0.25 radians (~14 degrees)
-      // Smooth curves change by tiny fractions.
-      // Sharp corners (like a star or shield point) change abruptly.
-      if (delta > 0.25) {
-        const pt = elements.engine.getPointAtLength(dist);
-        corners.push({ dist, x: pt.x, y: pt.y });
-      }
-    }
-    lastAngle = angle;
-  }
-
-  // Always lock in the absolute start/end point
-  if (corners.length === 0 || corners[0].dist > 1) {
-    const start = elements.engine.getPointAtLength(0);
-    corners.unshift({ dist: 0, x: start.x, y: start.y });
-  }
-
-  // Segment Preparation
-  // A Circle will have 1 long segment. A Square will have 4. A Shield will have 3.
+  // Extract Exact Mathematical Corners (The AST Junctions)
   const segments = [];
-  for (let i = 0; i < corners.length; i++) {
-    const startDist = corners[i].dist;
-    const endDist = i === corners.length - 1 ? totalLen : corners[i + 1].dist;
+  let currentDist = 0;
+
+  for (let seg of mathEngine.segments) {
     segments.push({
-      startDist: startDist,
-      endDist: endDist,
-      length: endDist - startDist,
+      startDist: currentDist,
+      endDist: currentDist + seg.length,
+      length: seg.length,
       pointsToPlace: 0,
-      startX: corners[i].x,
-      startY: corners[i].y,
+      startX: seg.getPoint(0).x,
+      startY: seg.getPoint(0).y,
     });
+    currentDist += seg.length;
   }
 
-  // Mathematical Precision: Point Distribution
-  // We subtract the corners we've already "locked in"
-  let pointsLeftToDistribute = target - corners.length;
+  // Exact Point Distribution
+  let pointsLeftToDistribute = target - segments.length;
 
-  // First Pass: Assign the floor value (guaranteed points)
+  // First Pass: Floor allocation
   segments.forEach((seg) => {
-    const share = (seg.length / totalLen) * (target - corners.length);
+    const share = (seg.length / totalLen) * (target - segments.length);
     seg.pointsToPlace = Math.floor(share);
     pointsLeftToDistribute -= seg.pointsToPlace;
   });
 
-  // Second Pass: Distribute the remainders to the longest segments first
-  // This is the "Self-Healing" part that ensures the count is EXACT
+  // Second Pass: Remainder distribution via sorting
   const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
   while (pointsLeftToDistribute > 0) {
     for (let seg of sortedByLength) {
@@ -291,9 +253,7 @@ function render() {
     }
   }
 
-  // Final Array Construction
-  // Because we use getPointAtLength on the native SVG, points distributed
-  // along a "curved" segment will perfectly follow the curve!
+  // Final Array Construction using Math
   const finalPoints = [];
   segments.forEach((seg) => {
     // Add the Anchor/Corner
@@ -305,13 +265,15 @@ function render() {
     for (let j = 1; j <= seg.pointsToPlace; j++) {
       const subDist =
         seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
-      const pt = elements.engine.getPointAtLength(subDist);
+      // Get coordinates directly from JS Memory, no DOM querying!
+      const pt = mathEngine.getPointAtLength(subDist);
       finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
     }
   });
 
   // --- Apply Anti-Twist Alignment ---
-  const alignedPoints = alignToTopCenter(finalPoints);
+  // const alignedPoints = alignToTopCenter(finalPoints);
+  const alignedPoints = finalPoints;
 
   // Final Integrity Check
   if (alignedPoints.length !== target) {
@@ -396,6 +358,135 @@ async function copySvgToClipboard() {
     console.error("SVG Copy failed", err);
     elements.copysvg.textContent = "⚠️";
     setTimeout(() => (elements.copysvg.textContent = "📋"), 1000);
+  }
+}
+
+class SVGMathEngine {
+  constructor(d) {
+    this.segments = [];
+    this.totalLength = 0;
+    this.parse(d);
+  }
+
+  parse(d) {
+    // Regex to extract commands and numbers
+    const tokens = d.match(
+      /[a-zA-Z]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g,
+    );
+    let x = 0,
+      y = 0,
+      startX = 0,
+      startY = 0;
+    let i = 0;
+
+    while (i < tokens.length) {
+      const cmd = tokens[i++];
+      if (cmd === "M") {
+        x = parseFloat(tokens[i++]);
+        y = parseFloat(tokens[i++]);
+        startX = x;
+        startY = y;
+      } else if (cmd === "L") {
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        this.addSegment(new LineSegment(x, y, nx, ny));
+        x = nx;
+        y = ny;
+      } else if (cmd === "H") {
+        let nx = parseFloat(tokens[i++]);
+        this.addSegment(new LineSegment(x, y, nx, y));
+        x = nx;
+      } else if (cmd === "V") {
+        let ny = parseFloat(tokens[i++]);
+        this.addSegment(new LineSegment(x, y, x, ny));
+        y = ny;
+      } else if (cmd === "C") {
+        let cx1 = parseFloat(tokens[i++]),
+          cy1 = parseFloat(tokens[i++]);
+        let cx2 = parseFloat(tokens[i++]),
+          cy2 = parseFloat(tokens[i++]);
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        this.addSegment(new BezierSegment(x, y, cx1, cy1, cx2, cy2, nx, ny));
+        x = nx;
+        y = ny;
+      } else if (cmd === "Z") {
+        this.addSegment(new LineSegment(x, y, startX, startY));
+        x = startX;
+        y = startY;
+      }
+    }
+  }
+
+  addSegment(seg) {
+    if (seg.length > 0) {
+      this.segments.push(seg);
+      this.totalLength += seg.length;
+    }
+  }
+
+  getPointAtLength(distance) {
+    if (distance <= 0) return this.segments[0].getPoint(0);
+    if (distance >= this.totalLength)
+      return this.segments[this.segments.length - 1].getPoint(1);
+
+    let currentDist = 0;
+    for (let seg of this.segments) {
+      if (currentDist + seg.length >= distance) {
+        // Find how far along THIS specific segment we are (from 0.0 to 1.0)
+        let t = (distance - currentDist) / seg.length;
+        return seg.getPoint(t);
+      }
+      currentDist += seg.length;
+    }
+  }
+}
+
+// --- Mathematical Geometry Classes ---
+
+class LineSegment {
+  constructor(x0, y0, x1, y1) {
+    this.x0 = x0;
+    this.y0 = y0;
+    this.x1 = x1;
+    this.y1 = y1;
+    this.length = Math.hypot(x1 - x0, y1 - y0);
+  }
+  getPoint(t) {
+    return {
+      x: this.x0 + (this.x1 - this.x0) * t,
+      y: this.y0 + (this.y1 - this.y0) * t,
+    };
+  }
+}
+
+class BezierSegment {
+  constructor(x0, y0, cx1, cy1, cx2, cy2, x1, y1) {
+    this.pts = [x0, y0, cx1, cy1, cx2, cy2, x1, y1];
+    this.length = this.calculateLength();
+  }
+
+  // Fast 10-step chord approximation for curve length
+  calculateLength() {
+    let len = 0;
+    let prev = this.getPoint(0);
+    for (let i = 1; i <= 10; i++) {
+      let curr = this.getPoint(i / 10);
+      len += Math.hypot(curr.x - prev.x, curr.y - prev.y);
+      prev = curr;
+    }
+    return len;
+  }
+
+  getPoint(t) {
+    const [x0, y0, cx1, cy1, cx2, cy2, x1, y1] = this.pts;
+    const mt = 1 - t;
+    const mt2 = mt * mt;
+    const t2 = t * t;
+    return {
+      x: x0 * mt2 * mt + 3 * cx1 * mt2 * t + 3 * cx2 * mt * t2 + x1 * t2 * t,
+      y: y0 * mt2 * mt + 3 * cy1 * mt2 * t + 3 * cy2 * mt * t2 + y1 * t2 * t,
+    };
   }
 }
 
