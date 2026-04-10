@@ -29,6 +29,7 @@ const shapes = [
   "star",
   "circle",
   "ellipse",
+  "heart",
 ];
 
 let intervalID = null;
