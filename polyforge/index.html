@@ -17,13 +17,30 @@
 
     <style>
       :root {
-        --bg: #09090b;
-        --card: #18181b;
-        --text: #fafafa;
-        --accent: #bd7cff;
-        --border: #27272a;
-        --input-bg: #09090b;
+        /* Default Light Mode Palette */
+        --bg: #ffffff;
+        --card: #f4f4f5;
+        --text: #09090b;
+        --accent: #7c3aed;
+        --accent-hover: #6d28d9;
+        --border: #e4e4e7;
+        --input-bg: #ffffff;
         --success: #10b981;
+        --canvas-bg: #fdfdfd;
+      }
+
+      /* Automatic Dark Mode Support */
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #09090b;
+          --card: #18181b;
+          --text: #fafafa;
+          --accent: #bd7cff;
+          --accent-hover: #a03ff0;
+          --border: #27272a;
+          --input-bg: #09090b;
+          --canvas-bg: #0c0c0e;
+        }
       }
 
       * {
@@ -36,6 +53,9 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        transition:
+          background-color 0.3s ease,
+          color 0.3s ease;
         background-color: var(--bg);
         padding: 1rem;
         min-height: 100vh;
@@ -47,7 +67,7 @@
       .app-shell {
         display: flex;
         flex-direction: column;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         border: 1px solid var(--border);
         border-radius: 16px;
         background: var(--card);
@@ -55,16 +75,20 @@
         width: 100%;
         max-width: 650px;
         max-height: 95vh;
+        overflow-y: auto;
       }
 
       header {
         margin-bottom: 1.5rem;
         text-align: center;
       }
+
       header h1 {
         color: var(--accent);
         font-size: 1.6rem;
+        letter-spacing: -0.05rem;
       }
+
       header p {
         margin-top: 4px;
         color: #71717a;
@@ -83,6 +107,7 @@
         flex-direction: column;
         gap: 0.4rem;
       }
+
       label {
         color: #a1a1aa;
         font-weight: 600;
@@ -92,19 +117,19 @@
 
       select,
       input {
+        transition: border-color 0.2s;
         outline: none;
         border: 1px solid var(--border);
         border-radius: 8px;
         background: var(--input-bg);
-        padding: 0.6rem;
+        padding: 0.7rem;
         color: var(--text);
-        font-size: 0.95rem;
+        font-size: 1rem;
       }
 
       select:focus,
       input:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        box-shadow: 0 0 0 2px rgba(189, 124, 255, 0.2);
         border-color: var(--accent);
       }
 
@@ -115,9 +140,12 @@
         margin-bottom: 1.5rem;
         border: 1px solid var(--border);
         border-radius: 12px;
-        background: repeating-conic-gradient(#111 0% 25%, transparent 0% 50%)
+        background: repeating-conic-gradient(
+            rgba(0, 0, 0, 0.1) 0% 25%,
+            transparent 0% 50%
+          )
           50% / 20px 20px;
-        background-color: #0c0c0e;
+        background-color: var(--canvas-bg);
         aspect-ratio: 16/9;
         width: 100%;
         overflow: hidden;
@@ -127,10 +155,10 @@
         transition: clip-path 0.2s ease;
         background: linear-gradient(135deg, var(--accent), #8b5cf6);
         width: 180px;
+        max-width: 80%;
         height: 180px;
       }
 
-      /* Output Terminal */
       .code-container {
         position: relative;
         border: 1px solid var(--border);
@@ -143,31 +171,32 @@
 
       code {
         display: block;
-        padding-right: 30px;
+        padding-right: 35px;
         height: 100%;
         overflow-y: auto;
         color: #d1d5db;
         font-size: 0.8rem;
         font-family: "Fira Code", monospace;
         white-space: pre-wrap;
-        word-break: break-all; /* Prevents container growth */
+        word-break: break-all;
       }
 
       .copy-trigger {
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
+        transition: all 0.2s;
         cursor: pointer;
         border: 1px solid var(--border);
         border-radius: 6px;
-        background: var(--card);
-        padding: 5px;
-        color: var(--text);
+        background: #18181b;
+        padding: 6px;
+        color: #fff;
       }
 
       .copy-trigger:hover {
-        background: var(--border);
-        color: var(--accent);
+        border-color: var(--accent);
+        background: var(--accent);
       }
 
       /* Scrollbar styling */
@@ -179,12 +208,42 @@
         background: var(--border);
       }
 
+      /* Mobile-Specific Refinements */
       @media (max-width: 600px) {
+        .app-shell {
+          border: none;
+          border-radius: 0; /* Full screen look on mobile */
+          padding: 1.25rem;
+          max-height: 100vh;
+        }
+
         .grid-layout {
           grid-template-columns: 1fr;
+          gap: 1.25rem;
         }
-        .app-shell {
-          padding: 1.5rem;
+
+        header h1 {
+          font-size: 1.4rem;
+        }
+
+        #canvas-shape {
+          width: 140px;
+          height: 140px;
+        }
+
+        code {
+          font-size: 0.75rem;
+        }
+      }
+
+      /* Support for very small devices (iPhone SE, etc.) */
+      @media (max-width: 380px) {
+        body {
+          padding: 0;
+        }
+
+        .shape-preview {
+          aspect-ratio: 4/3;
         }
       }
     </style>
@@ -326,9 +385,8 @@
           });
 
           // Default State
-          elements.select.value = "Square";
-          elements.points.value = 4;
-          render();
+          elements.select.value = "Triangle";
+          handleShapeChange(); // This will trigger the first render
         } catch (e) {
           console.error("Initialization Failed:", e);
         }
@@ -352,12 +410,14 @@
       }
 
       /**
-       * Core Engine: Uses SVG path sampling to generate polygon points
+       * High-Precision Vertex and SVG sampling to generate polygon points
        * Optimized for shape retention and auto-clamping
        */
       function render() {
         const shape = SHAPE_LIB[elements.select.value];
         let target = parseInt(elements.points.value);
+
+        // Auto-clamp input
         if (isNaN(target) || target < shape.min) {
           target = shape.min;
           elements.points.value = target;
@@ -366,31 +426,79 @@
         elements.engine.setAttribute("d", shape.d);
         const totalLen = elements.engine.getTotalLength();
 
-        // 1. Identify Key Milestones (Vertices)
-        // For linear shapes, we sample a high-res density to find sharp turns
-        // For this tool, we treat the 'target' as a budget to be distributed
-        const points = [];
+        // Find the "True Vertices" (Corners)
+        // scan the path to find where direction changes significantly
+        const corners = [];
+        const scanResolution = 500;
+        let lastAngle = null;
 
-        /* ALGORITHM: Sub-segment Sampling
-           We break the total length into 'target' increments.
-           To prevent "rounding" of corners, we ensure the sampling 
-           frequency is high enough that every corner command in the SVG
-           is effectively captured.
-        */
-        for (let i = 0; i < target; i++) {
+        for (let i = 0; i <= scanResolution; i++) {
+          const dist = (i / scanResolution) * totalLen;
+          const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.1));
+          const p2 = elements.engine.getPointAtLength(
+            Math.min(totalLen, dist + 0.1),
+          );
+
+          const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+
+          // If the angle changed significantly, it's a corner
+          if (lastAngle !== null && Math.abs(angle - lastAngle) > 0.01) {
+            const pt = elements.engine.getPointAtLength(dist);
+            corners.push({ dist, x: pt.x, y: pt.y });
+          }
+          lastAngle = angle;
+        }
+
+        // Always include start and end
+        if (corners.length === 0 || corners[0].dist > 1) {
+          const start = elements.engine.getPointAtLength(0);
+          corners.unshift({ dist: 0, x: start.x, y: start.y });
+        }
+
+        // Distribute extra points across segments
+        const finalPoints = [];
+        const extraPointsNeeded = target - corners.length;
+
+        if (extraPointsNeeded <= 0) {
+          // If user asks for fewer points than corners, we just sample the corners
+          // (Clamping usually prevents this, but safety first)
+          for (let i = 0; i < target; i++) {
           // By using (i / (target)) and taking the point, we ensure
           // that for a 4-point square, we hit 0, 0.25, 0.5, 0.75 of the length.
           // These land exactly on the vertices of SVG L commands.
-          const dist = (i / target) * totalLen;
-          const pt = elements.engine.getPointAtLength(dist);
-          points.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
+            const dist = (i / target) * totalLen;
+            const pt = elements.engine.getPointAtLength(dist);
+            finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
+          }
+        } else {
+          // Precise Distribution: Add extra points along the segments proportional to length
+          corners.forEach((corner, idx) => {
+            finalPoints.push(`${corner.x.toFixed(1)}% ${corner.y.toFixed(1)}%`);
+
+            const nextCorner = corners[idx + 1] || { dist: totalLen };
+            const segLen = nextCorner.dist - corner.dist;
+
+            // How many extra points does this specific edge get?
+            const pointsForThisSeg = Math.round(
+              (segLen / totalLen) * extraPointsNeeded,
+            );
+
+            for (let j = 1; j <= pointsForThisSeg; j++) {
+              const subDist =
+                corner.dist + (j / (pointsForThisSeg + 1)) * segLen;
+              const pt = elements.engine.getPointAtLength(subDist);
+              finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
+            }
+          });
         }
 
-        const res = `polygon(${points.join(", ")})`;
-        elements.canvas.style.clipPath = res;
-        elements.output.textContent = `clip-path: ${res};`;
-      }
+        // Ensure we don't exceed target due to rounding, and format
+        const resultStr = `polygon(${finalPoints.slice(0, target).join(", ")})`;
 
+        // Update UI
+        elements.canvas.style.clipPath = resultStr;
+        elements.output.textContent = `clip-path: ${resultStr};`;
+      }
       // Run
       init();
     </script>
