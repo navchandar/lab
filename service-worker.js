@@ -1,6 +1,6 @@
-// version=v2026.04.09
+// version=v2026.04.10
 
-const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","company","smart-dom-inspector","serviceability","hospitals","pm-e-drive","diff"];
+const IGNORED_DIRS = [".git",".github","config","node_modules","Lychee","stefanzweifel","ip","jobs","company","smart-dom-inspector","serviceability","hospitals","pm-e-drive","diff","polyforge"];
 
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
