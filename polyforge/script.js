@@ -4,8 +4,15 @@
 const SHAPE_LIB = {
   // --- Basic Polygons ---
   Triangle: { min: 3, d: "M 50 0 L 100 100 L 0 100 Z" },
-  Square: { min: 4, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
-  Rectangle: { min: 4, d: "M 10 25 H 90 V 75 H 10 Z" },
+  Square: {
+    min: 8,
+    d: "M 50 0 L 100 0 L 100 100 L 0 100 L 0 0 Z",
+  },
+
+  Rectangle: {
+    min: 8,
+    d: "M 50 25 L 90 25 L 90 75 L 10 75 L 10 25 Z",
+  },
   Pentagon: { min: 5, d: "M 50 0 L 98 35 L 79 90 L 21 90 L 2 35 Z" },
   Hexagon: {
     min: 6,
@@ -16,8 +23,8 @@ const SHAPE_LIB = {
     d: "M 50 0 L 89 22 L 100 66 L 72 100 L 28 100 L 0 66 L 11 22 Z",
   },
   Octagon: {
-    min: 8,
-    d: "M 30 0 L 70 0 L 100 30 L 100 70 L 70 100 L 30 100 L 0 70 L 0 30 Z",
+    min: 9,
+    d: "M 50 0 L 70 0 L 100 30 L 100 70 L 70 100 L 30 100 L 0 70 L 0 30 L 30 0 Z",
   },
   Nonagon: {
     min: 9,
@@ -29,23 +36,34 @@ const SHAPE_LIB = {
   },
 
   // --- Geometric Variations ---
-  Diamond: { min: 8, d: "M 50 0 L 100 50 L 50 100 L 0 50 Z" },
-  Trapezoid: { min: 8, d: "M 20 20 H 80 L 100 80 H 0 Z" },
-  Parallelogram: { min: 8, d: "M 25 20 H 100 L 75 80 H 0 Z" },
-  Rhombus: { min: 8, d: "M 50 0 L 90 50 L 50 100 L 10 50 Z" },
-
+  Diamond: {
+    min: 8,
+    d: "M 50 0 L 100 50 L 50 100 L 0 50 Z",
+  },
+  Trapezoid: {
+    min: 8,
+    d: "M 50 20 L 80 20 L 100 80 L 0 80 L 20 20 Z",
+  },
+  Parallelogram: {
+    min: 8,
+    d: "M 50 20 L 100 20 L 75 80 L 0 80 L 25 20 Z",
+  },
+  Rhombus: {
+    min: 8,
+    d: "M 50 0 L 90 50 L 50 100 L 10 50 Z",
+  },
   // --- Symbols & UI ---
   Home: {
-    min: 10,
-    d: "M 10 90 V 40 L 50 10 L 90 40 V 90 Z",
+    min: 5,
+    d: "M 50 10 L 90 40 V 90 H 10 V 40 Z",
   },
   Cloud: {
     min: 30,
-    d: "M 25 80 A 15 15 0 0 1 25 50 A 20 20 0 0 1 65 40 A 15 15 0 0 1 85 55 A 15 15 0 0 1 75 80 Z",
+    d: "M 50 25 A 20 20 0 0 1 85 45 A 15 15 0 0 1 75 80 H 25 A 15 15 0 0 1 25 50 A 20 20 0 0 1 50 25 Z",
   },
   Lightning: {
-    min: 12,
-    d: "M 60 0 L 20 50 H 50 L 40 100 L 80 50 H 50 Z",
+    min: 6,
+    d: "M 50 0 H 60 L 20 50 H 50 L 40 100 L 80 40 H 50 Z",
   },
   Star: {
     min: 10,
@@ -61,65 +79,75 @@ const SHAPE_LIB = {
   },
   Ellipse: {
     min: 40,
-    d: "M 0 50 A 50 30 0 1 1 100 50 A 50 30 0 1 1 0 50 Z",
+    d: "M 50 20 A 50 30 0 1 1 50 80 A 50 30 0 1 1 50 20 Z",
   },
   Line: {
-    min: 20,
-    d: "M 0 100 L 25 100 L 50 100 L 75 100 L 100 100 L 100 95 L 75 95 L 50 95 L 25 95 L 0 95 Z",
+    min: 4,
+    d: "M 50 95 H 100 V 100 H 0 V 95 Z",
   },
   Angle: {
-    min: 20,
-    d: "M 0 100 L 50 100 L 100 100 L 100 90 L 60 90 L 16 90 L 50 0 L 40 0 L 20 50 Z",
-  },
-  "Arrow Right": {
     min: 8,
-    d: "M 0 30 L 60 30 L 60 0 L 100 50 L 60 100 L 60 70 L 0 70 Z",
+    d: "M 50 0 L 40 0 L 20 50 L 0 100 H 100 V 90 H 60 L 16 90 Z",
+  },
+
+  // --- Directional Arrows ---
+  "Arrow Right": {
+    min: 7,
+    d: "M 50 30 H 60 V 0 L 100 50 L 60 100 V 70 H 0 V 30 Z",
   },
   "Arrow Left": {
-    min: 8,
-    d: "M 100 30 L 40 30 L 40 0 L 0 50 L 40 100 L 40 70 L 100 70 Z",
+    min: 7,
+    d: "M 50 30 H 100 V 70 H 40 V 100 L 0 50 L 40 0 V 30 Z",
   },
   "Arrow Up": {
-    min: 8,
-    d: "M 30 100 V 40 H 0 L 50 0 L 100 40 H 70 V 100 Z",
+    min: 7,
+    d: "M 50 0 L 100 40 H 70 V 100 H 30 V 40 H 0 Z",
   },
   "Arrow Down": {
-    min: 8,
-    d: "M 30 0 V 60 H 0 L 50 100 L 100 60 H 70 V 0 Z",
+    min: 7,
+    d: "M 50 0 H 70 V 60 H 100 L 50 100 L 0 60 H 30 V 0 Z",
   },
+
+  // --- UI Elements ---
   Chevron: {
-    min: 10,
-    d: "M 0 0 L 50 50 L 0 100 L 30 100 L 80 50 L 30 0 Z",
+    min: 6,
+    d: "M 50 20 L 80 50 L 30 100 H 0 L 50 50 L 0 0 H 30 Z",
   },
   Cross: {
-    min: 16,
-    d: "M 35 0 H 65 V 35 H 100 V 65 H 65 V 100 H 35 V 65 H 0 V 35 H 35 Z",
+    min: 12,
+    d: "M 50 0 H 65 V 35 H 100 V 65 H 65 V 100 H 35 V 65 H 0 V 35 H 35 V 0 Z",
   },
   Shield: {
-    min: 42,
-    d: "M 0 0 H 100 V 50 C 100 80 50 100 50 100 C 50 100 0 80 0 50 Z",
+    min: 15,
+    d: "M 50 0 H 100 V 50 C 100 80 50 100 50 100 C 50 100 0 80 0 50 V 0 Z",
   },
-  Message: { min: 8, d: "M 0 0 H 100 V 75 H 35 L 0 100 Z" },
+  Message: {
+    min: 6,
+    d: "M 50 0 H 100 V 75 H 35 L 0 100 V 0 Z",
+  },
   Crescent: {
     min: 25,
-    d: "M 80 10 C 30 10 30 90 80 90 C 10 110 10 -10 80 10 Z",
+    d: "M 50 0 C 80 0 100 40 80 90 C 30 90 30 10 50 0 Z",
   },
-  Bolt: { min: 9, d: "M 60 0 L 20 50 H 50 L 40 100 L 80 40 H 50 Z" },
+  Bolt: {
+    min: 6,
+    d: "M 50 0 H 60 L 20 50 H 50 L 40 100 L 80 40 H 50 Z",
+  },
   Badge: {
-    min: 20,
+    min: 16,
     d: "M 50 0 L 65 15 H 85 V 35 L 100 50 L 85 65 V 85 H 65 L 50 100 L 35 85 H 15 V 65 L 0 50 L 15 35 V 15 H 35 Z",
   },
   Ticket: {
-    min: 70,
-    d: "M 0 0 H 100 V 35 A 15 15 0 0 0 100 65 V 100 H 0 V 65 A 15 15 0 0 0 0 35 Z",
+    min: 12,
+    d: "M 50 0 H 100 V 35 A 15 15 0 0 0 100 65 V 100 H 0 V 65 A 15 15 0 0 0 0 35 V 0 Z",
   },
   Infinity: {
     min: 50,
-    d: "M 30 35 C 0 35 0 65 30 65 C 45 65 55 35 70 35 C 100 35 100 65 70 65 C 55 65 45 35 30 35 Z",
+    d: "M 50 50 C 20 10 0 35 30 65 C 45 65 55 35 70 35 C 100 35 80 90 50 50 Z",
   },
   Clover: {
-    min: 50,
-    d: "M 50 50 C 50 20 20 20 20 50 C 20 80 50 80 50 50 C 50 80 80 80 80 50 C 80 20 50 20 50 50 M 50 50 V 90",
+    min: 40,
+    d: "M 50 10 C 70 -10 90 30 50 50 C 90 70 70 110 50 90 C 30 110 10 70 50 50 C 10 30 30 -10 50 10 Z",
   },
 };
 
