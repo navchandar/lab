@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>PolyForge | CSS Clip-Path Generator</title>
+    <meta
+      name="description"
+      content="Convert complex shapes into CSS clip-path polygons with a custom number of points. Useful for smooth UI animations and transitions."
+    />
+    <meta
+      name="keywords"
+      content="CSS, Clip-path, Polygon Generator, Web Development, UI Design, SVG to Polygon, Animation Tools"
+    />
+    <meta name="author" content="Naveenchandar" />
+
+    <style>
+      :root {
+        --bg: #09090b;
+        --card: #18181b;
+        --text: #fafafa;
+        --accent: #bd7cff;
+        --accent-hover: #a03ff0;
+        --border: #27272a;
+        --input-bg: #09090b;
+        --success: #10b981;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: var(--bg);
+        padding: 1.5rem;
+        min-height: 100vh;
+        color: var(--text);
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      .app-shell {
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        background: var(--card);
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 700px;
+      }
+
+      header {
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+      header h1 {
+        color: var(--text);
+        font-size: 1.8rem;
+        letter-spacing: -0.025em;
+      }
+      header p {
+        margin-top: 0.5rem;
+        color: #71717a;
+        font-size: 0.9rem;
+      }
+
+      .grid-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+      }
+
+      .control-block {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      label {
+        color: #a1a1aa;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+      }
+
+      select,
+      input {
+        transition: all 0.2s ease;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--input-bg);
+        padding: 0.75rem;
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      select:focus,
+      input:focus {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        border-color: var(--accent);
+      }
+
+      /* Preview Canvas */
+      .shape-preview {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 2rem;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background:
+          linear-gradient(45deg, #111 25%, transparent 25%),
+          linear-gradient(-45deg, #111 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #111 75%),
+          linear-gradient(-45deg, transparent 75%, #111 75%);
+        background-size: 20px 20px;
+        background-color: #0c0c0e;
+        aspect-ratio: 16/9;
+        width: 100%;
+      }
+
+      #canvas-shape {
+        transition: clip-path 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: linear-gradient(135deg, var(--accent), #8b5cf6);
+        width: 200px;
+        height: 200px;
+      }
+
+      /* Output Terminal */
+      .code-container {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #000;
+        padding: 1.25rem;
+      }
+
+      code {
+        display: block;
+        max-height: 150px;
+        overflow-y: auto;
+        color: #d1d5db;
+        font-size: 0.85rem;
+        line-height: 1.6;
+        font-family: "Fira Code", "Cascadia Code", monospace;
+        word-break: break-all;
+      }
+
+      .copy-trigger {
+        display: flex;
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        align-items: center;
+        transition: all 0.2s;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: var(--card);
+        padding: 6px;
+        color: var(--text);
+      }
+
+      .copy-trigger:hover {
+        background: var(--border);
+        color: var(--accent);
+      }
+
+      /* Scrollbar styling */
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-thumb {
+        border-radius: 10px;
+        background: var(--border);
+      }
+
+      @media (max-width: 600px) {
+        .grid-layout {
+          grid-template-columns: 1fr;
+        }
+        .app-shell {
+          padding: 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header>
+        <h1>PolyForge</h1>
+        <p>Dynamic Polygon Sampling Engine</p>
+      </header>
+
+      <div class="grid-layout">
+        <div class="control-block">
+          <label for="shape-select">Geometry</label>
+          <select id="shape-select"></select>
+        </div>
+        <div class="control-block">
+          <label for="point-count">Sampling Points</label>
+          <input type="number" id="point-count" step="1" />
+        </div>
+      </div>
+
+      <div class="shape-preview">
+        <div id="canvas-shape"></div>
+      </div>
+
+      <div class="control-block">
+        <label>Generated CSS</label>
+        <div class="code-container">
+          <code id="output-code">Initializing...</code>
+          <button class="copy-trigger" id="copy-btn" title="Copy Code">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path
+                d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <svg style="visibility: hidden; position: absolute" width="0" height="0">
+      <path id="math-engine" d=""></path>
+    </svg>
+
+    <script>
+      /**
+       * Shape Coordinates are based on a 100x100 viewBox
+       */
+      const SHAPE_LIB = {
+        Triangle: { min: 3, d: "M 50 0 L 100 100 L 0 100 Z" },
+        Square: { min: 4, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
+        Diamond: { min: 4, d: "M 50 0 L 100 50 L 50 100 L 0 50 Z" },
+        Pentagon: { min: 5, d: "M 50 0 L 98 35 L 79 90 L 21 90 L 2 35 Z" },
+        Hexagon: {
+          min: 6,
+          d: "M 50 0 L 93 25 L 93 75 L 50 100 L 7 75 L 7 25 Z",
+        },
+        Octagon: {
+          min: 8,
+          d: "M 30 0 L 70 0 L 100 30 L 100 70 L 70 100 L 30 100 L 0 70 L 0 30 Z",
+        },
+        Star: {
+          min: 10,
+          d: "M 50 0 L 61 35 L 98 35 L 68 57 L 79 91 L 50 70 L 21 91 L 32 57 L 2 35 L 39 35 Z",
+        },
+        Heart: {
+          min: 30,
+          d: "M 50 30 C 50 0 0 0 0 40 C 0 70 50 100 50 100 C 50 100 100 70 100 40 C 100 0 50 0 50 30",
+        },
+        Circle: {
+          min: 40,
+          d: "M 50 0 A 50 50 0 1 1 50 100 A 50 50 0 1 1 50 0",
+        },
+        "Arrow Right": {
+          min: 7,
+          d: "M 0 30 L 60 30 L 60 0 L 100 50 L 60 100 L 60 70 L 0 70 Z",
+        },
+        Chevron: {
+          min: 6,
+          d: "M 0 0 L 50 50 L 0 100 L 30 100 L 80 50 L 30 0 Z",
+        },
+        Cross: {
+          min: 12,
+          d: "M 35 0 H 65 V 35 H 100 V 65 H 65 V 100 H 35 V 65 H 0 V 35 H 35 Z",
+        },
+        Shield: {
+          min: 15,
+          d: "M 0 0 H 100 V 50 C 100 80 50 100 50 100 C 50 100 0 80 0 50 Z",
+        },
+        Message: { min: 8, d: "M 0 0 H 100 V 75 H 35 L 0 100 Z" },
+        Crescent: {
+          min: 25,
+          d: "M 80 10 C 30 10 30 90 80 90 C 10 110 10 -10 80 10 Z",
+        },
+        Bolt: { min: 6, d: "M 60 0 L 20 50 H 50 L 40 100 L 80 40 H 50 Z" },
+        Badge: {
+          min: 16,
+          d: "M 50 0 L 65 15 H 85 V 35 L 100 50 L 85 65 V 85 H 65 L 50 100 L 35 85 H 15 V 65 L 0 50 L 15 35 V 15 H 35 Z",
+        },
+        Ticket: {
+          min: 12,
+          d: "M 0 0 H 100 V 35 A 15 15 0 0 0 100 65 V 100 H 0 V 65 A 15 15 0 0 0 0 35 Z",
+        },
+        Infinity: {
+          min: 50,
+          d: "M 30 35 C 0 35 0 65 30 65 C 45 65 55 35 70 35 C 100 35 100 65 70 65 C 55 65 45 35 30 35 Z",
+        },
+        Clover: {
+          min: 40,
+          d: "M 50 50 C 50 20 20 20 20 50 C 20 80 50 80 50 50 C 50 80 80 80 80 50 C 80 20 50 20 50 50 M 50 50 V 90",
+        },
+      };
+
+      // DOM Elements
+      const elements = {
+        select: document.getElementById("shape-select"),
+        points: document.getElementById("point-count"),
+        engine: document.getElementById("math-engine"),
+        canvas: document.getElementById("canvas-shape"),
+        output: document.getElementById("output-code"),
+        copy: document.getElementById("copy-btn"),
+      };
+
+      /**
+       * Initialization Logic
+       */
+      function init() {
+        try {
+          // Populate Select
+          Object.keys(SHAPE_LIB).forEach((name) => {
+            const opt = document.createElement("option");
+            opt.value = name;
+            opt.textContent = name;
+            elements.select.appendChild(opt);
+          });
+
+          // Event Listeners
+          elements.select.addEventListener("change", handleShapeChange);
+          elements.points.addEventListener("input", render);
+          elements.copy.addEventListener("click", copyToClipboard);
+
+          // Default State
+          elements.select.value = "Triangle";
+          handleShapeChange();
+        } catch (e) {
+          console.error("Initialization Failed:", e);
+        }
+      }
+
+      /**
+       * Handles updating UI when a new shape is chosen
+       */
+      function handleShapeChange() {
+        const config = SHAPE_LIB[elements.select.value];
+        elements.points.min = config.min;
+
+        // Only reset value if current value is invalid for new shape
+        if (
+          parseInt(elements.points.value) < config.min ||
+          !elements.points.value
+        ) {
+          elements.points.value = config.min;
+        }
+
+        render();
+      }
+
+      /**
+       * Core Engine: Uses SVG path sampling to generate polygon points
+       */
+      function render() {
+        try {
+          const shapeName = elements.select.value;
+          const targetPoints = parseInt(elements.points.value);
+          const shapeData = SHAPE_LIB[shapeName];
+
+          // Safety validation
+          if (isNaN(targetPoints) || targetPoints < shapeData.min) {
+            elements.output.textContent =
+              "Error: Point count below minimum for this shape.";
+            return;
+          }
+
+          elements.engine.setAttribute("d", shapeData.d);
+          const totalPathLength = elements.engine.getTotalLength();
+          const polygonPoints = [];
+
+          // Sampling Strategy: Equidistant points along the SVG path
+          for (let i = 0; i < targetPoints; i++) {
+            const dist = (i / targetPoints) * totalPathLength;
+            const point = elements.engine.getPointAtLength(dist);
+
+            // Precision set to 1 decimal for optimal balance of code size vs accuracy
+            polygonPoints.push(`${point.x.toFixed(1)}% ${point.y.toFixed(1)}%`);
+          }
+
+          const resultStr = `polygon(${polygonPoints.join(", ")})`;
+
+          // Update UI
+          elements.canvas.style.clipPath = resultStr;
+          elements.output.textContent = `clip-path: ${resultStr};`;
+        } catch (err) {
+          elements.output.textContent = `Rendering Exception: ${err.message}`;
+        }
+      }
+
+      /**
+       * Clipboard Utility
+       */
+      async function copyToClipboard() {
+        const originalText = elements.copy.innerHTML;
+        try {
+          await navigator.clipboard.writeText(elements.output.textContent);
+          elements.copy.style.color = "var(--success)";
+          setTimeout(() => (elements.copy.innerHTML = originalText), 2000);
+        } catch (err) {
+          alert("Copy failed. Please select and copy manually.");
+        }
+      }
+
+      // Run
+      init();
+    </script>
+  </body>
+</html>

@@ -443,7 +443,9 @@ export function addglobalHideSettings() {
       // If the user clicks on the parent document, hide the iframe's settings
       hideSettings();
     });
-  } catch (e) {}
+  } catch (e) {
+    console.warn("Failed to addglobalHideSettings listener!")
+  }
 }
 
 /**

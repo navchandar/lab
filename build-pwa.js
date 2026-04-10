@@ -20,6 +20,7 @@ const IGNORED_DIRS = [
   "hospitals",
   "pm-e-drive",
   "diff",
+  "polyforge",
 ];
 const IGNORED_FILES = [
   "build-pwa.js",
