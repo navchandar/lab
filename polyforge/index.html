@@ -25,6 +25,7 @@
         --accent-hover: #6d28d9;
         --border: #e4e4e7;
         --input-bg: #ffffff;
+        --code-bg: #454545;
         --success: #10b981;
         --canvas-bg: #fdfdfd;
       }
@@ -39,6 +40,8 @@
           --accent-hover: #a03ff0;
           --border: #27272a;
           --input-bg: #09090b;
+          --code-bg: #000;
+          --success: #066646;
           --canvas-bg: #0c0c0e;
         }
       }
@@ -168,7 +171,7 @@
         position: relative;
         border: 1px solid var(--border);
         border-radius: 10px;
-        background: #000;
+        background: var(--code-bg);
         padding: 1rem;
         height: 130px;
         overflow: hidden;
@@ -190,11 +193,12 @@
         position: absolute;
         top: 0.5rem;
         right: 0.5rem;
+        z-index: 10;
         transition: all 0.2s;
         cursor: pointer;
         border: 1px solid var(--border);
         border-radius: 6px;
-        background: #18181b;
+        background: var(--code-bg);
         padding: 6px;
         color: #fff;
       }
@@ -285,7 +289,6 @@
           id="copy-svg-btn"
           title="Copy as SVG"
           aria-label="Copy shape as SVG code"
-          style="top: 10px; right: 10px; z-index: 10"
         >
           📋
         </button>
@@ -324,7 +327,7 @@
         // --- Basic Polygons ---
         Triangle: { min: 3, d: "M 50 0 L 100 100 L 0 100 Z" },
         Square: { min: 4, d: "M 0 0 L 100 0 L 100 100 L 0 100 Z" },
-        Rectangle: { min: 4, d: "M 0 20 H 100 V 80 H 0 Z" },
+        Rectangle: { min: 4, d: "M 10 25 H 90 V 75 H 10 Z" },
         Pentagon: { min: 5, d: "M 50 0 L 98 35 L 79 90 L 21 90 L 2 35 Z" },
         Hexagon: {
           min: 6,
@@ -481,7 +484,7 @@
         const shape = SHAPE_LIB[elements.select.value];
         let target = parseInt(elements.points.value);
 
-        // Auto-clamp input
+        // Auto-clamp and validate
         if (isNaN(target) || target < shape.min) {
           target = shape.min;
           elements.points.value = target;
@@ -490,8 +493,7 @@
         elements.engine.setAttribute("d", shape.d);
         const totalLen = elements.engine.getTotalLength();
 
-        // Find the "True Vertices" (Corners)
-        // scan the path to find where direction changes significantly
+        // Detect Corners (Vertices)
         const corners = [];
         const scanResolution = 500;
         let lastAngle = null;
@@ -502,7 +504,6 @@
           const p2 = elements.engine.getPointAtLength(
             Math.min(totalLen, dist + 0.1),
           );
-
           const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
 
           // If the angle changed significantly, it's a corner
@@ -513,50 +514,59 @@
           lastAngle = angle;
         }
 
-        // Always include start and end
+        // Ensure start point is included
         if (corners.length === 0 || corners[0].dist > 1) {
           const start = elements.engine.getPointAtLength(0);
           corners.unshift({ dist: 0, x: start.x, y: start.y });
         }
 
-        // Distribute extra points across segments
-        const finalPoints = [];
-        const extraPointsNeeded = target - corners.length;
-
-        if (extraPointsNeeded <= 0) {
-          // If user asks for fewer points than corners, we just sample the corners
-          // (Clamping usually prevents this, but safety first)
-          for (let i = 0; i < target; i++) {
-            // By using (i / (target)) and taking the point, we ensure
-            // that for a 4-point square, we hit 0, 0.25, 0.5, 0.75 of the length.
-            // These land exactly on the vertices of SVG L commands.
-            const dist = (i / target) * totalLen;
-            const pt = elements.engine.getPointAtLength(dist);
-            finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
-          }
-        } else {
-          // Precise Distribution: Add extra points along the segments proportional to length
-          corners.forEach((corner, idx) => {
-            finalPoints.push(`${corner.x.toFixed(1)}% ${corner.y.toFixed(1)}%`);
-
-            const nextCorner = corners[idx + 1] || { dist: totalLen };
-            const segLen = nextCorner.dist - corner.dist;
-
-            // How many extra points does this specific edge get?
-            const pointsForThisSeg = Math.round(
-              (segLen / totalLen) * extraPointsNeeded,
-            );
-
-            for (let j = 1; j <= pointsForThisSeg; j++) {
-              const subDist =
-                corner.dist + (j / (pointsForThisSeg + 1)) * segLen;
-              const pt = elements.engine.getPointAtLength(subDist);
-              finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
-            }
+        // Prepare Segments
+        const segments = [];
+        for (let i = 0; i < corners.length; i++) {
+          const startNode = corners[i];
+          const endDist =
+            i === corners.length - 1 ? totalLen : corners[i + 1].dist;
+          segments.push({
+            startDist: startNode.dist,
+            endDist: endDist,
+            length: endDist - startNode.dist,
+            extraPoints: 0,
           });
         }
 
-        // Ensure we don't exceed target due to rounding, and format
+        // Distribute Extra Points "Greedily"
+        let extraBudget = target - corners.length;
+
+        // Sort segments by length so longer sides get points first (improves visual balance)
+        const sortedSegments = [...segments].sort(
+          (a, b) => b.length - a.length,
+        );
+
+        while (extraBudget > 0) {
+          for (let seg of sortedSegments) {
+            if (extraBudget <= 0) break;
+            seg.extraPoints++;
+            extraBudget--;
+          }
+        }
+
+        // Build Final Point Array
+        const finalPoints = [];
+        segments.forEach((seg) => {
+          // Add the corner (start of segment)
+          const startPt = elements.engine.getPointAtLength(seg.startDist);
+          finalPoints.push(`${startPt.x.toFixed(1)}% ${startPt.y.toFixed(1)}%`);
+
+          // Add the extra points along this segment
+          for (let j = 1; j <= seg.extraPoints; j++) {
+            const subDist =
+              seg.startDist + (j / (seg.extraPoints + 1)) * seg.length;
+            const pt = elements.engine.getPointAtLength(subDist);
+            finalPoints.push(`${pt.x.toFixed(1)}% ${pt.y.toFixed(1)}%`);
+          }
+        });
+
+        // Final validation: Ensure we have EXACTLY the target count
         const resultStr = `polygon(${finalPoints.slice(0, target).join(", ")})`;
 
         // Update UI
@@ -591,13 +601,13 @@
           .join(" ");
 
         const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <polygon points="${svgPoints}" fill="currentColor"/>
-</svg>`;
+          <polygon points="${svgPoints}" fill="currentColor"/>
+      </svg>`;
 
         try {
           await navigator.clipboard.writeText(svgTemplate);
           elements.copysvg.textContent = "✅";
-          setTimeout(() => (copysvg.textContent = "📋"), 1000);
+          setTimeout(() => (elements.copysvg.textContent = "📋"), 1000);
         } catch (err) {
           console.error("SVG Copy failed", err);
         }
