@@ -175,6 +175,7 @@ function handleShapeChange() {
 /**
  * High-Precision Vertex and SVG sampling to generate polygon points
  * Optimized for shape retention and auto-clamping
+ * Automatically detects sharp corners and smoothly traverses curves.
  */
 function render() {
   const shape = SHAPE_LIB[elements.select.value];
@@ -188,105 +189,100 @@ function render() {
 
   elements.engine.setAttribute("d", shape.d);
   const totalLen = elements.engine.getTotalLength();
-  let finalPoints = [];
 
-  // Check if this path contain curve commands
-  const isCurved = /[CQSATcqsata]/.test(shape.d);
+  // Advanced Corner Detection (The Hybrid Heuristic)
+  const corners = [];
+  const scanResolution = 600; // Higher resolution for better curve analysis
+  let lastAngle = null;
 
-  if (isCurved) {
-    // --- STRATEGY A: Curve Handling (Equidistant) ---
-    // Curves constantly change angles. Finding "corners" causes massive drift.
-    // We space points evenly along the entire length.
-    for (let i = 0; i < target; i++) {
-      const dist = (i / target) * totalLen;
-      const pt = elements.engine.getPointAtLength(dist);
-      finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
-    }
-  } else {
-    // --- STRATEGY B: Polygon Handling (Segment Distribution) ---
-    // Find the "True Vertices" (Corners)
-    const corners = [];
-    const scanResolution = 500;
-    let lastAngle = null;
+  for (let i = 0; i <= scanResolution; i++) {
+    const dist = (i / scanResolution) * totalLen;
+    // Step slightly backward and forward to find the tangent angle
+    const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.5));
+    const p2 = elements.engine.getPointAtLength(Math.min(totalLen, dist + 0.5));
 
-    for (let i = 0; i <= scanResolution; i++) {
-      const dist = (i / scanResolution) * totalLen;
-      const p1 = elements.engine.getPointAtLength(Math.max(0, dist - 0.1));
-      const p2 = elements.engine.getPointAtLength(
-        Math.min(totalLen, dist + 0.1),
-      );
+    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
 
-      const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+    if (lastAngle !== null) {
+      // Calculate angle difference and normalize it (handle 360-degree wrap-around)
+      let delta = Math.abs(angle - lastAngle);
+      if (delta > Math.PI) delta = 2 * Math.PI - delta;
 
-      // If the angle changed significantly, it's a corner
-      if (lastAngle !== null && Math.abs(angle - lastAngle) > 0.01) {
+      // THRESHOLD: 0.25 radians (~14 degrees)
+      // Smooth curves change by tiny fractions.
+      // Sharp corners (like a star or shield point) change abruptly.
+      if (delta > 0.25) {
         const pt = elements.engine.getPointAtLength(dist);
         corners.push({ dist, x: pt.x, y: pt.y });
       }
-      lastAngle = angle;
     }
+    lastAngle = angle;
+  }
 
-    // Always include start and end
-    if (corners.length === 0 || corners[0].dist > 1) {
-      const start = elements.engine.getPointAtLength(0);
-      corners.unshift({ dist: 0, x: start.x, y: start.y });
-    }
+  // Always lock in the absolute start/end point
+  if (corners.length === 0 || corners[0].dist > 1) {
+    const start = elements.engine.getPointAtLength(0);
+    corners.unshift({ dist: 0, x: start.x, y: start.y });
+  }
 
-    // Segment Preparation
-    const segments = [];
-    for (let i = 0; i < corners.length; i++) {
-      const startDist = corners[i].dist;
-      const endDist = i === corners.length - 1 ? totalLen : corners[i + 1].dist;
-      segments.push({
-        startDist: startDist,
-        endDist: endDist,
-        length: endDist - startDist,
-        pointsToPlace: 0,
-        startX: corners[i].x,
-        startY: corners[i].y,
-      });
-    }
-
-    // Mathematical Precision: Point Distribution
-    // We subtract the corners we've already "locked in"
-    let pointsLeftToDistribute = target - corners.length;
-
-    // First Pass: Assign the floor value (guaranteed points)
-    segments.forEach((seg) => {
-      const share = (seg.length / totalLen) * (target - corners.length);
-      seg.pointsToPlace = Math.floor(share);
-      pointsLeftToDistribute -= seg.pointsToPlace;
-    });
-
-    // Second Pass: Distribute the remainders to the longest segments first
-    // This is the "Self-Healing" part that ensures the count is EXACT
-    const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
-    while (pointsLeftToDistribute > 0) {
-      for (let seg of sortedByLength) {
-        if (pointsLeftToDistribute <= 0) {
-          break;
-        }
-        seg.pointsToPlace++;
-        pointsLeftToDistribute--;
-      }
-    }
-
-    // Array Construction for Polygons
-    segments.forEach((seg) => {
-      // Add the Anchor/Corner
-      finalPoints.push(
-        `${parseFloat(seg.startX).toFixed(2)}% ${parseFloat(seg.startY).toFixed(2)}%`,
-      );
-
-      // Add the distributed points along this segment
-      for (let j = 1; j <= seg.pointsToPlace; j++) {
-        const subDist =
-          seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
-        const pt = elements.engine.getPointAtLength(subDist);
-        finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
-      }
+  // Segment Preparation
+  // A Circle will have 1 long segment. A Square will have 4. A Shield will have 3.
+  const segments = [];
+  for (let i = 0; i < corners.length; i++) {
+    const startDist = corners[i].dist;
+    const endDist = i === corners.length - 1 ? totalLen : corners[i + 1].dist;
+    segments.push({
+      startDist: startDist,
+      endDist: endDist,
+      length: endDist - startDist,
+      pointsToPlace: 0,
+      startX: corners[i].x,
+      startY: corners[i].y,
     });
   }
+
+  // Mathematical Precision: Point Distribution
+  // We subtract the corners we've already "locked in"
+  let pointsLeftToDistribute = target - corners.length;
+
+  // First Pass: Assign the floor value (guaranteed points)
+  segments.forEach((seg) => {
+    const share = (seg.length / totalLen) * (target - corners.length);
+    seg.pointsToPlace = Math.floor(share);
+    pointsLeftToDistribute -= seg.pointsToPlace;
+  });
+
+  // Second Pass: Distribute the remainders to the longest segments first
+  // This is the "Self-Healing" part that ensures the count is EXACT
+  const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
+  while (pointsLeftToDistribute > 0) {
+    for (let seg of sortedByLength) {
+      if (pointsLeftToDistribute <= 0) {
+        break;
+      }
+      seg.pointsToPlace++;
+      pointsLeftToDistribute--;
+    }
+  }
+
+  // Final Array Construction
+  // Because we use getPointAtLength on the native SVG, points distributed
+  // along a "curved" segment will perfectly follow the curve!
+  const finalPoints = [];
+  segments.forEach((seg) => {
+    // Add the Anchor/Corner
+    finalPoints.push(
+      `${parseFloat(seg.startX).toFixed(2)}% ${parseFloat(seg.startY).toFixed(2)}%`,
+    );
+
+    // Add the distributed points along this segment
+    for (let j = 1; j <= seg.pointsToPlace; j++) {
+      const subDist =
+        seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
+      const pt = elements.engine.getPointAtLength(subDist);
+      finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
+    }
+  });
 
   // --- Apply Anti-Twist Alignment ---
   const alignedPoints = alignToTopCenter(finalPoints);
