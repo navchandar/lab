@@ -410,6 +410,39 @@ document
     passive: false,
   });
 
+function updateSettingsMenu() {
+  // =========================
+  // Settings Menu
+  // =========================
+
+  utils.addListeners(settingsBtn, utils.onClickSettings);
+  utils.addListeners(settingsIcon, utils.onClickSettings);
+
+  randomizeCheckbox.addEventListener("change", (e) => {
+    e.stopPropagation();
+    utils.setIsRandom(randomizeCheckbox.checked);
+  });
+
+  spellWordsCheckbox.addEventListener("change", (e) => {
+    e.stopPropagation();
+    if (spellWordsCheckbox.checked) {
+      speaker();
+    }
+  });
+
+  if (quizCheckbox) {
+    quizCheckbox.addEventListener("change", (e) => {
+      e.stopPropagation();
+      isQuizMode = quizCheckbox.checked;
+      // Step back so the current word is rebuilt in the new mode
+      if (isQuizMode || !isQuizMode) {
+        currentIndex = Math.max(0, currentIndex - 1);
+        updateWord();
+      }
+    });
+  }
+}
+
 function handleKeydown(event) {
   const target = event.target;
   utils.hideSidebar();
@@ -453,14 +486,6 @@ function handleKeydown(event) {
   }
 }
 
-utils.addListeners(settingsBtn, utils.onClickSettings);
-utils.addListeners(settingsIcon, utils.onClickSettings);
-
-randomizeCheckbox.addEventListener("change", (e) => {
-  e.stopPropagation();
-  utils.setIsRandom(randomizeCheckbox.checked);
-});
-
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -478,22 +503,6 @@ document.addEventListener("DOMContentLoaded", () => {
     utils.disableMuteBtn();
   }
 
-  spellWordsCheckbox.addEventListener("change", (e) => {
-    e.stopPropagation();
-    if (spellWordsCheckbox.checked) {
-      speaker();
-    }
-  });
-
-  if (quizCheckbox) {
-    quizCheckbox.addEventListener("change", (e) => {
-      e.stopPropagation();
-      isQuizMode = quizCheckbox.checked;
-      // Step back so the current word is rebuilt in the new mode
-      if (isQuizMode || !isQuizMode) {
-        currentIndex = Math.max(0, currentIndex - 1);
-        updateWord();
-      }
-    });
-  }
+  updateSettingsMenu();
+  utils.addglobalHideSettings();
 });

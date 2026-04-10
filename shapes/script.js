@@ -148,6 +148,7 @@ function updateSettingsMenu() {
   }
 
   utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
+  utils.addglobalHideSettings();
 }
 
 // =========================

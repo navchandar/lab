@@ -194,8 +194,16 @@ Promise.all([d3.json(dataUrl), d3.json(country)])
         el.classed("hovering", false);
 
         // Fade the shared gradient out
-        hoverStop1.interrupt().transition().duration(150).attr("stop-opacity", 0);
-        hoverStop2.interrupt().transition().duration(150).attr("stop-opacity", 0);
+        hoverStop1
+          .interrupt()
+          .transition()
+          .duration(150)
+          .attr("stop-opacity", 0);
+        hoverStop2
+          .interrupt()
+          .transition()
+          .duration(150)
+          .attr("stop-opacity", 0);
 
         // Using setTimeout securely locks the context to THIS specific country path
         setTimeout(() => {
@@ -519,6 +527,7 @@ function updateSettingsMenu() {
   }
   utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
   utils.addUnifiedListeners(extrainfoCheckbox, handleExtraInfoToggle);
+  utils.addglobalHideSettings();
 }
 
 // =========================

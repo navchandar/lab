@@ -698,6 +698,7 @@ let intervalID = null;
     }
 
     utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
+    utils.addglobalHideSettings();
   }
 
   // =========================

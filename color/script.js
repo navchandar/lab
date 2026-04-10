@@ -149,7 +149,7 @@ function updateColor() {
       }
     }
   } else {
-    console.error("Color Data not found!")
+    console.error("Color Data not found!");
   }
   utils.hideSettings();
 }
@@ -234,6 +234,7 @@ function updateSettingsMenu() {
   }
 
   utils.addUnifiedListeners(autoplayCheckbox, handleAutoplayToggle);
+  utils.addglobalHideSettings();
 }
 
 /**

@@ -123,17 +123,36 @@ export function setFullscreenIcon() {
 }
 
 /**
- * Toggles fullscreen mode for the page.
+ * Toggles fullscreen mode for the topmost window.
+ * Works whether called from the main window or an iframe.
  */
 export function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch((err) => {
-      console.log(
-        `Error attempting to enable full-screen mode: ${err.message}`,
-      );
-    });
-  } else {
-    document.exitFullscreen();
+  try {
+    // We use window.top to ensure the entire parent container goes fullscreen
+    const targetDoc = window.top.document;
+    const targetEl = targetDoc.documentElement;
+
+    if (!targetDoc.fullscreenElement) {
+      targetEl.requestFullscreen().catch((err) => {
+        console.warn(
+          `Top-level fullscreen failed: ${err.message}. Trying local...`,
+        );
+        // Fallback to local window if top-level is blocked
+        document.documentElement.requestFullscreen();
+      });
+    } else {
+      targetDoc.exitFullscreen();
+    }
+  } catch (err) {
+    // SecurityError: If the iframe is on a different domain, window.top access is blocked.
+    // In that case, we fall back to making just the iframe content fullscreen.
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((e) => {
+        console.error("Error when enabling Fullscreen:", e.message);
+      });
+    } else {
+      document.exitFullscreen();
+    }
   }
 }
 
@@ -153,12 +172,31 @@ export function toggleMute() {
   muteButton.title = isMute ? "UnMute sound" : "Mute sound";
 }
 
+// Update how mute button looks
 export function updateMuteBtn() {
   const muteButton = document.getElementById("muteButton");
   addListeners(muteButton, toggleMute);
-  let isMute = isMuted();
+
+  // Sync state if it changes in a DIFFERENT frame/tab
+  window.addEventListener("storage", (event) => {
+    // Update icons/titles without re-saving to storage
+    if (event.key === "isMuted") {
+      applyMuteUI();
+    }
+  });
+
+  applyMuteUI();
+}
+
+// Helper to keep UI updated without logic loops
+function applyMuteUI() {
+  const muteButton = document.getElementById("muteButton");
+  if (!muteButton) {
+    return;
+  }
+  const isMute = isMuted();
+  const msg = isMute ? "UnMute sound" : "Mute sound";
   muteButton.textContent = isMute ? "🔇" : "🔊";
-  let msg = isMute ? "UnMute sound" : "Mute sound";
   muteButton.title = msg;
   muteButton.setAttribute("aria-label", msg);
 }
@@ -186,11 +224,27 @@ export function updateFullScreenBtn() {
   const fullscreenbtn = document.getElementById("fullscreen-btn");
   addListeners(fullscreenbtn, toggleFullscreen);
 
-  document.addEventListener("fullscreenchange", () => {
-    const isFullscreen = !!document.fullscreenElement;
+  const updateIcon = () => {
+    // Check fullscreen state of BOTH top and local window
+    const isFullscreen = !!(
+      document.fullscreenElement ||
+      (window.top && window.top.document.fullscreenElement)
+    );
+
     fullscreenbtn.classList.toggle("fullscreen-active", isFullscreen);
     isFullscreen ? setExitFullscreenIcon() : setEnterFullscreenIcon();
-  });
+  };
+
+  // Listen locally
+  document.addEventListener("fullscreenchange", updateIcon);
+
+  // Attempt to listen on the parent window as well
+  try {
+    window.top.document.addEventListener("fullscreenchange", updateIcon);
+  } catch (e) {
+    // Cross-origin: Parent will need to notify the iframe via postMessage if needed
+    console.log("Could not attach listener to parent window.");
+  }
 }
 
 /**
@@ -383,14 +437,27 @@ export function hideSettings() {
   }
 }
 
+export function addglobalHideSettings() {
+  try {
+    window.top.document.addEventListener("click", (e) => {
+      // If the user clicks on the parent document, hide the iframe's settings
+      hideSettings();
+    });
+  } catch (e) {}
+}
+
 /**
  * Check for the '=' key press and toggle Sidebar from iframe app
  */
 export function handleSidebar(message = "toggleSidebar") {
   // If this site is in an iframe: send message to parent
   if (window !== window.parent) {
-    const targetOrigin = window.location.origin;
-    window.parent.postMessage({ command: message }, targetOrigin);
+    try {
+      window.parent.postMessage({ command: message }, "*");
+    } catch (e) {
+      const targetOrigin = window.location.origin;
+      window.parent.postMessage({ command: message }, targetOrigin);
+    }
     console.log("Message sent to parent to toggle sidebar");
   }
 }

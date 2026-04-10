@@ -411,6 +411,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     utils.addUnifiedListeners(autoplayCheckbox, handleAutoplay);
+    utils.addglobalHideSettings();
   }
 
   // --- INITIALIZATION ---
