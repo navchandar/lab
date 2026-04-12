@@ -20,7 +20,7 @@ body {
         color 0.5s ease,
         opacity 0.5s ease;
     cursor: pointer;
-    box-sizing: border-box;
+    box-sizing: content-box;
     container-type: size;
     box-shadow:
         0 1px 1px rgba(0, 0, 0, 0.1),
@@ -38,18 +38,25 @@ body {
     background-size: 20px 20px;
     background-color: lightgrey;
     padding: 0 20px;
-    width: 90%;
+    width: 600px;
     max-width: 800px;
-    height: auto;
-    -webkit-text-stroke: 2px #333;
+    height: 720px;
+    -webkit-text-stroke: 3px #333;
     overflow: hidden;
     color: black;
     font-weight: bold;
+    font-size: 8em;
     /* Scales with viewport width to accommodate words */
     line-height: 1;
     letter-spacing: 0.1em;
     user-select: none;
-    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.5);
+    text-shadow: 4px 4px 5px rgba(0, 0, 0, 0.75);
+}
+
+body.quiz-mode #word-display {
+    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    padding: clamp(12px, 2vw, 24px);
 }
 
 .letter {
@@ -79,56 +86,80 @@ body {
     width: 100%;
 }
 
+body.quiz-mode .quiz-container {
+    gap: clamp(16px, 2.5vw, 28px);
+}
+
+/* Stop #word-display word styling affecting quiz tiles */
+body.quiz-mode .quiz-container,
+body.quiz-mode .jumbled-letter,
+body.quiz-mode .mould-letter {
+    letter-spacing: normal;
+    text-shadow: none;
+}
+
 .jumbled-row,
 .mould-row {
     display: flex;
     position: relative;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 15px;
+    gap: clamp(8px, 1.5vw, 14px);
     width: 70vw;
 }
 
+/* Shared tile sizing that scales */
 .jumbled-letter,
 .mould-letter {
-    display: inline-flex;
+    display: grid;
     justify-content: center;
+    place-items: center;
     align-items: center;
     box-sizing: border-box;
-
     border-radius: 12px;
-    padding: 5px 10px;
+    padding: 0;
     /* Gives wide characters breathing room */
     /*Use min-width/height so large language characters can stretch the box if needed */
     min-width: 70px;
     min-height: 70px;
+    -webkit-text-stroke: 2px rgba(0, 0, 0, 0.5);
+    inline-size: clamp(56px, 8vw, 82px);
+    block-size: clamp(52px, 7.5vw, 76px);
     font-weight: bold;
-    font-size: 2.5rem;
+    font-size: clamp(1.6rem, 4vw, 2.6rem);
     line-height: 1;
     font-family: inherit;
     user-select: none;
+    text-align: center;
+    white-space: nowrap;
 }
 
 /* Scrambled Letters at the top */
 .jumbled-letter {
+    transform: translateZ(0);
     z-index: 10;
     transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+        color 0.3s ease,
+        box-shadow 0.3s ease;
     cursor: default;
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-    background: white;
-    color: #333;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.95);
+    touch-action: manipulation;
+    color: #222;
     text-shadow: none;
 }
 
+/* Expected one should look obviously selectable */
 .jumbled-letter.clickable {
     cursor: pointer;
+    outline: 2px solid rgba(0, 207, 255, 0.75);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.8);
 }
 
 .jumbled-letter.clickable:hover {
     transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.4);
 }
 
 /* The Moulds at the bottom */
@@ -138,9 +169,22 @@ body {
     text-shadow: none;
 }
 
+/* When "hidden", keep its space so row doesn't reflow */
+.jumbled-letter.hidden {
+    opacity: 0;
+    cursor: none;
+    pointer-events: none;
+}
+
+.jumbled-letter.wrong {
+    animation: wrongShake 0.25s ease-in-out;
+    outline: 3px solid rgba(244, 67, 54, 0.85);
+}
+
+/* Mould looks like a target slot */
 .mould-letter.unfulfilled {
-    box-shadow: inset 0 0px 10px rgba(0, 0, 0, 0.6);
-    border: 4px inset rgb(172, 172, 172);
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
+    border: 2px dashed rgba(255, 255, 255, 0.35);
 }
 
 .mould-letter.fulfilled {
@@ -150,26 +194,50 @@ body {
     color: currentColor;
 }
 
+.tile-ghost {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    transition:
+        color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+@keyframes wrongShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    25% {
+        transform: translateX(-6px);
+    }
+
+    75% {
+        transform: translateX(6px);
+    }
+}
+
 /* Hint Animation for Space/Enter */
 @keyframes hintGlow {
     0% {
-        transform: scale(1);
+        transform: scale(0.9);
         box-shadow:
-            0 0 10px #ffeb3b,
-            0 6px 12px rgba(0, 0, 0, 0.15);
+            0 0 10px #3bffdbdf,
+            0 4px 9px rgba(0, 0, 0, 0.5);
     }
 
     100% {
-        transform: scale(1.2);
+        transform: scale(1.1);
         box-shadow:
-            0 0 25px #ff9800,
-            0 6px 12px rgba(0, 0, 0, 0.15);
+            0 0 25px #007bffb7,
+            0 6px 12px rgba(0, 0, 0, 0.6);
     }
 }
 
 .hint-glow {
-    animation: hintGlow 1s infinite alternate !important;
-    border: 3px solid #ff9800;
+    animation: hintGlow 0.8s infinite alternate !important;
+    border: 3px solid #14ff00;
 }
 
 /* Styles for mobile devices */
@@ -210,19 +278,6 @@ body {
 
     .quiz-container {
         gap: 2rem;
-    }
-}
-
-/* Styles for desktop */
-@media (min-width: 768px) {
-    #word-display {
-        box-sizing: content-box;
-        width: 600px;
-        height: 720px;
-        -webkit-text-stroke: 3px #333;
-        font-size: 8em;
-        /* Cap the size on larger screens */
-        text-shadow: 6px 6px 12px rgba(0, 0, 0, 0.75);
     }
 }
 

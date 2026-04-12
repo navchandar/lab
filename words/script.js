@@ -15,6 +15,7 @@ const quizCheckbox = document.getElementById("quiz-words");
 let isQuizMode = false;
 let quizSegments = [];
 let expectedSegmentIndex = 0;
+let wrongTaps = 0;
 let isQuizAnimating = false;
 let isQuizComplete = false;
 
@@ -33,6 +34,8 @@ let currentIndex = -1;
 let previousWord = null;
 let history = [];
 let locked = false;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // --- Speaker Initiation --
 const ttsInstance = TTS();
@@ -110,6 +113,7 @@ function updateWord() {
 function incrementWord() {
   utils.hideSettings();
   if (locked) {
+    console.warn("Text is locked!");
     return;
   }
   // Block skipping if quiz is active and NOT finished.
@@ -195,9 +199,10 @@ function initQuizWord(word) {
       handleJumbledClick(e, jSpan, segment);
     };
 
-    jSpan.addEventListener("click", interactionHandler);
-    jSpan.addEventListener("touchstart", interactionHandler, {
-      passive: false,
+    jSpan.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleJumbledClick(e, jSpan, segment);
     });
     jumbledContainer.appendChild(jSpan);
   });
@@ -214,11 +219,12 @@ function updateClickableLetters() {
     ".jumbled-letter:not(.hidden)",
   );
   const expectedLetter = quizSegments[expectedSegmentIndex];
-
+  const clickableAdded = false;
   jumbledLetters.forEach((span) => {
     span.classList.remove("hint-glow"); // Clear previous hints
-    if (span.textContent === expectedLetter) {
+    if (!clickableAdded && span.textContent === expectedLetter) {
       span.classList.add("clickable");
+      clickableAdded = true;
     } else {
       span.classList.remove("clickable");
     }
@@ -238,86 +244,57 @@ function showHint() {
   }
 }
 
-async function handleJumbledClick(event, jumbledNode, segment) {
-  if (isQuizAnimating || isQuizComplete) {
-    return;
-  }
-  if (segment !== quizSegments[expectedSegmentIndex]) {
-    return;
-  }
-
-  isQuizAnimating = true;
+function setQuizMode(on) {
+  isQuizMode = on;
+  document.body.classList.toggle("quiz-mode", on);
+}
+function markWrongTap(jumbledNode) {
+  wrongTaps++;
   jumbledNode.classList.remove("hint-glow");
+  jumbledNode.classList.add("wrong");
+  setTimeout(() => jumbledNode.classList.remove("wrong"), 500);
 
-  const targetMould = document.querySelector(
-    `.mould-letter[data-index="${expectedSegmentIndex}"]`,
-  );
-
-  // -- FLIP Animation Technique --
-  const first = jumbledNode.getBoundingClientRect();
-  const last = targetMould.getBoundingClientRect();
-
-  const deltaX = last.left - first.left;
-  const deltaY = last.top - first.top;
-
-  // Ensure the moving element stays on top
-  jumbledNode.style.zIndex = 100;
-
-  const animation = jumbledNode.animate(
-    [
-      { transform: `translate(0, 0) scale(1)` },
-      {
-        transform: `translate(${deltaX}px, ${deltaY}px) scale(1)`,
-        offset: 0.5,
-      },
-      { transform: `translate(${deltaX}px, ${deltaY}px) scale(0.9)` }, // Slight squash at the end
-    ],
-    {
-      duration: 400,
-      easing: "cubic-bezier(0.25, 1, 0.5, 1)", // Smooth, physical ease-out
-    },
-  );
-
-  await animation.finished;
-
-  // Hide moving node, reveal mould
-  jumbledNode.classList.add("hidden");
-  jumbledNode.style.display = "none";
-
-  targetMould.classList.remove("unfulfilled");
-  targetMould.classList.add("fulfilled");
-  targetMould.style.color = currentColor; // Apply the theme color
-
-  // Speak letter STRICTLY after animation finishes
-  if (!utils.isMuted()) {
-    await new Promise((resolve) => {
-      ttsInstance.speakElement(segment, {
-        directSpeech: true,
-        rate: 0.75,
-        locale: Locale,
-        onEnd: resolve,
-      });
-      // Safety fallback
-      setTimeout(resolve, 1500);
-    });
-  }
-
-  expectedSegmentIndex++;
-  isQuizAnimating = false;
-
-  if (expectedSegmentIndex === quizSegments.length) {
-    handleQuizCompletion();
-  } else {
-    updateClickableLetters();
+  if (wrongTaps >= 2) {
+    showHint();
+    wrongTaps = 0;
   }
 }
 
-async function handleQuizCompletion() {
+function markTileAsUsed(jumbledNode) {
+  jumbledNode.classList.add("hidden");
+  // jumbledNode.style.display = "none";
+}
+
+function fulfillMould(targetMould) {
+  targetMould.classList.remove("unfulfilled");
+  targetMould.classList.add("fulfilled");
+  targetMould.style.color = currentColor;
+}
+
+function speak(text, { rate, locale }, timeoutMs = 1500) {
+  if (utils.isMuted()) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve) => {
+    if (!utils.isMuted()) {
+      ttsInstance.speakElement(text, {
+        directSpeech: true,
+        rate,
+        locale,
+        onEnd: resolve,
+      });
+    }
+    setTimeout(resolve, timeoutMs); // safety fallback
+  });
+}
+
+async function handleQuizFinished() {
   isQuizComplete = true;
   const fullWord = quizSegments.join("");
 
   // Wait exactly 0.5s before speaking full word
-  await new Promise((r) => setTimeout(r, 500));
+  await sleep(500);
 
   if (!utils.isMuted()) {
     ttsInstance.speakElement(fullWord, {
@@ -326,7 +303,146 @@ async function handleQuizCompletion() {
       locale: Locale,
     });
   }
+
   locked = false;
+}
+
+async function handleJumbledClick(event, jumbledNode, segment) {
+  if (isQuizAnimating || isQuizComplete) {
+    return;
+  }
+
+  const expected = quizSegments[expectedSegmentIndex];
+  if (segment !== expected) {
+    markWrongTap(jumbledNode);
+    return;
+  }
+
+  wrongTaps = 0;
+  isQuizAnimating = true;
+  jumbledNode.classList.remove("hint-glow", "wrong");
+
+  const targetMould = document.querySelector(
+    `.mould-letter[data-index="${expectedSegmentIndex}"]`,
+  );
+
+  try {
+    // Animate flying text
+    const flyPromise = animateTileFlyToTarget(jumbledNode, targetMould);
+    jumbledNode.style.visibility = "hidden"; // reserve space, hide real tile
+    await flyPromise;
+
+    // Commit UI state
+    markTileAsUsed(jumbledNode);
+    fulfillMould(targetMould);
+
+    // Advance state & enable next clickable immediately
+    expectedSegmentIndex++;
+    const isDone = expectedSegmentIndex >= quizSegments.length;
+
+    if (!isDone) {
+      updateClickableLetters();
+      // Speak letter (does not block next click because isQuizAnimating resets in finally)
+      await speak(segment, { rate: 0.75, locale: Locale });
+      return;
+    }
+
+    // Completed: speak last segment then whole word
+    await speak(segment, { rate: 0.75, locale: Locale });
+    await handleQuizFinished();
+  } finally {
+    // Always release animation lock even if something errors
+    isQuizAnimating = false;
+  }
+}
+
+function animateTileFlyToTarget(sourceNode, targetNode) {
+  const reduceMotion = window.matchMedia?.(
+    "(prefers-reduced-motion: reduce)",
+  )?.matches;
+
+  // If reduced motion, skip fancy animation
+  if (reduceMotion) {
+    return Promise.resolve();
+  }
+
+  const first = sourceNode.getBoundingClientRect();
+  const last = targetNode.getBoundingClientRect();
+  const deltaX = last.left - first.left;
+  const deltaY = last.top - first.top;
+
+  // Create a "ghost" clone to animate (keeps original layout stable)
+  const ghost = sourceNode.cloneNode(true);
+  ghost.style.visibility = "visible";
+  ghost.style.opacity = "1";
+  ghost.classList.remove("hidden");
+  ghost.classList.add("tile-ghost");
+
+  Object.assign(ghost.style, {
+    position: "fixed",
+    left: `${first.left}px`,
+    top: `${first.top}px`,
+    width: `${first.width}px`,
+    height: `${first.height}px`,
+    margin: "0",
+    zIndex: 1000,
+    pointerEvents: "none",
+    transform: "translate3d(0,0,0) scale(1)",
+    willChange: "transform, filter, opacity",
+  });
+  document.body.appendChild(ghost);
+
+  // Arc lift
+  const lift = Math.min(36, Math.max(18, Math.abs(deltaY) * 0.15));
+
+  const fly = ghost.animate(
+    [
+      {
+        transform: "translate3d(0,0,0) scale(1)",
+        filter: "drop-shadow(0 10px 14px rgba(0,0,0,0.25))",
+        offset: 0,
+      },
+      {
+        // arc midpoint: move partway + lift up a bit + slight grow
+        transform: `translate3d(${deltaX * 0.6}px, ${deltaY * 0.6 - lift}px, 0) scale(1.08)`,
+        filter: "drop-shadow(0 18px 18px rgba(0,0,0,0.30))",
+        offset: 0.55,
+      },
+      {
+        // overshoot past the target a touch (gives "snap-in" feel)
+        transform: `translate3d(${deltaX}px, ${deltaY + 8}px, 0) scale(0.96)`,
+        filter: "drop-shadow(0 8px 10px rgba(0,0,0,0.22))",
+        offset: 0.88,
+      },
+      {
+        // settle into place
+        transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(1)`,
+        filter: "drop-shadow(0 6px 8px rgba(0,0,0,0.18))",
+        offset: 1,
+      },
+    ],
+    {
+      duration: 520,
+      easing: "cubic-bezier(0.22, 1, 0.36, 1)", // easeOutCubic-like
+    },
+  );
+
+  const pop = targetNode.animate(
+    [
+      { transform: "scale(1)", boxShadow: "none", offset: 0 },
+      {
+        transform: "scale(1.12)",
+        boxShadow: "0 10px 18px rgba(0,0,0,0.25)",
+        offset: 0.6,
+      },
+      { transform: "scale(1)", boxShadow: "none", offset: 1 },
+    ],
+    { duration: 220, easing: "cubic-bezier(0.2, 0.9, 0.2, 1)" },
+  );
+
+  return Promise.allSettled([fly.finished, pop.finished]).then(() => {
+    ghost.remove();
+  });
 }
 
 // =========================================================================
@@ -334,12 +450,16 @@ async function handleQuizCompletion() {
 // =========================================================================
 async function speaker() {
   const spellEnabled = spellWordsCheckbox ? spellWordsCheckbox.checked : false;
-  if (utils.isMuted()) {
+  const spans = wordElement.querySelectorAll(".letter");
+  const fullWord = wordElement.textContent;
+
+  // If muted: do NOT block skipping
+  if (utils.isMuted() && !spellEnabled) {
     locked = false;
     return;
   }
-  const spans = wordElement.querySelectorAll(".letter");
-  const fullWord = wordElement.textContent;
+  // If unmuted: lock until we’re fully done
+  locked = true;
 
   if (spellEnabled) {
     // Spell the word letter by letter (or grapheme by grapheme)
@@ -347,32 +467,48 @@ async function speaker() {
       const char = spans[i].textContent;
       spans[i].classList.add("active");
 
+      // We always create a promise so the "timing" exists even when silent
       await new Promise((resolve) => {
-        ttsInstance.speakElement(char, {
-          directSpeech: true,
-          chunk: false,
-          rate: 0.75,
-          locale: Locale,
-          onEnd: resolve, // Callback when the letter sound finishes
-        });
-        // Safety timeout in case TTS engine hangs
-        setTimeout(resolve, 2000);
+        if (!utils.isMuted()) {
+          ttsInstance.speakElement(char, {
+            directSpeech: true,
+            chunk: false,
+            rate: 0.75,
+            locale: Locale,
+            onEnd: resolve,
+          });
+          // Safety timeout for TTS
+          setTimeout(resolve, 2000);
+        } else {
+          // If muted, just wait 1000ms to simulate the "speaking" highlight
+          setTimeout(resolve, 1000);
+        }
       });
+
       spans[i].classList.remove("active");
-      await new Promise((r) => setTimeout(r, 150));
+      await sleep(200);
     }
     // Tiny pause before the final word delivery
-    await new Promise((r) => setTimeout(r, 300));
-    locked = false;
+    await sleep(300);
   }
 
   // Speak the full word everytime (unless muted or word length is one)
   if (spans && spans.length > 1) {
-    ttsInstance.speakElement(fullWord, {
-      directSpeech: true,
-      rate: 0.7, // Clear pronunciation
-      locale: Locale,
-    });
+    if (!utils.isMuted()) {
+      ttsInstance.speakElement(fullWord, {
+        directSpeech: true,
+        rate: 0.7, // Clear pronunciation
+        locale: Locale,
+        onEnd: () => {
+          locked = false;
+        },
+      });
+    } else {
+      locked = false;
+    }
+  } else {
+    // If it's a single letter or not found, unlock immediately
+    locked = false;
   }
 }
 
@@ -433,12 +569,11 @@ function updateSettingsMenu() {
   if (quizCheckbox) {
     quizCheckbox.addEventListener("change", (e) => {
       e.stopPropagation();
-      isQuizMode = quizCheckbox.checked;
+      locked = false; // Reset lock when switching modes
+      setQuizMode(quizCheckbox.checked);
       // Step back so the current word is rebuilt in the new mode
-      if (isQuizMode || !isQuizMode) {
-        currentIndex = Math.max(0, currentIndex - 1);
-        updateWord();
-      }
+      currentIndex = Math.max(0, currentIndex - 1);
+      updateWord();
     });
   }
 }
