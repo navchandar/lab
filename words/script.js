@@ -219,7 +219,7 @@ function updateClickableLetters() {
     ".jumbled-letter:not(.hidden)",
   );
   const expectedLetter = quizSegments[expectedSegmentIndex];
-  const clickableAdded = false;
+  let clickableAdded = false;
   jumbledLetters.forEach((span) => {
     span.classList.remove("hint-glow"); // Clear previous hints
     if (!clickableAdded && span.textContent === expectedLetter) {
