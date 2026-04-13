@@ -455,8 +455,13 @@ function toCanonicalRoute(href) {
 
 function getNormalizedHashPath() {
   const hash = window.location.hash;
-  if (hash.length > 1) {
-    let path = hash.slice(1).trim();
+  const UI_HASHES = ["#tools", "#settings"];
+  // Check if hash is empty or specifically used for the tools toggle
+  if (hash.length <= 1 || UI_HASHES.includes(hash)) {
+    return null;
+  }
+  let path = hash.slice(1).trim();
+  if (path) {
     // Ensure single leading slash before normalization
     if (!path.startsWith("/")) {
       path = "/" + path;

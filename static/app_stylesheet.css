@@ -80,6 +80,12 @@ header {
     height: 100%;
 }
 
+/* Make Tools sidebar bigger */
+#sidebar:has([class='hidden-tool'][style*='flex']) {
+    width: 20em !important;
+}
+
+
 #sidebar.collapsed {
     transform: translateX(-100%);
 }
@@ -150,6 +156,7 @@ header {
     border-left: none;
     border-radius: 12px;
     padding: 14px 24px;
+    width: 100%;
     color: #495057;
     font-weight: bold;
     text-decoration: none;

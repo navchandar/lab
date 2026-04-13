@@ -15,7 +15,7 @@ function updateRefreshTimeDisplay() {
   const now = new Date();
   const seconds = Math.floor((now - lastRefreshTime) / 1000);
   let displayText = "just now";
-  // calculdate time difference
+  // calculate time difference
   if (seconds < 60) {
     displayText = `${seconds} seconds ago`;
   } else if (seconds < 3600) {
@@ -234,6 +234,10 @@ function updateButtons() {
 
   // Attach keyboard shortcut listeners
   document.addEventListener("keydown", function (event) {
+    // Ignore if user is typing in an input or textarea
+    if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName)) {
+      return;
+    }
     const key = event.key.toLowerCase();
     if (key === "c") {
       const button = document.getElementById("copy-ipv4");
