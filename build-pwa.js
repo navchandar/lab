@@ -208,14 +208,33 @@ function getAllFiles(dirPath, arrayOfFiles = []) {
 
   files.forEach((file) => {
     const fullPath = path.join(dirPath, file);
+
+    // Basic Ignored Check
     if (IGNORED_DIRS.includes(file) || IGNORED_FILES.includes(file)) {
       return;
     }
+
     if (fs.statSync(fullPath).isDirectory()) {
       arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
     } else {
-      // Use forward slashes for web compatibility
-      arrayOfFiles.push(fullPath.replace(/\\/g, "/"));
+      const relativePath = fullPath.replace(/\\/g, "/");
+      const ext = path.extname(file).toLowerCase();
+
+      // Identify if this file belongs to a Hidden Tool
+      const isPartOfHiddenTool = HIDDEN_TOOLS.some(
+        (tool) => relativePath.startsWith(`${tool}/`) || relativePath === tool,
+      );
+
+      if (isPartOfHiddenTool) {
+        // Strict Filter for Hidden Tools: Only CSS, JS, HTML
+        const allowedExtensions = [".css", ".js", ".html", ".htm"];
+        if (allowedExtensions.includes(ext)) {
+          arrayOfFiles.push(relativePath);
+        }
+      } else {
+        // Regular Apps: Cache all files
+        arrayOfFiles.push(relativePath);
+      }
     }
   });
   return arrayOfFiles;
