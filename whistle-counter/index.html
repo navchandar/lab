@@ -513,6 +513,21 @@
           stateEl.textContent = text;
         }
 
+        function showError(msg) {
+          setState(msg, "bad");
+        }
+
+        // Wrap a promise so "silent hangs" turn into a visible timeout error
+        function withTimeout(promise, ms, timeoutMessage) {
+          let t;
+          const timeout = new Promise((_, reject) => {
+            t = setTimeout(() => reject(new Error(timeoutMessage)), ms);
+          });
+          return Promise.race([promise, timeout]).finally(() =>
+            clearTimeout(t),
+          );
+        }
+
         function updateLabels() {
           thrLbl.textContent = Number(thrEl.value).toFixed(2);
           relLbl.textContent = Number(relEl.value).toFixed(2);
@@ -526,6 +541,16 @@
           el.addEventListener("change", updateLabels);
         });
         updateLabels();
+        // Catch unexpected errors and show them in the UI (not just console)
+        window.addEventListener("error", (e) => {
+          showError(`JS error: ${e.message || e.error || "Unknown error"}`);
+        });
+
+        window.addEventListener("unhandledrejection", (e) => {
+          const reason =
+            e.reason?.message || String(e.reason || "Unknown rejection");
+          showError(`Unhandled promise rejection: ${reason}`);
+        });
 
         function clamp(v, lo, hi) {
           return Math.max(lo, Math.min(hi, v));
@@ -793,26 +818,44 @@
          * - Node cleanup on failure
          */
         async function startListening() {
-          if (audioCtx) return;
-
+          if (audioCtx) {
+            return;
+          }
           updateLabels();
+
+          if (!window.isSecureContext) {
+            throw new Error(
+              "Microphone needs a secure context. Use https:// or http://localhost (not file://)",
+            );
+          }
+
+          if (
+            !navigator.mediaDevices ||
+            typeof navigator.mediaDevices.getUserMedia !== "function"
+          ) {
+            throw new Error(
+              "Microphone API unavailable in this browser/context (try Chrome/Safari)",
+            );
+          }
+
           setState("Requesting microphone permission…", "warn");
 
           try {
-            if (!navigator.mediaDevices?.getUserMedia) {
-              throw new Error("getUserMedia is not supported in this browser.");
-            }
-
             // These constraints are hints; browsers may ignore them.
             // Enabling noiseSuppression can help with far-off noise, but might also alter whistle tone.
-            stream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: false,
-              },
-              video: false,
-            });
+            // If the browser doesn't show a prompt AND doesn't reject, force a visible error after 8s
+            stream = await withTimeout(
+              navigator.mediaDevices.getUserMedia({
+                audio: {
+                  echoCancellation: true,
+                  noiseSuppression: true,
+                  autoGainControl: false,
+                },
+                video: false,
+              }),
+              8000,
+              "No permission prompt appeared. Check: Browser mic permission for this site or Microphone privacy settings!",
+            );
 
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -848,8 +891,8 @@
             tick();
           } catch (err) {
             console.error(err);
-            setState(`Failed to start: ${err?.message || err}`, "bad");
             await stopListening(); // cleanup partially created resources
+            showError(`Failed to start: ${err?.message || err}`);
           }
         }
 
