@@ -21,6 +21,7 @@ const IGNORED_DIRS = [
   "pm-e-drive",
   "diff",
   "polyforge",
+  "whistle-counter",
 ];
 const IGNORED_FILES = [
   "build-pwa.js",

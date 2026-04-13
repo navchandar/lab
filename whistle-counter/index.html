@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
+    <title>Whistle Counter</title>
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏲️</text></svg>"
+    />
+
+    <meta name="title" content="Whistle Counter" />
+    <meta
+      name="description"
+      content="A free, local, web tool that counts whistles using your device's microphone. Processes audio locally using the Web Audio API with noise gating."
+    />
+    <meta
+      name="keywords"
+      content="whistle counter, whistle detector, web audio api, local audio processing, frequency detection, hands-free counter"
+    />
+    <meta name="author" content="Naveenchandar" />
+
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://navchandar.github.io/lab/whistle-counter/"
+    />
+    <meta property="og:title" content="Whistle Counter" />
+    <meta
+      property="og:description"
+      content="Count whistles automatically using your browser. 100% local processing, no audio leaves your device."
+    />
+    <meta
+      property="og:image"
+      content="https://navchandar.github.io/lab/whistle-counter/preview.png"
+    />
+
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:title" content="Whistle Counter" />
+    <meta
+      property="twitter:description"
+      content="Count whistles automatically using your browser. 100% local processing, no audio leaves your device."
+    />
+
+    <style>
+      /* ---------- Theme (supports night mode) ---------- */
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --panel: #f6f7f9;
+        --text: #111;
+        --muted: #555;
+        --border: #d8dbe0;
+        --accent: #0a7;
+        --warn: #b60;
+        --bad: #b00;
+        --btn: #111;
+        --btnText: #fff;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f1115;
+          --panel: #171a21;
+          --text: #f2f3f5;
+          --muted: #b7bcc6;
+          --border: #2a2f3a;
+          --btn: #f2f3f5;
+          --btnText: #0f1115;
+        }
+      }
+
+      /* Manual override (optional toggle) */
+      html[data-theme="light"] {
+        --bg: #ffffff;
+        --panel: #f6f7f9;
+        --text: #111;
+        --muted: #555;
+        --border: #d8dbe0;
+        --btn: #111;
+        --btnText: #fff;
+      }
+
+      html[data-theme="dark"] {
+        --bg: #0f1115;
+        --panel: #171a21;
+        --text: #f2f3f5;
+        --muted: #b7bcc6;
+        --border: #2a2f3a;
+        --btn: #f2f3f5;
+        --btnText: #0f1115;
+      }
+
+      /* ---------- Layout (mobile-first) ---------- */
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          Arial,
+          sans-serif;
+      }
+
+      .wrap {
+        margin: 0 auto;
+        padding: 16px;
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        max-width: 980px;
+      }
+
+      h1 {
+        margin: 8px 0 6px;
+        font-size: 20px;
+      }
+
+      p {
+        margin: 8px 0;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 12px;
+        margin: 12px 0;
+      }
+
+      @media (min-width: 780px) {
+        .row.cols-2 {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .row.cols-3 {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        p {
+          font-size: small;
+          line-height: 1.25;
+        }
+      }
+
+      .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--panel);
+        padding: 12px;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      @media (min-width: 540px) {
+        .controls {
+          grid-template-columns: repeat(4, auto);
+          justify-content: start;
+        }
+      }
+
+      button {
+        appearance: none;
+        cursor: pointer;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--btn);
+        padding: 12px 12px;
+        min-height: 44px;
+        color: var(--btnText);
+        font-weight: 650;
+        font-size: 14px;
+        /* good mobile tap target */
+      }
+
+      button.secondary {
+        background: transparent;
+        color: var(--text);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .big {
+        margin-top: 4px;
+        font-weight: 900;
+        font-size: 44px;
+        letter-spacing: 0.3px;
+      }
+
+      .kvs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .kv {
+        border: 1px dashed var(--border);
+        border-radius: 10px;
+        padding: 10px;
+      }
+
+      code {
+        border-radius: 8px;
+        background: rgba(127, 127, 127, 0.14);
+        padding: 2px 6px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      label {
+        display: grid;
+        gap: 6px;
+        font-weight: 650;
+      }
+
+      input[type="range"],
+      input[type="number"] {
+        width: 80%;
+      }
+
+      input[type="number"] {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: transparent;
+        padding: 10px 10px;
+        min-height: 40px;
+        color: var(--text);
+      }
+
+      .muted {
+        color: var(--muted);
+        font-weight: 500;
+      }
+
+      .ok {
+        color: var(--accent);
+        font-weight: 800;
+      }
+
+      .warn {
+        color: var(--warn);
+        font-weight: 800;
+      }
+
+      .bad {
+        color: var(--bad);
+        font-weight: 800;
+      }
+
+      progress {
+        width: 100%;
+        height: 14px;
+      }
+
+      .mini {
+        color: var(--muted);
+        font-weight: 500;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="wrap">
+      <h1>Whistle Counter</h1>
+      <p>
+        Local Audio processing to detect whistles. A “full whistle” is counted
+        when a
+        <b>tonal high-pitch sound</b> stays present for <b>&ge; 2 seconds</b>.
+        Talking and far-off sounds are reduced using a noise gate + voice
+        rejection + tonal checks.
+      </p>
+
+      <div class="controls">
+        <button id="startBtn">Start Listening</button>
+        <button id="stopBtn" disabled>Stop</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+      </div>
+
+      <div class="row cols-2">
+        <div class="card">
+          <div class="muted">Whistles counted</div>
+          <div id="count" class="big">0</div>
+          <div id="state" class="muted">Idle</div>
+
+          <div class="kvs" style="margin-top: 12px">
+            <div class="kv">
+              <div class="mini">High-band energy (Strength)</div>
+              <progress id="energyBar" value="0" max="1"></progress>
+              <div class="mini">Now: <code id="energyVal">0.000</code></div>
+            </div>
+            <div class="kv">
+              <div class="mini">Volume (Loudness)</div>
+              <progress id="rmsBar" value="0" max="0.2"></progress>
+              <div class="mini">Now: <code id="rmsVal">0.000</code></div>
+            </div>
+          </div>
+
+          <div class="kvs" style="margin-top: 10px">
+            <div class="kv">
+              <div class="mini">Peakiness (Amplitude tone)</div>
+              <progress id="peakBar" value="0" max="10"></progress>
+              <div class="mini">Now: <code id="peakVal">0.00</code></div>
+            </div>
+            <div class="kv">
+              <div class="mini">Min. duration to track</div>
+              <div style="font-size: 22px; font-weight: 900">
+                <span id="holdSec">0.00</span>s
+              </div>
+              <div class="mini">Need: <code id="minHoldLbl">2.00</code>s</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="margin: 0 0 8px">Tuning</h3>
+
+          <div class="row cols-2">
+            <label>
+              High band start (Hz)
+              <input id="fLow" type="number" value="2000" min="200" step="50" />
+              <span class="mini">Whistles often ~2–6 kHz</span>
+            </label>
+
+            <label>
+              High band end (Hz)
+              <input
+                id="fHigh"
+                type="number"
+                value="6000"
+                min="500"
+                step="50"
+              />
+              <span class="mini"
+                >Increase if your whistle is higher-pitched.</span
+              >
+            </label>
+          </div>
+
+          <div class="row cols-2">
+            <label>
+              Trigger threshold
+              <span class="mini">(<span id="thrLbl">0.18</span>)</span>
+              <input
+                id="threshold"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.18"
+              />
+              <span class="mini">Sensitivity for high-band energy ratio.</span>
+            </label>
+
+            <label>
+              Release threshold
+              <span class="mini">(<span id="relLbl">0.12</span>)</span>
+              <input
+                id="release"
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.12"
+              />
+              <span class="mini">Must fall below this to “re-arm”.</span>
+            </label>
+          </div>
+
+          <div class="row cols-2">
+            <label>
+              Min whistle duration (s)
+              <input
+                id="minHold"
+                type="number"
+                value="2.0"
+                min="0.3"
+                step="0.1"
+              />
+              <span class="mini"
+                >Counts only after the sound continues for this duration.</span
+              >
+            </label>
+
+            <label>
+              Noise gate (min RMS)
+              <input
+                id="minRms"
+                type="number"
+                value="0.018"
+                min="0"
+                step="0.001"
+              />
+              <span class="mini">Raises ignoring of far/quiet sounds.</span>
+            </label>
+          </div>
+
+          <div class="row cols-2">
+            <label>
+              Tone peakiness min
+              <span class="mini">(<span id="peakLbl">3.50</span>x)</span>
+              <input
+                id="peakiness"
+                type="range"
+                min="1"
+                max="10"
+                step="0.1"
+                value="3.5"
+              />
+              <span class="mini">Higher = more “pure tone” required.</span>
+            </label>
+
+            <label>
+              Voice reject ratio
+              <span class="mini">(<span id="vrLbl">1.80</span>x)</span>
+              <input
+                id="voiceReject"
+                type="range"
+                min="0.5"
+                max="6"
+                step="0.1"
+                value="1.8"
+              />
+              <span class="mini"
+                >High band must beat speech band by this factor.</span
+              >
+            </label>
+          </div>
+
+          <p class="mini" style="margin-top: 8px">
+            Tip: If it counts speech, raise <b>Voice reject</b> or
+            <b>Peakiness</b>. If it misses whistles, lower <b>Trigger</b> or
+            <b>Peakiness</b>.
+          </p>
+        </div>
+      </div>
+
+      <p class="mini">
+        Copyright &copy;
+        <script>
+          document.write(new Date().getFullYear());
+        </script>
+        Naveenchandar | This work is licensed under the
+        <a
+          href="https://github.com/navchandar/lab/blob/main/LICENSE"
+          target="_blank"
+        >
+          GNU GPLv3
+        </a>
+      </p>
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        /* ============================================================
+         * UI helpers
+         * ============================================================ */
+        const $ = (id) => document.getElementById(id);
+
+        const startBtn = $("startBtn");
+        const stopBtn = $("stopBtn");
+        const resetBtn = $("resetBtn");
+
+        const countEl = $("count");
+        const stateEl = $("state");
+
+        const energyBar = $("energyBar");
+        const energyVal = $("energyVal");
+
+        const rmsBar = $("rmsBar");
+        const rmsVal = $("rmsVal");
+
+        const peakBar = $("peakBar");
+        const peakVal = $("peakVal");
+
+        const holdSecEl = $("holdSec");
+
+        const fLowEl = $("fLow");
+        const fHighEl = $("fHigh");
+
+        const thrEl = $("threshold");
+        const relEl = $("release");
+        const minHoldEl = $("minHold");
+        const minRmsEl = $("minRms");
+
+        const peakinessEl = $("peakiness");
+        const voiceRejectEl = $("voiceReject");
+
+        const thrLbl = $("thrLbl");
+        const relLbl = $("relLbl");
+        const minHoldLbl = $("minHoldLbl");
+        const peakLbl = $("peakLbl");
+        const vrLbl = $("vrLbl");
+
+        function setState(text, cls = "muted") {
+          stateEl.className = cls;
+          stateEl.textContent = text;
+        }
+
+        function updateLabels() {
+          thrLbl.textContent = Number(thrEl.value).toFixed(2);
+          relLbl.textContent = Number(relEl.value).toFixed(2);
+          minHoldLbl.textContent = Number(minHoldEl.value).toFixed(2);
+          peakLbl.textContent = Number(peakinessEl.value).toFixed(2);
+          vrLbl.textContent = Number(voiceRejectEl.value).toFixed(2);
+        }
+
+        [thrEl, relEl, minHoldEl, peakinessEl, voiceRejectEl].forEach((el) => {
+          el.addEventListener("input", updateLabels);
+          el.addEventListener("change", updateLabels);
+        });
+        updateLabels();
+
+        function clamp(v, lo, hi) {
+          return Math.max(lo, Math.min(hi, v));
+        }
+
+        /* ============================================================
+         * Audio + detection state
+         * ============================================================ */
+        let audioCtx = null;
+        let analyser = null;
+        let source = null;
+        let stream = null;
+        let rafId = null;
+
+        // Optional filtering nodes to focus on whistle band
+        let hpFilter = null; // high-pass to remove low rumble
+        let bpFilter = null; // band-pass around whistle band
+
+        // FFT buffers
+        const fftSize = 2048;
+        let freqData = null; // Uint8Array magnitudes 0..255
+        let timeData = null; // Float32Array time-domain samples
+
+        // Counter
+        let count = 0;
+
+        // FSM modes:
+        // WAITING -> HOLDING -> COUNTED -> WAITING (after release)
+        let mode = "WAITING";
+        let holdStartMs = null;
+
+        /* ============================================================
+         * DSP feature extraction (the part that helps ignore talking)
+         * ============================================================ */
+
+        /**
+         * Compute RMS volume from time-domain samples.
+         * RMS helps us ignore far/quiet sounds via a "noise gate".
+         */
+        function computeRms() {
+          analyser.getFloatTimeDomainData(timeData);
+          let sumSq = 0;
+          for (let i = 0; i < timeData.length; i++) {
+            const x = timeData[i];
+            sumSq += x * x;
+          }
+          return Math.sqrt(sumSq / timeData.length);
+        }
+
+        /**
+         * Compute average magnitude in a frequency band.
+         * Uses analyser.getByteFrequencyData (0..255).
+         */
+        function bandAvg(sampleRate, fLow, fHigh) {
+          const bins = analyser.frequencyBinCount;
+          const nyquist = sampleRate / 2;
+
+          const a = Math.floor(clamp(fLow / nyquist, 0, 1) * (bins - 1));
+          const b = Math.floor(clamp(fHigh / nyquist, 0, 1) * (bins - 1));
+          const lo = Math.min(a, b);
+          const hi = Math.max(a, b);
+
+          let sum = 0;
+          let n = 0;
+          for (let i = lo; i <= hi; i++) {
+            sum += freqData[i];
+            n++;
+          }
+          return n ? sum / n : 0;
+        }
+
+        /**
+         * Compute "peakiness" (tonalness proxy) in a band:
+         * peakiness = maxMagnitude / avgMagnitude.
+         *
+         * - Whistles tend to have a strong narrow peak -> higher peakiness
+         * - Speech tends to be more spread -> lower peakiness
+         */
+        function bandPeakiness(sampleRate, fLow, fHigh) {
+          const bins = analyser.frequencyBinCount;
+          const nyquist = sampleRate / 2;
+
+          const a = Math.floor(clamp(fLow / nyquist, 0, 1) * (bins - 1));
+          const b = Math.floor(clamp(fHigh / nyquist, 0, 1) * (bins - 1));
+          const lo = Math.min(a, b);
+          const hi = Math.max(a, b);
+
+          let sum = 0,
+            n = 0,
+            mx = 0;
+          for (let i = lo; i <= hi; i++) {
+            const v = freqData[i];
+            sum += v;
+            n++;
+            if (v > mx) mx = v;
+          }
+          const avg = n ? sum / n : 0;
+          return mx / (avg + 1e-6);
+        }
+
+        /**
+         * Compute normalized high-band energy:
+         * highBandAvg / totalAvg, with a scaling to map into ~0..1.
+         */
+        function normalizedHighEnergy(sampleRate, fLow, fHigh) {
+          const bins = analyser.frequencyBinCount;
+
+          const high = bandAvg(sampleRate, fLow, fHigh);
+
+          // total average magnitude for normalization
+          let total = 0;
+          for (let i = 0; i < bins; i++) total += freqData[i];
+          const totalAvg = total / bins;
+
+          // ratio tells us "how concentrated is energy in high band"
+          const ratio = high / (totalAvg + 1e-6);
+
+          // scale down a bit so slider thresholds stay in a comfortable range
+          return clamp(ratio / 4, 0, 1);
+        }
+
+        /**
+         * Voice rejection:
+         * Compare high band to a typical speech band (mid band).
+         * If speech dominates, we avoid triggering.
+         *
+         * Speech band here is approximate: 300–1800 Hz.
+         */
+        function voiceRatio(sampleRate, highLow, highHigh) {
+          const mid = bandAvg(sampleRate, 300, 1800);
+          const high = bandAvg(sampleRate, highLow, highHigh);
+          return high / (mid + 1e-6);
+        }
+
+        /* ============================================================
+         * Main detection loop
+         * ============================================================ */
+        function tick() {
+          if (!audioCtx || !analyser) return;
+
+          // Read UI settings
+          const fLow = Number(fLowEl.value);
+          const fHigh = Number(fHighEl.value);
+          const trigger = Number(thrEl.value);
+          const release = Number(relEl.value);
+          const minHoldSec = Number(minHoldEl.value);
+          const minRms = Number(minRmsEl.value);
+          const peakinessMin = Number(peakinessEl.value);
+          const voiceRejectMin = Number(voiceRejectEl.value);
+
+          // Pull FFT data once per frame
+          analyser.getByteFrequencyData(freqData);
+
+          // Feature extraction
+          const rms = computeRms();
+          const highNorm = normalizedHighEnergy(
+            audioCtx.sampleRate,
+            fLow,
+            fHigh,
+          );
+          const peak = bandPeakiness(audioCtx.sampleRate, fLow, fHigh);
+          const vRatio = voiceRatio(audioCtx.sampleRate, fLow, fHigh);
+
+          // UI meters
+          rmsBar.value = rms;
+          rmsVal.textContent = rms.toFixed(3);
+
+          energyBar.value = highNorm;
+          energyVal.textContent = highNorm.toFixed(3);
+
+          peakBar.value = clamp(peak, 0, 10);
+          peakVal.textContent = peak.toFixed(2);
+
+          const now = performance.now();
+
+          // --- Gating rules to "ignore other sounds" ---
+          // 1) Must be loud enough (ignore far/quiet)
+          const loudEnough = rms >= minRms;
+
+          // 2) Must be tonal enough (ignore speech-ish broadband)
+          const tonalEnough = peak >= peakinessMin;
+
+          // 3) Must beat speech band by some ratio (ignore talking)
+          const voiceRejected = vRatio >= voiceRejectMin;
+
+          // 4) Main trigger based on high-band normalized energy
+          const passesEnergy = highNorm >= trigger;
+          const aboveRelease = highNorm > release;
+
+          // Combine for a robust "candidate whistle" signal:
+          const isCandidate =
+            loudEnough && tonalEnough && voiceRejected && passesEnergy;
+
+          // FSM
+          if (mode === "WAITING") {
+            holdStartMs = null;
+            holdSecEl.textContent = "0.00";
+
+            if (!loudEnough) {
+              setState("Listening… (too quiet / gated)", "muted");
+            } else if (!voiceRejected) {
+              setState("Listening… (speech-like sound ignored)", "muted");
+            } else if (!tonalEnough) {
+              setState("Listening… (not tonal enough)", "muted");
+            } else {
+              setState("Listening… (waiting for sustained whistle)", "ok");
+            }
+
+            if (isCandidate) {
+              mode = "HOLDING";
+              holdStartMs = now;
+              setState("Potential whistle… timing duration", "warn");
+            }
+          } else if (mode === "HOLDING") {
+            const heldSec = (now - (holdStartMs ?? now)) / 1000;
+            holdSecEl.textContent = heldSec.toFixed(2);
+
+            // If any gating condition fails OR energy drops below release, reset.
+            // Using release threshold adds hysteresis (avoids jitter counting).
+            const stillValid =
+              loudEnough && tonalEnough && voiceRejected && aboveRelease;
+
+            if (!stillValid) {
+              mode = "WAITING";
+              holdStartMs = null;
+              setState("Candidate ended before minimum duration", "muted");
+            } else if (heldSec >= minHoldSec) {
+              count++;
+              countEl.textContent = String(count);
+              mode = "COUNTED";
+              setState("Full whistle counted. Waiting for it to stop…", "ok");
+            } else {
+              setState("Whistle continuing…", "warn");
+            }
+          } else if (mode === "COUNTED") {
+            // Wait until it clearly stops (drops below release OR fails gating),
+            // then re-arm for the next whistle.
+            const rearm = !aboveRelease || !loudEnough || !tonalEnough;
+
+            if (rearm) {
+              mode = "WAITING";
+              holdStartMs = null;
+              holdSecEl.textContent = "0.00";
+              setState("Ready for next whistle", "ok");
+            } else {
+              setState(
+                "Whistle still ongoing… (not counting again yet)",
+                "warn",
+              );
+            }
+          }
+
+          rafId = requestAnimationFrame(tick);
+        }
+
+        /* ============================================================
+         * Start/Stop with strong exception handling
+         * ============================================================ */
+
+        /**
+         * Start microphone capture and analysis.
+         * Handles:
+         * - Permission errors
+         * - AudioContext resume requirements (mobile)
+         * - Node cleanup on failure
+         */
+        async function startListening() {
+          if (audioCtx) return;
+
+          updateLabels();
+          setState("Requesting microphone permission…", "warn");
+
+          try {
+            if (!navigator.mediaDevices?.getUserMedia) {
+              throw new Error("getUserMedia is not supported in this browser.");
+            }
+
+            // These constraints are hints; browsers may ignore them.
+            // Enabling noiseSuppression can help with far-off noise, but might also alter whistle tone.
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: false,
+              },
+              video: false,
+            });
+
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Some browsers require explicit resume after user gesture.
+            if (audioCtx.state === "suspended") {
+              try {
+                await audioCtx.resume();
+              } catch {
+                /* ignore */
+              }
+            }
+
+            analyser = audioCtx.createAnalyser();
+            analyser.fftSize = fftSize;
+            analyser.smoothingTimeConstant = 0.65;
+
+            freqData = new Uint8Array(analyser.frequencyBinCount);
+            timeData = new Float32Array(analyser.fftSize);
+
+            source = audioCtx.createMediaStreamSource(stream);
+            // Connect: source -> analyser
+            source.connect(analyser);
+
+            // Reset detection state
+            mode = "WAITING";
+            holdStartMs = null;
+
+            // UI buttons
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            setState("Listening…", "ok");
+            tick();
+          } catch (err) {
+            console.error(err);
+            setState(`Failed to start: ${err?.message || err}`, "bad");
+            await stopListening(); // cleanup partially created resources
+          }
+        }
+
+        /**
+         * Stop everything cleanly (RAF, AudioContext, stream tracks).
+         * Safe to call multiple times.
+         */
+        async function stopListening() {
+          // Stop UI loop
+          if (rafId) cancelAnimationFrame(rafId);
+          rafId = null;
+
+          // Stop mic tracks first (releases mic quickly on mobile)
+          if (stream) {
+            try {
+              stream.getTracks().forEach((t) => t.stop());
+            } catch {
+              /* ignore */
+            }
+            stream = null;
+          }
+
+          // Close audio context
+          if (audioCtx) {
+            try {
+              await audioCtx.close();
+            } catch {
+              /* ignore */
+            }
+          }
+
+          audioCtx = null;
+          analyser = null;
+          source = null;
+          hpFilter = null;
+          bpFilter = null;
+
+          freqData = null;
+          timeData = null;
+
+          mode = "WAITING";
+          holdStartMs = null;
+
+          // Reset meters
+          energyBar.value = 0;
+          energyVal.textContent = "0.000";
+          rmsBar.value = 0;
+          rmsVal.textContent = "0.000";
+          peakBar.value = 0;
+          peakVal.textContent = "0.00";
+          holdSecEl.textContent = "0.00";
+
+          startBtn.disabled = false;
+          stopBtn.disabled = true;
+
+          setState("Idle", "muted");
+        }
+
+        function resetCount() {
+          count = 0;
+          countEl.textContent = "0";
+        }
+
+        /* ============================================================
+         * Theme toggle
+         * ============================================================ */
+        function toggleTheme() {
+          const html = document.documentElement;
+          const cur = html.getAttribute("data-theme");
+          // If not set, choose opposite of current system
+          if (!cur) {
+            const systemDark =
+              window.matchMedia &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches;
+            html.setAttribute("data-theme", systemDark ? "light" : "dark");
+            return;
+          }
+          html.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+        }
+
+        /* ============================================================
+         * Wire up events
+         * ============================================================ */
+        startBtn.addEventListener("click", startListening);
+        stopBtn.addEventListener("click", stopListening);
+        resetBtn.addEventListener("click", resetCount);
+
+        // Safety cleanup on close/tab switch
+        window.addEventListener("beforeunload", () => {
+          try {
+            if (stream) stream.getTracks().forEach((t) => t.stop());
+          } catch {}
+        });
+      })();
+    </script>
+  </body>
+</html>

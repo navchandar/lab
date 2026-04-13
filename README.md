@@ -38,6 +38,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | ⚡️ <a href="https://navchandar.github.io/lab/pm-e-drive/" target="_blank">**PM E-Drive EV Comparison**</a> | Compare EV models from different OEMs that are actively incentivized by Indian Govt. | 🟩🟩🟩🟩🟩 100% |
 | 𝜟 <a href="https://navchandar.github.io/lab/diff/" target="_blank">**URL Diff Tool**</a> | Data comparison tool that shows the differences between two websites or files with URLs. | 🟩🟩🟩🟩🟩 100% |
 | 🔰 <a href="https://navchandar.github.io/lab/polyforge/" target="_blank">**PolyForge CSS Clip Tool**</a> | Web utility to convert complex geometric shapes into CSS clip-path polygon data. | 🟩🟩🟩🟩⬜ 80%  |
+| ⏲️ <a href="https://navchandar.github.io/lab/whistle-counter/" target="_blank">**Whistle Counter**</a> | Web utility to detect whistles using Local Audio processing. | 🟩🟩🟩🟩⬜ 80%  |
 
 
 ### Status 
