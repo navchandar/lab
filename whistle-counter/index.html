@@ -891,8 +891,16 @@
             tick();
           } catch (err) {
             console.error(err);
+            const extraHint = (e) =>
+              /not allowed by the user agent|notallowederror|securityerror/i.test(
+                `${e?.name || ""} ${e?.message || ""}`,
+              )
+                ? " (Mic blocked. Check site/browser/OS microphone permissions!)"
+                : "";
+
+            const msg = `Failed to start: ${err?.message || err}${extraHint(err)}`;
             await stopListening(); // cleanup partially created resources
-            showError(`Failed to start: ${err?.message || err}`);
+            showError(msg);
           }
         }
 
