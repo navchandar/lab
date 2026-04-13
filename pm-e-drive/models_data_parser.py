@@ -1,15 +1,16 @@
-import os
-import re
 import json
 import logging
+import os
+import re
 import sys
+from collections import defaultdict
+from io import BytesIO
 
 import requests
 from bs4 import BeautifulSoup
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
-from PIL import Image, ImageOps, ImageFilter, ImageEnhance
-from io import BytesIO
 
 # --- Configuration & Logging Setup ---
 logging.basicConfig(
@@ -19,7 +20,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-#  CMVR mapping
+# --- EV Engineering & Regulatory Constants ---
+
 CATEGORY_MAP = {
     "L1": "Electric 2W: Max Speed ≤ 45 km/h, Power ≤ 0.5 kW",
     "L2": "Electric 2W: Max Speed > 45 km/h, Power > 0.5 kW",
@@ -27,24 +29,19 @@ CATEGORY_MAP = {
     "L5M": "Electric 3W: Passenger Carrier (Auto-Rickshaw)",
     "L5N": "Electric 3W: Goods/Cargo Carrier",
     "E-RICKSHAW": "Special 3W: Max Speed 25 km/h, Power ≤ 2 kW",
-    "E-RICKSHAW & E-CART": "Special 3W: Max Speed 25 km/h, Power ≤ 2 kW",
     "E-CART": "Special 3W: Goods Carrier, Max Speed 25 km/h",
 }
 
-# Max CMVR GVW legal limits in India (Total Weight Allowed)
 LIMITS = {
     "L1": 250,
     "L2": 350,
     "L5": 1500,
     "L5M": 1500,
     "L5N": 1600,
-    "E-Rickshaw": 750,
-    "E-RICKSHAW & E-CART": 775,
+    "E-RICKSHAW": 775,  # Merged standard
     "E-CART": 800,
 }
 
-# Engineering-based Chassis + Motor weight ratios (as % of GVW)
-# L1: light, L5: Heavy commercial grade steel
 CHASSIS_RATIOS = {
     "L1": 0.28,
     "L2": 0.32,
@@ -55,15 +52,104 @@ CHASSIS_RATIOS = {
     "E-CART": 0.40,
 }
 
-# Standard size (4:3 ratio is common)
+MIN_KERB_FRACTION = {
+    "L1": 0.0,
+    "L2": 0.0,
+    "L5": 0.50,
+    "L5M": 0.50,
+    "L5N": 0.55,
+    "E-RICKSHAW": 0.45,
+    "E-CART": 0.45,
+}
+
+SEGMENT_PARAMS = {
+    "L1": {"usable_soc": 0.93, "derate_ara_to_field": 0.78},
+    "L2": {"usable_soc": 0.92, "derate_ara_to_field": 0.70},
+    "L5": {"usable_soc": 0.92, "derate_ara_to_field": 0.70},
+    "L5M": {"usable_soc": 0.92, "derate_ara_to_field": 0.70},
+    "L5N": {"usable_soc": 0.92, "derate_ara_to_field": 0.65},
+    "E-RICKSHAW": {"usable_soc": 0.93, "derate_ara_to_field": 0.75},
+    "E-CART": {"usable_soc": 0.93, "derate_ara_to_field": 0.70},
+}
+
+SEGMENT_SCORES = {
+    "L1": {
+        "range_ref": 80,
+        "payload_ref": 120,
+        "cost_ref": 20,
+        "w_range": 0.40,
+        "w_cost": 0.40,
+        "w_payload": 0.20,
+    },
+    "L2": {
+        "range_ref": 120,
+        "payload_ref": 150,
+        "cost_ref": 25,
+        "w_range": 0.45,
+        "w_cost": 0.35,
+        "w_payload": 0.20,
+    },
+    "L5": {
+        "range_ref": 110,
+        "payload_ref": 400,
+        "cost_ref": 30,
+        "w_range": 0.35,
+        "w_cost": 0.35,
+        "w_payload": 0.30,
+    },
+    "L5M": {
+        "range_ref": 120,
+        "payload_ref": 300,
+        "cost_ref": 30,
+        "w_range": 0.40,
+        "w_cost": 0.30,
+        "w_payload": 0.30,
+    },
+    "L5N": {
+        "range_ref": 100,
+        "payload_ref": 500,
+        "cost_ref": 30,
+        "w_range": 0.30,
+        "w_cost": 0.35,
+        "w_payload": 0.35,
+    },
+    "E-RICKSHAW": {
+        "range_ref": 90,
+        "payload_ref": 350,
+        "cost_ref": 25,
+        "w_range": 0.35,
+        "w_cost": 0.35,
+        "w_payload": 0.30,
+    },
+    "E-CART": {
+        "range_ref": 90,
+        "payload_ref": 400,
+        "cost_ref": 25,
+        "w_range": 0.30,
+        "w_cost": 0.35,
+        "w_payload": 0.35,
+    },
+}
+
+UNIT_COST_INR_PER_KWH = 8.0
 TARGET_SIZE = (800, 600)
 
 
 class DataUtils:
 
     @staticmethod
-    def get_category_info(cat_code):
+    def normalize_category(cat_code):
+        """Cleans and maps edge-case categories to strict CMVR definitions."""
         cat_code = str(cat_code).upper().strip()
+        if "RICKSHAW" in cat_code:
+            return "E-RICKSHAW"
+        if "CART" in cat_code and "RICKSHAW" not in cat_code:
+            return "E-CART"
+        return cat_code
+
+    @staticmethod
+    def get_category_info(cat_code):
+        cat_code = DataUtils.normalize_category(cat_code)
         return CATEGORY_MAP.get(cat_code, "Other")
 
     @staticmethod
@@ -72,106 +158,121 @@ class DataUtils:
         if not val or str(val).strip().lower() in ["na", "-", "", "none"]:
             return 0.0
         try:
-            # Remove units like 'km', 'kg' and commas
             clean_val = "".join(c for c in str(val) if c.isdigit() or c == ".")
             return float(clean_val)
         except ValueError:
             return 0.0
 
     @staticmethod
-    def calculate_metrics(item):
-        """
-        Calculates economy and performance metrics for real world conditions
-        Calculates load capacity based on CMVR limits and battery weight.
-        """
-        # 1. Basic Variables
-        unit_cost = 8  # (Assuming average ₹8 per kWh in India)
-        reported_range = item.get("range_km", 0)
-        battery_kwh = item.get("battery_kwh", 0)
-        efficiency = item.get("efficiency_reported_kwh_100km", 0)
-        density = item.get("battery_density_wh_kg", 150)
-        cat = str(item.get("category", "L1")).upper().strip()
+    def estimate_real_world_range(item):
+        cat = DataUtils.normalize_category(item.get("category", "L1"))
+        seg = SEGMENT_PARAMS.get(cat, SEGMENT_PARAMS["L2"])
 
-        # We use a 0.8 factor (20% reduction) due to "usable" capacity and real-world conditions
-        # But If battery is high-tech (high density), it performs better.
-        # And If it's a slow vehicle (L1), it loses less energy.
-        base_factor = 0.82  # Start at 82%
-        if density >= 200:  # Tech bonus
-            base_factor += 0.03
-        if cat == "L1":  # Slow speed efficiency bonus
-            base_factor += 0.05
+        battery_kwh = item.get("battery_kwh", 0.0)
+        eff_kwh_per_100km = item.get("efficiency_reported_kwh_100km", 0.0)
+        arai_range = item.get("range_km", 0.0)
 
-        # --- 2. Estimated Real World Range ---
-        # Calculation: (Total Energy / Energy used per 100km) * 100 * Safety Factor
-        if efficiency > 0:
-            item["cost_per_100km_inr"] = round(efficiency * unit_cost, 2)
-            real_range = (battery_kwh / efficiency) * 100 * base_factor
-            item["est_real_world_range_km"] = round(real_range, 1)
+        usable_energy = battery_kwh * seg["usable_soc"]
+
+        # High density tech bonus to usable SoC
+        if item.get("battery_density_wh_kg", 0) >= 200:
+            usable_energy *= 1.02
+
+        if eff_kwh_per_100km > 0:
+            test_cycle_range = usable_energy / (eff_kwh_per_100km / 100.0)
+            field_range = test_cycle_range * seg["derate_ara_to_field"]
+        elif arai_range > 0:
+            field_range = arai_range * seg["derate_ara_to_field"]
         else:
-            # If efficiency is missing, assume 25% reduction from ARAI reported range
-            item["est_real_world_range_km"] = round(reported_range * 0.75, 1)
+            field_range = 0.0
 
-        # --- 3. Payload Calculation ---
-        # 1. Density Clamping: Prevents 'Magic' lightweight batteries
-        density = max(100, min(density, 180))
-        # 2. Maximum GVW Lookup
-        max_gvw = item.get("gvw_kg") or LIMITS.get(cat, 350)
+        item["est_real_world_range_km"] = round(field_range, 1)
+        return item
 
-        # 3. Practical Multipliers (Design Envelope)
-        PRACTICAL_MULTIPLIERS = {
-            "L1": 0.45, "L2": 0.43, "L5": 0.50,
-            "L5M": 0.48, "L5N": 0.52, "E-RICKSHAW": 0.48,
-            "E-RICKSHAW & E-CART": 0.48, "E-CART": 0.50
-        }
-        multiplier = PRACTICAL_MULTIPLIERS.get(cat, 0.45)
+    @staticmethod
+    def estimate_cost(item):
+        eff = item.get("efficiency_reported_kwh_100km", 0.0)
+        if eff <= 0 and item.get("battery_kwh", 0) and item.get("range_km", 0):
+            # Back-calculate approximate test-cycle efficiency
+            eff = (item["battery_kwh"] * 100.0) / item["range_km"]
 
-        # 4. Battery Weight Calculation
-        battery_kg = (battery_kwh * 1000) / density
-        item["battery_weight_kg"] = round(battery_kg, 2)
-
-        # 5. Baseline Context
-        BASELINE_BATT_KG = {
-            "L1": 9, "L2": 14, "L5": 45, "L5M": 45, "L5N": 55,
-            "E-RICKSHAW": 40, "E-CART": 55
-        }
-        baseline = BASELINE_BATT_KG.get(cat, 14)
-
-        # 6. Nonlinear Penalty Logic
-        if "L1" in cat or "L2" in cat:
-            excess = max(0, battery_kg - baseline)
-            mild = min(excess, 5) * 0.35   # Slight reduction for minor weight increase
-            harsh = max(0, excess - 5) * 0.75 # Heavy reduction for oversized packs
-            battery_penalty = mild + harsh
+        if eff > 0:
+            item["cost_per_100km_inr"] = round(eff * UNIT_COST_INR_PER_KWH, 2)
         else:
-            # 3W: Linear/Lower penalty due to robust commercial chassis
-            excess = max(0, battery_kg - baseline)
-            battery_penalty = excess * 0.20
+            item["cost_per_100km_inr"] = None
+        return item
 
-        # 7. Final Payload Synthesis
-        base_practical_capacity = max_gvw * multiplier
-        payload = base_practical_capacity - battery_penalty
+    @staticmethod
+    def estimate_payload(item):
+        cat = DataUtils.normalize_category(item.get("category", "L1"))
 
-        # 8. Legal Cap (If actual Kerb Weight is scraped)
+        # Ensure GVW is always saved to the item, using legal limits as fallback
+        gvw = item.get("gvw_kg") or LIMITS.get(cat, 350)
+        item["gvw_kg"] = gvw
+
+        #  Calculate and explicitly save Battery Weight
+        density = max(100, min(item.get("battery_density_wh_kg", 150), 180))
+        battery_mass = (item.get("battery_kwh", 0.0) * 1000.0) / density
+        item["battery_weight_kg"] = round(battery_mass, 1)
         kerb = item.get("kerb_weight_kg")
-        if kerb:
-            legal_payload = max_gvw - kerb
-            payload = min(payload, legal_payload)
 
-        item["payload_kg"] = round(max(0, payload), 2)
+        # Exact calculation if legal weights exist
+        if kerb and kerb > 0:
+            payload = max(gvw - kerb, 0)
+            item["payload_kg"] = round(payload, 1)
+            return item
+
+        # First-principles estimation
+        chassis_ratio = CHASSIS_RATIOS.get(cat, 0.32)
+        chassis_mass = gvw * chassis_ratio
+
+        driver_mass = 75.0
+        kerb_est = chassis_mass + battery_mass + driver_mass
+
+        min_kerb_frac = MIN_KERB_FRACTION.get(cat, 0.0)
+        kerb_est = max(kerb_est, min_kerb_frac * gvw)
+
+        payload_est = max(gvw - kerb_est, 0)
+        item["payload_kg"] = round(payload_est, 1)
+        return item
+
+    @staticmethod
+    def calculate_segment_score_raw(item):
+        cat = DataUtils.normalize_category(item.get("category", "L2"))
+        seg = SEGMENT_SCORES.get(cat, SEGMENT_SCORES["L2"])
+
+        r = item.get("est_real_world_range_km", 0.0) or 0.0
+        p = item.get("payload_kg", 0.0) or 0.0
+        c = item.get("cost_per_100km_inr", None)
+
+        # Clip ratios between 0 and 1.5 to avoid runaway values dominating the score
+        r_ratio = max(0.0, min(r / seg["range_ref"], 1.5))
+        p_ratio = max(0.0, min(p / seg["payload_ref"], 1.5))
+
+        if c is not None and seg["cost_ref"] > 0:
+            c_ratio = max(0.0, min(seg["cost_ref"] / c, 1.5))
+        else:
+            c_ratio = 0.0
+
+        raw_score = (
+            r_ratio * seg["w_range"]
+            + c_ratio * seg["w_cost"]
+            + p_ratio * seg["w_payload"]
+        )
+
+        item["segment_score_raw"] = round(raw_score * 100, 1)
+        return item
+
+    @staticmethod
+    def enrich_item(item):
+        """Orchestrates the sequential physical calculations."""
+        item = DataUtils.estimate_real_world_range(item)
+        item = DataUtils.estimate_cost(item)
+        item = DataUtils.estimate_payload(item)
+        item = DataUtils.calculate_segment_score_raw(item)
         return item
 
 
-    @staticmethod
-    def calculate_score(item):
-        """Calculates a normalized score (0-100) for ranking."""
-        # We weigh Range (45%), Efficiency/Cost (25%), and Payload (30%)
-        r_score = (item.get("est_real_world_range_km", 0) / 160) * 45  # Benchmark 160km
-        c_score = (1 - (item.get("cost_per_100km_inr", 0) / 40)) * 25 # Lower cost is better
-        p_score = (item.get("payload_kg", 0) / 250) * 30              # Benchmark 250kg
-        
-        return round(max(r_score + c_score + p_score, 0), 2)
-
-        
 class EV_DATA_PARSER:
     def __init__(self):
         self.url = "https://pmedrive.heavyindustries.gov.in/models"
@@ -201,8 +302,7 @@ class EV_DATA_PARSER:
         self.session.mount("https://", adapter)
 
     def sanitize_filename(self, text):
-        """Converts strings to safe filenames."""
-        return re.sub(r'[^\w\-]', '_', text.strip().lower())
+        return re.sub(r"[^\w\-]", "_", text.strip().lower())
 
     def process_and_save_image(self, image_content, filepath):
         """
@@ -220,41 +320,31 @@ class EV_DATA_PARSER:
             img_stream.seek(0)
             original_img = Image.open(img_stream).convert("RGB")
 
-            # --- Create Background Layer (Blurred & Zoomed) ---
-            # ImageOps.fit resizes and centers crop to fill dimensions completely
-            background = ImageOps.fit(original_img, TARGET_SIZE, method=Image.Resampling.LANCZOS)
-            # Apply heavy blur (adjust radius=30 up or down for more/less blur)
+            background = ImageOps.fit(
+                original_img, TARGET_SIZE, method=Image.Resampling.LANCZOS
+            )
             background = background.filter(ImageFilter.GaussianBlur(radius=30))
-            # Darken background slightly to make foreground pop
             background = ImageEnhance.Brightness(background).enhance(0.8)
 
-            # --- Create Foreground Layer (Sharp & Fitted) ---
             foreground = original_img.copy()
-            # thumbnail resizes to fit WITHIN dimensions, maintaining aspect ratio
             foreground.thumbnail(TARGET_SIZE, Image.Resampling.LANCZOS)
 
-            # --- Combine Layers ---
-            # Calculate center position
             bg_w, bg_h = background.size
             fg_w, fg_h = foreground.size
             offset_x = (bg_w - fg_w) // 2
             offset_y = (bg_h - fg_h) // 2
 
-            # Paste foreground onto blurred background (using the background as canvas)
             background.paste(foreground, (offset_x, offset_y))
-
-            # Compress and Save resulting image
-            # optimize=True reduces file size significantly
             background.save(filepath, "JPEG", optimize=True, quality=80)
             return True
         except Exception as e:
             _, _, exc_traceback = sys.exc_info()
             # Extract the line number from the traceback object
             line = exc_traceback.tb_lineno
-            logger.error(f"Image processing failed for {filepath}")
-            logger.error(f"Error on {line=}: {e}")
+            logger.error(
+                f"Image processing failed for {filepath}. Error on {line=}: {e}"
+            )
             return False
-
 
     def download_image(self, item):
         """Downloads vehicle image if it doesn't already exist."""
@@ -264,9 +354,9 @@ class EV_DATA_PARSER:
 
         # Generate filename based on dedup key logic
         # format: oem_name_type_category.jpg
-        safe_oem = self.sanitize_filename(item['oem'])
-        safe_name = self.sanitize_filename(item['name'])
-        filename = f"{safe_oem}_{safe_name}_{item['type']}_{item['category']}.jpg"
+        safe_oem = self.sanitize_filename(item["oem"])
+        safe_name = self.sanitize_filename(item["name"])
+        filename = f'{safe_oem}_{safe_name}_{item["type"]}_{item["category"]}.jpg'
         filepath = os.path.join(self.image_dir, filename)
 
         # Skip if already exists
@@ -289,6 +379,21 @@ class EV_DATA_PARSER:
             logger.error(f"Failed to download image for {item['name']}: {e}")
         return None
 
+    def normalize_scores_within_segment(self):
+        """Normalizes raw scores so the best in each segment represents 100%."""
+        groups = defaultdict(list)
+        for item in self.data:
+            cat = DataUtils.normalize_category(item.get("category", "L1"))
+            groups[cat].append(item)
+
+        for cat, items in groups.items():
+            max_score = max((i.get("segment_score_raw", 0) for i in items), default=1.0)
+            if max_score == 0:
+                max_score = 1.0  # Prevent division by zero
+
+            for item in items:
+                raw = item.get("segment_score_raw", 0)
+                item["segment_score_norm"] = round((raw / max_score) * 100.0, 1)
 
     def fetch_data(self):
         try:
@@ -327,67 +432,68 @@ class EV_DATA_PARSER:
                     model_entry.get("type", ""),
                     model_entry.get("category", ""),
                 )
+
                 if dedup_key not in models_found:
                     models_found[dedup_key] = model_entry
                 else:
-                    # Keep the one with better battery or range
                     existing = models_found[dedup_key]
-                    
                     new_batt = model_entry.get("battery_kwh", 0)
                     old_batt = existing.get("battery_kwh", 0)
-                    
                     new_range = model_entry.get("range_km", 0)
                     old_range = existing.get("range_km", 0)
 
-                    # If the new model is better, replace the old one
-                    if new_batt > old_batt or (new_batt == old_batt and new_range > old_range):
+                    if new_batt > old_batt or (
+                        new_batt == old_batt and new_range > old_range
+                    ):
                         models_found[dedup_key] = model_entry
 
             # Move dictionary values to our main data list
             self.data = list(models_found.values())
 
-            # Image processing and final ranking
+            # Perform cross-dataset normalization
+            self.normalize_scores_within_segment()
+
             for item in self.data:
                 # Handle Image Download
                 filename = self.download_image(item)
                 item["image"] = filename if filename else ""
                 # Remove the raw URL to keep JSON clean
                 item.pop("temp_image_url", None)
-
-                # Calculate Ranking
-                item["rank_score"] = DataUtils.calculate_score(item)
                 item["is_best_in_oem"] = False
 
-            # Identify the winner for each OEM + Type (2W or 3W)
+            # Identify the winner for each OEM + Type using normalized score
             oem_groups = {}
             for item in self.data:
                 key = (item["oem"], item["type"])
-                if key not in oem_groups or item["rank_score"] > oem_groups[key]["rank_score"]:
+                if (
+                    key not in oem_groups
+                    or item["segment_score_norm"]
+                    > oem_groups[key]["segment_score_norm"]
+                ):
                     oem_groups[key] = item
-            
-            # Mark the winners based on ranking
+
             for winner in oem_groups.values():
                 winner["is_best_in_oem"] = True
 
         except Exception as e:
             # Get the traceback object
             _, _, exc_traceback = sys.exc_info()
-            # Extract the line number from the traceback object
             line = exc_traceback.tb_lineno
             logger.error(f"Error on {line=}: {e}")
         finally:
             if self.data:
                 with open("data.json", "w") as f:
                     json.dump(self.data, f, indent=4)
+                logger.info("Saved data.json successfully.")
 
     def get_row_data(self, cells, soup):
         model_entry = None
         try:
-            category_code = cells[5].text.strip().upper()
+            category_code = DataUtils.normalize_category(cells[5].text.strip())
             category_desc = DataUtils.get_category_info(category_code)
             # type is e-2W or e-3W
             type_code = cells[4].text.upper().strip().replace("E-", "")
-            # Basic Mapping
+
             model_entry = {
                 "oem": cells[1].text.strip(),
                 "name": cells[2].text.strip(),
@@ -404,28 +510,25 @@ class EV_DATA_PARSER:
                 modal_id = btn.get("data-target", "").replace("#", "")
                 modal = soup.find("div", id=modal_id)
                 if not modal:
-                    return model_entry
+                    return DataUtils.enrich_item(model_entry)
 
                 # EXTRACT IMAGE URL HERE
                 img_link = modal.find("a", class_="btn-info")
                 if img_link and "image" in img_link.text.lower():
                     model_entry["temp_image_url"] = img_link.get("href")
-                    
+
                 for tr in modal.find_all("tr"):
-                    cells = tr.find_all("td")
-                    if len(cells) == 2:
-                        label = cells[0].text.lower().strip()
-                        val = cells[1].text.strip()
-                        logger.info(f"{model_entry['name']} - {label}: {val}")
-                        # Map every useful label found in your logs
+                    modal_cells = tr.find_all("td")
+                    if len(modal_cells) == 2:
+                        label = modal_cells[0].text.lower().strip()
+                        val = modal_cells[1].text.strip()
+
                         if "range" in label:
                             model_entry["range_km"] = DataUtils.get_float(val)
                         elif "speed" in label:
                             model_entry["max_speed_kmh"] = DataUtils.get_float(val)
                         elif "acceleration" in label:
-                            model_entry["acceleration_ms2"] = DataUtils.get_float(
-                                val
-                            )
+                            model_entry["acceleration_ms2"] = DataUtils.get_float(val)
                         elif "energy consumption" in label:
                             model_entry["efficiency_reported_kwh_100km"] = (
                                 DataUtils.get_float(val)
@@ -433,16 +536,20 @@ class EV_DATA_PARSER:
                         elif "capacity" in label:
                             model_entry["battery_kwh"] = DataUtils.get_float(val)
                         elif "density" in label:
-                            model_entry["battery_density_wh_kg"] = (
-                                DataUtils.get_float(val)
+                            model_entry["battery_density_wh_kg"] = DataUtils.get_float(
+                                val
                             )
+                        # Added extraction for structural weight mapping
+                        elif "gvw" in label or "gross vehicle weight" in label:
+                            model_entry["gvw_kg"] = DataUtils.get_float(val)
+                        elif "kerb" in label or "unladen" in label:
+                            model_entry["kerb_weight_kg"] = DataUtils.get_float(val)
                         elif "valid from" in label:
                             model_entry["valid_from"] = val
                         elif "valid upto" in label:
                             model_entry["valid_upto"] = val
 
-            # Add estimated payload calculations and real-world range
-            return DataUtils.calculate_metrics(model_entry)
+            return DataUtils.enrich_item(model_entry)
 
         except Exception as e:
             logger.error(f"Error processing model entry: {e}")

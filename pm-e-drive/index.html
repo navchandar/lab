@@ -347,7 +347,7 @@
                         v-if="isBest(m, spec.key)"
                         class="fas fa-crown text-[9px]"
                       ></i>
-                      {{ m[spec.key] }}{{ spec.suffix }}
+                      {{ m[spec.key] ? m[spec.key] + spec.suffix : 'N/A' }}
                     </span>
                   </div>
                 </div>
@@ -546,6 +546,11 @@
 
           const comparisonSpecs = [
             {
+              key: "segment_score_norm",
+              label: "Segment Score",
+              suffix: " / 100", // Using the normalized score
+            },
+            {
               key: "est_real_world_range_km",
               label: "Real Range",
               suffix: " km",
@@ -569,6 +574,11 @@
             {
               key: "payload_kg",
               label: "Payload Capacity",
+              suffix: " kg",
+            },
+            {
+              key: "gvw_kg",
+              label: "Gross Vehicle Wt.",
               suffix: " kg",
             },
             {
@@ -616,6 +626,8 @@
               "L1",
               "L2",
               "L5",
+              "L5M", // Added specific CMVR classes
+              "L5N",
               "EV",
               "LR",
               "HR",
@@ -626,6 +638,7 @@
               "MAX",
               "NX",
               "G1",
+              "GVW",
             ];
 
             return str
@@ -680,7 +693,7 @@
           // 2. Filtered Models based on all inputs
           const filteredModels = computed(() => {
             const query = searchQuery.value.toLowerCase();
-            return vehicles.value.filter((v) => {
+            let result = vehicles.value.filter((v) => {
               const typeMatch =
                 filterType.value === "ALL" || v.type === filterType.value;
               const oemMatch =
@@ -688,6 +701,13 @@
               const searchMatch =
                 !query || v.name.toLowerCase().includes(query);
               return typeMatch && oemMatch && searchMatch;
+            });
+
+            // Sort by the new normalized segment score descending (Best at the top)
+            return result.sort((a, b) => {
+              const scoreA = a.segment_score_norm || 0;
+              const scoreB = b.segment_score_norm || 0;
+              return scoreB - scoreA;
             });
           });
 
@@ -722,9 +742,18 @@
           function isBest(m, key) {
             if (selectedModels.value.length < 2) return false;
             const spec = comparisonSpecs.find((s) => s.key === key);
-            const vals = selectedModels.value.map((x) => x[key]);
-            const target = spec.reverse ? Math.min(...vals) : Math.max(...vals);
-            return m[key] === target;
+
+            // Protect against undefined values when comparing
+            const validVals = selectedModels.value
+              .map((x) => x[key])
+              .filter((val) => val !== null && val !== undefined && val !== "");
+
+            if (validVals.length === 0) return false;
+
+            const target = spec.reverse
+              ? Math.min(...validVals)
+              : Math.max(...validVals);
+            return m[key] === target && m[key] !== undefined && m[key] !== null;
           }
 
           // --- Chart Engine ---
