@@ -1,5 +1,5 @@
 
-<h1><a href="https://navchandar.github.io/lab/" target="_blank">Lab Repository</a></h1>
+<h1><a href="https://github.com/navchandar/lab/" target="_blank">Lab Repository</a></h1>
 
 This Repo for creative tools, experiments and interactive web apps for learning. 
 
@@ -7,7 +7,7 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 
 ## Project Index
 
-### Learning
+### [Learning](https://navchandar.github.io/lab/)
 
 | Project | Description | Progress |
 |--------|-------------|----------|
@@ -25,7 +25,8 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 📅 **Days And Months** | Learn days of the week and months of the year with animations and sounds. | ⬜⬜⬜⬜⬜ 0% |
 | 🌍 <a href="https://navchandar.github.io/lab/world/" target="_blank">**World Explorer**</a>  | Learn country names, flags, and capitals with a simple quiz mode. | 🟩🟩🟩🟩🟩 100% |
 
-### Tools
+
+### [Tools](https://navchandar.github.io/lab/#tools)
 
 | Project | Description | Progress |
 |--------|-------------|----------|

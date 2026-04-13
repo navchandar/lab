@@ -10,8 +10,12 @@ const IGNORED_DIRS = [
   ".github",
   "config",
   "node_modules",
+  "__pycache__",
   "Lychee",
   "stefanzweifel",
+];
+
+const HIDDEN_TOOLS = [
   "ip",
   "jobs",
   "company",
@@ -23,6 +27,7 @@ const IGNORED_DIRS = [
   "polyforge",
   "whistle-counter",
 ];
+
 const IGNORED_FILES = [
   "build-pwa.js",
   "service-worker.js",
@@ -56,7 +61,7 @@ const versionString = `v${yr}.${mon}.${date}`;
 
 console.log(`Version: ${versionString}`);
 
-// --- 1. Generate index.html ---
+// --- Generate index.html ---
 
 // Extract favicon path or base64 from index.html
 function getFavicon(appDir) {
@@ -132,7 +137,12 @@ function generateIndexHtml() {
         ? `<img src="${favicon}" alt="${displayName} icon" class="favicon">`
         : "";
 
-      return `            <li><a href="${appName}/index.html" title="${displayName}" target="appFrame">${faviconImg}${displayName}</a></li>`;
+      // Check if this app is a hidden tool
+      const isHidden = HIDDEN_TOOLS.includes(appName);
+      const liClass = isHidden
+        ? 'class="hidden-tool" style="display: none;"'
+        : "";
+      return `      <li ${liClass}><a href="${appName}/index.html" title="${displayName}" target="appFrame">${faviconImg}${displayName}</a></li>`;
     })
     .join("\n");
 
@@ -190,7 +200,7 @@ ${appLinks}
   console.log("✅ index.html generated successfully.");
 }
 
-// --- 2. Generate service-worker.js ---
+// --- Generate service-worker.js ---
 
 // Recursive function to get all file paths in a directory
 function getAllFiles(dirPath, arrayOfFiles = []) {
