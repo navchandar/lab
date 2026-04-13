@@ -22,26 +22,25 @@ let appLinks = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeAppUI();
-  unlockDevTools();
+  updateAppLinks();
   registerServiceWorker();
 });
 
-function unlockDevTools() {
+function updateAppLinks() {
   // Check if the URL has ?tools=true or ends with #tools
   const urlParams = new URLSearchParams(window.location.search);
   const showTools =
     urlParams.get("tools") === "true" || window.location.hash === "#tools";
+  // Select all list items inside the app links container
+  const allLinks = document.querySelectorAll("#app-links li");
+  if (!allLinks) {
+    console.warn("App links not found in the sidebar!");
+  }
 
   if (showTools) {
-    // Select all list items inside the app links container
-    const allLinks = document.querySelectorAll("#app-links li");
-    if (!allLinks) {
-      console.warn("App links not found in the sidebar!");
-    }
-
     allLinks.forEach((li) => {
-      // Check if this specific list item has the hidden-tool class
-      if (li.classList.contains("hidden-tool")) {
+      // Check if this specific list item has the hidden tool class
+      if (li.classList.contains("tool")) {
         // Show the tools
         li.style.display = "flex";
       } else {
@@ -49,8 +48,19 @@ function unlockDevTools() {
         li.style.display = "none";
       }
     });
-
-    console.log("🛠️ Developer tools unlocked!");
+    console.log("Developer tools displayed!");
+  } else {
+    allLinks.forEach((li) => {
+      // Check if this specific list item has the game class
+      if (li.classList.contains("game")) {
+        // Show the games
+        li.style.display = "flex";
+      } else {
+        // Hide the tools
+        li.style.display = "none";
+      }
+    });
+    console.log("Game links displayed!");
   }
 }
 

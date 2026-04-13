@@ -140,8 +140,8 @@ function generateIndexHtml() {
       // Check if this app is a hidden tool
       const isHidden = HIDDEN_TOOLS.includes(appName);
       const liClass = isHidden
-        ? 'class="hidden-tool" style="display: none;"'
-        : "";
+        ? 'class="tool" style="display: none;"'
+        : 'class="game" style="display: none;"';
       return `      <li ${liClass}><a href="${appName}/index.html" title="${displayName}" target="appFrame">${faviconImg}${displayName}</a></li>`;
     })
     .join("\n");
