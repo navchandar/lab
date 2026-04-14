@@ -149,9 +149,9 @@ function getHybridTrendData(rawData) {
       const key =
         type === "month"
           ? date.toLocaleDateString("en-IN", {
-              month: "short",
-              year: "numeric",
-            })
+            month: "short",
+            year: "numeric",
+          })
           : `Week of ${new Date(date.setDate(date.getDate() - date.getDay())).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
 
       if (!acc[key]) {
@@ -520,7 +520,7 @@ function updateMomentumUI(momentum) {
   const priv = momentum.private_avg_30d_chg;
   if (pub && pub > 0 && priv && priv > 0) {
     container.innerHTML = `
-        <div class="momentum-card">
+        <div class="momentum-card" style="text-align: center;">
             <span>Public Market Momentum: <strong>${pub > 0 ? "+" : ""}${pub}%</strong></span>
             <span>Private Market Momentum: <strong>${priv > 0 ? "+" : ""}${priv}%</strong></span>
         </div>
@@ -617,10 +617,11 @@ const workerLogic = `
 
   function getGrowthTitle(item) {
     const parts = [];
-    if (item["Δ_30d"] !== null && item["Δ_30d"] !== undefined) parts.push("30d: " + item["Δ_30d"] + "%");
-    if (item["Δ_90d"] !== null && item["Δ_90d"] !== undefined) parts.push("90d: " + item["Δ_90d"] + "%");
-    if (item["Δ_365d"] !== null && item["Δ_365d"] !== undefined) parts.push("1yr: " + item["Δ_365d"] + "%");
-    return parts.length > 0 ? "Growth Trend | " + parts.join(" • ") : "";
+    if (item["Δ_10d"] !== null && item["Δ_10d"] !== undefined) parts.push("Δ10d: " + item["Δ_10d"] + "%");
+    if (item["Δ_30d"] !== null && item["Δ_30d"] !== undefined) parts.push("Δ30d: " + item["Δ_30d"] + "%");
+    if (item["Δ_90d"] !== null && item["Δ_90d"] !== undefined) parts.push("Δ90d: " + item["Δ_90d"] + "%");
+    if (item["Δ_365d"] !== null && item["Δ_365d"] !== undefined) parts.push("Δ1yr: " + item["Δ_365d"] + "%");
+    return parts.length > 0 ? "Growth Trend = " + parts.join("  |  ") : "";
   }
 
   self.onmessage = async function(e) {

@@ -43,6 +43,7 @@ avoid_words = [
     "secret",
     "hidden",
     "study from",
+    "anonymous",
 ]
 guest_job_url = "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -243,46 +244,73 @@ class GrowthAnalytics:
         return history
 
     @staticmethod
+    def _parse_date(date_str: str) -> datetime:
+        """Helper to ensure all dates are UTC aware for comparison."""
+        return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+
+    @staticmethod
     def get_trend(history: dict, handle: str, days: int) -> Optional[float]:
         """Calculates growth % over a period with noise filters."""
         company_history = history.get(handle, [])
         if len(company_history) < 2:
             return None
 
-        latest = company_history[-1]
-        target_date = now - timedelta(days=days)
+        latest_record = company_history[-1]
+        latest_dt = GrowthAnalytics._parse_date(latest_record["d"])
+        # Prevent calculations for tiny teams where small changes cause massive % swings
+        if latest_record["c"] < MIN_GROWTH_THRESHOLD:
+            return None
 
-        # Find nearest historical record
+        # Define an acceptable look-back window.
+        # For 30 days, accept records between 22 and 45 days old.
+        min_days = days * 0.8
+        max_days = days * 1.5
+        valid_past_records = []
+
         try:
-            past = min(
-                company_history,
-                key=lambda x: abs(
-                    (datetime.strptime(x["d"], "%Y-%m-%d") - target_date).days
-                ),
-            )
-            days_diff = (
-                datetime.strptime(latest["d"], "%Y-%m-%d")
-                - datetime.strptime(past["d"], "%Y-%m-%d")
-            ).days
+            for r in company_history:
+                r_dt = GrowthAnalytics._parse_date(r["d"])
+                diff = (latest_dt - r_dt).days
+                if min_days <= diff <= max_days:
+                    valid_past_records.append((r, diff))
 
-            if days_diff < (days * 0.8) or latest["c"] < MIN_GROWTH_THRESHOLD:
+            # If no records exist within the acceptable window, we don't have enough data
+            if not valid_past_records:
+                # logger.info(f"No valid past records for {handle} in {days}days")
                 return None
+            # From the valid records, pick the one closest to exactly 'days' ago
+            past_record, _ = min(valid_past_records, key=lambda x: abs(x[1] - days))
 
-            change = latest["c"] - past["c"]
-            # Noise Filter: Ignore changes < 3 people or < 0.5%
-            growth = (change / past["c"]) * 100
-            if abs(change) < 3 or abs(growth) < 0.5:
+            past_count = past_record["c"]
+            current_count = latest_record["c"]
+            # Prevent division by zero
+            if past_count == 0:
+                # logger.info(f"Past count = 0 for {handle}")
+                return 0.0
+            change = current_count - past_count
+            growth = (change / past_count) * 100
+
+            # Noise Filter: Ignore changes < 3 people or < 0.01%
+            growth = (change / past_record["c"]) * 100
+            if abs(change) < 3 or abs(growth) < 0.01:
+                # logger.info(f"Noise Filter: Ignored changes <3 or <0.01% for {handle} in {days}days")
                 return 0.0
 
             return round(growth, 2)
-        except Exception:
+        except Exception as e:
+            logger.error(f"Trend calculation error for {handle}: {e}")
             return None
 
     @staticmethod
     def generate_sparkline_svg(item: Dict) -> Optional[str]:
         """Generates a compact, theme-aware SVG sparkline string."""
         # Get trends: [Yearly, 90d, 30d]
-        points_raw = [item.get("Δ_365d"), item.get("Δ_90d"), item.get("Δ_30d")]
+        points_raw = [
+            item.get("Δ_365d"),
+            item.get("Δ_90d"),
+            item.get("Δ_30d"),
+            item.get("Δ_10d"),
+        ]
 
         # If no data is available for all, return None
         if not any(p is not None for p in points_raw):
@@ -293,30 +321,32 @@ class GrowthAnalytics:
             random.randint(0, 999)
         )
         grad_id = f"grad-{handle}"
-
         points = [p if p is not None else 0.0 for p in points_raw]
 
-        def normalize(val) -> int:
+        def normalize(val) -> float:
+            # Use float to work with rounding differences
             return max(0, min(20, 10 - (val / 5)))
 
-        coords = [f"{i * 20},{normalize(p)}" for i, p in enumerate(points)]
+        # Dynamic Width: 20 units per segment
+        x_step = 20
+        svg_width = (len(points) - 1) * x_step
+
+        coords = [f"{i * x_step},{normalize(p)}" for i, p in enumerate(points)]
         path_data = "M " + " L ".join(coords)
 
         # Determine colors for each stop in the gradient
         # Left (365d), Middle (90d), Right (30d)
         colors = ["#22c55e" if (p or 0) >= 0 else "#ef4444" for p in points]
+        # Generate evenly spaced gradient stops automatically
+        stops = []
+        for i, color in enumerate(colors):
+            pct = int((i / (len(points) - 1)) * 100)
+            stops.append(f"<stop offset='{pct}%' stop-color='{color}' />")
+        stops_str = "\n".join(stops)
 
-        return f"""<svg class='sparkline' viewBox='0 0 40 20' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'>
-                    <defs>
-                    <linearGradient id='{grad_id}' x1='0%' y1='0%' x2='100%' y2='0%'>
-                        <stop offset='0%' stop-color='{colors[0]}' />
-                        <stop offset='50%' stop-color='{colors[1]}' />
-                        <stop offset='100%' stop-color='{colors[2]}' />
-                    </linearGradient>
-                    </defs>
-                    <path d='{path_data}' fill='none' stroke='url(#{grad_id})' 
-                    stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>
-                </svg>"""
+        return f"""<svg class='sparkline' viewBox='0 0 {svg_width} 20' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'>
+<defs><linearGradient id='{grad_id}' x1='0%' y1='0%' x2='100%' y2='0%'>{stops_str}</linearGradient></defs>
+<path d='{path_data}' fill='none' stroke='url(#{grad_id})' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"""
 
     @staticmethod
     def aggregate_global_history() -> None:
@@ -1283,16 +1313,9 @@ class DataCoordinator:
                 continue
 
             ln_count = clean.get("ln_count")
-            # Log History & Calculate Trends
+            # Log History for Calculating Trends
             if handle and ln_count and str(ln_count).isdigit():
                 history = GrowthAnalytics.log_headcount(history, handle, int(ln_count))
-                if trend_30 := GrowthAnalytics.get_trend(history, handle, 30):
-                    clean["Δ_30d"] = trend_30
-                if trend_90 := GrowthAnalytics.get_trend(history, handle, 90):
-                    clean["Δ_90d"] = trend_90
-                if trend_365 := GrowthAnalytics.get_trend(history, handle, 365):
-                    clean["Δ_365d"] = trend_365
-                clean["sparkline"] = GrowthAnalytics.generate_sparkline_svg(clean)
 
             # Merge based on Handle
             if handle in data_map:
@@ -1351,6 +1374,48 @@ class DataCoordinator:
         return len(final)
 
     @staticmethod
+    def update_all_trends() -> None:
+        """Calculates employee count trends and sparklines for ALL companies."""
+        logger.info("Calculating historical trends")
+
+        if not DATA_FILE.exists() or not HISTORY_FILE.exists():
+            logger.warning("Missing data or history files. Skipping trend calculation!")
+            return
+
+        companies = DataCoordinator._load_data_file()
+        history = GrowthAnalytics._load_history_file()
+
+        for company in companies:
+            handle = LnSearch.get_handle(company.get("linkedin", ""))
+            if not handle:
+                continue
+
+            # Recalculate all trends
+            for period, key in [
+                (10, "Δ_10d"),
+                (30, "Δ_30d"),
+                (90, "Δ_90d"),
+                (365, "Δ_365d"),
+            ]:
+                val = GrowthAnalytics.get_trend(history, handle, period)
+                if val is not None:
+                    company[key] = val
+                else:
+                    company.pop(key, None)  # Clear out stale trends
+
+            # Update sparkline
+            spark = GrowthAnalytics.generate_sparkline_svg(company)
+            if spark:
+                company["sparkline"] = spark
+            else:
+                company.pop("sparkline", None)
+
+        # Save back to disk once
+        with open(DATA_FILE, "w") as f:
+            json.dump(companies, f, indent=2)
+        logger.info("Global trend recalculation complete!")
+
+    @staticmethod
     def append_github_step_summary() -> None:
         """Append Markdown or plain text to the GitHub Actions job summary"""
         path = os.environ.get("GITHUB_STEP_SUMMARY")
@@ -1360,7 +1425,7 @@ class DataCoordinator:
             except OSError as e:
                 print(f"Error writing summary: {e}", flush=True)
         else:
-            print("GITHUB_STEP_SUMMARY not found")
+            logger.warning("GITHUB_STEP_SUMMARY not found")
 
     @staticmethod
     def run() -> None:
@@ -1371,9 +1436,11 @@ class DataCoordinator:
 
         # Discover URLs
         url_list = DataCoordinator._get_target_urls()
-        # Process URLs and save data
+        # # Process URLs and save data
         DataCoordinator.process_urls(url_list, TIME_LIMIT)
 
+        # Calculate trends for all companies
+        DataCoordinator.update_all_trends()
         # Calculate the Global Index after all companies are updated
         GrowthAnalytics.aggregate_global_history()
         # Generate the frontend-ready chart data
