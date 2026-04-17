@@ -245,7 +245,9 @@ function getPathData() {
   }
 
   const val = elements.customSvg.value.trim();
-  if (!val) return null;
+  if (!val) {
+    return null;
+  }
 
   // If user pasted raw HTML/SVG
   if (val.includes("<svg") || val.includes("<path") || val.includes("<rect")) {
@@ -271,7 +273,9 @@ function getPathData() {
           node.getAttribute("fill") !== "transparent",
       );
 
-      if (shapeNodes.length === 0) return null;
+      if (shapeNodes.length === 0) {
+        return null;
+      }
 
       // Convert every SVG primitive into standard 'd' string math
       const combinedPath = shapeNodes
@@ -304,10 +308,14 @@ function getPathData() {
               .trim();
             const pts = rawPoints.split(/[\s,]+/).filter((p) => p !== "");
 
-            if (pts.length < 2) return "";
+            if (pts.length < 2) {
+              return "";
+            }
             let d = `M ${pts[0]} ${pts[1]} `;
             for (let i = 2; i < pts.length; i += 2) {
-              if (pts[i] && pts[i + 1]) d += `L ${pts[i]} ${pts[i + 1]} `;
+              if (pts[i] && pts[i + 1]) {
+                d += `L ${pts[i]} ${pts[i + 1]} `;
+              }
             }
             return tag === "polygon" ? d + "Z" : d;
           }
@@ -345,8 +353,9 @@ function render() {
   try {
     // Parse Path and Math
     const mathEngine = new SVGMathEngine(pathData);
-    if (mathEngine.segments.length === 0)
+    if (mathEngine.segments.length === 0) {
       throw new Error("No valid segments found.");
+    }
 
     elements.svgWarning.style.display = "none";
     const totalLen = mathEngine.totalLength;
@@ -401,14 +410,18 @@ function render() {
       seg.pointsToPlace = Math.floor(
         (seg.length / totalLen) * (target - structuralMin),
       );
-      if (seg.pointsToPlace < 0) seg.pointsToPlace = 0;
+      if (seg.pointsToPlace < 0) {
+        seg.pointsToPlace = 0;
+      }
       pointsLeftToDistribute -= seg.pointsToPlace;
     });
 
     const sortedByLength = [...segmentData].sort((a, b) => b.length - a.length);
     while (pointsLeftToDistribute > 0) {
       for (let seg of sortedByLength) {
-        if (pointsLeftToDistribute <= 0) break;
+        if (pointsLeftToDistribute <= 0) {
+          break;
+        }
         seg.pointsToPlace++;
         pointsLeftToDistribute--;
       }
@@ -638,10 +651,18 @@ class SVGMathEngine {
   }
 
   updateBounds(x, y) {
-    if (x < this.minX) this.minX = x;
-    if (x > this.maxX) this.maxX = x;
-    if (y < this.minY) this.minY = y;
-    if (y > this.maxY) this.maxY = y;
+    if (x < this.minX) {
+      this.minX = x;
+    }
+    if (x > this.maxX) {
+      this.maxX = x;
+    }
+    if (y < this.minY) {
+      this.minY = y;
+    }
+    if (y > this.maxY) {
+      this.maxY = y;
+    }
   }
 
   parse(d) {
@@ -669,8 +690,12 @@ class SVGMathEngine {
         i++;
       } else {
         cmd = lastCmd;
-        if (cmd === "M") cmd = "L";
-        if (cmd === "m") cmd = "l";
+        if (cmd === "M") {
+          cmd = "L";
+        }
+        if (cmd === "m") {
+          cmd = "l";
+        }
       }
 
       const upCmd = cmd.toUpperCase();
@@ -709,7 +734,9 @@ class SVGMathEngine {
         this.updateBounds(x, y);
       } else if (upCmd === "H") {
         let nx = parseFloat(tokens[i++]);
-        if (isRelative) nx += x;
+        if (isRelative) {
+          nx += x;
+        }
         this.addSegment(new LineSegment(x, y, nx, y));
         x = nx;
         lastCx = x;
@@ -717,7 +744,9 @@ class SVGMathEngine {
         this.updateBounds(x, y);
       } else if (upCmd === "V") {
         let ny = parseFloat(tokens[i++]);
-        if (isRelative) ny += y;
+        if (isRelative) {
+          ny += y;
+        }
         this.addSegment(new LineSegment(x, y, x, ny));
         y = ny;
         lastCx = x;
@@ -888,9 +917,12 @@ class SVGMathEngine {
   }
 
   getPointAtLength(distance) {
-    if (distance <= 0) return this.segments[0].getPoint(0);
-    if (distance >= this.totalLength)
+    if (distance <= 0) {
+      return this.segments[0].getPoint(0);
+    }
+    if (distance >= this.totalLength) {
       return this.segments[this.segments.length - 1].getPoint(1);
+    }
 
     let currentDist = 0;
     for (let seg of this.segments) {
@@ -961,7 +993,9 @@ function svgArcToCubicBezier(
   x1,
   y1,
 ) {
-  if (x0 === x1 && y0 === y1) return [];
+  if (x0 === x1 && y0 === y1) {
+    return [];
+  }
 
   const phi = (xAxisRot * Math.PI) / 180;
   const cosPhi = Math.cos(phi);
@@ -1004,7 +1038,9 @@ function svgArcToCubicBezier(
     const dot = ux * vx + uy * vy;
     const len = Math.sqrt(ux * ux + uy * uy) * Math.sqrt(vx * vx + vy * vy);
     let ang = Math.acos(Math.max(-1, Math.min(1, dot / len)));
-    if (ux * vy - uy * vx < 0) ang = -ang;
+    if (ux * vy - uy * vx < 0) {
+      ang = -ang;
+    }
     return ang;
   };
 
@@ -1016,8 +1052,12 @@ function svgArcToCubicBezier(
   let theta1 = angle(1, 0, ux, uy);
   let dTheta = angle(ux, uy, vx, vy);
 
-  if (sweepFlag === 0 && dTheta > 0) dTheta -= 2 * Math.PI;
-  if (sweepFlag === 1 && dTheta < 0) dTheta += 2 * Math.PI;
+  if (sweepFlag === 0 && dTheta > 0) {
+    dTheta -= 2 * Math.PI;
+  }
+  if (sweepFlag === 1 && dTheta < 0) {
+    dTheta += 2 * Math.PI;
+  }
 
   // Split the arc into 90-degree segments max for smooth curves
   const segments = Math.max(1, Math.ceil(Math.abs(dTheta) / (Math.PI / 2)));
