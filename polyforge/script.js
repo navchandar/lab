@@ -149,172 +149,385 @@ const SHAPE_LIB = {
 
 // DOM Elements
 const elements = {
+  tabPreset: document.getElementById("tab-preset"),
+  tabCustom: document.getElementById("tab-custom"),
+  presetBlock: document.getElementById("preset-block"),
+  customBlock: document.getElementById("custom-block"),
+  customSvg: document.getElementById("custom-svg"),
+  svgWarning: document.getElementById("svg-warning"),
   select: document.getElementById("shape-select"),
   points: document.getElementById("point-count"),
-  engine: document.getElementById("engine"),
   canvas: document.getElementById("canvas-shape"),
   output: document.getElementById("output-code"),
   copy: document.getElementById("copy-btn"),
   copysvg: document.getElementById("copy-svg-btn"),
 };
 
+let currentMode = "preset";
+let debounceTimer;
+let lastPathData = null;
+let customViewBox = null;
+
 /**
  * Initialization Logic
  */
 function init() {
-  try {
-    // Populate Select dropdown values
-    const shapeNames = Object.keys(SHAPE_LIB);
-    const options = shapeNames.map((name) => new Option(name, name));
-    elements.select.append(...options);
+  const shapeNames = Object.keys(SHAPE_LIB);
+  const options = shapeNames.map((name) => new Option(name, name));
+  elements.select.append(...options);
 
-    // Event Listeners
-    elements.select.addEventListener("change", handleShapeChange);
-    elements.points.addEventListener("input", render);
-    elements.copy.addEventListener("click", copyClipPath);
-    elements.copysvg.addEventListener("click", copySvgToClipboard);
+  // Event Listeners
+  elements.tabPreset.addEventListener("click", () => switchTab("preset"));
+  elements.tabCustom.addEventListener("click", () => switchTab("custom"));
+  elements.select.addEventListener("change", handleShapeChange);
+  // Real-time render while typing
+  elements.points.addEventListener("input", render);
+  // Gentle UI clamp: Only forces the minimum into the box when the user clicks away
+  elements.points.addEventListener("blur", () => {
+    let val = parseInt(elements.points.value);
+    let min = parseInt(elements.points.min);
+    if (isNaN(val) || val < min) {
+      elements.points.value = min;
+      render();
+    }
+  });
+  // Copy icons
+  elements.copy.addEventListener("click", copyClipPath);
+  elements.copysvg.addEventListener("click", copySvgToClipboard);
 
-    // Default State - Use the first key in the object
-    elements.select.value = shapeNames[0];
-    handleShapeChange(); // This will trigger the first render
-  } catch (e) {
-    console.error("Initialization Failed:", e);
+  // Custom SVG Input with Debounce
+  elements.customSvg.addEventListener("input", () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(render, 300);
+  });
+
+  elements.select.value = shapeNames[0];
+  handleShapeChange();
+}
+
+function switchTab(mode) {
+  currentMode = mode;
+  if (mode === "preset") {
+    elements.tabPreset.classList.add("active");
+    elements.tabCustom.classList.remove("active");
+    elements.presetBlock.classList.remove("hidden");
+    elements.customBlock.classList.add("hidden");
+    elements.svgWarning.style.display = "none";
+    handleShapeChange();
+  } else {
+    elements.tabCustom.classList.add("active");
+    elements.tabPreset.classList.remove("active");
+    elements.customBlock.classList.remove("hidden");
+    elements.presetBlock.classList.add("hidden");
+    render();
   }
 }
 
-/**
- * Handles updating UI when a new shape is chosen
- */
 function handleShapeChange() {
-  const config = SHAPE_LIB[elements.select.value];
-  elements.points.min = config.min;
-
-  // Only reset value if current value is invalid for new shape
-  if (parseInt(elements.points.value) < config.min || !elements.points.value) {
-    elements.points.value = config.min;
+  if (currentMode !== "preset") {
+    return;
   }
   render();
 }
 
 /**
+ * Parses user input. Extracts 'd' if they pasted a whole <svg> block.
  * High-Precision Vertex and SVG sampling to generate polygon points
  * Optimized for shape retention and auto-clamping
  * Automatically detects sharp corners and smoothly traverses curves.
+ * Automatically converts primitive shapes (rect, circle, polygon) to paths.
  */
-function render() {
-  const shape = SHAPE_LIB[elements.select.value];
-  let target = parseInt(elements.points.value);
+function getPathData() {
+  customViewBox = null; // Reset it on every parse
 
-  // Validation & Auto-clamp
-  if (isNaN(target) || target < shape.min) {
-    target = shape.min;
-    elements.points.value = target;
+  if (currentMode === "preset") {
+    return SHAPE_LIB[elements.select.value].d;
   }
 
-  // Initialize our Pure Math Engine
-  const mathEngine = new SVGMathEngine(shape.d);
-  const totalLen = mathEngine.totalLength;
+  const val = elements.customSvg.value.trim();
+  if (!val) return null;
 
-  // Extract Exact Mathematical Corners (The AST Junctions)
-  const segments = [];
-  let currentDist = 0;
+  // If user pasted raw HTML/SVG
+  if (val.includes("<svg") || val.includes("<path") || val.includes("<rect")) {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(val, "image/svg+xml");
 
-  for (let seg of mathEngine.segments) {
-    segments.push({
-      startDist: currentDist,
-      endDist: currentDist + seg.length,
-      length: seg.length,
-      pointsToPlace: 0,
-      startX: seg.getPoint(0).x,
-      startY: seg.getPoint(0).y,
-    });
-    currentDist += seg.length;
-  }
-
-  // Exact Point Distribution
-  let pointsLeftToDistribute = target - segments.length;
-
-  // First Pass: Floor allocation
-  segments.forEach((seg) => {
-    const share = (seg.length / totalLen) * (target - segments.length);
-    seg.pointsToPlace = Math.floor(share);
-    pointsLeftToDistribute -= seg.pointsToPlace;
-  });
-
-  // Second Pass: Remainder distribution via sorting
-  const sortedByLength = [...segments].sort((a, b) => b.length - a.length);
-  while (pointsLeftToDistribute > 0) {
-    for (let seg of sortedByLength) {
-      if (pointsLeftToDistribute <= 0) {
-        break;
+      // Extract the explicit viewBox if it exists
+      const svgNode = doc.querySelector("svg");
+      if (svgNode && svgNode.getAttribute("viewBox")) {
+        customViewBox = svgNode
+          .getAttribute("viewBox")
+          .split(/[\s,]+/)
+          .map(parseFloat);
       }
-      seg.pointsToPlace++;
-      pointsLeftToDistribute--;
+
+      // Find all valid shapes, ignoring invisible bounding boxes (fill="none")
+      const shapeNodes = Array.from(
+        doc.querySelectorAll("path, rect, circle, ellipse, polygon, polyline"),
+      ).filter(
+        (node) =>
+          node.getAttribute("fill") !== "none" &&
+          node.getAttribute("fill") !== "transparent",
+      );
+
+      if (shapeNodes.length === 0) return null;
+
+      // Convert every SVG primitive into standard 'd' string math
+      const combinedPath = shapeNodes
+        .map((node) => {
+          const tag = node.tagName.toLowerCase();
+
+          if (tag === "path") {
+            return node.getAttribute("d");
+          } else if (tag === "rect") {
+            const x = parseFloat(node.getAttribute("x")) || 0;
+            const y = parseFloat(node.getAttribute("y")) || 0;
+            const w = parseFloat(node.getAttribute("width")) || 0;
+            const h = parseFloat(node.getAttribute("height")) || 0;
+            return `M ${x} ${y} H ${x + w} V ${y + h} H ${x} Z`;
+          } else if (tag === "circle") {
+            const cx = parseFloat(node.getAttribute("cx")) || 0;
+            const cy = parseFloat(node.getAttribute("cy")) || 0;
+            const r = parseFloat(node.getAttribute("r")) || 0;
+            return `M ${cx - r} ${cy} A ${r} ${r} 0 1 0 ${cx + r} ${cy} A ${r} ${r} 0 1 0 ${cx - r} ${cy} Z`;
+          } else if (tag === "ellipse") {
+            const cx = parseFloat(node.getAttribute("cx")) || 0;
+            const cy = parseFloat(node.getAttribute("cy")) || 0;
+            const rx = parseFloat(node.getAttribute("rx")) || 0;
+            const ry = parseFloat(node.getAttribute("ry")) || 0;
+            return `M ${cx - rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx + rx} ${cy} A ${rx} ${ry} 0 1 0 ${cx - rx} ${cy} Z`;
+          } else if (tag === "polygon" || tag === "polyline") {
+            // Scrub all alphabet letters out of the points array so words like 'evenodd' don't crash the engine
+            const rawPoints = (node.getAttribute("points") || "")
+              .replace(/[a-zA-Z]/g, "")
+              .trim();
+            const pts = rawPoints.split(/[\s,]+/).filter((p) => p !== "");
+
+            if (pts.length < 2) return "";
+            let d = `M ${pts[0]} ${pts[1]} `;
+            for (let i = 2; i < pts.length; i += 2) {
+              if (pts[i] && pts[i + 1]) d += `L ${pts[i]} ${pts[i + 1]} `;
+            }
+            return tag === "polygon" ? d + "Z" : d;
+          }
+          return "";
+        })
+        .join(" "); // Join multiple shapes so the engine treats them as subpaths (holes)
+
+      return combinedPath;
+    } catch (e) {
+      console.warn("DOMParser failed", e);
+      return null;
     }
   }
 
-  // Final Array Construction using Math
-  const finalPoints = [];
-  segments.forEach((seg) => {
-    // Add the Anchor/Corner
-    finalPoints.push(
-      `${parseFloat(seg.startX).toFixed(2)}% ${parseFloat(seg.startY).toFixed(2)}%`,
-    );
-
-    // Add the distributed points along this segment
-    for (let j = 1; j <= seg.pointsToPlace; j++) {
-      const subDist =
-        seg.startDist + (j / (seg.pointsToPlace + 1)) * seg.length;
-      // Get coordinates directly from JS Memory, no DOM querying!
-      const pt = mathEngine.getPointAtLength(subDist);
-      finalPoints.push(`${pt.x.toFixed(2)}% ${pt.y.toFixed(2)}%`);
-    }
-  });
-
-  // --- Apply Anti-Twist Alignment ---
-  // const alignedPoints = alignToTopCenter(finalPoints);
-  const alignedPoints = finalPoints;
-
-  // Final Integrity Check
-  if (alignedPoints.length !== target) {
-    console.warn(
-      `Drift detected in Final Points: ${alignedPoints.length} vs Input:${target}!`,
-    );
-  }
-
-  // Update UI using the aligned points
-  const resultStr = `polygon(${alignedPoints.join(", ")})`;
-  elements.canvas.style.clipPath = resultStr;
-  elements.canvas.style.display = "block";
-  elements.output.textContent = `clip-path: ${resultStr};`;
-  console.log("Rendered Shaped:", elements.select.value);
+  // Assume user just pasted a raw "M 50 0 L..." d-string
+  return val;
 }
 
 /**
- * Aligns the polygon array so the point closest to Top-Center (50% 0%) is at Index 0.
- * Prevents "twisting" during CSS clip-path morphing animations.
+ * Render Pipeline
  */
-function alignToTopCenter(points) {
-  let closestIndex = 0;
-  let minDistance = Infinity;
+function render() {
+  const pathData = getPathData();
 
-  for (let i = 0; i < points.length; i++) {
-    // Extract X and Y numbers from the "X% Y%" string
-    const [xStr, yStr] = points[i].replace(/%/g, "").split(" ");
-    const x = parseFloat(xStr);
-    const y = parseFloat(yStr);
-
-    // Calculate distance to 50% 0% (We skip Math.sqrt for performance since we only need relative comparison)
-    const distanceToTopCenter = Math.pow(x - 50, 2) + Math.pow(y - 0, 2);
-
-    if (distanceToTopCenter < minDistance) {
-      minDistance = distanceToTopCenter;
-      closestIndex = i;
-    }
+  if (!pathData && currentMode === "custom") {
+    elements.canvas.style.clipPath = "none";
+    elements.output.textContent = "Awaiting valid SVG input...";
+    return;
   }
 
-  // Rotate the array without losing or scrambling points
-  return [...points.slice(closestIndex), ...points.slice(0, closestIndex)];
+  // Did the actual SVG geometry change since the last render?
+  const isShapeChange = pathData !== lastPathData;
+  lastPathData = pathData;
+
+  try {
+    // Parse Path and Math
+    const mathEngine = new SVGMathEngine(pathData);
+    if (mathEngine.segments.length === 0)
+      throw new Error("No valid segments found.");
+
+    elements.svgWarning.style.display = "none";
+    const totalLen = mathEngine.totalLength;
+
+    // Extract Exact Segments
+    const segmentData = [];
+    let currentDist = 0;
+    for (let seg of mathEngine.segments) {
+      segmentData.push({
+        startDist: currentDist,
+        length: seg.length,
+        pointsToPlace: 0,
+      });
+      currentDist += seg.length;
+    }
+
+    // --- THE DYNAMIC RESET LOGIC ---
+    // Calculate the absolute mathematical minimum needed
+    // Adding 2 points for proximity bridge
+    const slitCount = Math.max(0, mathEngine.subpaths.length - 1) * 2;
+    const structuralMin = segmentData.length + slitCount;
+
+    let requiredMin = structuralMin;
+    if (currentMode === "preset") {
+      requiredMin = Math.max(
+        structuralMin,
+        SHAPE_LIB[elements.select.value].min,
+      );
+    }
+
+    // Update HTML attribute
+    elements.points.min = requiredMin;
+
+    let target = parseInt(elements.points.value);
+
+    // Auto-Reset: If the user just pasted a new SVG or selected a new preset,
+    // immediately reset the input box to show them the new minimum!
+    if (isShapeChange) {
+      target = requiredMin;
+      elements.points.value = target;
+    }
+    // Internal Clamp: Protect the math engine if they are typing a low number,
+    // but don't overwrite the UI box so they can finish typing safely.
+    else if (isNaN(target) || target < requiredMin) {
+      target = requiredMin;
+    }
+
+    // Precise Point Allocation
+    let pointsLeftToDistribute = target - structuralMin;
+
+    segmentData.forEach((seg) => {
+      seg.pointsToPlace = Math.floor(
+        (seg.length / totalLen) * (target - structuralMin),
+      );
+      if (seg.pointsToPlace < 0) seg.pointsToPlace = 0;
+      pointsLeftToDistribute -= seg.pointsToPlace;
+    });
+
+    const sortedByLength = [...segmentData].sort((a, b) => b.length - a.length);
+    while (pointsLeftToDistribute > 0) {
+      for (let seg of sortedByLength) {
+        if (pointsLeftToDistribute <= 0) break;
+        seg.pointsToPlace++;
+        pointsLeftToDistribute--;
+      }
+    }
+
+    // Calculate Custom Bounds
+    let bMinX = mathEngine.minX;
+    let bMinY = mathEngine.minY;
+    let width = mathEngine.maxX - mathEngine.minX;
+    let height = mathEngine.maxY - mathEngine.minY;
+    // If the user pasted an SVG with a viewBox, respect their canvas padding!
+    if (
+      currentMode === "custom" &&
+      customViewBox &&
+      customViewBox.length === 4
+    ) {
+      bMinX = customViewBox[0];
+      bMinY = customViewBox[1];
+      width = customViewBox[2];
+      height = customViewBox[3];
+    }
+
+    if (width === 0) {
+      width = 1;
+    }
+    if (height === 0) {
+      height = 1;
+    }
+
+    // 5. Final Geometry Construction (Handling Holes / Subpaths)
+    const subpathPointArrays = [];
+    let globalSegIndex = 0;
+
+    mathEngine.subpaths.forEach((subpath) => {
+      const currentSubpathPoints = [];
+
+      subpath.forEach((seg) => {
+        const sData = segmentData[globalSegIndex];
+        globalSegIndex++;
+
+        // Anchor
+        let pt = mathEngine.getPointAtLength(sData.startDist);
+        currentSubpathPoints.push(
+          getNormalizedPoint(pt, bMinX, bMinY, width, height),
+        );
+
+        // Sub-segments
+        for (let j = 1; j <= sData.pointsToPlace; j++) {
+          const subDist =
+            sData.startDist + (j / (sData.pointsToPlace + 1)) * sData.length;
+          pt = mathEngine.getPointAtLength(subDist);
+          currentSubpathPoints.push(
+            getNormalizedPoint(pt, bMinX, bMinY, width, height),
+          );
+        }
+      });
+      subpathPointArrays.push(currentSubpathPoints);
+    });
+
+    // --- THE PROXIMITY BRIDGE TECHNIQUE (Anti-Twist/Anti-Crisscross) ---
+    // Start with the primary outer boundary
+    let finalPath = [...subpathPointArrays[0]];
+
+    // Inject all inner holes at their mathematically closest points
+    for (let i = 1; i < subpathPointArrays.length; i++) {
+      const innerPath = subpathPointArrays[i];
+      const innerStart = innerPath[0];
+
+      // Find closest point on the CURRENT accumulated outer path
+      let closestIdx = 0;
+      let minDist = Infinity;
+      for (let j = 0; j < finalPath.length; j++) {
+        const dist = Math.hypot(
+          finalPath[j].x - innerStart.x,
+          finalPath[j].y - innerStart.y,
+        );
+        if (dist < minDist) {
+          minDist = dist;
+          closestIdx = j;
+        }
+      }
+
+      // Split the outer path at the closest vertex
+      const before = finalPath.slice(0, closestIdx + 1);
+      const after = finalPath.slice(closestIdx + 1);
+
+      // Inject: Go to hole -> Trace hole -> Ensure hole is closed -> Bridge back out
+      finalPath = [
+        ...before,
+        ...innerPath,
+        innerStart, // +1 point: Force inner loop closed
+        finalPath[closestIdx], // +1 point: Draw bridge back to the outer wall
+        ...after,
+      ];
+    }
+
+    const finalPointsStr = finalPath.map((p) => p.str);
+
+    // Final Integrity Check
+    if (finalPointsStr.length !== target) {
+      console.warn(
+        `Drift detected in Final Points: ${finalPointsStr.length} vs Input:${target}!`,
+      );
+    }
+
+    // Update UI (Injecting 'evenodd' rule to force hollow cuts)
+    const resultStr = `polygon(evenodd, ${finalPointsStr.join(", ")})`;
+    elements.canvas.style.clipPath = resultStr;
+    elements.canvas.style.display = "block";
+    elements.output.textContent = `clip-path: ${resultStr};`;
+  } catch (e) {
+    console.error("Path Parse Error:", e);
+    if (currentMode === "custom") {
+      elements.svgWarning.textContent = `⚠️ Invalid SVG: ${e.message}`;
+      elements.svgWarning.style.display = "block";
+      elements.canvas.style.clipPath = "none";
+      elements.output.textContent = "Error parsing path.";
+    }
+  }
 }
 
 function copyClipPath() {
@@ -330,6 +543,28 @@ function copyClipPath() {
 }
 
 /**
+ * Returns a normalized point object with both coordinates and CSS string
+ */
+function getNormalizedPoint(pt, minX, minY, w, h) {
+  let px = pt.x;
+  let py = pt.y;
+
+  if (currentMode === "custom") {
+    px = ((px - minX) / w) * 100;
+    py = ((py - minY) / h) * 100;
+  }
+
+  px = Math.max(0, Math.min(100, px));
+  py = Math.max(0, Math.min(100, py));
+
+  return {
+    x: px,
+    y: py,
+    str: `${px.toFixed(2)}% ${py.toFixed(2)}%`,
+  };
+}
+
+/**
  * Serializes the current clip-path into a standard SVG string
  */
 async function copySvgToClipboard() {
@@ -341,14 +576,19 @@ async function copySvgToClipboard() {
 
   try {
     // Extract coordinates: "50% 0%, 100% 100%..." -> "50 0, 100 100..."
-    const pointsRaw = clipPath.replace("polygon(", "").replace(")", "");
+    const pointsRaw = clipPath
+      .replace("polygon(", "")
+      .replace(")", "")
+      .replace("evenodd,", "")
+      .trim();
+
     const svgPoints = pointsRaw
       .split(",")
       .map((p) => p.trim().replace(/%/g, ""))
       .join(" ");
 
     const svgTemplate = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <polygon points="${svgPoints}" fill="currentColor"/>
+    <polygon points="${svgPoints}" fill="currentColor" fill-rule="evenodd"/>
 </svg>`;
 
     await navigator.clipboard.writeText(svgTemplate);
@@ -361,82 +601,300 @@ async function copySvgToClipboard() {
   }
 }
 
+/**
+ * Normalizes wild SVG coordinates into perfect 0-100 CSS percentages
+ */
+function pushNormalizedPoint(pt, arr, engine, w, h) {
+  let px = pt.x;
+  let py = pt.y;
+
+  if (currentMode === "custom") {
+    px = ((px - engine.minX) / w) * 100;
+    py = ((py - engine.minY) / h) * 100;
+  }
+
+  // Clamp edge floating point bugs
+  px = Math.max(0, Math.min(100, px));
+  py = Math.max(0, Math.min(100, py));
+
+  arr.push(`${px.toFixed(2)}% ${py.toFixed(2)}%`);
+}
+
+// ---------------------------------------------------------
+// PURE MATH GEOMETRY ENGINE (AST Parser & Evaluator)
+// ---------------------------------------------------------
+
 class SVGMathEngine {
   constructor(d) {
     this.segments = [];
+    this.subpaths = []; // Tracks inner vs outer shapes
+    this.currentSubpath = [];
     this.totalLength = 0;
+    this.minX = Infinity;
+    this.minY = Infinity;
+    this.maxX = -Infinity;
+    this.maxY = -Infinity;
     this.parse(d);
   }
 
+  updateBounds(x, y) {
+    if (x < this.minX) this.minX = x;
+    if (x > this.maxX) this.maxX = x;
+    if (y < this.minY) this.minY = y;
+    if (y > this.maxY) this.maxY = y;
+  }
+
   parse(d) {
-    // Regex to extract commands and numbers
     const tokens = d.match(
       /[a-zA-Z]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g,
     );
+    if (!tokens) {
+      return;
+    }
+
     let x = 0,
       y = 0,
       startX = 0,
       startY = 0;
+    let lastCx = 0,
+      lastCy = 0; // Memory for Smooth Curves (S & T)
     let i = 0;
+    let lastCmd = "";
 
     while (i < tokens.length) {
-      const cmd = tokens[i++];
-      if (cmd === "M") {
-        x = parseFloat(tokens[i++]);
-        y = parseFloat(tokens[i++]);
-        startX = x;
-        startY = y;
-      } else if (cmd === "L") {
+      let cmd = tokens[i];
+      let isRelative = false;
+
+      if (/[a-zA-Z]/.test(cmd)) {
+        i++;
+      } else {
+        cmd = lastCmd;
+        if (cmd === "M") cmd = "L";
+        if (cmd === "m") cmd = "l";
+      }
+
+      const upCmd = cmd.toUpperCase();
+      isRelative = cmd !== upCmd;
+
+      if (upCmd === "M") {
+        if (this.currentSubpath.length > 0) {
+          this.subpaths.push(this.currentSubpath);
+          this.currentSubpath = [];
+        }
         let nx = parseFloat(tokens[i++]),
           ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          nx += x;
+          ny += y;
+        }
+        x = nx;
+        y = ny;
+        startX = x;
+        startY = y;
+        lastCx = x;
+        lastCy = y;
+        this.updateBounds(x, y);
+      } else if (upCmd === "L") {
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          nx += x;
+          ny += y;
+        }
         this.addSegment(new LineSegment(x, y, nx, ny));
         x = nx;
         y = ny;
-      } else if (cmd === "H") {
+        lastCx = x;
+        lastCy = y;
+        this.updateBounds(x, y);
+      } else if (upCmd === "H") {
         let nx = parseFloat(tokens[i++]);
+        if (isRelative) nx += x;
         this.addSegment(new LineSegment(x, y, nx, y));
         x = nx;
-      } else if (cmd === "V") {
+        lastCx = x;
+        lastCy = y;
+        this.updateBounds(x, y);
+      } else if (upCmd === "V") {
         let ny = parseFloat(tokens[i++]);
+        if (isRelative) ny += y;
         this.addSegment(new LineSegment(x, y, x, ny));
         y = ny;
-      } else if (cmd === "C") {
+        lastCx = x;
+        lastCy = y;
+        this.updateBounds(x, y);
+      } else if (upCmd === "C") {
         let cx1 = parseFloat(tokens[i++]),
           cy1 = parseFloat(tokens[i++]);
         let cx2 = parseFloat(tokens[i++]),
           cy2 = parseFloat(tokens[i++]);
         let nx = parseFloat(tokens[i++]),
           ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          cx1 += x;
+          cy1 += y;
+          cx2 += x;
+          cy2 += y;
+          nx += x;
+          ny += y;
+        }
+
         this.addSegment(new BezierSegment(x, y, cx1, cy1, cx2, cy2, nx, ny));
+        lastCx = cx2;
+        lastCy = cy2; // Save control point
         x = nx;
         y = ny;
-      } else if (cmd === "Z") {
+        this.updateBounds(x, y);
+      } else if (upCmd === "S") {
+        // Smooth Cubic Bezier: Mirrors the previous C/S control point
+        let cx2 = parseFloat(tokens[i++]),
+          cy2 = parseFloat(tokens[i++]);
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          cx2 += x;
+          cy2 += y;
+          nx += x;
+          ny += y;
+        }
+
+        let cx1 = x,
+          cy1 = y;
+        if (lastCmd.toUpperCase() === "C" || lastCmd.toUpperCase() === "S") {
+          cx1 = x + (x - lastCx);
+          cy1 = y + (y - lastCy);
+        }
+
+        this.addSegment(new BezierSegment(x, y, cx1, cy1, cx2, cy2, nx, ny));
+        lastCx = cx2;
+        lastCy = cy2;
+        x = nx;
+        y = ny;
+        this.updateBounds(x, y);
+      } else if (upCmd === "Q") {
+        let cx = parseFloat(tokens[i++]),
+          cy = parseFloat(tokens[i++]);
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          cx += x;
+          cy += y;
+          nx += x;
+          ny += y;
+        }
+
+        let cx1 = x + (2 / 3) * (cx - x),
+          cy1 = y + (2 / 3) * (cy - y);
+        let cx2 = nx + (2 / 3) * (cx - nx),
+          cy2 = ny + (2 / 3) * (cy - ny);
+
+        this.addSegment(new BezierSegment(x, y, cx1, cy1, cx2, cy2, nx, ny));
+        lastCx = cx;
+        lastCy = cy; // Save ORIGINAL Q control point, not converted C point
+        x = nx;
+        y = ny;
+        this.updateBounds(x, y);
+      } else if (upCmd === "T") {
+        // Smooth Quadratic Bezier: Mirrors the previous Q/T control point
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          nx += x;
+          ny += y;
+        }
+
+        let cx = x,
+          cy = y;
+        if (lastCmd.toUpperCase() === "Q" || lastCmd.toUpperCase() === "T") {
+          cx = x + (x - lastCx);
+          cy = y + (y - lastCy);
+        }
+
+        let cx1 = x + (2 / 3) * (cx - x),
+          cy1 = y + (2 / 3) * (cy - y);
+        let cx2 = nx + (2 / 3) * (cx - nx),
+          cy2 = ny + (2 / 3) * (cy - ny);
+
+        this.addSegment(new BezierSegment(x, y, cx1, cy1, cx2, cy2, nx, ny));
+        lastCx = cx;
+        lastCy = cy;
+        x = nx;
+        y = ny;
+        this.updateBounds(x, y);
+      } else if (upCmd === "A") {
+        let rx = Math.abs(parseFloat(tokens[i++]));
+        let ry = Math.abs(parseFloat(tokens[i++]));
+        let xAxisRot = parseFloat(tokens[i++]);
+        let largeArcFlag = parseFloat(tokens[i++]);
+        let sweepFlag = parseFloat(tokens[i++]);
+        let nx = parseFloat(tokens[i++]),
+          ny = parseFloat(tokens[i++]);
+        if (isRelative) {
+          nx += x;
+          ny += y;
+        }
+
+        if (rx === 0 || ry === 0) {
+          this.addSegment(new LineSegment(x, y, nx, ny));
+        } else {
+          const curves = svgArcToCubicBezier(
+            x,
+            y,
+            rx,
+            ry,
+            xAxisRot,
+            largeArcFlag,
+            sweepFlag,
+            nx,
+            ny,
+          );
+          for (let c of curves) {
+            this.addSegment(
+              new BezierSegment(x, y, c.cp1x, c.cp1y, c.cp2x, c.cp2y, c.x, c.y),
+            );
+            x = c.x;
+            y = c.y;
+          }
+        }
+        x = nx;
+        y = ny;
+        lastCx = x;
+        lastCy = y;
+        this.updateBounds(x, y);
+      } else if (upCmd === "Z") {
         this.addSegment(new LineSegment(x, y, startX, startY));
         x = startX;
         y = startY;
+        lastCx = x;
+        lastCy = y;
+      } else {
+        throw new Error(`Unsupported SVG command: ${upCmd}`);
       }
+
+      lastCmd = cmd;
+    }
+
+    if (this.currentSubpath.length > 0) {
+      this.subpaths.push(this.currentSubpath);
     }
   }
 
   addSegment(seg) {
     if (seg.length > 0) {
       this.segments.push(seg);
+      this.currentSubpath.push(seg);
       this.totalLength += seg.length;
     }
   }
 
   getPointAtLength(distance) {
-    if (distance <= 0) {
-      return this.segments[0].getPoint(0);
-    }
-    if (distance >= this.totalLength) {
+    if (distance <= 0) return this.segments[0].getPoint(0);
+    if (distance >= this.totalLength)
       return this.segments[this.segments.length - 1].getPoint(1);
-    }
 
     let currentDist = 0;
     for (let seg of this.segments) {
       if (currentDist + seg.length >= distance) {
-        // Find how far along THIS specific segment we are (from 0.0 to 1.0)
         let t = (distance - currentDist) / seg.length;
         return seg.getPoint(t);
       }
@@ -444,8 +902,6 @@ class SVGMathEngine {
     }
   }
 }
-
-// --- Mathematical Geometry Classes ---
 
 class LineSegment {
   constructor(x0, y0, x1, y1) {
@@ -468,11 +924,9 @@ class BezierSegment {
     this.pts = [x0, y0, cx1, cy1, cx2, cy2, x1, y1];
     this.length = this.calculateLength();
   }
-
-  // Fast 10-step chord approximation for curve length
   calculateLength() {
-    let len = 0;
-    let prev = this.getPoint(0);
+    let len = 0,
+      prev = this.getPoint(0);
     for (let i = 1; i <= 10; i++) {
       let curr = this.getPoint(i / 10);
       len += Math.hypot(curr.x - prev.x, curr.y - prev.y);
@@ -480,17 +934,135 @@ class BezierSegment {
     }
     return len;
   }
-
   getPoint(t) {
     const [x0, y0, cx1, cy1, cx2, cy2, x1, y1] = this.pts;
-    const mt = 1 - t;
-    const mt2 = mt * mt;
-    const t2 = t * t;
+    const mt = 1 - t,
+      mt2 = mt * mt,
+      t2 = t * t;
     return {
       x: x0 * mt2 * mt + 3 * cx1 * mt2 * t + 3 * cx2 * mt * t2 + x1 * t2 * t,
       y: y0 * mt2 * mt + 3 * cy1 * mt2 * t + 3 * cy2 * mt * t2 + y1 * t2 * t,
     };
   }
+}
+
+/**
+ * Converts an SVG Elliptical Arc to an array of Cubic Bezier curves.
+ * Required to support wild SVGs using 'A' or 'a' commands.
+ */
+function svgArcToCubicBezier(
+  x0,
+  y0,
+  rx,
+  ry,
+  xAxisRot,
+  largeArcFlag,
+  sweepFlag,
+  x1,
+  y1,
+) {
+  if (x0 === x1 && y0 === y1) return [];
+
+  const phi = (xAxisRot * Math.PI) / 180;
+  const cosPhi = Math.cos(phi);
+  const sinPhi = Math.sin(phi);
+
+  const dx = (x0 - x1) / 2;
+  const dy = (y0 - y1) / 2;
+  const x1p = cosPhi * dx + sinPhi * dy;
+  const y1p = -sinPhi * dx + cosPhi * dy;
+
+  let rxSq = rx * rx;
+  let rySq = ry * ry;
+  const x1pSq = x1p * x1p;
+  const y1pSq = y1p * y1p;
+
+  // Scale radii up if they are mathematically too small to reach the target point
+  let lambda = x1pSq / rxSq + y1pSq / rySq;
+  if (lambda > 1) {
+    const root = Math.sqrt(lambda);
+    rx *= root;
+    ry *= root;
+    rxSq = rx * rx;
+    rySq = ry * ry;
+  }
+
+  let sign = largeArcFlag === sweepFlag ? -1 : 1;
+  let num = rxSq * rySq - rxSq * y1pSq - rySq * x1pSq;
+  let den = rxSq * y1pSq + rySq * x1pSq;
+  let sq = num / den;
+  sq = sq < 0 ? 0 : sq;
+  let coef = sign * Math.sqrt(sq);
+
+  const cxp = coef * ((rx * y1p) / ry);
+  const cyp = coef * (-(ry * x1p) / rx);
+
+  const cx = cosPhi * cxp - sinPhi * cyp + (x0 + x1) / 2;
+  const cy = sinPhi * cxp + cosPhi * cyp + (y0 + y1) / 2;
+
+  const angle = (ux, uy, vx, vy) => {
+    const dot = ux * vx + uy * vy;
+    const len = Math.sqrt(ux * ux + uy * uy) * Math.sqrt(vx * vx + vy * vy);
+    let ang = Math.acos(Math.max(-1, Math.min(1, dot / len)));
+    if (ux * vy - uy * vx < 0) ang = -ang;
+    return ang;
+  };
+
+  const ux = (x1p - cxp) / rx;
+  const uy = (y1p - cyp) / ry;
+  const vx = (-x1p - cxp) / rx;
+  const vy = (-y1p - cyp) / ry;
+
+  let theta1 = angle(1, 0, ux, uy);
+  let dTheta = angle(ux, uy, vx, vy);
+
+  if (sweepFlag === 0 && dTheta > 0) dTheta -= 2 * Math.PI;
+  if (sweepFlag === 1 && dTheta < 0) dTheta += 2 * Math.PI;
+
+  // Split the arc into 90-degree segments max for smooth curves
+  const segments = Math.max(1, Math.ceil(Math.abs(dTheta) / (Math.PI / 2)));
+  dTheta /= segments;
+
+  const curves = [];
+  let currentTheta = theta1;
+
+  for (let i = 0; i < segments; i++) {
+    const t0 = currentTheta;
+    const t1 = currentTheta + dTheta;
+    const alpha = (4 / 3) * Math.tan(dTheta / 4);
+
+    const p0 = [Math.cos(t0), Math.sin(t0)];
+    const p1 = [Math.cos(t1), Math.sin(t1)];
+
+    const cp1 = [p0[0] - p0[1] * alpha, p0[1] + p0[0] * alpha];
+    const cp2 = [p1[0] + p1[1] * alpha, p1[1] - p1[0] * alpha];
+
+    const map = (p) => [
+      cosPhi * (rx * p[0]) - sinPhi * (ry * p[1]) + cx,
+      sinPhi * (rx * p[0]) + cosPhi * (ry * p[1]) + cy,
+    ];
+
+    const c1 = map(cp1);
+    const c2 = map(cp2);
+    const pE = map(p1);
+
+    curves.push({
+      cp1x: c1[0],
+      cp1y: c1[1],
+      cp2x: c2[0],
+      cp2y: c2[1],
+      x: pE[0],
+      y: pE[1],
+    });
+
+    currentTheta = t1;
+  }
+
+  // Hard-snap the last point to prevent floating point drift
+  curves[curves.length - 1].x = x1;
+  curves[curves.length - 1].y = y1;
+
+  return curves;
 }
 
 // Run

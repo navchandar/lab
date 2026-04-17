@@ -122,9 +122,13 @@
       }
 
       header h1 {
-        color: var(--accent);
+        background: linear-gradient(135deg, var(--accent), #dd41f5);
         font-size: 1.6rem;
         letter-spacing: -0.05rem;
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: transparent;
       }
 
       header p {
@@ -160,7 +164,7 @@
         border: 1px solid var(--border);
         border-radius: 8px;
         background: var(--input-bg);
-        padding: 0.7rem;
+        padding: 0.6rem;
         color: var(--text);
         font-size: 1rem;
       }
@@ -254,6 +258,84 @@
         background: var(--border);
       }
 
+      /* Tab Navigation */
+      .tabs {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0;
+      }
+
+      .tab {
+        position: relative;
+        transition: color 0.2s;
+        cursor: pointer;
+        border: none;
+        background: none;
+        padding: 0.5rem 0;
+        color: #a1a1aa;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .tab:hover {
+        color: var(--text);
+      }
+
+      .tab.active {
+        color: var(--accent);
+      }
+
+      .tab.active::after {
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        border-radius: 2px 2px 0 0;
+        background: var(--accent);
+        width: 100%;
+        height: 2px;
+        content: "";
+      }
+
+      /* Custom SVG Input */
+      textarea {
+        transition: border-color 0.2s;
+        outline: none;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--input-bg);
+        padding: 0.5rem;
+        width: 100%;
+        min-height: 80px;
+        resize: vertical;
+        color: var(--text);
+        font-size: 0.75rem;
+        font-family: "Fira Code", monospace;
+      }
+
+      textarea:focus {
+        box-shadow: 0 0 0 2px rgba(189, 124, 255, 0.2);
+        border-color: var(--accent);
+      }
+
+      .warning-text {
+        display: none; /* Toggled via JS */
+        margin-top: 0.4rem;
+        color: #ef4444; /* Vibrant Red */
+        font-weight: 600;
+        font-size: 0.75rem;
+      }
+
+      /* Utility Classes */
+      .hidden {
+        display: none !important;
+      }
+
+      .full-width {
+        grid-column: 1 / -1;
+      }
+
       /* Mobile-Specific Refinements */
       @media (max-width: 600px) {
         .app-shell {
@@ -301,14 +383,34 @@
         <p>Dynamic Polygon Sampling Engine</p>
       </header>
 
+      <div class="tabs" role="tablist">
+        <button class="tab active" id="tab-preset" role="tab">
+          Preset Shapes
+        </button>
+        <button class="tab" id="tab-custom" role="tab">Custom SVG</button>
+      </div>
+
       <div class="grid-layout">
-        <div class="control-block">
+        <div class="control-block" id="preset-block">
           <label for="shape-select">Shape</label>
           <select
             id="shape-select"
             aria-label="Select a base shape geometry"
           ></select>
         </div>
+
+        <div class="control-block hidden full-width" id="custom-block">
+          <label for="custom-svg">SVG or Path</label>
+          <textarea
+            id="custom-svg"
+            placeholder="<svg>...</svg> or M 50 0 L 100 100..."
+            aria-label="Paste SVG code"
+          ></textarea>
+          <span id="svg-warning" class="warning-text"
+            >⚠️ Invalid SVG or Path data! Could not parse!</span
+          >
+        </div>
+
         <div class="control-block">
           <label for="point-count">Points</label>
           <input
