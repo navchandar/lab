@@ -1,4 +1,4 @@
-// version=v2026.04.14
+// version=v2026.04.17
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel"];
 
@@ -9,11 +9,11 @@ const urlsToCache = [
   'manifest.json',
   'static/icons/icon-192x192.png',
   'static/icons/icon-512x512.png',
-  '.ruff_cache/0.15.10/15274789502473331778',
-  '.ruff_cache/0.15.10/16745208805549297326',
-  '.ruff_cache/0.15.10/2091048453285411571',
-  '.ruff_cache/0.15.10/8001291954108900101',
-  '.ruff_cache/0.15.10/9665642407308259011',
+  '.ruff_cache/0.15.11/15751938232715732477',
+  '.ruff_cache/0.15.11/17813439579821462172',
+  '.ruff_cache/0.15.11/2688359400260633907',
+  '.ruff_cache/0.15.11/3544832572359635353',
+  '.ruff_cache/0.15.11/7194711055867974632',
   '.ruff_cache/CACHEDIR.TAG',
   'alphabet/data.js',
   'alphabet/index.html',
