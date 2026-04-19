@@ -800,7 +800,7 @@ function loadData() {
               const name = `<strong title="${row.name}">${row.name}</strong>`;
               const mobileName = row.website
                 ? `<a href="${row.website}" class="mobile-only-link" target="_blank" alt="${row.name} website" title="${row.name}">${row.name}</a>`
-                : "";
+                : `<span title="${row.name}">${row.name}</span>`;
               return isMobile ? mobileName : name;
             },
           },
