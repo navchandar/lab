@@ -41,6 +41,9 @@ function updateAppLinks() {
   if (!showTools && currentHash && currentHash.length > 1) {
     // Normalize current hash to a canonical path
     const currentCanonical = toCanonicalRoute(currentHash);
+    if (currentCanonical === "/lab/tools") {
+      showTools = true;
+    }
 
     allLinks.forEach((li) => {
       const link = li.querySelector("a");
@@ -656,7 +659,17 @@ function initializeAppUI() {
     console.warn("App links not found in the sidebar!");
   }
 
-  window.addEventListener("hashchange", handlePopState);
+  // Listen for hash changes to update sidebar visibility
+  window.addEventListener("hashchange", () => {
+    updateAppLinks();
+    handlePopState();
+  });
+
+  // Handle back/forward navigation
+  window.addEventListener("popstate", () => {
+    updateAppLinks();
+    handlePopState();
+  });
 
   // On load, sync iframe with current hash (if any):
   handlePopState();
