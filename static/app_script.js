@@ -27,41 +27,52 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function updateAppLinks() {
-  // Check if the URL has ?tools=true or ends with #tools
   const urlParams = new URLSearchParams(window.location.search);
-  const showTools =
-    urlParams.get("tools") === "true" || window.location.hash === "#tools";
+  const currentHash = window.location.hash;
+  // Initial check via URL parameter
+  let showTools = urlParams.get("tools") === "true";
   // Select all list items inside the app links container
   const allLinks = document.querySelectorAll("#app-links li");
-  if (!allLinks) {
+  if (!allLinks || !allLinks.length) {
     console.warn("App links not found in the sidebar!");
   }
 
-  if (showTools) {
+  // Hash-based detection with partial matching
+  if (!showTools && currentHash && currentHash.length > 1) {
+    // Normalize current hash to a canonical path
+    const currentCanonical = toCanonicalRoute(currentHash);
+
     allLinks.forEach((li) => {
-      // Check if this specific list item has the hidden tool class
-      if (li.classList.contains("tool")) {
-        // Show the tools
-        li.style.display = "flex";
-      } else {
-        // Hide the regular, non-tool links
-        li.style.display = "none";
+      const link = li.querySelector("a");
+      if (link && li.classList.contains("tool")) {
+        const linkCanonical = toCanonicalRoute(link.getAttribute("href"));
+
+        // Check if one path contains the other to handle partials/sub-folders
+        if (
+          currentCanonical &&
+          linkCanonical &&
+          (currentCanonical.includes(linkCanonical) ||
+            linkCanonical.includes(currentCanonical))
+        ) {
+          showTools = true;
+        }
       }
     });
-    console.log("Developer tools displayed!");
-  } else {
-    allLinks.forEach((li) => {
-      // Check if this specific list item has the game class
-      if (li.classList.contains("game")) {
-        // Show the games
-        li.style.display = "flex";
-      } else {
-        // Hide the tools
-        li.style.display = "none";
-      }
-    });
-    console.log("Game links displayed!");
   }
+
+  // Final Render Logic
+  allLinks.forEach((li) => {
+    const isTool = li.classList.contains("tool");
+    const isGame = li.classList.contains("game");
+
+    if (showTools) {
+      li.style.display = isTool ? "flex" : "none";
+    } else {
+      li.style.display = isGame ? "flex" : "none";
+    }
+  });
+
+  console.log(showTools ? "Sidebar: Tools mode" : "Sidebar: Games mode");
 }
 
 function registerServiceWorker() {
