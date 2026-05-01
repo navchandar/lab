@@ -51,7 +51,8 @@
         --bg-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         --card-bg: rgba(255, 255, 255, 0.8);
         --text-main: #2d3436;
-        --text-warn: #e81d5d;
+        --text-correct: #fff;
+        --text-warn: #ff9fbd;
         --display-bg: rgba(0, 0, 0, 0.3);
       }
 
@@ -63,7 +64,8 @@
           --bg-gradient: radial-gradient(circle at top left, #1e1e2f, #121212);
           --card-bg: rgba(30, 30, 45, 0.7);
           --text-main: #d4d3d3;
-          --text-warn: #950b36;
+          --text-correct: #1f1f1f;
+          --text-warn: #ff2166;
           --display-bg: rgba(255, 255, 255, 0.05);
         }
       }
@@ -113,6 +115,7 @@
         bottom: -8px;
         left: -8px;
         z-index: -1;
+        box-shadow: 0px 2px 6px gray;
         border-radius: 48px;
         background: linear-gradient(
           45deg,
@@ -143,6 +146,7 @@
         font-size: 1.6rem;
         line-height: 1.4;
         hyphens: auto;
+        text-shadow: 1px 1px 4px var(--text-main);
         word-break: keep-all;
       }
 
@@ -381,7 +385,7 @@
         // The Twist: 25% chance of trick or no prefix
         const twistRoll = Math.random();
         let prefix = "Simon says: ";
-        let color = "var(--text-main)";
+        let color = "var(--text-correct)";
 
         if (twistRoll < 0.15) {
           // Pick a random trick prefix
