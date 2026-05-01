@@ -1,159 +1,326 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simon Says Game</title>
-    <style>
-        :root {
-            --bg-color: #fff0f6;
-            --card-bg: #ffffff;
-            --primary: #ff2d78; /* Pink */
-            --secondary: #9c27b0; /* Purple */
-            --accent: #008080; /* Teal */
-            --text: #333;
-            --btn-text: #ffffff;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        @media (prefers-color-scheme: dark) {
+        <!-- SEO Meta Tags -->
+        <title>Simon Says Interactive - Fun Game for Kids</title>
+        <meta
+            name="description"
+            content="A bright, colorful Simon Says game for girls aged 3-10. Simple and hard interactive tasks to keep kids active and laughing!"
+        />
+        <meta
+            name="keywords"
+            content="Simon Says, kids game, interactive game, physical activity for kids, online game for girls"
+        />
+        <meta name="author" content="Simon Says Game" />
+
+        <!-- SVG Favicon (👑 Emoji) -->
+        <link
+            rel="icon"
+            href="data:image/svg+xml,<svg xmlns=%22http://w3.org viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>"
+        />
+
+        <style>
             :root {
-                --bg-color: #1a1a2e;
-                --card-bg: #16213e;
-                --primary: #ff4d94;
-                --secondary: #bd59d4;
-                --accent: #26a69a;
-                --text: #f0f0f0;
+                --gp-pink: #ff75c3;
+                --gp-purple: #9a4eff;
+                --gp-teal: #2bd2ff;
+                --bg-gradient: linear-gradient(135deg, #fff0f6 0%, #e6fbff 100%);
+                --card-bg: rgba(255, 255, 255, 0.9);
+                --text-main: #2d3436;
             }
-        }
 
-        body {
-            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #0f3443 100%);
+                    --card-bg: rgba(22, 33, 62, 0.95);
+                    --text-main: #f0f0f0;
+                }
+            }
 
-        .container {
-            background: var(--card-bg);
-            padding: 2rem;
-            border-radius: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            text-align: center;
-            max-width: 500px;
-            width: 100%;
-            border: 6px solid var(--accent);
-        }
+            body {
+                font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                background: var(--bg-gradient);
+                background-attachment: fixed;
+                color: var(--text-main);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                margin: 0;
+                padding: 20px;
+            }
 
-        h1 { color: var(--primary); font-size: 2.5rem; margin-top: 0; }
+            .game-card {
+                background: var(--card-bg);
+                backdrop-filter: blur(10px);
+                padding: 2.5rem;
+                border-radius: 40px;
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+                text-align: center;
+                max-width: 450px;
+                width: 100%;
+                border: 8px solid transparent;
+                background-clip: padding-box;
+                position: relative;
+            }
 
-        #display-box {
-            min-height: 150px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            line-height: 1.4;
-            margin: 1.5rem 0;
-            padding: 1.5rem;
-            border-radius: 20px;
-            background: rgba(156, 39, 176, 0.05);
-            color: var(--text);
-            border: 3px dashed var(--secondary);
-            transition: all 0.2s ease;
-        }
+            /* Gradient Border Hack */
+            .game-card::before {
+                content: "";
+                position: absolute;
+                top: -8px;
+                bottom: -8px;
+                left: -8px;
+                right: -8px;
+                background: linear-gradient(45deg, var(--gp-pink), var(--gp-purple), var(--gp-teal));
+                border-radius: 48px;
+                z-index: -1;
+            }
 
-        .generate-btn {
-            background-color: var(--primary);
-            color: var(--btn-text);
-            border: none;
-            padding: 1.5rem;
-            font-size: 1.4rem;
-            font-weight: bold;
-            border-radius: 15px;
-            cursor: pointer;
-            width: 100%;
-            box-shadow: 0 8px 0 #b31b53;
-            transition: transform 0.1s;
-        }
+            h1 {
+                background: linear-gradient(to right, #ff2d78, #9c27b0);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                font-size: 2.8rem;
+                margin: 0 0 1rem 0;
+            }
 
-        .generate-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 #b31b53;
-        }
+            #display-area {
+                min-height: 160px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.6rem;
+                font-weight: 700;
+                margin-bottom: 2rem;
+                padding: 1.5rem;
+                border-radius: 25px;
+                background: rgba(255, 255, 255, 0.5);
+                box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+                transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
 
-        .generate-btn:focus { outline: 4px solid var(--accent); outline-offset: 4px; }
+            .btn-generate {
+                background: linear-gradient(45deg, var(--gp-pink), var(--gp-purple));
+                color: white;
+                border: none;
+                padding: 1.2rem;
+                font-size: 1.4rem;
+                font-weight: 800;
+                border-radius: 20px;
+                cursor: pointer;
+                width: 100%;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                transition: all 0.3s ease;
+                box-shadow: 0 10px 20px rgba(255, 117, 195, 0.3);
+            }
 
-        /* Mobile Adjustments */
-        @media (max-width: 480px) {
-            h1 { font-size: 1.8rem; }
-            #display-box { font-size: 1.4rem; min-height: 120px; }
-        }
-    </style>
-</head>
-<body>
+            /* Hover & Click Actions */
+            .btn-generate:hover {
+                transform: translateY(-3px) scale(1.02);
+                background: linear-gradient(45deg, var(--gp-teal), var(--gp-purple));
+                box-shadow: 0 15px 25px rgba(43, 210, 255, 0.4);
+            }
 
-<main class="container">
-    <h1>Simon Says!</h1>
-    <div id="display-box" aria-live="assertive">Ready to play?</div>
-    <button class="generate-btn" onclick="generateTask()">GENERATE COMMAND</button>
-</main>
+            .btn-generate:active {
+                transform: translateY(2px) scale(0.98);
+                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+            }
 
-<script>
-    const simpleTasks = [
-        "Jump 3 times!", "Touch your nose!", "Clap your hands!", "Spin once!", "Wave your hands!", 
-        "Touch your toes!", "Wiggle your fingers!", "Nod your head!", "Point to the ceiling!", "Stick out your tongue!",
-        "Stomp your feet!", "Give a thumbs up!", "Pat your tummy!", "Cover your eyes!", "Blink 5 times!",
-        "Moo like a cow!", "Hop on one foot!", "Touch your ears!", "Meow like a cat!", "Pretend to wash your hands!",
-        "Shrug your shoulders!", "Sit down!", "Stand up!", "Touch your knees!", "Blow a kiss!",
-        "March in place!", "Wiggle your nose!", "Point to something blue!", "Make a circle in the air!", "Cross your arms!",
-        "Touch your elbows!", "Pretend to eat!", "Yawn loudly!", "Smile big!", "Shake your head 'No'!",
-        "Nod your head 'Yes'!", "Tap your chin!", "Look at the floor!", "Reach for the stars!", "Flap your arms like a bird!",
-        "Give yourself a hug!", "Snap your fingers!", "Whistle (or try to)!", "Touch your eyebrows!", "Wink one eye!",
-        "Pretend to sleep!", "Check your watch!", "Point to your shoes!", "Count to 3!", "Hold up 5 fingers!"
-    ];
+            .pop-anim {
+                animation: pop 0.4s ease-out;
+            }
+            @keyframes pop {
+                0% {
+                    transform: scale(0.9);
+                    opacity: 0;
+                }
+                100% {
+                    transform: scale(1);
+                    opacity: 1;
+                }
+            }
 
-    const hardTasks = [
-        "Spell your name backwards!", "Stand on one leg for 10 seconds!", "Touch your left ear with your right hand!", 
-        "Name 5 animals in 10 seconds!", "Say the days of the week!", "Count by twos to twenty!", "Rub your tummy and pat your head!", 
-        "Do 5 jumping jacks!", "Name 3 fruits that are red!", "Recite a nursery rhyme!", "Balance a book on your head!",
-        "Draw a square in the air with your foot!", "Say 'Blueberry Pie' 5 times fast!", "Crawl like a crab!", "Walk backwards 5 steps!",
-        "Name 4 things you see that are round!", "Count backwards from 10!", "Sing 'Happy Birthday'!", "Do a slow-motion run!",
-        "Find something smaller than your hand!", "Describe your shirt without looking!", "Name 3 neighbors or friends!",
-        "Close your eyes and touch your nose!", "Spell the word 'APPLE'!", "List 3 colors in the rainbow!",
-        "Stand as still as a statue for 15 seconds!", "Hop like a frog 4 times!", "Tell a short joke!", "Name 5 body parts!",
-        "Pretend to tie your shoes!", "Bark like a dog then sit!", "Identify 3 sounds you hear right now!", "Say 'Hello' in a deep voice!",
-        "Point to your left, then your right!", "Try to touch your nose with your toe!", "Name 3 things you do in the morning!",
-        "Whisper your favorite color!", "Hum your favorite song!", "Describe the weather outside!", "Say the alphabet until 'M'!",
-        "Count how many windows are in the room!", "Pretend to be a robot!", "Walk on your tiptoes!", "Spin 3 times without falling!",
-        "Name 2 things that are very hot!", "Touch your back with both hands!", "Make a sound like a car!", "Find something soft!",
-        "Name 3 things that live in water!", "Clap a rhythm and repeat it!"
-    ];
+            /* Mobile Viewport Fix */
+            @media (max-width: 400px) {
+                .game-card {
+                    padding: 1.5rem;
+                    border-radius: 30px;
+                }
+                h1 {
+                    font-size: 2rem;
+                }
+                #display-area {
+                    font-size: 1.3rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <main class="game-card" role="main">
+            <h1>Simon Says!</h1>
 
-    function generateTask() {
-        const isHard = Math.random() < 0.25;
-        const taskPool = isHard ? hardTasks : simpleTasks;
-        const action = taskPool[Math.floor(Math.random() * taskPool.length)];
-        
-        const twistRoll = Math.random();
-        const display = document.getElementById('display-box');
-        
-        if (twistRoll < 0.15) {
-            display.innerText = `Sam says: ${action}`;
-            display.style.color = "var(--primary)";
-        } else if (twistRoll < 0.25) {
-            display.innerText = action;
-            display.style.color = "var(--primary)";
-        } else {
-            display.innerText = `Simon says: ${action}`;
-            display.style.color = "var(--accent)";
-        }
-    }
-</script>
+            <div id="display-area" aria-live="polite">Tap the button to get your first command!</div>
 
-</body>
+            <button class="btn-generate" onclick="playGame()" aria-label="Generate a new Simon Says command">
+                Next Move! 🚀
+            </button>
+        </main>
+
+        <script>
+            // Logic: 50 Simple, 50 Hard
+            const simple = [
+                "Jump 3 times",
+                "Touch your nose",
+                "Clap your hands",
+                "Spin once",
+                "Wave your hands",
+                "Touch your toes",
+                "Wiggle your fingers",
+                "Nod your head",
+                "Point to the ceiling",
+                "Stick out your tongue",
+                "Stomp your feet",
+                "Give a thumbs up",
+                "Pat your tummy",
+                "Cover your eyes",
+                "Blink 5 times",
+                "Moo like a cow",
+                "Hop on one foot",
+                "Touch your ears",
+                "Meow like a cat",
+                "Pretend to wash your hands",
+                "Shrug your shoulders",
+                "Sit down",
+                "Stand up",
+                "Touch your knees",
+                "Blow a kiss",
+                "March in place",
+                "Wiggle your nose",
+                "Point to something blue",
+                "Make a circle in the air",
+                "Cross your arms",
+                "Touch your elbows",
+                "Pretend to eat",
+                "Yawn loudly",
+                "Smile big",
+                "Shake your head 'No'",
+                "Nod your head 'Yes'",
+                "Tap your chin",
+                "Look at the floor",
+                "Reach for the stars",
+                "Flap your arms like a bird",
+                "Give yourself a hug",
+                "Snap your fingers",
+                "Whistle",
+                "Touch your eyebrows",
+                "Wink one eye",
+                "Pretend to sleep",
+                "Check your watch",
+                "Point to your shoes",
+                "Count to 3",
+                "Hold up 5 fingers",
+            ];
+
+            const hard = [
+                "Spell your name backwards",
+                "Stand on one leg for 10 seconds",
+                "Touch left ear with right hand",
+                "Name 5 animals",
+                "Say days of the week",
+                "Count by twos to 20",
+                "Rub tummy and pat head",
+                "Do 5 jumping jacks",
+                "Name 3 red fruits",
+                "Recite a nursery rhyme",
+                "Balance a book on your head",
+                "Draw a square with your foot",
+                "Say 'Blueberry Pie' 3 times fast",
+                "Crawl like a crab",
+                "Walk backwards 5 steps",
+                "Name 4 round things",
+                "Count backwards from 10",
+                "Sing Happy Birthday",
+                "Do a slow-motion run",
+                "Find something smaller than your hand",
+                "Describe your shirt color",
+                "Name 3 friends",
+                "Close eyes and touch nose",
+                "Spell the word 'APPLE'",
+                "List 3 rainbow colors",
+                "Stand still for 15 seconds",
+                "Hop like a frog 4 times",
+                "Tell a short joke",
+                "Name 5 body parts",
+                "Pretend to tie shoes",
+                "Bark like a dog then sit",
+                "Name 3 sounds you hear",
+                "Say 'Hello' in a deep voice",
+                "Point left then right",
+                "Touch your nose with your toe",
+                "Name 3 morning activities",
+                "Whisper your favorite color",
+                "Hum your favorite song",
+                "Describe the weather",
+                "Say the alphabet to M",
+                "Count windows in the room",
+                "Pretend to be a robot",
+                "Walk on your tiptoes",
+                "Spin 3 times",
+                "Name 2 hot things",
+                "Touch your back",
+                "Make a car sound",
+                "Find something soft",
+                "Name 3 water animals",
+                "Clap a rhythm",
+            ];
+
+            let lastIndices = { simple: [], hard: [] };
+
+            function getUniqueRandom(arr, type) {
+                if (lastIndices[type].length >= arr.length) lastIndices[type] = [];
+                let index;
+                do {
+                    index = Math.floor(Math.random() * arr.length);
+                } while (lastIndices[type].includes(index));
+                lastIndices[type].push(index);
+                return arr[index];
+            }
+
+            function playGame() {
+                const display = document.getElementById("display-area");
+
+                // 25% chance for a Hard task
+                const isHard = Math.random() < 0.25;
+                const task = getUniqueRandom(isHard ? hard : simple, isHard ? "hard" : "simple");
+
+                // The Twist: 25% chance of no 'Simon Says' or 'Sam Says'
+                const twistRoll = Math.random();
+                let prefix = "Simon says: ";
+                let color = "var(--gp-purple)";
+
+                if (twistRoll < 0.15) {
+                    prefix = "Sam says: ";
+                    color = "var(--gp-pink)";
+                } else if (twistRoll < 0.25) {
+                    prefix = "";
+                    color = "var(--gp-pink)";
+                } else {
+                    color = "var(--gp-teal)";
+                }
+
+                display.innerText = `${prefix}${task}!`;
+                display.style.color = color;
+
+                // Animation reset
+                display.classList.remove("pop-anim");
+                void display.offsetWidth;
+                display.classList.add("pop-anim");
+            }
+        </script>
+    </body>
 </html>
