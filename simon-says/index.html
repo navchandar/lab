@@ -302,6 +302,9 @@
         "Act like you just bit into a chilli",
       ];
 
+      const display = document.getElementById("display-area");
+      const btn = document.getElementById("btn-generate");
+
       // Shuffle-pool approach: O(1) per pick, no repeats until pool is exhausted
       function createShuffledPool(arr) {
         const shuffled = [...arr];
@@ -337,8 +340,6 @@
           return;
         }
         cooldown = true;
-        const display = document.getElementById("display-area");
-        const btn = document.getElementById("btn-generate");
 
         btn.classList.add("on-cooldown");
         setTimeout(() => {
