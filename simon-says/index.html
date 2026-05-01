@@ -101,7 +101,6 @@
 
       h1 {
         margin: 0 0 1rem 0;
-        color: var(--gp-purple);
         font-size: 2.8rem;
       }
 
@@ -346,7 +345,7 @@
         setTimeout(() => {
           cooldown = false;
           btn.classList.remove("on-cooldown");
-        }, 1000);
+        }, 500);
 
         // 20% chance for a Hard task
         const isHard = Math.random() < 0.2;
@@ -378,6 +377,23 @@
         void display.offsetWidth;
         display.classList.add("pop-anim");
       }
+
+      // Click anywhere on the page
+      document.addEventListener("click", (e) => {
+        // Ignore if they clicked the button itself (it already calls playGame)
+        if (e.target.closest(".btn-generate")) {
+          return;
+        }
+        playGame();
+      });
+
+      // Spacebar or Enter key
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space" || e.code === "Enter") {
+          e.preventDefault(); // prevent page scroll on spacebar
+          playGame();
+        }
+      });
     </script>
   </body>
 </html>
