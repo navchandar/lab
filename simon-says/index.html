@@ -1,326 +1,379 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-        <!-- SEO Meta Tags -->
-        <title>Simon Says Interactive - Fun Game for Kids</title>
-        <meta
-            name="description"
-            content="A bright, colorful Simon Says game for girls aged 3-10. Simple and hard interactive tasks to keep kids active and laughing!"
-        />
-        <meta
-            name="keywords"
-            content="Simon Says, kids game, interactive game, physical activity for kids, online game for girls"
-        />
-        <meta name="author" content="Simon Says Game" />
+    <title>Simon Says | Game for Kids</title>
+    <meta
+      name="description"
+      content="A bright, colorful Simon Says game for children aged 3-10. Simple and hard interactive tasks to keep kids active and laughing!"
+    />
+    <meta
+      name="keywords"
+      content="Simon Says, kids game, interactive game, physical activity for kids, online game for children"
+    />
+    <meta name="author" content="Naveenchandar" />
 
-        <!-- SVG Favicon (👑 Emoji) -->
-        <link
-            rel="icon"
-            href="data:image/svg+xml,<svg xmlns=%22http://w3.org viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>👑</text></svg>"
-        />
+    <link
+      rel="icon"
+      href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>"
+    />
 
-        <style>
-            :root {
-                --gp-pink: #ff75c3;
-                --gp-purple: #9a4eff;
-                --gp-teal: #2bd2ff;
-                --bg-gradient: linear-gradient(135deg, #fff0f6 0%, #e6fbff 100%);
-                --card-bg: rgba(255, 255, 255, 0.9);
-                --text-main: #2d3436;
-            }
+    <style>
+      :root {
+        /* Softer, more cohesive brand colors */
+        --gp-pink: #ff99cc;
+        --gp-purple: #a29bfe;
+        --gp-teal: #81ecec;
+        --bg-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        --card-bg: rgba(255, 255, 255, 0.8);
+        --text-main: #2d3436;
+        --display-bg: rgba(0, 0, 0, 0.03);
+      }
 
-            @media (prefers-color-scheme: dark) {
-                :root {
-                    --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #0f3443 100%);
-                    --card-bg: rgba(22, 33, 62, 0.95);
-                    --text-main: #f0f0f0;
-                }
-            }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --gp-pink: #96477d;
+          --gp-purple: #52479c;
+          --gp-teal: #2b6363;
+          --bg-gradient: radial-gradient(circle at top left, #1e1e2f, #121212);
+          --card-bg: rgba(30, 30, 45, 0.7);
+          --text-main: #d4d3d3;
+          --display-bg: rgba(255, 255, 255, 0.05);
+        }
+      }
 
-            body {
-                font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                background: var(--bg-gradient);
-                background-attachment: fixed;
-                color: var(--text-main);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                min-height: 100vh;
-                margin: 0;
-                padding: 20px;
-            }
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0;
+        background: var(--bg-gradient);
+        background-attachment: fixed;
+        padding: 20px;
+        padding: max(20px, env(safe-area-inset-top))
+          max(20px, env(safe-area-inset-right))
+          max(20px, env(safe-area-inset-bottom))
+          max(20px, env(safe-area-inset-left));
+        min-height: 100vh;
+        color: var(--text-main);
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
 
-            .game-card {
-                background: var(--card-bg);
-                backdrop-filter: blur(10px);
-                padding: 2.5rem;
-                border-radius: 40px;
-                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
-                text-align: center;
-                max-width: 450px;
-                width: 100%;
-                border: 8px solid transparent;
-                background-clip: padding-box;
-                position: relative;
-            }
+      .game-card {
+        position: relative;
+        z-index: 0;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        border: 8px solid transparent;
+        border-radius: 40px;
+        background: var(--card-bg);
+        background-clip: padding-box;
+        padding: 2.5rem;
+        width: 100%;
+        max-width: 450px;
+        text-align: center;
+      }
 
-            /* Gradient Border Hack */
-            .game-card::before {
-                content: "";
-                position: absolute;
-                top: -8px;
-                bottom: -8px;
-                left: -8px;
-                right: -8px;
-                background: linear-gradient(45deg, var(--gp-pink), var(--gp-purple), var(--gp-teal));
-                border-radius: 48px;
-                z-index: -1;
-            }
+      /* Gradient Border Hack */
+      .game-card::before {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        bottom: -8px;
+        left: -8px;
+        z-index: -1;
+        border-radius: 48px;
+        background: linear-gradient(
+          45deg,
+          var(--gp-pink),
+          var(--gp-purple),
+          var(--gp-teal)
+        );
+        content: "";
+      }
 
-            h1 {
-                background: linear-gradient(to right, #ff2d78, #9c27b0);
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                font-size: 2.8rem;
-                margin: 0 0 1rem 0;
-            }
+      h1 {
+        background: linear-gradient(to right, #ff2d78, #9c27b0);
+        -webkit-background-clip: text;
+        margin: 0 0 1rem 0;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        color: #ff2d78;
+        font-size: 2.8rem;
+      }
 
-            #display-area {
-                min-height: 160px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 1.6rem;
-                font-weight: 700;
-                margin-bottom: 2rem;
-                padding: 1.5rem;
-                border-radius: 25px;
-                background: rgba(255, 255, 255, 0.5);
-                box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
-                transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            }
+      #display-area {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        margin-bottom: 2rem;
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        border-radius: 25px;
+        background: var(--display-bg);
+        padding: 1.5rem;
+        min-height: 160px;
+        font-weight: 700;
+        font-size: 1.6rem;
+        line-height: 1.4;
+        hyphens: auto;
+        word-break: break-word;
+      }
 
-            .btn-generate {
-                background: linear-gradient(45deg, var(--gp-pink), var(--gp-purple));
-                color: white;
-                border: none;
-                padding: 1.2rem;
-                font-size: 1.4rem;
-                font-weight: 800;
-                border-radius: 20px;
-                cursor: pointer;
-                width: 100%;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                transition: all 0.3s ease;
-                box-shadow: 0 10px 20px rgba(255, 117, 195, 0.3);
-            }
+      .btn-generate {
+        transition: all 0.3s ease;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(255, 117, 195, 0.3);
+        border: none;
+        border-radius: 20px;
+        background: linear-gradient(45deg, var(--gp-pink), var(--gp-purple));
+        padding: 1.2rem;
+        width: 100%;
+        color: white;
+        font-weight: 800;
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+      }
+      .btn-generate.on-cooldown {
+        transform: scale(0.97);
+        opacity: 0.6;
+        pointer-events: none;
+      }
+      /* Hover & Click Actions */
+      .btn-generate:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 15px 25px rgba(43, 210, 255, 0.4);
+        background: linear-gradient(45deg, var(--gp-teal), var(--gp-purple));
+      }
 
-            /* Hover & Click Actions */
-            .btn-generate:hover {
-                transform: translateY(-3px) scale(1.02);
-                background: linear-gradient(45deg, var(--gp-teal), var(--gp-purple));
-                box-shadow: 0 15px 25px rgba(43, 210, 255, 0.4);
-            }
+      .btn-generate:active {
+        transform: translateY(2px) scale(0.98);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+      }
 
-            .btn-generate:active {
-                transform: translateY(2px) scale(0.98);
-                box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
-            }
+      .pop-anim {
+        animation: pop 0.4s ease-out;
+      }
+      @keyframes pop {
+        0% {
+          transform: scale(0.9);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
 
-            .pop-anim {
-                animation: pop 0.4s ease-out;
-            }
-            @keyframes pop {
-                0% {
-                    transform: scale(0.9);
-                    opacity: 0;
-                }
-                100% {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-            }
+      /* Mobile Viewport Fix */
+      @media (max-width: 400px) {
+        .game-card {
+          border-radius: 30px;
+          padding: 1.5rem;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        #display-area {
+          font-size: 1.3rem;
+        }
+      }
 
-            /* Mobile Viewport Fix */
-            @media (max-width: 400px) {
-                .game-card {
-                    padding: 1.5rem;
-                    border-radius: 30px;
-                }
-                h1 {
-                    font-size: 2rem;
-                }
-                #display-area {
-                    font-size: 1.3rem;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <main class="game-card" role="main">
-            <h1>Simon Says!</h1>
+      @media (hover: none) {
+        .btn-generate:active {
+          transform: scale(0.95);
+          box-shadow: 0 5px 15px rgba(255, 117, 195, 0.4);
+          background: linear-gradient(45deg, var(--gp-teal), var(--gp-purple));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="game-card" role="main">
+      <h1>Simon Says!</h1>
 
-            <div id="display-area" aria-live="polite">Tap the button to get your first command!</div>
+      <div id="display-area" aria-live="polite">
+        Tap the button to get your first command!
+      </div>
 
-            <button class="btn-generate" onclick="playGame()" aria-label="Generate a new Simon Says command">
-                Next Move! 🚀
-            </button>
-        </main>
+      <button
+        class="btn-generate"
+        onclick="playGame()"
+        aria-label="Generate a new Simon Says command"
+      >
+        Next Move!
+      </button>
+    </main>
 
-        <script>
-            // Logic: 50 Simple, 50 Hard
-            const simple = [
-                "Jump 3 times",
-                "Touch your nose",
-                "Clap your hands",
-                "Spin once",
-                "Wave your hands",
-                "Touch your toes",
-                "Wiggle your fingers",
-                "Nod your head",
-                "Point to the ceiling",
-                "Stick out your tongue",
-                "Stomp your feet",
-                "Give a thumbs up",
-                "Pat your tummy",
-                "Cover your eyes",
-                "Blink 5 times",
-                "Moo like a cow",
-                "Hop on one foot",
-                "Touch your ears",
-                "Meow like a cat",
-                "Pretend to wash your hands",
-                "Shrug your shoulders",
-                "Sit down",
-                "Stand up",
-                "Touch your knees",
-                "Blow a kiss",
-                "March in place",
-                "Wiggle your nose",
-                "Point to something blue",
-                "Make a circle in the air",
-                "Cross your arms",
-                "Touch your elbows",
-                "Pretend to eat",
-                "Yawn loudly",
-                "Smile big",
-                "Shake your head 'No'",
-                "Nod your head 'Yes'",
-                "Tap your chin",
-                "Look at the floor",
-                "Reach for the stars",
-                "Flap your arms like a bird",
-                "Give yourself a hug",
-                "Snap your fingers",
-                "Whistle",
-                "Touch your eyebrows",
-                "Wink one eye",
-                "Pretend to sleep",
-                "Check your watch",
-                "Point to your shoes",
-                "Count to 3",
-                "Hold up 5 fingers",
-            ];
+    <script>
+      const simple = [
+        "Jump 3 times",
+        "Touch your nose",
+        "Clap your hands twice",
+        "Spin once",
+        "Touch your toes",
+        "Wiggle your fingers",
+        "Nod your head",
+        "Point to the ceiling",
+        "Point to the floor",
+        "Stick out your tongue",
+        "Close your eyes",
+        "Don't blink",
+        "Pretend to swim",
+        "Scratch your head",
+        "Stomp your feet",
+        "Give a thumbs up",
+        "Cover your eyes",
+        "Blink 5 times",
+        "Moo like a cow",
+        "Stand on one foot",
+        "Touch your ears",
+        "Meow like a cat",
+        "Wash your hands",
+        "Sit down",
+        "Stand up",
+        "Touch your knees",
+        "Walk in the same place",
+        "Point to something blue",
+        "Make a circle in the air",
+        "Cross your arms",
+        "Touch your elbows",
+        "Pretend to brush your teeth",
+        "Yawn loudly",
+        "Smile big",
+        "Shake your head 'No'",
+        "Shake your head 'Yes'",
+        "Tap your chin",
+        "Look at the floor",
+        "Reach for the stars",
+        "Flap your arms like a bird",
+        "Give yourself a hug",
+        "Touch your eyebrows",
+        "Pretend to sleep",
+        "Show 3 fingers",
+        "Pretend to drink coffee",
+        "Roar like a tiger",
+        "Make a car sound",
+        "Say your shirt color",
+        "Freeze like a statue",
+        "Tap your head 5 times",
+        "Make a fish face",
+      ];
 
-            const hard = [
-                "Spell your name backwards",
-                "Stand on one leg for 10 seconds",
-                "Touch left ear with right hand",
-                "Name 5 animals",
-                "Say days of the week",
-                "Count by twos to 20",
-                "Rub tummy and pat head",
-                "Do 5 jumping jacks",
-                "Name 3 red fruits",
-                "Recite a nursery rhyme",
-                "Balance a book on your head",
-                "Draw a square with your foot",
-                "Say 'Blueberry Pie' 3 times fast",
-                "Crawl like a crab",
-                "Walk backwards 5 steps",
-                "Name 4 round things",
-                "Count backwards from 10",
-                "Sing Happy Birthday",
-                "Do a slow-motion run",
-                "Find something smaller than your hand",
-                "Describe your shirt color",
-                "Name 3 friends",
-                "Close eyes and touch nose",
-                "Spell the word 'APPLE'",
-                "List 3 rainbow colors",
-                "Stand still for 15 seconds",
-                "Hop like a frog 4 times",
-                "Tell a short joke",
-                "Name 5 body parts",
-                "Pretend to tie shoes",
-                "Bark like a dog then sit",
-                "Name 3 sounds you hear",
-                "Say 'Hello' in a deep voice",
-                "Point left then right",
-                "Touch your nose with your toe",
-                "Name 3 morning activities",
-                "Whisper your favorite color",
-                "Hum your favorite song",
-                "Describe the weather",
-                "Say the alphabet to M",
-                "Count windows in the room",
-                "Pretend to be a robot",
-                "Walk on your tiptoes",
-                "Spin 3 times",
-                "Name 2 hot things",
-                "Touch your back",
-                "Make a car sound",
-                "Find something soft",
-                "Name 3 water animals",
-                "Clap a rhythm",
-            ];
+      const hard = [
+        "Spell your name backwards",
+        "Stand on one leg for 10 seconds",
+        "Touch left ear with right hand",
+        "Say days of the week",
+        "Rub tummy and pat head",
+        "Name 3 red fruits",
+        "Sing a nursery rhyme",
+        "Balance a book on your head",
+        "Name 4 round things",
+        "Count backwards from 10",
+        "Sing Happy Birthday",
+        "Do a slow-motion run in place",
+        "Find something smaller than your hand",
+        "Close eyes and touch nose",
+        "Spell the word 'APPLE'",
+        "List 3 colors in a rainbow",
+        "Name 5 body parts",
+        "Bark like a dog and then sit",
+        "Say 'Hello' in a deep voice",
+        "Point to your left and then right",
+        "Whisper your favorite color",
+        "Hum your favorite song",
+        "Say the alphabet to M",
+        "Pretend to sneeze but dont sneeze",
+        "Count the windows in this room",
+        "Walk like a robot",
+        "Walk on your tiptoes",
+        "Spin 3 times",
+        "Touch your back",
+        "Pretend to be a monkey",
+        "Walk like a very old person",
+        "Make the sound of a pressure cooker whistle",
+        "Name 3 things that are yellow",
+        "Act like you just bit into a chilli",
+      ];
 
-            let lastIndices = { simple: [], hard: [] };
+      // Shuffle-pool approach: O(1) per pick, no repeats until pool is exhausted
+      function createShuffledPool(arr) {
+        const shuffled = [...arr];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      }
 
-            function getUniqueRandom(arr, type) {
-                if (lastIndices[type].length >= arr.length) lastIndices[type] = [];
-                let index;
-                do {
-                    index = Math.floor(Math.random() * arr.length);
-                } while (lastIndices[type].includes(index));
-                lastIndices[type].push(index);
-                return arr[index];
-            }
+      let pools = { simple: [], hard: [] };
 
-            function playGame() {
-                const display = document.getElementById("display-area");
+      function getUniqueRandom(arr, type) {
+        if (pools[type].length === 0) {
+          pools[type] = createShuffledPool(arr);
+        }
+        return pools[type].pop();
+      }
 
-                // 25% chance for a Hard task
-                const isHard = Math.random() < 0.25;
-                const task = getUniqueRandom(isHard ? hard : simple, isHard ? "hard" : "simple");
+      // Cooldown to prevent spam clicks
+      let cooldown = false;
 
-                // The Twist: 25% chance of no 'Simon Says' or 'Sam Says'
-                const twistRoll = Math.random();
-                let prefix = "Simon says: ";
-                let color = "var(--gp-purple)";
+      // Trick prefixes — similar sounding to "Simon" to confuse kids
+      const trickPrefixes = [
+        "Siman says: ",
+        "Simran says: ",
+        "Lemon says: ",
+        "Sam says: ",
+        "Diamond says: ",
+      ];
 
-                if (twistRoll < 0.15) {
-                    prefix = "Sam says: ";
-                    color = "var(--gp-pink)";
-                } else if (twistRoll < 0.25) {
-                    prefix = "";
-                    color = "var(--gp-pink)";
-                } else {
-                    color = "var(--gp-teal)";
-                }
+      function playGame() {
+        if (cooldown) {
+          return;
+        }
+        cooldown = true;
+        btn.classList.add("on-cooldown");
+        setTimeout(() => {
+          cooldown = false;
+          btn.classList.remove("on-cooldown");
+        }, 1000);
 
-                display.innerText = `${prefix}${task}!`;
-                display.style.color = color;
+        const display = document.getElementById("display-area");
 
-                // Animation reset
-                display.classList.remove("pop-anim");
-                void display.offsetWidth;
-                display.classList.add("pop-anim");
-            }
-        </script>
-    </body>
+        // 20% chance for a Hard task
+        const isHard = Math.random() < 0.2;
+        const task = getUniqueRandom(
+          isHard ? hard : simple,
+          isHard ? "hard" : "simple",
+        );
+
+        // The Twist: 25% chance of trick or no prefix
+        const twistRoll = Math.random();
+        let prefix = "Simon says: ";
+        let color = "var(--gp-teal)";
+
+        if (twistRoll < 0.15) {
+          // Pick a random trick prefix
+          prefix =
+            trickPrefixes[Math.floor(Math.random() * trickPrefixes.length)];
+          color = "var(--gp-pink)";
+        } else if (twistRoll < 0.25) {
+          prefix = "";
+          color = "var(--gp-pink)";
+        }
+
+        display.innerText = `${prefix}${task}!`;
+        display.style.color = color;
+
+        // Animation reset
+        display.classList.remove("pop-anim");
+        void display.offsetWidth;
+        display.classList.add("pop-anim");
+      }
+    </script>
+  </body>
 </html>
