@@ -29,7 +29,7 @@
         --bg-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         --card-bg: rgba(255, 255, 255, 0.8);
         --text-main: #2d3436;
-        --display-bg: rgba(0, 0, 0, 0.03);
+        --display-bg: rgba(0, 0, 0, 0.3);
       }
 
       @media (prefers-color-scheme: dark) {
@@ -49,8 +49,7 @@
         justify-content: center;
         align-items: center;
         margin: 0;
-        background: var(--bg-gradient);
-        background-attachment: fixed;
+        background: #f5f5f7;
         padding: 20px;
         padding: max(20px, env(safe-area-inset-top))
           max(20px, env(safe-area-inset-right))
@@ -59,6 +58,12 @@
         min-height: 100vh;
         color: var(--text-main);
         font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #151520;
+        }
       }
 
       .game-card {
@@ -95,12 +100,8 @@
       }
 
       h1 {
-        background: linear-gradient(to right, #ff2d78, #9c27b0);
-        -webkit-background-clip: text;
         margin: 0 0 1rem 0;
-        background-clip: text;
-        -webkit-text-fill-color: transparent;
-        color: #ff2d78;
+        color: var(--gp-purple);
         font-size: 2.8rem;
       }
 
@@ -128,7 +129,7 @@
         box-shadow: 0 10px 20px rgba(255, 117, 195, 0.3);
         border: none;
         border-radius: 20px;
-        background: linear-gradient(45deg, var(--gp-pink), var(--gp-purple));
+        background: var(--gp-purple);
         padding: 1.2rem;
         width: 100%;
         color: white;
@@ -146,7 +147,8 @@
       .btn-generate:hover {
         transform: translateY(-3px) scale(1.02);
         box-shadow: 0 15px 25px rgba(43, 210, 255, 0.4);
-        background: linear-gradient(45deg, var(--gp-teal), var(--gp-purple));
+        background: var(--gp-teal);
+        color: var(--text-main);
       }
 
       .btn-generate:active {
@@ -201,6 +203,7 @@
 
       <button
         class="btn-generate"
+        id="btn-generate"
         onclick="playGame()"
         aria-label="Generate a new Simon Says command"
       >
@@ -336,13 +339,14 @@
           return;
         }
         cooldown = true;
+        const display = document.getElementById("display-area");
+        const btn = document.getElementById("btn-generate");
+
         btn.classList.add("on-cooldown");
         setTimeout(() => {
           cooldown = false;
           btn.classList.remove("on-cooldown");
         }, 1000);
-
-        const display = document.getElementById("display-area");
 
         // 20% chance for a Hard task
         const isHard = Math.random() < 0.2;
