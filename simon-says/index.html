@@ -55,7 +55,7 @@
           max(20px, env(safe-area-inset-right))
           max(20px, env(safe-area-inset-bottom))
           max(20px, env(safe-area-inset-left));
-        min-height: 100vh;
+        min-height: 90vh;
         color: var(--text-main);
         font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
@@ -119,7 +119,7 @@
         font-size: 1.6rem;
         line-height: 1.4;
         hyphens: auto;
-        word-break: break-word;
+        word-break: keep-all;
       }
 
       .btn-generate {
@@ -169,8 +169,8 @@
         }
       }
 
-      /* Mobile Viewport Fix */
-      @media (max-width: 400px) {
+      /* Styles for mobile devices */
+      @media (max-width: 767px) {
         .game-card {
           border-radius: 30px;
           padding: 1.5rem;
@@ -326,7 +326,6 @@
 
       // Trick prefixes — similar sounding to "Simon" to confuse kids
       const trickPrefixes = [
-        "Siman says: ",
         "Simran says: ",
         "Lemon says: ",
         "Sam says: ",
@@ -357,7 +356,7 @@
         // The Twist: 25% chance of trick or no prefix
         const twistRoll = Math.random();
         let prefix = "Simon says: ";
-        let color = "var(--gp-teal)";
+        let color = "var(--text-main)";
 
         if (twistRoll < 0.15) {
           // Pick a random trick prefix
@@ -384,14 +383,14 @@
         if (e.target.closest(".btn-generate")) {
           return;
         }
-        playGame();
+        btn.click();
       });
 
       // Spacebar or Enter key
       document.addEventListener("keydown", (e) => {
         if (e.code === "Space" || e.code === "Enter") {
           e.preventDefault(); // prevent page scroll on spacebar
-          playGame();
+          btn.click();
         }
       });
     </script>
