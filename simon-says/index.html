@@ -5,19 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>Simon Says | Game for Kids</title>
-    <meta
-      name="description"
-      content="A bright, colorful Simon Says game for children aged 3-10. Simple and hard interactive tasks to keep kids active and laughing!"
-    />
-    <meta
-      name="keywords"
-      content="Simon Says, kids game, interactive game, physical activity for kids, online game for children"
-    />
-    <meta name="author" content="Naveenchandar" />
-
     <link
       rel="icon"
       href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👑</text></svg>"
+    />
+
+    <link rel="canonical" href="https://navchandar.github.io/lab/simon-says/" />
+
+    <meta
+      name="description"
+      content="A bright, colorful Simon Says game for children aged 3-10. Simple interactive tasks to keep kids active and laughing!"
+    />
+    <meta
+      name="keywords"
+      content="Simon Says, kids game, interactive game, physical activity for kids, game for children"
+    />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+    <meta property="og:author" content="Naveenchandar" />
+
+    <meta name="title" property="og:title" content="Simon Says" />
+    <meta
+      name="description"
+      property="og:description"
+      content="A bright, colorful Simon Says game for children aged 3-10. Simple interactive tasks to keep kids active and laughing!"
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://navchandar.github.io/lab/simon-says/"
+    />
+    <meta
+      name="image"
+      property="og:image"
+      content="https://navchandar.github.io/lab/simon-says/preview.png"
     />
 
     <style>
@@ -29,6 +51,7 @@
         --bg-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         --card-bg: rgba(255, 255, 255, 0.8);
         --text-main: #2d3436;
+        --text-warn: #e81d5d;
         --display-bg: rgba(0, 0, 0, 0.3);
       }
 
@@ -40,6 +63,7 @@
           --bg-gradient: radial-gradient(circle at top left, #1e1e2f, #121212);
           --card-bg: rgba(30, 30, 45, 0.7);
           --text-main: #d4d3d3;
+          --text-warn: #950b36;
           --display-bg: rgba(255, 255, 255, 0.05);
         }
       }
@@ -363,10 +387,10 @@
           // Pick a random trick prefix
           prefix =
             trickPrefixes[Math.floor(Math.random() * trickPrefixes.length)];
-          color = "var(--gp-pink)";
+          color = "var(--text-warn)";
         } else if (twistRoll < 0.25) {
           prefix = "";
-          color = "var(--gp-pink)";
+          color = "var(--text-warn)";
         }
 
         display.innerText = `${prefix}${task}!`;
