@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snack a Day</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --card-bg: rgba(30, 30, 46, 0.7);
+            --card-border: 1px solid rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-color: #ff007a; /* Neon Pink */
+            --accent-glow: 0 0 20px rgba(255, 0, 122, 0.4);
+            --success-color: #00d4ff;
+            --active-scale: scale(1.02);
+            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Prevent body scroll, handle in container */
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 20px 10px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(to right, #fff, #a0a0a0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 300;
+        }
+
+        /* Horizontal Scroll Container */
+        .carousel-container {
+            display: flex;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            gap: 20px;
+            padding: 40px 5vw; /* Side padding for centering first/last item */
+            height: 100%;
+            align-items: center;
+            
+            /* Hide Scrollbar Firefox */
+            scrollbar-width: none; 
+        }
+
+        /* Hide Scrollbar Chrome/Safari/Webkit */
+        .carousel-container::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Card Styles */
+        .day-card {
+            flex: 0 0 auto; /* Don't shrink */
+            width: 85vw;    /* Mobile Default */
+            max-width: 380px; /* Desktop Cap */
+            height: 65vh;   /* Responsive height */
+            min-height: 400px;
+            
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: var(--card-border);
+            border-radius: 24px;
+            padding: 25px;
+            
+            scroll-snap-align: center;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Hover Effect (Desktop) */
+        @media (hover: hover) {
+            .day-card:hover {
+                background: rgba(40, 40, 60, 0.9);
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Active State */
+        .day-card.active {
+            border-color: var(--accent-color);
+            box-shadow: var(--accent-glow);
+            transform: var(--active-scale);
+            background: rgba(40, 40, 60, 0.95);
+            z-index: 2;
+        }
+
+        .day-card.active .day-name {
+            color: var(--accent-color);
+        }
+
+        /* Card Content */
+        .day-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 25px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 15px;
+        }
+
+        .day-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            transition: color 0.3s;
+        }
+
+        .category-badge {
+            font-size: 0.75rem;
+            background: rgba(0, 212, 255, 0.15);
+            color: var(--success-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .card-body {
+            flex-grow: 1;
+            overflow-y: auto; /* Allow scrolling inside card if content is long */
+            padding-right: 5px;
+        }
+        
+        /* Custom scrollbar for inside the card */
+        .card-body::-webkit-scrollbar {
+            width: 4px;
+        }
+        .card-body::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        li {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            align-items: flex-start;
+        }
+
+        li:last-child {
+            border-bottom: none;
+        }
+
+        .item-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .item-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .bullet {
+            margin-top: 6px;
+            height: 8px;
+            width: 8px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            margin-right: 15px;
+            flex-shrink: 0;
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        /* Responsive Footer/Hint */
+        .footer-hint {
+            text-align: center;
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.3);
+            padding-bottom: 10px;
+        }
+        
+        /* Tablet/Desktop Adjustments */
+        @media (min-width: 768px) {
+            .day-card {
+                width: 350px;
+                height: 60vh;
+                opacity: 0.6; /* Dim inactive cards on desktop */
+            }
+            .day-card.active {
+                opacity: 1;
+            }
+            h1 { font-size: 3rem; }
+        }
+
+        #error-container {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff4757;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            z-index: 100;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="error-container"></div>
+
+    <header>
+        <h1 id="main-title">Snack a Day</h1>
+        <p class="subtitle" id="current-date-display">Loading...</p>
+    </header>
+
+    <main class="carousel-container" id="cards-container" role="tablist">
+        <!-- Cards injected via JS -->
+    </main>
+    
+    <div class="footer-hint">
+        Swipe or Scroll to Explore
+    </div>
+
+    <script>
+        const snackData = [
+            {
+                day: "Monday",
+                category: "Fruits",
+                items: [
+                    { name: "Nendran Banana", desc: "Steamed or raw; rich in fiber." },
+                    { name: "Jackfruit (Chakka)", desc: "Seasonal sweet yellow bulbs." },
+                    { name: "Guava (Koyya)", desc: "Semi-ripe with salt & chili." },
+                    { name: "Pomegranate", desc: "Hydrating antioxidant-rich arils." },
+                    { name: "Papaya", desc: "Great for digestion, available year-round." }
+                ]
+            },
+            {
+                day: "Tuesday",
+                category: "Boiled Vegetables",
+                items: [
+                    { name: "Boiled Peanuts", desc: "Soft, salty, boiled in shell." },
+                    { name: "Tapioca (Kappa)", desc: "Boiled tubers, often spicy." },
+                    { name: "Sweet Potato", desc: "Naturally sweet energy booster." },
+                    { name: "Sweet Corn", desc: "Steamed with lemon and salt." },
+                    { name: "Plantain Fry", desc: "Raw plantain seasoned with mustard." }
+                ]
+            },
+            {
+                day: "Wednesday",
+                category: "Indian Sweets",
+                items: [
+                    { name: "Kadalai Mittai", desc: "Peanut & jaggery chikki bar." },
+                    { name: "Adhirasam", desc: "Fried fermented rice flour sweet." },
+                    { name: "Pori Urundai", desc: "Crispy puffed rice balls." },
+                    { name: "Unniyappam", desc: "Banana & rice fritters." },
+                    { name: "Sakkarai Pongal", desc: "Rice, moong dal & ghee pudding." }
+                ]
+            },
+            {
+                day: "Thursday",
+                category: "Sprouts & Pulses",
+                items: [
+                    { name: "Chickpea Sundal", desc: "Tempered with coconut & mustard." },
+                    { name: "Moong Kosambari", desc: "Raw sprouted salad with cucumber." },
+                    { name: "Green Gram Sundal", desc: "Soft boiled whole moong dal." },
+                    { name: "Black-Eyed Pea Sundal", desc: "Creamy legumes with spices." },
+                    { name: "Horse Gram Sundal", desc: "Heat-generating healthy pulse." }
+                ]
+            },
+            {
+                day: "Friday",
+                category: "Dry Fruits",
+                items: [
+                    { name: "Roasted Cashews", desc: "Pan-roasted with pepper." },
+                    { name: "Soaked Almonds", desc: "Peeled for cooling effect." },
+                    { name: "Dates", desc: "Instant iron & energy boost." },
+                    { name: "Black Raisins", desc: "Soaked/hydrated for health." },
+                    { name: "Dry Figs", desc: "Chewy, calcium-rich snack." }
+                ]
+            }
+        ];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                initApp();
+            } catch (e) {
+                showError("Init Error: " + e.message);
+            }
+        });
+
+        function initApp() {
+            const container = document.getElementById('cards-container');
+            const dateDisplay = document.getElementById('current-date-display');
+            
+            // 1. Date Logic
+            const now = new Date();
+            dateDisplay.textContent = now.toLocaleDateString('en-IN', { 
+                weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' 
+            });
+
+            // 2. Calculate Active Day (Mon=0 ... Fri=4)
+            let dayIndex = now.getDay(); 
+            let activeIndex = (dayIndex >= 1 && dayIndex <= 5) ? dayIndex - 1 : 0;
+
+            // 3. Render
+            snackData.forEach((data, index) => {
+                const card = document.createElement('article');
+                card.className = 'day-card';
+                if (index === activeIndex) card.classList.add('active');
+                
+                card.setAttribute('role', 'tab');
+                card.id = `card-${index}`;
+
+                const itemsHtml = data.items.map(item => `
+                    <li>
+                        <div class="bullet"></div>
+                        <div>
+                            <div class="item-name">${escapeHtml(item.name)}</div>
+                            <div class="item-desc">${escapeHtml(item.desc)}</div>
+                        </div>
+                    </li>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="day-header">
+                        <span class="day-name">${data.day}</span>
+                        <span class="category-badge">${data.category}</span>
+                    </div>
+                    <div class="card-body">
+                        <ul>${itemsHtml}</ul>
+                    </div>
+                `;
+
+                // Click to center and highlight
+                card.addEventListener('click', () => {
+                    setActiveCard(index);
+                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                });
+
+                container.appendChild(card);
+            });
+
+            // 4. Initial Scroll to Active Card
+            setTimeout(() => {
+                const activeCard = document.getElementById(`card-${activeIndex}`);
+                if (activeCard) {
+                    activeCard.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+                }
+            }, 100);
+        }
+
+        function setActiveCard(index) {
+            const cards = document.querySelectorAll('.day-card');
+            cards.forEach((c, i) => {
+                if (i === index) c.classList.add('active');
+                else c.classList.remove('active');
+            });
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-container');
+            el.style.display = 'block';
+            el.textContent = msg;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+            });
+        }
+    </script>
+</body>
+</html>
