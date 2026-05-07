@@ -1,4 +1,4 @@
-// version=v2026.05.01
+// version=v2026.05.07
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel"];
 
@@ -64,10 +64,12 @@ const urlsToCache = [
   'shapes/script.js',
   'shapes/style.css',
   'simon-says/index.html',
+  'simon-says/preview.png',
   'smart-dom-inspector/index.html',
   'smart-dom-inspector/locator_helper.js',
   'smart-dom-inspector/script.js',
   'smart-dom-inspector/style.css',
+  'snacks/index.html',
   'static/app_script.js',
   'static/icons/ico/android-icon-144x144.png',
   'static/icons/ico/android-icon-192x192.png',
