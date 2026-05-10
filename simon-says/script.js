@@ -196,7 +196,7 @@ function handleKeydown(event) {
       break;
     case "KeyF":
       event.preventDefault();
-      toggleFullscreen();
+      utils.toggleFullscreen();
       break;
     case "Equal":
       event.preventDefault();
