@@ -26,6 +26,7 @@ const HIDDEN_TOOLS = [
   "diff",
   "polyforge",
   "whistle-counter",
+  "snacks",
 ];
 
 const IGNORED_FILES = [

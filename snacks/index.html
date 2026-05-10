@@ -1,352 +1,476 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Snack a Day</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text x='50' y='75' font-size='80' text-anchor='middle'>🍱</text></svg>"
+      type="image/svg+xml"
+    />
+
+    <link rel="canonical" href="https://navchandar.github.io/lab/snacks/" />
+
+    <meta
+      name="description"
+      content="A simple website to track snacks for kids every week day!"
+    />
+    <meta name="keywords" content="kids, snacks, school, food, tracker" />
+
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Naveenchandar" />
+    <meta property="og:author" content="Naveenchandar" />
+
+    <meta name="title" property="og:title" content="Snacks" />
+    <meta
+      name="description"
+      property="og:description"
+      content="A Week day schedule of snacks for children!"
+    />
+
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:url"
+      content="https://navchandar.github.io/lab/snacks/"
+    />
+    <meta
+      name="image"
+      property="og:image"
+      content="https://navchandar.github.io/lab/snacks/preview.png"
+    />
+
     <style>
+      /* Theme Variables & Auto-Detection */
+      :root {
+        --bg-body: #fdfcf0;
+        --bg-gradient: linear-gradient(135deg, #fdfcf0 0%, #f7ebcb 100%);
+        --card-bg: rgba(255, 255, 255, 0.75);
+        --card-border: 1px solid rgba(180, 83, 9, 0.5);
+        --text-primary: #332b21;
+        --text-secondary: #71604a;
+        --accent-color: #b45309;
+        --accent-glow: 0 10px 25px rgba(180, 83, 9, 0.25);
+        --badge-bg: rgba(21, 128, 61, 0.1);
+        --badge-text: #15803d;
+        --font-main: "Inter", system-ui, -apple-system, sans-serif;
+      }
+
+      /* Global Smooth Transitions */
+      * {
+        transition:
+          background-color 0.5s ease,
+          border-color 0.5s ease,
+          color 0.5s ease,
+          box-shadow 0.5s ease;
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-body);
+        background-image: var(--bg-gradient);
+        height: 100vh;
+        overflow: hidden;
+        color: var(--text-primary);
+        font-family: var(--font-main);
+        /* Prevent body scroll, handle in container */
+      }
+
+      /* Header Styling */
+      header {
+        flex-shrink: 0;
+        z-index: 10;
+        padding: 30px 20px 0;
+        text-align: center;
+      }
+
+      h1 {
+        background: linear-gradient(to bottom, #ea9335, #b45309);
+        font-size: 2rem;
+        -webkit-background-clip: text;
+        margin-bottom: 5px;
+        -webkit-text-fill-color: transparent;
+        color: var(--text-primary);
+        font-weight: 800;
+        font-size: 2.2rem;
+        letter-spacing: 3px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .subtitle {
+        color: var(--text-secondary);
+        font-weight: 400;
+        font-size: 1.1rem;
+      }
+
+      /* Carousel (Scroll Container) */
+      .carousel-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px 8vw; /* Side padding for centering first/last item */
+        height: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+
+      .carousel-container::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Card Styling */
+      .day-card {
+        flex: 0 0 auto;
+        backdrop-filter: blur(12px);
+        background: var(--card-bg);
+        width: 85vw;
+        max-width: 380px;
+        height: 68vh;
+        min-height: 400px;
+        -webkit-backdrop-filter: blur(12px);
+        display: flex;
+        position: relative;
+        flex-direction: column;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        cursor: pointer;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border: var(--card-border);
+        border-radius: 28px;
+        padding: 28px;
+        scroll-snap-align: center;
+      }
+
+      /* Active Card State */
+      .day-card.active {
+        transform: scale(1.02);
+        backdrop-filter: blur(2px);
+        box-shadow: var(--accent-glow);
+        border-width: 2px;
+        border-color: var(--accent-color);
+        -webkit-backdrop-filter: blur(2px);
+        z-index: 2;
+      }
+
+      .day-card.active .day-name {
+        color: var(--accent-color);
+        text-shadow: 0 0.5px 0 black;
+      }
+
+      .day-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.1);
+        padding-bottom: 10px;
+      }
+
+      .day-name {
+        color: var(--text-primary);
+        font-weight: 900;
+        font-size: 1.8rem;
+      }
+
+      .category-badge {
+        border-radius: 100px;
+        background: var(--badge-bg);
+        padding: 5px 10px;
+        color: var(--badge-text);
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+
+      .day-card.active .category-badge {
+        border-width: 1px;
+        border-style: solid;
+        border-color: #075021;
+      }
+
+      /* 6. List & Item Styling */
+      .card-body {
+        flex-grow: 1;
+        padding-right: 10px;
+        overflow-y: auto;
+      }
+
+      li {
+        border-bottom: 1px solid rgba(128, 128, 128, 0.08);
+        padding: 14px 0;
+        list-style: none;
+      }
+      li {
+        padding: 10px 0;
+      }
+
+      .item-name {
+        display: flex;
+        align-items: center;
+        margin-bottom: 4px;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 1.05rem;
+      }
+
+      /* Modern Bullet Point */
+      .item-name::before {
+        display: inline-block;
+        margin-right: 12px;
+        border-radius: 50%;
+        background: var(--accent-color);
+        width: 6px;
+        height: 6px;
+        content: "";
+      }
+
+      .item-desc {
+        padding-left: 18px;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      /* Error & Footer */
+      #error-container {
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        border-radius: 50px;
+        background: #ef4444;
+        padding: 12px 24px;
+        color: white;
+        font-weight: 600;
+      }
+
+      /* Responsive Footer/Hint */
+      .footer-hint {
+        padding-bottom: 10px;
+        color: var(--text-primary);
+        font-size: 0.8rem;
+        text-align: center;
+      }
+
+      @media (prefers-color-scheme: dark) {
         :root {
-            --bg-gradient: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            --card-bg: rgba(30, 30, 46, 0.7);
-            --card-border: 1px solid rgba(255, 255, 255, 0.1);
-            --text-primary: #ffffff;
-            --text-secondary: #a0a0a0;
-            --accent-color: #ff007a; /* Neon Pink */
-            --accent-glow: 0 0 20px rgba(255, 0, 122, 0.4);
-            --success-color: #00d4ff;
-            --active-scale: scale(1.02);
-            --font-main: 'Inter', system-ui, -apple-system, sans-serif;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background: var(--bg-gradient);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden; /* Prevent body scroll, handle in container */
-        }
-
-        header {
-            text-align: center;
-            padding: 20px 20px 10px;
-            flex-shrink: 0;
-            z-index: 10;
+          /* Night Mode Colors (Deep/Elegant) */
+          --bg-body: #121212;
+          --bg-gradient: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+          --card-bg: rgba(30, 30, 30, 0.7);
+          --card-border: 1px solid rgba(235, 252, 186, 0.2);
+          --text-primary: #e5e5e5;
+          --text-secondary: #a0a0a0;
+          --accent-color: #fbbf24;
+          /* Turmeric Gold */
+          --accent-glow: 0 0 25px rgba(251, 191, 36, 0.2);
+          --badge-bg: rgba(74, 222, 128, 0.15);
+          --badge-text: #4ade80;
         }
 
         h1 {
-            font-size: 2rem;
-            background: linear-gradient(to right, #fff, #a0a0a0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-bottom: 5px;
+          background: linear-gradient(to bottom, #fae1a3, #ac7f0d);
+          -webkit-text-fill-color: none;
+          -webkit-background-clip: text;
         }
+      }
 
-        .subtitle {
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            font-weight: 300;
-        }
-
-        /* Horizontal Scroll Container */
-        .carousel-container {
-            display: flex;
-            overflow-x: auto;
-            overflow-y: hidden;
-            scroll-snap-type: x mandatory;
-            gap: 20px;
-            padding: 40px 5vw; /* Side padding for centering first/last item */
-            height: 100%;
-            align-items: center;
-            
-            /* Hide Scrollbar Firefox */
-            scrollbar-width: none; 
-        }
-
-        /* Hide Scrollbar Chrome/Safari/Webkit */
-        .carousel-container::-webkit-scrollbar {
-            display: none;
-        }
-
-        /* Card Styles */
-        .day-card {
-            flex: 0 0 auto; /* Don't shrink */
-            width: 85vw;    /* Mobile Default */
-            max-width: 380px; /* Desktop Cap */
-            height: 65vh;   /* Responsive height */
-            min-height: 400px;
-            
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: var(--card-border);
-            border-radius: 24px;
-            padding: 25px;
-            
-            scroll-snap-align: center;
-            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-        }
-
-        /* Hover Effect (Desktop) */
-        @media (hover: hover) {
-            .day-card:hover {
-                background: rgba(40, 40, 60, 0.9);
-                transform: translateY(-5px);
-            }
-        }
-
-        /* Active State */
-        .day-card.active {
-            border-color: var(--accent-color);
-            box-shadow: var(--accent-glow);
-            transform: var(--active-scale);
-            background: rgba(40, 40, 60, 0.95);
-            z-index: 2;
-        }
-
-        .day-card.active .day-name {
-            color: var(--accent-color);
-        }
-
-        /* Card Content */
-        .day-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 25px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
-        }
-
-        .day-name {
-            font-size: 1.8rem;
-            font-weight: 800;
-            transition: color 0.3s;
-        }
-
-        .category-badge {
-            font-size: 0.75rem;
-            background: rgba(0, 212, 255, 0.15);
-            color: var(--success-color);
-            padding: 6px 12px;
-            border-radius: 20px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-weight: 600;
-        }
-
-        .card-body {
-            flex-grow: 1;
-            overflow-y: auto; /* Allow scrolling inside card if content is long */
-            padding-right: 5px;
-        }
-        
-        /* Custom scrollbar for inside the card */
-        .card-body::-webkit-scrollbar {
-            width: 4px;
-        }
-        .card-body::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
-        }
-
-        ul {
-            list-style: none;
-        }
-
+      /* Styles for mobile devices */
+      @media (max-width: 767px) {
         li {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            align-items: flex-start;
+          padding: 10px 0;
         }
-
-        li:last-child {
-            border-bottom: none;
+        .day-name {
+          font-size: 1.3rem;
         }
-
-        .item-name {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
-        }
-
-        .item-desc {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            line-height: 1.4;
-        }
-
-        .bullet {
-            margin-top: 6px;
-            height: 8px;
-            width: 8px;
-            background-color: var(--accent-color);
-            border-radius: 50%;
-            margin-right: 15px;
-            flex-shrink: 0;
-            box-shadow: 0 0 10px var(--accent-color);
-        }
-
-        /* Responsive Footer/Hint */
-        .footer-hint {
-            text-align: center;
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.3);
-            padding-bottom: 10px;
-        }
-        
-        /* Tablet/Desktop Adjustments */
-        @media (min-width: 768px) {
-            .day-card {
-                width: 350px;
-                height: 60vh;
-                opacity: 0.6; /* Dim inactive cards on desktop */
-            }
-            .day-card.active {
-                opacity: 1;
-            }
-            h1 { font-size: 3rem; }
-        }
-
-        #error-container {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #ff4757;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            z-index: 100;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
 
+  <body>
     <div id="error-container"></div>
 
     <header>
-        <h1 id="main-title">Snack a Day</h1>
-        <p class="subtitle" id="current-date-display">Loading...</p>
+      <h1 id="main-title">Snack a Day</h1>
+      <p class="subtitle" id="current-date-display">Loading...</p>
     </header>
 
     <main class="carousel-container" id="cards-container" role="tablist">
-        <!-- Cards injected via JS -->
+      <!-- Cards injected via JS -->
     </main>
-    
-    <div class="footer-hint">
-        Swipe or Scroll to Explore
-    </div>
+
+    <div class="footer-hint">Swipe or Scroll to Explore</div>
 
     <script>
-        const snackData = [
+      const snackData = [
+        {
+          day: "Monday",
+          category: "Fruits",
+          items: [
             {
-                day: "Monday",
-                category: "Fruits",
-                items: [
-                    { name: "Nendran Banana", desc: "Steamed or raw; rich in fiber." },
-                    { name: "Jackfruit (Chakka)", desc: "Seasonal sweet yellow bulbs." },
-                    { name: "Guava (Koyya)", desc: "Semi-ripe with salt & chili." },
-                    { name: "Pomegranate", desc: "Hydrating antioxidant-rich arils." },
-                    { name: "Papaya", desc: "Great for digestion, available year-round." }
-                ]
+              name: "Banana",
+              desc: "Nendrapazham or Sevvazhai; Steamed or raw; rich in fiber.",
             },
             {
-                day: "Tuesday",
-                category: "Boiled Vegetables",
-                items: [
-                    { name: "Boiled Peanuts", desc: "Soft, salty, boiled in shell." },
-                    { name: "Tapioca (Kappa)", desc: "Boiled tubers, often spicy." },
-                    { name: "Sweet Potato", desc: "Naturally sweet energy booster." },
-                    { name: "Sweet Corn", desc: "Steamed with lemon and salt." },
-                    { name: "Plantain Fry", desc: "Raw plantain seasoned with mustard." }
-                ]
+              name: "Jackfruit (Palaa Pazham)",
+              desc: "Seasonal sweet yellow bulbs.",
             },
             {
-                day: "Wednesday",
-                category: "Indian Sweets",
-                items: [
-                    { name: "Kadalai Mittai", desc: "Peanut & jaggery chikki bar." },
-                    { name: "Adhirasam", desc: "Fried fermented rice flour sweet." },
-                    { name: "Pori Urundai", desc: "Crispy puffed rice balls." },
-                    { name: "Unniyappam", desc: "Banana & rice fritters." },
-                    { name: "Sakkarai Pongal", desc: "Rice, moong dal & ghee pudding." }
-                ]
+              name: "Guava (Koyyapazham)",
+              desc: "Semi-ripe with salt & chili.",
             },
             {
-                day: "Thursday",
-                category: "Sprouts & Pulses",
-                items: [
-                    { name: "Chickpea Sundal", desc: "Tempered with coconut & mustard." },
-                    { name: "Moong Kosambari", desc: "Raw sprouted salad with cucumber." },
-                    { name: "Green Gram Sundal", desc: "Soft boiled whole moong dal." },
-                    { name: "Black-Eyed Pea Sundal", desc: "Creamy legumes with spices." },
-                    { name: "Horse Gram Sundal", desc: "Heat-generating healthy pulse." }
-                ]
+              name: "Pomegranate (Maadhulai)",
+              desc: "Hydrating antioxidant-rich arils.",
             },
             {
-                day: "Friday",
-                category: "Dry Fruits",
-                items: [
-                    { name: "Roasted Cashews", desc: "Pan-roasted with pepper." },
-                    { name: "Soaked Almonds", desc: "Peeled for cooling effect." },
-                    { name: "Dates", desc: "Instant iron & energy boost." },
-                    { name: "Black Raisins", desc: "Soaked/hydrated for health." },
-                    { name: "Dry Figs", desc: "Chewy, calcium-rich snack." }
-                ]
-            }
-        ];
+              name: "Papaya",
+              desc: "Great for digestion, available year-round.",
+            },
+            { name: "Sapota", desc: "Chickoo; soft, sweet, and high energy." },
+          ],
+        },
+        {
+          day: "Tuesday",
+          category: "Boiled Veggies",
+          items: [
+            {
+              name: "Peanuts (Verkadalai)",
+              desc: "Soft, salty, boiled, protein-rich.",
+            },
+            {
+              name: "Tapioca (Maravalli)",
+              desc: "Steamed Tapioca with coconut/sugar.",
+            },
+            {
+              name: "Sweet Potato (Sakkaravalli)",
+              desc: "Naturally sweet; Vitamin A rich.",
+            },
+            { name: "Sweet Corn", desc: "Steamed with lemon and salt." },
+            {
+              name: "Peas (Pattani)",
+              desc: "Steamed green peas with mild seasoning.",
+            },
+          ],
+        },
+        {
+          day: "Wednesday",
+          category: "Sweets",
+          items: [
+            {
+              name: "Sakkarai Pongal",
+              desc: "Rice, moong dal & ghee pudding.",
+            },
+            {
+              name: "Sweet Aval",
+              desc: "Flattened rice soaked in jaggery and coconut.",
+            },
+            {
+              name: "Sweet Kozhukattai",
+              desc: "Steamed rice flour dumplings with jaggery.",
+            },
+            { name: "Pori Urundai", desc: "Crispy puffed rice balls." },
+            { name: "Kadalai Mittai", desc: "Peanut & jaggery chikki bar." },
+            { name: "Adhirasam", desc: "Fried fermented rice flour sweet." },
+            {
+              name: "Unniyappam",
+              desc: "Small ghee-fried banana & rice fritters.",
+            },
+          ],
+        },
+        {
+          day: "Thursday",
+          category: "Sprouts & Pulses",
+          items: [
+            {
+              name: "Chickpea Sundal (Kondaikadalai)",
+              desc: "Tempered with coconut & mustard.",
+            },
+            {
+              name: "Paasi Paruppu Sundal",
+              desc: "Easy-to-digest yellow moong dal.",
+            },
+            {
+              name: "Thattappayaru Sundal",
+              desc: "Black-eyed peas; very creamy texture.",
+            },
+            { name: "Green Gram Sundal", desc: "Soft boiled whole moong dal." },
+            {
+              name: "Kollu Sundal",
+              desc: "Heat-generating Horse Gram Sundal.",
+            },
+            { name: "Karamani Sundal", desc: "Red cowpeas; rich in iron." },
+          ],
+        },
+        {
+          day: "Friday",
+          category: "Dry Fruits",
+          items: [
+            {
+              name: "Roasted Cashews (Munthiri)",
+              desc: "Pan-roasted with pepper(no salt).",
+            },
+            {
+              name: "Almonds (Baadham)",
+              desc: "Soaked and peeled for cooling effect.",
+            },
+            {
+              name: "Dates (Perichampazham)",
+              desc: "Instant iron & energy boost.",
+            },
+            { name: "Black Raisins", desc: "Soaked in water overnight" },
+            { name: "Dry Figs", desc: "Chewy, calcium-rich snack." },
+            { name: "Makhana", desc: "Lotus seeds roasted in a little ghee." },
+          ],
+        },
+      ];
 
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                initApp();
-            } catch (e) {
-                showError("Init Error: " + e.message);
-            }
+      document.addEventListener("DOMContentLoaded", () => {
+        try {
+          initApp();
+        } catch (e) {
+          showError("Init Error: " + e.message);
+        }
+      });
+
+      function initApp() {
+        const container = document.getElementById("cards-container");
+        const dateDisplay = document.getElementById("current-date-display");
+
+        // 1. Date Logic
+        const now = new Date();
+        dateDisplay.textContent = now.toLocaleDateString("en-IN", {
+          weekday: "long",
+          year: "numeric",
+          month: "short",
+          day: "numeric",
         });
 
-        function initApp() {
-            const container = document.getElementById('cards-container');
-            const dateDisplay = document.getElementById('current-date-display');
-            
-            // 1. Date Logic
-            const now = new Date();
-            dateDisplay.textContent = now.toLocaleDateString('en-IN', { 
-                weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' 
-            });
+        // 2. Calculate Active Day (Mon=0 ... Fri=4)
+        let dayIndex = now.getDay();
+        let activeIndex = dayIndex >= 1 && dayIndex <= 5 ? dayIndex - 1 : 0;
 
-            // 2. Calculate Active Day (Mon=0 ... Fri=4)
-            let dayIndex = now.getDay(); 
-            let activeIndex = (dayIndex >= 1 && dayIndex <= 5) ? dayIndex - 1 : 0;
+        // 3. Render
+        snackData.forEach((data, index) => {
+          const card = document.createElement("article");
+          card.className = "day-card";
+          if (index === activeIndex) card.classList.add("active");
 
-            // 3. Render
-            snackData.forEach((data, index) => {
-                const card = document.createElement('article');
-                card.className = 'day-card';
-                if (index === activeIndex) card.classList.add('active');
-                
-                card.setAttribute('role', 'tab');
-                card.id = `card-${index}`;
+          card.setAttribute("role", "tab");
+          card.id = `card-${index}`;
 
-                const itemsHtml = data.items.map(item => `
+          const itemsHtml = data.items
+            .map(
+              (item) => `
                     <li>
                         <div class="bullet"></div>
                         <div>
@@ -354,9 +478,11 @@
                             <div class="item-desc">${escapeHtml(item.desc)}</div>
                         </div>
                     </li>
-                `).join('');
+                `,
+            )
+            .join("");
 
-                card.innerHTML = `
+          card.innerHTML = `
                     <div class="day-header">
                         <span class="day-name">${data.day}</span>
                         <span class="category-badge">${data.category}</span>
@@ -366,43 +492,57 @@
                     </div>
                 `;
 
-                // Click to center and highlight
-                card.addEventListener('click', () => {
-                    setActiveCard(index);
-                    card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-                });
-
-                container.appendChild(card);
+          // Click to center and highlight
+          card.addEventListener("click", () => {
+            setActiveCard(index);
+            card.scrollIntoView({
+              behavior: "smooth",
+              block: "nearest",
+              inline: "center",
             });
+          });
 
-            // 4. Initial Scroll to Active Card
-            setTimeout(() => {
-                const activeCard = document.getElementById(`card-${activeIndex}`);
-                if (activeCard) {
-                    activeCard.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
-                }
-            }, 100);
-        }
+          container.appendChild(card);
+        });
 
-        function setActiveCard(index) {
-            const cards = document.querySelectorAll('.day-card');
-            cards.forEach((c, i) => {
-                if (i === index) c.classList.add('active');
-                else c.classList.remove('active');
+        // 4. Initial Scroll to Active Card
+        setTimeout(() => {
+          const activeCard = document.getElementById(`card-${activeIndex}`);
+          if (activeCard) {
+            activeCard.scrollIntoView({
+              behavior: "auto",
+              block: "nearest",
+              inline: "center",
             });
-        }
+          }
+        }, 100);
+      }
 
-        function showError(msg) {
-            const el = document.getElementById('error-container');
-            el.style.display = 'block';
-            el.textContent = msg;
-        }
+      function setActiveCard(index) {
+        const cards = document.querySelectorAll(".day-card");
+        cards.forEach((c, i) => {
+          if (i === index) c.classList.add("active");
+          else c.classList.remove("active");
+        });
+      }
 
-        function escapeHtml(text) {
-            return text.replace(/[&<>"']/g, function(m) {
-                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
-            });
-        }
+      function showError(msg) {
+        const el = document.getElementById("error-container");
+        el.style.display = "block";
+        el.textContent = msg;
+      }
+
+      function escapeHtml(text) {
+        return text.replace(/[&<>"']/g, function (m) {
+          return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#039;",
+          }[m];
+        });
+      }
     </script>
-</body>
+  </body>
 </html>
