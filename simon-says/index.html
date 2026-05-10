@@ -44,29 +44,38 @@
 
     <style>
       :root {
-        /* Softer, more cohesive brand colors */
-        --gp-pink: #ff99cc;
-        --gp-purple: #a29bfe;
-        --gp-teal: #81ecec;
-        --bg-gradient: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        --card-bg: rgba(255, 255, 255, 0.8);
-        --text-main: #2d3436;
+        /* Warm, playful palette */
+        --gp-pink: #f472b6;
+        --gp-purple: #818cf8;
+        --gp-teal: #34d399;
+        --bg-gradient: linear-gradient(
+          135deg,
+          #fdf2f8 0%,
+          #ede9fe 50%,
+          #ecfdf5 100%
+        );
+        --card-bg: rgba(255, 255, 255, 0.85);
+        --text-main: #1e1b4b;
         --text-correct: #fff;
-        --text-warn: #ff9fbd;
-        --display-bg: rgba(0, 0, 0, 0.4);
+        --text-warn: #fb7185;
+        --display-bg: rgba(99, 102, 241, 0.08);
+        --btn-shadow: rgba(244, 114, 182, 0.35);
+        --btn-hover-shadow: rgba(52, 211, 153, 0.4);
       }
 
       @media (prefers-color-scheme: dark) {
         :root {
-          --gp-pink: #96477d;
-          --gp-purple: #52479c;
-          --gp-teal: #2b6363;
-          --bg-gradient: radial-gradient(circle at top left, #1e1e2f, #121212);
-          --card-bg: rgba(30, 30, 45, 0.7);
-          --text-main: #d4d3d3;
-          --text-correct: #1f1f1f;
-          --text-warn: #ce0745;
-          --display-bg: rgba(255, 255, 255, 0.3);
+          --gp-pink: #db2777;
+          --gp-purple: #6366f1;
+          --gp-teal: #10b981;
+          --bg-gradient: radial-gradient(circle at top left, #1e1b4b, #0f0f1a);
+          --card-bg: rgba(30, 27, 75, 0.55);
+          --text-main: #e0e7ff;
+          --text-correct: #0f0f1a;
+          --text-warn: #fb7185;
+          --display-bg: rgba(99, 102, 241, 0.15);
+          --btn-shadow: rgba(219, 39, 119, 0.3);
+          --btn-hover-shadow: rgba(16, 185, 129, 0.35);
         }
       }
 
@@ -75,8 +84,7 @@
         justify-content: center;
         align-items: center;
         margin: 0;
-        background: #f5f5f7;
-        padding: 20px;
+        background: var(--bg-gradient);
         padding: max(20px, env(safe-area-inset-top))
           max(20px, env(safe-area-inset-right))
           max(20px, env(safe-area-inset-bottom))
@@ -86,17 +94,12 @@
         font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
 
-      @media (prefers-color-scheme: dark) {
-        body {
-          background: #151520;
-        }
-      }
-
       .game-card {
         position: relative;
         z-index: 0;
         backdrop-filter: blur(10px);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
         border: 8px solid transparent;
         border-radius: 40px;
         background: var(--card-bg);
@@ -107,7 +110,7 @@
         text-align: center;
       }
 
-      /* Gradient Border Hack */
+      /* Gradient Border */
       .game-card::before {
         position: absolute;
         top: -8px;
@@ -115,10 +118,10 @@
         bottom: -8px;
         left: -8px;
         z-index: -1;
-        box-shadow: 0px 2px 6px gray;
+        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.3);
         border-radius: 48px;
         background: linear-gradient(
-          45deg,
+          135deg,
           var(--gp-pink),
           var(--gp-purple),
           var(--gp-teal)
@@ -137,50 +140,52 @@
         align-items: center;
         transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         margin-bottom: 2rem;
-        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+        box-shadow: inset 0 2px 10px rgba(99, 102, 241, 0.5);
+        border: 1px solid rgba(129, 140, 248, 0.12);
         border-radius: 25px;
         background: var(--display-bg);
         padding: 1.5rem;
         min-height: 160px;
+        color: var(--text-main);
         font-weight: 700;
         font-size: 1.6rem;
         line-height: 1.4;
         hyphens: auto;
-        text-shadow: 1px 1px 4px var(--text-main);
         word-break: keep-all;
       }
 
       .btn-generate {
         transition: all 0.3s ease;
         cursor: pointer;
-        box-shadow: 0 10px 20px rgba(255, 117, 195, 0.3);
+        box-shadow: 0 10px 25px var(--btn-shadow);
         border: none;
         border-radius: 20px;
-        background: var(--gp-purple);
+        background: linear-gradient(135deg, var(--gp-pink), var(--gp-purple));
         padding: 1.2rem;
         width: 100%;
-        color: var(--text-main);
+        color: #fff;
         font-weight: 800;
         font-size: 1.4rem;
         letter-spacing: 1px;
         text-transform: uppercase;
       }
+
       .btn-generate.on-cooldown {
         transform: scale(0.97);
         opacity: 0.6;
         pointer-events: none;
       }
-      /* Hover & Click Actions */
+
       .btn-generate:hover {
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 15px 25px rgba(43, 210, 255, 0.4);
-        background: var(--gp-teal);
-        color: var(--text-main);
+        box-shadow: 0 15px 30px var(--btn-hover-shadow);
+        background: linear-gradient(135deg, var(--gp-purple), var(--gp-teal));
+        color: #fff;
       }
 
       .btn-generate:active {
         transform: translateY(2px) scale(0.98);
-        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.15);
       }
 
       .pop-anim {
@@ -214,13 +219,30 @@
       @media (hover: none) {
         .btn-generate:active {
           transform: scale(0.95);
-          box-shadow: 0 5px 15px rgba(255, 117, 195, 0.4);
-          background: linear-gradient(45deg, var(--gp-teal), var(--gp-purple));
+          box-shadow: 0 5px 15px var(--btn-shadow);
+          background: linear-gradient(135deg, var(--gp-teal), var(--gp-purple));
         }
       }
     </style>
+    <link rel="stylesheet" href="../static/settings.css" />
   </head>
   <body>
+    <noscript>
+      <div class="noscript-overlay">
+        <div class="noscript-content">
+          <h2>JavaScript is Required</h2>
+          <p>We rely on JavaScript to render the interactive website.</p>
+          <p>
+            Please enable JavaScript in your browser settings and reload the
+            page.
+          </p>
+          <a href="https://www.enable-javascript.com/" target="_blank"
+            >How to enable JavaScript
+          </a>
+        </div>
+      </div>
+    </noscript>
+
     <main class="game-card" role="main">
       <h1>Simon Says!</h1>
 
@@ -238,190 +260,6 @@
       </button>
     </main>
 
-    <script>
-      const simple = [
-        "Jump 3 times",
-        "Touch your nose",
-        "Clap your hands twice",
-        "Spin once",
-        "Touch your toes",
-        "Wiggle your fingers",
-        "Nod your head",
-        "Point to the ceiling",
-        "Point to the floor",
-        "Stick out your tongue",
-        "Close your eyes",
-        "Don't blink",
-        "Pretend to swim",
-        "Scratch your head",
-        "Stomp your feet",
-        "Give a thumbs up",
-        "Cover your eyes",
-        "Blink 5 times",
-        "Moo like a cow",
-        "Stand on one foot",
-        "Touch your ears",
-        "Meow like a cat",
-        "Wash your hands",
-        "Sit down",
-        "Stand up",
-        "Touch your knees",
-        "Walk in the same place",
-        "Point to something blue",
-        "Make a circle in the air",
-        "Cross your arms",
-        "Touch your elbows",
-        "Pretend to brush your teeth",
-        "Yawn loudly",
-        "Smile big",
-        "Shake your head 'No'",
-        "Shake your head 'Yes'",
-        "Tap your chin",
-        "Look at the floor",
-        "Reach for the stars",
-        "Flap your arms like a bird",
-        "Give yourself a hug",
-        "Touch your eyebrows",
-        "Pretend to sleep",
-        "Show 3 fingers",
-        "Pretend to drink coffee",
-        "Roar like a tiger",
-        "Make a car sound",
-        "Say your shirt color",
-        "Freeze like a statue",
-        "Tap your head 5 times",
-        "Make a fish face",
-      ];
-
-      const hard = [
-        "Spell your name backwards",
-        "Stand on one leg for 10 seconds",
-        "Touch left ear with right hand",
-        "Say days of the week",
-        "Rub tummy and pat head",
-        "Name 3 red fruits",
-        "Sing a nursery rhyme",
-        "Balance a book on your head",
-        "Name 4 round things",
-        "Count backwards from 10",
-        "Sing Happy Birthday",
-        "Do a slow-motion run in place",
-        "Find something smaller than your hand",
-        "Close eyes and touch nose",
-        "Spell the word 'APPLE'",
-        "List 3 colors in a rainbow",
-        "Name 5 body parts",
-        "Bark like a dog and then sit",
-        "Say 'Hello' in a deep voice",
-        "Point to your left and then right",
-        "Whisper your favorite color",
-        "Hum your favorite song",
-        "Say the alphabet to M",
-        "Pretend to sneeze but dont sneeze",
-        "Count the windows in this room",
-        "Walk like a robot",
-        "Walk on your tiptoes",
-        "Spin 3 times",
-        "Touch your back",
-        "Pretend to be a monkey",
-        "Walk like a very old person",
-        "Make the sound of a pressure cooker whistle",
-        "Name 3 things that are yellow",
-        "Act like you just bit into a chilli",
-      ];
-
-      const display = document.getElementById("display-area");
-      const btn = document.getElementById("btn-generate");
-
-      // Shuffle-pool approach: O(1) per pick, no repeats until pool is exhausted
-      function createShuffledPool(arr) {
-        const shuffled = [...arr];
-        for (let i = shuffled.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-        }
-        return shuffled;
-      }
-
-      let pools = { simple: [], hard: [] };
-
-      function getUniqueRandom(arr, type) {
-        if (pools[type].length === 0) {
-          pools[type] = createShuffledPool(arr);
-        }
-        return pools[type].pop();
-      }
-
-      // Cooldown to prevent spam clicks
-      let cooldown = false;
-
-      // Trick prefixes — similar sounding to "Simon" to confuse kids
-      const trickPrefixes = [
-        "Simran says: ",
-        "Lemon says: ",
-        "Sam says: ",
-        "Diamond says: ",
-      ];
-
-      function playGame() {
-        if (cooldown) {
-          return;
-        }
-        cooldown = true;
-
-        btn.classList.add("on-cooldown");
-        setTimeout(() => {
-          cooldown = false;
-          btn.classList.remove("on-cooldown");
-        }, 500);
-
-        // 20% chance for a Hard task
-        const isHard = Math.random() < 0.2;
-        const task = getUniqueRandom(
-          isHard ? hard : simple,
-          isHard ? "hard" : "simple",
-        );
-
-        // The Twist: 25% chance of trick or no prefix
-        const twistRoll = Math.random();
-        let prefix = "Simon says: ";
-        let color = "var(--text-correct)";
-
-        if (twistRoll < 0.15) {
-          // Pick a random trick prefix
-          prefix =
-            trickPrefixes[Math.floor(Math.random() * trickPrefixes.length)];
-          color = "var(--text-warn)";
-        } else if (twistRoll < 0.25) {
-          prefix = "";
-          color = "var(--text-warn)";
-        }
-
-        display.innerText = `${prefix}${task}!`;
-        display.style.color = color;
-
-        // Animation reset
-        display.classList.remove("pop-anim");
-        void display.offsetWidth;
-        display.classList.add("pop-anim");
-      }
-
-      // Click anywhere on the page
-      document.addEventListener("click", (e) => {
-        // Ignore if they clicked the button itself (it already calls playGame)
-        if (e.target.closest(".btn-generate")) {
-          return;
-        }
-        btn.click();
-      });
-
-      // Spacebar or Enter key
-      document.addEventListener("keydown", (e) => {
-        if (e.code === "Space" || e.code === "Enter") {
-          e.preventDefault(); // prevent page scroll on spacebar
-          btn.click();
-        }
-      });
-    </script>
+    <script type="module" src="script.js"></script>
   </body>
 </html>

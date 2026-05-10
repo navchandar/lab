@@ -54,6 +54,8 @@
         --badge-bg: rgba(21, 128, 61, 0.1);
         --badge-text: #15803d;
         --font-main: "Inter", system-ui, -apple-system, sans-serif;
+        --check-color: #15803d;
+        --checked-bg: rgba(21, 128, 61, 0.06);
       }
 
       /* Global Smooth Transitions */
@@ -97,7 +99,6 @@
         color: var(--text-primary);
         font-weight: 800;
         font-size: 2.2rem;
-        letter-spacing: 3px;
         letter-spacing: 0.5px;
         text-transform: uppercase;
       }
@@ -195,7 +196,7 @@
         border-color: #075021;
       }
 
-      /* 6. List & Item Styling */
+      /* List & Item Styling */
       .card-body {
         flex-grow: 1;
         padding-right: 10px;
@@ -204,38 +205,96 @@
 
       li {
         border-bottom: 1px solid rgba(128, 128, 128, 0.08);
-        padding: 14px 0;
+        padding: 10px 0;
         list-style: none;
       }
-      li {
-        padding: 10px 0;
+
+      .item-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        cursor: pointer;
+      }
+
+      /* Custom Checkbox */
+      .snack-checkbox {
+        appearance: none;
+        -webkit-appearance: none;
+        position: relative;
+        flex-shrink: 0;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        margin-top: 5px;
+        border: 2px solid var(--text-secondary);
+        border-radius: 4px;
+        background: transparent;
+        width: 20px;
+        height: 20px;
+      }
+
+      .snack-checkbox:hover {
+        box-shadow: 0 0 0 2px rgba(21, 128, 61, 0.2);
+        border-color: var(--check-color);
+      }
+
+      .snack-checkbox:checked {
+        border-color: var(--check-color);
+        background: var(--check-color);
+      }
+
+      .snack-checkbox:checked:hover {
+        transform: scale(0.9);
+      }
+
+      .snack-checkbox:checked::after {
+        position: absolute;
+        top: 1px;
+        left: 5px;
+        transform: rotate(45deg);
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        width: 5px;
+        height: 10px;
+        content: "";
+      }
+
+      .item-content {
+        flex: 1;
+        min-width: 0;
       }
 
       .item-name {
         display: flex;
         align-items: center;
+        transition: opacity 0.3s ease;
         margin-bottom: 4px;
         color: var(--text-primary);
         font-weight: 700;
         font-size: 1.05rem;
       }
 
-      /* Modern Bullet Point */
-      .item-name::before {
-        display: inline-block;
-        margin-right: 12px;
-        border-radius: 50%;
-        background: var(--accent-color);
-        width: 6px;
-        height: 6px;
-        content: "";
-      }
-
       .item-desc {
-        padding-left: 18px;
+        transition: opacity 0.3s ease;
+        padding-left: 0;
         color: var(--text-secondary);
         font-size: 0.9rem;
         line-height: 1.5;
+      }
+
+      /* Checked item styling */
+      li.checked .item-name {
+        opacity: 0.7;
+        text-decoration: line-through;
+      }
+
+      li.checked .item-desc {
+        opacity: 0.7;
+        text-decoration: line-through;
+      }
+
+      li.checked {
+        border-radius: 8px;
+        background: var(--checked-bg);
       }
 
       /* Error & Footer */
@@ -253,12 +312,39 @@
         font-weight: 600;
       }
 
-      /* Responsive Footer/Hint */
       .footer-hint {
-        padding-bottom: 10px;
-        color: var(--text-primary);
-        font-size: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        padding: 8px 20px 12px;
+        color: var(--text-secondary);
+        font-size: 0.78rem;
         text-align: center;
+      }
+      .reset-btn {
+        appearance: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 1.5px solid var(--text-secondary);
+        border-radius: 100px;
+        background: transparent;
+        padding: 5px 14px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.75rem;
+        font-family: var(--font-main);
+        white-space: nowrap;
+      }
+      .reset-btn:hover {
+        box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+        border-color: #ef4444;
+        background: #ef4444;
+        color: #fff;
+      }
+      .reset-btn:active {
+        transform: scale(0.95);
       }
 
       @media (prefers-color-scheme: dark) {
@@ -275,6 +361,8 @@
           --accent-glow: 0 0 25px rgba(251, 191, 36, 0.2);
           --badge-bg: rgba(74, 222, 128, 0.15);
           --badge-text: #4ade80;
+          --check-color: #4ade80;
+          --checked-bg: rgba(74, 222, 128, 0.08);
         }
 
         h1 {
@@ -308,9 +396,18 @@
       <!-- Cards injected via JS -->
     </main>
 
-    <div class="footer-hint">Swipe or Scroll to Explore</div>
+    <div class="footer-hint">
+      <span>Swipe to explore · Check off snacks </span>
+      <br /><span>Auto Resets in 4 weeks</span>
+      <button class="reset-btn" id="resetBtn" title="Clear all checks">
+        ↺ Reset All
+      </button>
+    </div>
 
     <script>
+      const STORAGE_KEY = "snackChecks";
+      const FOUR_WEEKS_MS = 28 * 24 * 60 * 60 * 1000;
+
       const snackData = [
         {
           day: "Monday",
@@ -434,6 +531,43 @@
         },
       ];
 
+      // --- localStorage helpers ---
+
+      function loadChecks() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return {};
+          const data = JSON.parse(raw);
+          const now = Date.now();
+          let changed = false;
+          // Purge expired entries
+          for (const key of Object.keys(data)) {
+            if (now - data[key] > FOUR_WEEKS_MS) {
+              delete data[key];
+              changed = true;
+            }
+          }
+          if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          return data;
+        } catch {
+          return {};
+        }
+      }
+
+      function saveCheck(id) {
+        const data = loadChecks();
+        data[id] = Date.now();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      function removeCheck(id) {
+        const data = loadChecks();
+        delete data[id];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      }
+
+      // --- App Init ---
+
       document.addEventListener("DOMContentLoaded", () => {
         try {
           initApp();
@@ -459,42 +593,67 @@
         let dayIndex = now.getDay();
         let activeIndex = dayIndex >= 1 && dayIndex <= 5 ? dayIndex - 1 : 0;
 
-        // 3. Render
-        snackData.forEach((data, index) => {
+        const checks = loadChecks();
+
+        snackData.forEach((data, dIdx) => {
           const card = document.createElement("article");
           card.className = "day-card";
-          if (index === activeIndex) card.classList.add("active");
-
+          if (dIdx === activeIndex) card.classList.add("active");
           card.setAttribute("role", "tab");
-          card.id = `card-${index}`;
+          card.id = `card-${dIdx}`;
 
           const itemsHtml = data.items
-            .map(
-              (item) => `
-                    <li>
-                        <div class="bullet"></div>
-                        <div>
-                            <div class="item-name">${escapeHtml(item.name)}</div>
-                            <div class="item-desc">${escapeHtml(item.desc)}</div>
-                        </div>
-                    </li>
-                `,
-            )
+            .map((item, iIdx) => {
+              const checkId = `${dIdx}-${iIdx}`;
+              const isChecked = checkId in checks;
+              return `
+  <li class="${isChecked ? "checked" : ""}">
+    <label class="item-row">
+      <input
+        type="checkbox"
+        class="snack-checkbox"
+        data-id="${checkId}"
+        ${isChecked ? "checked" : ""}
+        aria-label="Mark ${escapeHtml(item.name)} as done"
+      />
+      <div class="item-content">
+        <div class="item-name">${escapeHtml(item.name)}</div>
+        <div class="item-desc">${escapeHtml(item.desc)}</div>
+      </div>
+    </label>
+  </li>`;
+            })
             .join("");
 
           card.innerHTML = `
-                    <div class="day-header">
-                        <span class="day-name">${data.day}</span>
-                        <span class="category-badge">${data.category}</span>
-                    </div>
-                    <div class="card-body">
-                        <ul>${itemsHtml}</ul>
-                    </div>
-                `;
+            <div class="day-header">
+              <span class="day-name">${data.day}</span>
+              <span class="category-badge">${data.category}</span>
+            </div>
+            <div class="card-body">
+              <ul>${itemsHtml}</ul>
+            </div>`;
 
-          // Click to center and highlight
-          card.addEventListener("click", () => {
-            setActiveCard(index);
+          // Delegate checkbox clicks
+          card.addEventListener("change", (e) => {
+            if (e.target.classList.contains("snack-checkbox")) {
+              e.stopPropagation();
+              const id = e.target.dataset.id;
+              const li = e.target.closest("li");
+              if (e.target.checked) {
+                saveCheck(id);
+                li.classList.add("checked");
+              } else {
+                removeCheck(id);
+                li.classList.remove("checked");
+              }
+            }
+          });
+
+          // Prevent card click from toggling checkbox
+          card.addEventListener("click", (e) => {
+            if (e.target.classList.contains("snack-checkbox")) return;
+            setActiveCard(dIdx);
             card.scrollIntoView({
               behavior: "smooth",
               block: "nearest",
@@ -516,6 +675,15 @@
             });
           }
         }, 100);
+
+        document.getElementById("resetBtn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          localStorage.removeItem(STORAGE_KEY);
+          document.querySelectorAll(".snack-checkbox").forEach((cb) => {
+            cb.checked = false;
+            cb.closest("li").classList.remove("checked");
+          });
+        });
       }
 
       function setActiveCard(index) {
