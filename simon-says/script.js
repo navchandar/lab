@@ -187,15 +187,14 @@ document.addEventListener("click", (e) => {
 // Keyboard Shortcuts
 // =========================
 function handleKeydown(event) {
+  utils.handleSidebar();
   switch (event.code) {
     case "Space":
     case "Enter":
-      utils.hideSidebar();
       event.preventDefault();
       btn.click();
       break;
     case "KeyF":
-      utils.hideSidebar();
       event.preventDefault();
       utils.toggleFullscreen();
       break;

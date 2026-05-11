@@ -560,6 +560,7 @@ function safeSetIframeSrc(src) {
  * Collapses the sidebar if iframe is loaded and visible.
  */
 const collapseSidebar = () => {
+  const iframe = document.getElementById("appFrame");
   const iframeSrc = iframe?.getAttribute("src");
 
   if (!iframeSrc || iframeSrc === "" || !iframe.contentWindow) {
@@ -581,6 +582,9 @@ const collapseSidebar = () => {
   }
   hamburger.classList.remove("menu-open");
   updateHamburger();
+  setTimeout(() => {
+    iframe.focus();
+  }, 100);
 };
 
 /**
