@@ -114,6 +114,7 @@
         display: flex;
         align-items: center;
         gap: 20px;
+        cursor: grab;
         /* Side padding for centering first/last item */
         padding: 10px 8vw;
         padding-top: 0px;
@@ -128,6 +129,11 @@
         display: none;
       }
 
+      .carousel-container.dragging {
+        cursor: grabbing;
+        scroll-snap-type: none;
+      }
+
       /* Card Styling */
       .day-card {
         flex: 0 0 auto;
@@ -135,7 +141,7 @@
         background: var(--card-bg);
         width: 85vw;
         max-width: 380px;
-        height: 68vh;
+        height: 70vh;
         min-height: 400px;
         -webkit-backdrop-filter: blur(12px);
         display: flex;
@@ -209,6 +215,13 @@
         border-bottom: 1px solid rgba(128, 128, 128, 0.08);
         padding: 10px 0;
         list-style: none;
+      }
+
+      li.item-focused {
+        outline: 2px solid var(--accent-color);
+        outline-offset: -2px;
+        border-radius: 8px;
+        background: rgba(180, 83, 9, 0.06);
       }
 
       .item-row {
@@ -324,11 +337,12 @@
         justify-content: center;
         align-items: center;
         gap: 14px;
-        padding: 8px 20px 12px;
+        padding: 8px 20px 25px 20px;
         color: var(--text-secondary);
         font-size: 0.78rem;
         text-align: center;
       }
+
       .reset-btn {
         appearance: none;
         transition: all 0.2s ease;
@@ -376,6 +390,9 @@
           -webkit-text-fill-color: none;
           -webkit-background-clip: text;
         }
+        li.item-focused {
+          background: rgba(251, 191, 36, 0.08);
+        }
       }
 
       /* Styles for mobile devices */
@@ -385,6 +402,12 @@
         }
         .day-name {
           font-size: 1.3rem;
+        }
+        .carousel-container {
+          height: 75%;
+        }
+        .footer-hint {
+          padding: 8px 25px 25px 25px;
         }
       }
     </style>
@@ -620,17 +643,29 @@
       ];
 
       // --- localStorage helpers ---
-
       function loadChecks() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) return {};
           const data = JSON.parse(raw);
+          // Validate parsed data is a plain object, not an array or primitive
+          if (
+            typeof data !== "object" ||
+            data === null ||
+            Array.isArray(data)
+          ) {
+            localStorage.removeItem(STORAGE_KEY);
+            return {};
+          }
           const now = Date.now();
           let changed = false;
-          // Purge expired entries
           for (const key of Object.keys(data)) {
-            if (now - data[key] > FOUR_WEEKS_MS) {
+            // Validate each value is a valid timestamp number
+            if (
+              typeof data[key] !== "number" ||
+              isNaN(data[key]) ||
+              now - data[key] > FOUR_WEEKS_MS
+            ) {
               delete data[key];
               changed = true;
             }
@@ -638,24 +673,30 @@
           if (changed) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
           return data;
         } catch {
+          // If data is corrupted, wipe it clean
+          localStorage.removeItem(STORAGE_KEY);
           return {};
         }
       }
-
       function saveCheck(id) {
-        const data = loadChecks();
-        data[id] = Date.now();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        try {
+          const data = loadChecks();
+          data[id] = Date.now();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch {
+          showError("Could not save changes — storage may be full.");
+        }
       }
-
       function removeCheck(id) {
-        const data = loadChecks();
-        delete data[id];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        try {
+          const data = loadChecks();
+          delete data[id];
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch {
+          // Silent fail on remove is acceptable
+        }
       }
-
       // --- App Init ---
-
       document.addEventListener("DOMContentLoaded", () => {
         try {
           initApp();
@@ -663,11 +704,14 @@
           showError("Init Error: " + e.message);
         }
       });
-
       function initApp() {
         const container = document.getElementById("cards-container");
         const dateDisplay = document.getElementById("current-date-display");
-
+        // Guard against missing DOM elements
+        if (!container || !dateDisplay) {
+          showError("Missing required page elements!");
+          return;
+        }
         // 1. Date Logic
         const now = new Date();
         dateDisplay.textContent = now.toLocaleDateString("en-IN", {
@@ -676,56 +720,55 @@
           month: "short",
           day: "numeric",
         });
-
         // 2. Calculate Active Day (Mon=0 ... Fri=4)
-        let dayIndex = now.getDay();
-        let activeIndex = dayIndex >= 1 && dayIndex <= 5 ? dayIndex - 1 : 0;
-
+        const dayIndex = now.getDay();
+        let activeIndex;
+        if (dayIndex >= 1 && dayIndex <= 5) {
+          activeIndex = dayIndex - 1;
+        } else {
+          activeIndex = 0; // Saturday/Sunday → show Monday
+        }
         const checks = loadChecks();
-
         snackData.forEach((data, dIdx) => {
           const card = document.createElement("article");
           card.className = "day-card";
           if (dIdx === activeIndex) card.classList.add("active");
           card.setAttribute("role", "tab");
           card.id = `card-${dIdx}`;
-
           const itemsHtml = data.items
             .map((item, iIdx) => {
               const checkId = `${dIdx}-${iIdx}`;
               const isChecked = checkId in checks;
               return `
-  <li class="${isChecked ? "checked" : ""}">
-    <label class="item-row">
-      <input
-        type="checkbox"
-        class="snack-checkbox"
-        data-id="${checkId}"
-        ${isChecked ? "checked" : ""}
-        aria-label="Mark ${escapeHtml(item.name)} as done"
-      />
-      <div class="item-content">
-        <div class="item-name">${escapeHtml(item.name)}</div>
-        <div class="item-desc">${escapeHtml(item.desc)}</div>
-      </div>
-    </label>
-  </li>`;
+<li class="${isChecked ? "checked" : ""}">
+  <label class="item-row">
+    <input
+      type="checkbox"
+      class="snack-checkbox"
+      data-id="${checkId}"
+      ${isChecked ? "checked" : ""}
+      aria-label="Mark ${escapeHtml(item.name)} as done"
+    />
+    <div class="item-content">
+      <div class="item-name">${escapeHtml(item.name)}</div>
+      <div class="item-desc">${escapeHtml(item.desc)}</div>
+    </div>
+  </label>
+</li>`;
             })
             .join("");
-
           card.innerHTML = `
-            <div class="day-header">
-              <span class="day-name">${data.day}</span>
-              <span class="category-badge">${data.category}</span>
-            </div>
-            <div class="card-body">
-              <ul>${itemsHtml}</ul>
-            </div>`;
-
-          // Delegate checkbox clicks
+        <div class="day-header">
+          <span class="day-name">${escapeHtml(data.day)}</span>
+          <span class="category-badge">${escapeHtml(data.category)}</span>
+        </div>
+        <div class="card-body">
+          <ul>${itemsHtml}</ul>
+        </div>`;
+          // Delegate checkbox changes
           card.addEventListener("change", (e) => {
             if (e.target.classList.contains("snack-checkbox")) {
-              // Safety net: revert if somehow toggled on a non-active card
+              // Safety net: revert if toggled on a non-active card
               if (!card.classList.contains("active")) {
                 e.target.checked = !e.target.checked;
                 return;
@@ -733,6 +776,10 @@
               e.stopPropagation();
               const id = e.target.dataset.id;
               const li = e.target.closest("li");
+              // Card may not have elements
+              if (!li) {
+                return;
+              }
               if (e.target.checked) {
                 saveCheck(id);
                 li.classList.add("checked");
@@ -742,11 +789,9 @@
               }
             }
           });
-
-          // Prevent card click from toggling checkbox
+          // Card click handler
           card.addEventListener("click", (e) => {
             const isActive = card.classList.contains("active");
-
             if (!isActive) {
               // Block checkbox/label toggle on non-active cards, just activate
               if (e.target.closest(".item-row")) {
@@ -760,22 +805,166 @@
               });
               return;
             }
-
-            // Active card: let checkboxes work, other clicks just re-center
             if (e.target.classList.contains("snack-checkbox")) {
               return;
             }
-            setActiveCard(dIdx);
-            card.scrollIntoView({
-              behavior: "smooth",
-              block: "nearest",
-              inline: "center",
-            });
           });
-
           container.appendChild(card);
         });
-
+        // =========================================
+        // A) Auto-activate card on scroll (mobile)
+        // =========================================
+        function syncActiveToScroll() {
+          setActiveCard(getClosestCardIndex(container));
+        }
+        let scrollTimer = null;
+        if ("onscrollend" in window) {
+          container.addEventListener("scrollend", syncActiveToScroll);
+        } else {
+          container.addEventListener(
+            "scroll",
+            () => {
+              clearTimeout(scrollTimer);
+              scrollTimer = setTimeout(syncActiveToScroll, 120);
+            },
+            { passive: true },
+          );
+        }
+        // =========================================
+        // B) Drag to scroll (desktop)
+        // =========================================
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragScrollLeft = 0;
+        let hasDragged = false;
+        container.addEventListener("mousedown", (e) => {
+          if (e.target.closest("input, button, a")) return;
+          isDragging = true;
+          hasDragged = false;
+          dragStartX = e.pageX;
+          dragScrollLeft = container.scrollLeft;
+          container.classList.add("dragging");
+          // Prevent text selection while dragging
+          e.preventDefault();
+        });
+        window.addEventListener("mousemove", (e) => {
+          if (!isDragging) return;
+          const dx = e.pageX - dragStartX;
+          if (Math.abs(dx) > 5) hasDragged = true;
+          container.scrollLeft = dragScrollLeft - dx;
+        });
+        window.addEventListener("mouseup", () => {
+          if (!isDragging) return;
+          isDragging = false;
+          container.classList.remove("dragging");
+          setTimeout(syncActiveToScroll, 100);
+        });
+        // Also handle mouse leaving the window mid-drag
+        window.addEventListener("mouseleave", () => {
+          if (!isDragging) return;
+          isDragging = false;
+          container.classList.remove("dragging");
+          setTimeout(syncActiveToScroll, 100);
+        });
+        // Prevent click from firing after a drag
+        container.addEventListener(
+          "click",
+          (e) => {
+            if (hasDragged) {
+              e.stopPropagation();
+              e.preventDefault();
+              hasDragged = false;
+            }
+          },
+          true,
+        );
+        // =========================================
+        // C) Keyboard navigation
+        // =========================================
+        document.addEventListener("keydown", (e) => {
+          // Ignore selects, buttons, contenteditable
+          const tag = e.target.tagName;
+          if (
+            tag === "INPUT" ||
+            tag === "TEXTAREA" ||
+            tag === "SELECT" ||
+            e.target.isContentEditable
+          ) {
+            return;
+          }
+          const cards = Array.from(document.querySelectorAll(".day-card"));
+          const activeCard = document.querySelector(".day-card.active");
+          if (!activeCard) return;
+          const activeIdx = cards.indexOf(activeCard);
+          switch (e.code) {
+            case "ArrowLeft": {
+              e.preventDefault();
+              const prev = Math.max(0, activeIdx - 1);
+              if (prev !== activeIdx) {
+                setActiveCard(prev);
+                cards[prev].scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                  inline: "center",
+                });
+              }
+              break;
+            }
+            case "ArrowRight": {
+              e.preventDefault();
+              const next = Math.min(cards.length - 1, activeIdx + 1);
+              if (next !== activeIdx) {
+                setActiveCard(next);
+                cards[next].scrollIntoView({
+                  behavior: "smooth",
+                  block: "nearest",
+                  inline: "center",
+                });
+              }
+              break;
+            }
+            case "ArrowDown": {
+              e.preventDefault();
+              const items = activeCard.querySelectorAll("li");
+              if (!items.length) break;
+              focusedItemIndex = Math.min(
+                items.length - 1,
+                focusedItemIndex + 1,
+              );
+              setItemFocus(activeCard, focusedItemIndex);
+              break;
+            }
+            case "ArrowUp": {
+              e.preventDefault();
+              if (focusedItemIndex <= 0) {
+                focusedItemIndex = -1;
+                clearItemFocus();
+                break;
+              }
+              focusedItemIndex--;
+              setItemFocus(activeCard, focusedItemIndex);
+              break;
+            }
+            case "Enter":
+            case "Space": {
+              if (focusedItemIndex >= 0) {
+                e.preventDefault();
+                const items = activeCard.querySelectorAll("li");
+                // Bounds check before accessing
+                if (focusedItemIndex >= items.length) {
+                  focusedItemIndex = items.length - 1;
+                }
+                const li = items[focusedItemIndex];
+                const cb = li?.querySelector(".snack-checkbox");
+                if (cb) {
+                  cb.checked = !cb.checked;
+                  cb.dispatchEvent(new Event("change", { bubbles: true }));
+                }
+              }
+              break;
+            }
+          }
+        });
         // 4. Initial Scroll to Active Card
         setTimeout(() => {
           const activeCard = document.getElementById(`card-${activeIndex}`);
@@ -787,32 +976,116 @@
             });
           }
         }, 100);
-
-        document.getElementById("resetBtn").addEventListener("click", (e) => {
-          e.stopPropagation();
-          localStorage.removeItem(STORAGE_KEY);
-          document.querySelectorAll(".snack-checkbox").forEach((cb) => {
-            cb.checked = false;
-            cb.closest("li").classList.remove("checked");
+        // Reset button
+        const resetBtn = document.getElementById("resetBtn");
+        if (resetBtn) {
+          // Add confirmation to prevent accidental reset
+          resetBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            // Simple double-click guard: first click primes, second click within 2s confirms
+            if (!resetBtn.dataset.primed) {
+              resetBtn.dataset.primed = "true";
+              resetBtn.textContent = "↺ Tap again to confirm";
+              resetBtn.style.borderColor = "#ef4444";
+              resetBtn.style.color = "#ef4444";
+              setTimeout(() => {
+                delete resetBtn.dataset.primed;
+                resetBtn.textContent = "↺ Reset All";
+                resetBtn.style.borderColor = "";
+                resetBtn.style.color = "";
+              }, 2000);
+              return;
+            }
+            // Confirmed — do the reset
+            delete resetBtn.dataset.primed;
+            resetBtn.textContent = "↺ Reset All";
+            resetBtn.style.borderColor = "";
+            resetBtn.style.color = "";
+            try {
+              localStorage.removeItem(STORAGE_KEY);
+            } catch {
+              // Ignore storage errors on clear
+            }
+            document.querySelectorAll(".snack-checkbox").forEach((cb) => {
+              cb.checked = false;
+              const li = cb.closest("li");
+              if (li) {
+                li.classList.remove("checked");
+              }
+            });
+            // clear keyboard focus state
+            focusedItemIndex = -1;
+            clearItemFocus();
           });
-        });
+        }
       }
-
+      // --- Shared state & helpers ---
+      let focusedItemIndex = -1;
       function setActiveCard(index) {
         const cards = document.querySelectorAll(".day-card");
+        if (index < 0 || index >= cards.length) {
+          return;
+        }
+        const current = document.querySelector(".day-card.active");
+        const currentIndex = current ? Array.from(cards).indexOf(current) : -1;
         cards.forEach((c, i) => {
           if (i === index) c.classList.add("active");
           else c.classList.remove("active");
         });
+        if (index !== currentIndex) {
+          focusedItemIndex = -1;
+          clearItemFocus();
+        }
       }
-
+      function getClosestCardIndex(container) {
+        const cards = container.querySelectorAll(".day-card");
+        // Guard against empty container
+        if (!cards.length) {
+          return 0;
+        }
+        const rect = container.getBoundingClientRect();
+        const center = rect.left + rect.width / 2;
+        let closest = 0;
+        let minDist = Infinity;
+        cards.forEach((card, i) => {
+          const r = card.getBoundingClientRect();
+          const dist = Math.abs(r.left + r.width / 2 - center);
+          if (dist < minDist) {
+            minDist = dist;
+            closest = i;
+          }
+        });
+        return closest;
+      }
+      function setItemFocus(card, index) {
+        clearItemFocus();
+        const items = card.querySelectorAll("li");
+        if (index >= 0 && index < items.length) {
+          items[index].classList.add("item-focused");
+          items[index].scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      }
+      function clearItemFocus() {
+        document
+          .querySelectorAll(".item-focused")
+          .forEach((el) => el.classList.remove("item-focused"));
+      }
       function showError(msg) {
         const el = document.getElementById("error-container");
+        if (!el) {
+          return;
+        }
         el.style.display = "block";
         el.textContent = msg;
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+          el.style.display = "none";
+        }, 5000);
       }
-
       function escapeHtml(text) {
+        if (typeof text !== "string") {
+          return "";
+        }
         return text.replace(/[&<>"']/g, function (m) {
           return {
             "&": "&amp;",
