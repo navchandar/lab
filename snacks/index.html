@@ -260,6 +260,10 @@
         content: "";
       }
 
+      .day-card:not(.active) .snack-checkbox {
+        opacity: 0.5;
+      }
+
       .item-content {
         flex: 1;
         min-width: 0;
@@ -721,6 +725,11 @@
           // Delegate checkbox clicks
           card.addEventListener("change", (e) => {
             if (e.target.classList.contains("snack-checkbox")) {
+              // Safety net: revert if somehow toggled on a non-active card
+              if (!card.classList.contains("active")) {
+                e.target.checked = !e.target.checked;
+                return;
+              }
               e.stopPropagation();
               const id = e.target.dataset.id;
               const li = e.target.closest("li");
@@ -736,7 +745,26 @@
 
           // Prevent card click from toggling checkbox
           card.addEventListener("click", (e) => {
-            if (e.target.classList.contains("snack-checkbox")) return;
+            const isActive = card.classList.contains("active");
+
+            if (!isActive) {
+              // Block checkbox/label toggle on non-active cards, just activate
+              if (e.target.closest(".item-row")) {
+                e.preventDefault();
+              }
+              setActiveCard(dIdx);
+              card.scrollIntoView({
+                behavior: "smooth",
+                block: "nearest",
+                inline: "center",
+              });
+              return;
+            }
+
+            // Active card: let checkboxes work, other clicks just re-center
+            if (e.target.classList.contains("snack-checkbox")) {
+              return;
+            }
             setActiveCard(dIdx);
             card.scrollIntoView({
               behavior: "smooth",
