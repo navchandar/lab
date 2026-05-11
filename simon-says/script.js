@@ -187,14 +187,15 @@ document.addEventListener("click", (e) => {
 // Keyboard Shortcuts
 // =========================
 function handleKeydown(event) {
-  utils.hideSidebar();
   switch (event.code) {
     case "Space":
     case "Enter":
+      utils.hideSidebar();
       event.preventDefault();
       btn.click();
       break;
     case "KeyF":
+      utils.hideSidebar();
       event.preventDefault();
       utils.toggleFullscreen();
       break;
@@ -208,6 +209,7 @@ function handleKeydown(event) {
 utils.setFullscreenIcon();
 
 document.addEventListener("DOMContentLoaded", () => {
+  btn.addEventListener("click", playGame);
   document.addEventListener("keydown", handleKeydown);
   utils.updateFullScreenBtn();
 });
