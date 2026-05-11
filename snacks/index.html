@@ -982,18 +982,16 @@
           // Add confirmation to prevent accidental reset
           resetBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            // Simple double-click guard: first click primes, second click within 2s confirms
+            // Simple double-click guard: first click primes, second click within 3s confirms
             if (!resetBtn.dataset.primed) {
               resetBtn.dataset.primed = "true";
               resetBtn.textContent = "↺ Tap again to confirm";
-              resetBtn.style.borderColor = "#ef4444";
-              resetBtn.style.color = "#ef4444";
               setTimeout(() => {
                 delete resetBtn.dataset.primed;
                 resetBtn.textContent = "↺ Reset All";
                 resetBtn.style.borderColor = "";
                 resetBtn.style.color = "";
-              }, 2000);
+              }, 3000);
               return;
             }
             // Confirmed — do the reset
