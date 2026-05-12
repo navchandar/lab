@@ -112,6 +112,7 @@
       /* Carousel (Scroll Container) */
       .carousel-container {
         display: flex;
+        align-content: center;
         align-items: center;
         gap: 20px;
         cursor: grab;
@@ -123,6 +124,7 @@
         overflow-y: hidden;
         scroll-snap-type: x mandatory;
         scrollbar-width: none;
+        pointer-events: auto;
       }
 
       .carousel-container::-webkit-scrollbar {
@@ -136,6 +138,8 @@
 
       /* Card Styling */
       .day-card {
+        user-select: none;
+        -webkit-user-drag: none;
         flex: 0 0 auto;
         backdrop-filter: blur(12px);
         background: var(--card-bg);
@@ -836,47 +840,66 @@
         // =========================================
         // B) Drag to scroll (desktop)
         // =========================================
+        // Variables for drag state
+        let isDown = false;
+        let startX;
+        let scrollLeft;
         let isDragging = false;
-        let dragStartX = 0;
-        let dragScrollLeft = 0;
-        let hasDragged = false;
         container.addEventListener("mousedown", (e) => {
-          if (e.target.closest("input, button, a")) return;
-          isDragging = true;
-          hasDragged = false;
-          dragStartX = e.pageX;
-          dragScrollLeft = container.scrollLeft;
+          // Ignore if clicking a button or checkbox
+          if (e.target.closest("input, button, a")) {
+            return;
+          }
+
+          isDown = true;
+          isDragging = false; // Reset dragging flag
           container.classList.add("dragging");
-          // Prevent text selection while dragging
-          e.preventDefault();
+
+          // Calculate start positions
+          startX = e.pageX - container.offsetLeft;
+          scrollLeft = container.scrollLeft;
         });
+
         window.addEventListener("mousemove", (e) => {
-          if (!isDragging) return;
-          const dx = e.pageX - dragStartX;
-          if (Math.abs(dx) > 5) hasDragged = true;
-          container.scrollLeft = dragScrollLeft - dx;
+          if (!isDown) {
+            return;
+          }
+          const x = e.pageX - container.offsetLeft;
+          const walk = x - startX;
+
+          // Only consider it a "drag" if the mouse moved more than 5 pixels
+          if (Math.abs(walk) > 5) {
+            isDragging = true;
+            // Move the scroll position
+            container.scrollLeft = scrollLeft - walk;
+          }
         });
-        window.addEventListener("mouseup", () => {
-          if (!isDragging) return;
-          isDragging = false;
+
+        window.addEventListener("mouseup", (e) => {
+          if (!isDown) {
+            return;
+          }
+          isDown = false;
           container.classList.remove("dragging");
-          setTimeout(syncActiveToScroll, 100);
+
+          // If we didn't drag, and the user clicked the container background (the padding)
+          // let's find the nearest card and snap to it
+          if (!isDragging) {
+            const clickedCard = e.target.closest(".day-card");
+            if (!clickedCard) {
+              // User clicked the padding at the ends, snap to closest card
+              handleScrollEnd();
+            }
+          }
         });
-        // Also handle mouse leaving the window mid-drag
-        window.addEventListener("mouseleave", () => {
-          if (!isDragging) return;
-          isDragging = false;
-          container.classList.remove("dragging");
-          setTimeout(syncActiveToScroll, 100);
-        });
-        // Prevent click from firing after a drag
+
+        // Prevent click events from firing if we were actually dragging
         container.addEventListener(
           "click",
           (e) => {
-            if (hasDragged) {
-              e.stopPropagation();
+            if (isDragging) {
               e.preventDefault();
-              hasDragged = false;
+              e.stopImmediatePropagation();
             }
           },
           true,
