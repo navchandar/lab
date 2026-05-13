@@ -746,7 +746,7 @@ class CompanyParser:
             company["public"] = is_public
             company["ticker"] = ticker
 
-            time.sleep(random.uniform(0.5, 1.0))
+            time.sleep(random.uniform(0.25, 0.5))
             return company
         except Exception as e:
             logger.error(f"Scrape failed for {name}: {e}")
@@ -839,7 +839,7 @@ class DataCoordinator:
                 processed.append(enriched)
 
             # save periodically to json file
-            if (i + 1) % 10 == 0:
+            if (i + 1) % 100 == 0:
                 total_saved = DataCoordinator._save_to_disk(processed)
                 processed_count += len(processed)
                 processed = []
@@ -1049,7 +1049,7 @@ class DataCoordinator:
         logger.info(f"Screening a subset of tickers: {len(symbol_sample)}")
 
         for sym in symbol_sample:
-            time.sleep(random.uniform(0.7, 1.0))
+            time.sleep(random.uniform(0.25, 0.5))
             try:
                 company_data = None
                 if error_count < MAX_PROCESS:
