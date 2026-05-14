@@ -187,7 +187,10 @@ document.addEventListener("click", (e) => {
 // Keyboard Shortcuts
 // =========================
 function handleKeydown(event) {
-  utils.handleSidebar();
+  if (event.code !== "Equal") {
+    utils.hideSidebar();
+  }
+
   switch (event.code) {
     case "Space":
     case "Enter":

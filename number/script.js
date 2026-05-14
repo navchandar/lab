@@ -122,7 +122,9 @@ function updateSettingsMenu() {
 // =========================
 function handleKeydown(event) {
   const target = event.target;
-  utils.hideSidebar();
+  if (event.code !== "Equal") {
+    utils.hideSidebar();
+  }
   // Ignore key presses if focused on an interactive element
   if (utils.isInteractiveElement(target)) {
     return;

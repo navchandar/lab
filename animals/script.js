@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     console.log(
-      `Checking existence for preload (${nextAnimal.name}): ${preloadPath}`
+      `Checking existence for preload (${nextAnimal.name}): ${preloadPath}`,
     );
 
     const exists = await checkImageExists(preloadPath);
@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       // Image does not exist (404). Update the maxIndexFound value.
       console.warn(
-        `Limit detected for ${nextAnimal.name} at index ${nextImageIndex}`
+        `Limit detected for ${nextAnimal.name} at index ${nextImageIndex}`,
       );
       // The valid limit is the previous index
       nextAnimal.maxIndexFound = Math.max(0, nextImageIndex - 1);
@@ -271,7 +271,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (failedPath) {
       // Error: Current indexed image missing (404)
       console.warn(
-        `Image not found during display: ${failedPath}. Resetting cycle for ${animal.name}.`
+        `Image not found during display: ${failedPath}. Resetting cycle for ${animal.name}.`,
       );
 
       // CRITICAL: Update the limit so we don't try this again.
@@ -354,8 +354,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function setupEventListeners() {
     function handleKeydown(event) {
       const target = event.target;
-      utils.hideSidebar();
-      
+      if (event.code !== "Equal") {
+        utils.hideSidebar();
+      }
+
       switch (event.code) {
         case "Space":
         case "Enter":

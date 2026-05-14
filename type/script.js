@@ -51,7 +51,9 @@ const adjustFontSize = () => {
  */
 const handleKeyDown = (e) => {
   const { code } = e;
-  utils.hideSidebar();
+  if (code !== "Equal") {
+    utils.hideSidebar();
+  }
 
   // Clear Input Keys
   if (["Space", "Enter", "Escape"].includes(code)) {

@@ -157,7 +157,9 @@ function updateSettingsMenu() {
 // =========================
 function handleKeydown(event) {
   const target = event.target;
-  utils.hideSidebar();
+  if (event.code !== "Equal") {
+    utils.hideSidebar();
+  }
 
   switch (event.code) {
     case "Space":

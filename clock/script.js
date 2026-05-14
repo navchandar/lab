@@ -706,8 +706,10 @@ let intervalID = null;
   // =========================
   function handleKeydown(event) {
     const target = event.target;
-    utils.hideSidebar();
-    
+    if (event.code !== "Equal") {
+      utils.hideSidebar();
+    }
+
     const isRandomEnabled = utils.getIsRandomEnabled();
     switch (event.code) {
       case "Space":
