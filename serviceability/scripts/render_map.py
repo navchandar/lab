@@ -4,7 +4,6 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 import matplotlib
 from PIL import Image
@@ -43,7 +42,7 @@ class MapConfig:
     BOUNDARY_WIDTH: float = 0.3
 
     # Services to Render
-    SERVICES: Tuple[str, ...] = (
+    SERVICES: tuple[str, ...] = (
         "amazon",
         "amazon fresh",
         "amazon now",
@@ -72,7 +71,7 @@ class MapConfig:
 
     # Brand Identity Colors (Hex Codes)
     DEFAULT_COLOR: str = "#2ecc71"  # Fallback Green
-    BRAND_COLORS: Dict[str, str] = field(
+    BRAND_COLORS: dict[str, str] = field(
         default_factory=lambda: {
             "amazon": "#FF9900",  # Amazon Orange
             "amazon fresh": "#77BC1F",  # Amazon Fresh Lima
@@ -100,7 +99,7 @@ class MapConfig:
             "freshtohome": "#633688",  # FreshToHome Eminence
         }
     )
-    SHORTCUTS: Dict[str, str] = field(
+    SHORTCUTS: dict[str, str] = field(
         default_factory=lambda: {
             "amazon": "a",
             "amazon fresh": "h",
@@ -201,7 +200,7 @@ class MapRenderer:
         self._fig_width = self.cfg.IMG_WIDTH_INCHES
         self._fig_height = self._fig_width * self._aspect_ratio
 
-    def _get_counts(self) -> Dict[str, int]:
+    def _get_counts(self) -> dict[str, int]:
         """Helper to calculate point counts for all services."""
         service_counts = {}
         logger.info("Calculating service coverage point count")
@@ -270,7 +269,7 @@ class MapRenderer:
 
         return valid_services
 
-    def _get_active_coordinates(self, service: str) -> Tuple[List[float], List[float]]:
+    def _get_active_coordinates(self, service: str) -> tuple[list[float], list[float]]:
         """Filters lat/lng points for a specific service."""
         lats, lngs = [], []
         # input: Lat/Lng, output: Web Mercator X/Y
@@ -380,7 +379,14 @@ class MapRenderer:
                 webp_size = f"{webp_size:.2f}MB"
                 logger.info(f"{service} Done: WebP ({webp_size}) | PNG ({png_size})")
 
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"❌ Failed to save {service}: {e}")
             # Cleanup temp files if they got stuck
             self._clean_tmp_files(webp_path, png_path)
@@ -518,7 +524,7 @@ class MapRenderer:
 
         try:
             self._save_images(service, fig)
-        except Exception as e:
+        except (OSError, ValueError, RuntimeError) as e:
             logger.error(f"❌ Matplotlib failed to render {service}: {e}")
         finally:
             plt.close(fig)
@@ -533,7 +539,7 @@ def main():
 
     try:
         data_mgr.load_all()
-    except Exception as e:
+    except (OSError, ValueError, KeyError, json.JSONDecodeError) as e:
         logger.error(f"Failed to load data: {e}")
         return
 

@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -81,7 +82,13 @@ def check_jiomart(pincode):
         else:
             return 0  # No service
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"   -> Request failed for {pincode}: {e}")
         return None
 
@@ -103,9 +110,9 @@ def main():
         if not pin or not lat or not lng:
             continue
 
-        if pin not in output_map:
-            pending_items.append(item)
-        elif "jiomart" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "jiomart" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

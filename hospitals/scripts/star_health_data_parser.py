@@ -4,7 +4,7 @@ import math
 import random
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -80,7 +80,7 @@ def clean_text(text: Any) -> str:
     return " ".join(str(text).split())
 
 
-def load_pincodes() -> List[str]:
+def load_pincodes() -> list[str]:
     """Loads unique pincodes from the source JSON file."""
     if not PINCODE_FILE.exists():
         logger.error(f"Pincode file not found at: {PINCODE_FILE}")
@@ -100,10 +100,16 @@ def load_pincodes() -> List[str]:
                 elif isinstance(item, (str, int)):
                     pincodes.add(str(item))
 
-        sorted_pins = sorted(list(pincodes))
+        sorted_pins = sorted(pincodes)
         logger.info(f"Loaded {len(sorted_pins)} unique pincodes to scan.")
         return sorted_pins
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error reading pincode file: {e}")
         return []
 
@@ -130,14 +136,20 @@ def get_record_count(session: requests.Session, pincode: str, category: str) -> 
 
         # API returns a raw number string like "3"
         return int(response.text.strip('"'))
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.debug(f"  No count for {pincode} or error: {e}")
         return 0
 
 
 def get_hospital_page(
     session: requests.Session, pincode: str, page_no: int, total_records: int
-) -> List[Dict]:
+) -> list[dict]:
     """Fetches a specific page of data."""
     payload = {
         "searchTerm": pincode,
@@ -165,7 +177,13 @@ def get_hospital_page(
 
         return hospitals
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"  Error fetching page {page_no} for {pincode}: {e}")
         return []
 
@@ -245,7 +263,13 @@ def main():
             with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
                 json.dump(all_data, f, indent=4, ensure_ascii=False)
             logger.info("Done.")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Error saving file: {e}")
     else:
         logger.warning("No data extracted.")

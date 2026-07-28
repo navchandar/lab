@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -40,7 +41,7 @@ def refresh_session(session):
     try:
         logger.info("Refreshing session cookies...")
         session.get("https://www.swiggy.com/restaurants/", timeout=10)
-    except Exception as e:
+    except requests.RequestException as e:
         logger.warning(f"Session refresh failed: {e}")
 
 
@@ -118,7 +119,7 @@ def check_pincode(session, lat, lng, pin):
         logger.warning(f"PIN {pin}: No explicit status found. Assuming unserviceable.")
         return 0
 
-    except Exception as e:
+    except (requests.RequestException, ValueError, KeyError, json.JSONDecodeError) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -145,11 +146,8 @@ def main():
         if not pin or not lat or not lng:
             continue
 
-        # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'swiggy' data is missing
-        elif "swiggy" not in output_map[pin].get("partners", {}):
+        # Condition 1: Pin doesn't exist in output at all, or swiggy data is missing
+        if pin not in output_map or "swiggy" not in output_map[pin].get("partners", {}):
             pending_items.append(item)
 
     total_pending = len(pending_items)

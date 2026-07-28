@@ -79,7 +79,7 @@ def get_avg_latitude(geo, topo_data):
             coords.append(lat)
 
         return sum(coords) / len(coords) if coords else 0
-    except Exception:
+    except (KeyError, IndexError, TypeError, ZeroDivisionError):
         return 0
 
 
@@ -141,7 +141,7 @@ def main():
                 f"Success! {map_path.name}: {map_path.stat().st_size // 1024}KB | {details_path.name}: {details_path.stat().st_size // 1024}KB"
             )
 
-        except Exception as e:
+        except (RuntimeError, OSError, json.JSONDecodeError, KeyError, ValueError) as e:
             # The safety net: Catches API failures, JSON parsing errors, or missing variables
             logger.error(
                 f"ABORT: Script failed to complete safely. No files were saved or overwritten. Reason: {e}"

@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import random
@@ -39,7 +40,13 @@ def refresh_session(session):
     try:
         logger.info("Refreshing session cookies...")
         session.get("https://www.bigbasket.com/", timeout=20, impersonate="chrome")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"Session refresh failed: {e}")
 
 
@@ -69,7 +76,13 @@ def get_lat_lng_from_place_id(session, place_id):
 
             if lat and lng:
                 return lat, lng
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"BigBasket Place lookup failed: {e}")
 
     # --- BLINKIT (First Fallback) ---
@@ -86,7 +99,13 @@ def get_lat_lng_from_place_id(session, place_id):
             lng = coord.get("lon")
             if lat and lng:
                 return lat, lng
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"Blinkit Place lookup failed: {e}")
     return None, None
 
@@ -138,7 +157,13 @@ def check_pincode(session, lat, lng, pin):
             return 1
         return 0
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -187,7 +212,13 @@ def get_pin_places(session, pin):
                             logger.info("   -> Found Serviceable Location")
                             return 1
             return 0
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Address Request failed for PIN {pin}: {e}")
         return None
 
@@ -212,10 +243,9 @@ def main():
             continue
 
         # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'bigbasket' data is missing
-        elif "bigbasket" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "bigbasket" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

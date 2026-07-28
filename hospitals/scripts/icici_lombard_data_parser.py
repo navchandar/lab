@@ -3,7 +3,7 @@ import logging
 import math
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from bs4 import BeautifulSoup
@@ -65,7 +65,7 @@ def clean_text(text: Any) -> str:
 
 
 # --- Parsing Helpers ---
-def parse_hospital_table(soup: BeautifulSoup) -> List[Dict[str, str]]:
+def parse_hospital_table(soup: BeautifulSoup) -> list[dict[str, str]]:
     """Extracts hospital rows from the HTML soup."""
     table = soup.find("table", {"id": "mt"})
     if not table:
@@ -98,7 +98,7 @@ def parse_hospital_table(soup: BeautifulSoup) -> List[Dict[str, str]]:
 
 
 # --- Core Logic ---
-def get_states(session: requests.Session) -> List[str]:
+def get_states(session: requests.Session) -> list[str]:
     """Fetches the list of states from the initial page load."""
     logger.info("Fetching State List...")
     try:
@@ -119,12 +119,18 @@ def get_states(session: requests.Session) -> List[str]:
         logger.info(f"Found {len(states)} states.")
         return states
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error fetching states: {e}")
         return []
 
 
-def get_cities(session: requests.Session, state: str) -> List[str]:
+def get_cities(session: requests.Session, state: str) -> list[str]:
     """Fetches the list of cities for a given state via POST."""
     payload = {
         "State": state,
@@ -156,12 +162,18 @@ def get_cities(session: requests.Session, state: str) -> List[str]:
         ]
         return cities
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error fetching cities for {state}: {e}")
         return []
 
 
-def process_city(session: requests.Session, state: str, city: str) -> List[Dict]:
+def process_city(session: requests.Session, state: str, city: str) -> list[dict]:
     """
     Handles the entire flow for a city:
     1. Search (POST) -> Get Page 0
@@ -216,7 +228,7 @@ def process_city(session: requests.Session, state: str, city: str) -> List[Dict]
         # "GetDelistedHospitalList?PageNumber=" + pageindex;
         # Since Page 0 is done, we iterate from 1 to total_pages - 1
         for page_num in range(1, total_pages):
-            time.sleep(0.3) 
+            time.sleep(0.3)
             try:
                 logger.info(f"    Fetching {city} Page {page_num}...")
 
@@ -230,13 +242,25 @@ def process_city(session: requests.Session, state: str, city: str) -> List[Dict]
                 page_data = parse_hospital_table(page_soup)
                 city_data.extend(page_data)
 
-            except Exception as e:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ) as e:
                 logger.error(f"    Failed to fetch Page {page_num} for {city}: {e}")
             time.sleep(0.5)  # Small delay between page requests
 
         return city_data
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Critical error processing {city}, {state}: {e}")
         return []
 
@@ -281,7 +305,13 @@ def main():
             with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
                 json.dump(all_data, f, indent=4, ensure_ascii=False)
             logger.info("Done.")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Error saving file: {e}")
     else:
         logger.warning("No data extracted.")

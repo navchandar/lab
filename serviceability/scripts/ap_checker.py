@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -91,7 +92,13 @@ def check_pincode(session, lat, lng, pin):
         logger.warning("   -> ⚠️ Serviceable=True, but no delivery mode found")
         return 0
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -119,10 +126,9 @@ def main():
             continue
 
         # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'apollo 24|7' data is missing
-        elif "apollo 24|7" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "apollo 24|7" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

@@ -4,7 +4,7 @@ import logging
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pdfplumber
 from playwright.sync_api import sync_playwright
@@ -50,7 +50,14 @@ def get_source_url(company_name: str, url_key: str) -> str:
                     if i.get("company") == company_name:
                         url = i.get(url_key, "")
                         break
-    except Exception as e:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        json.JSONDecodeError,
+    ) as e:
         logger.error(f"Error reading JSON source file: {e}")
     if not url:
         logger.warning(f"No {url_key} found for {company_name} in sources.json")
@@ -94,7 +101,14 @@ def download_pdf_via_browser(url) -> bool:
             download.save_as(TEMP_PDF_PATH)
             time.sleep(2)
 
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"Error during download: {e}")
         finally:
             browser.close()
@@ -105,7 +119,7 @@ def download_pdf_via_browser(url) -> bool:
     return pdf_download
 
 
-def parse_pdf_content(pdf_bytes: bytes) -> List[Dict]:
+def parse_pdf_content(pdf_bytes: bytes) -> list[dict]:
     """
     Extracts table data.
     - Crops Page 1 to remove introductory text.
@@ -198,7 +212,14 @@ def parse_pdf_content(pdf_bytes: bytes) -> List[Dict]:
 
         return data_list
 
-    except Exception as e:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        json.JSONDecodeError,
+    ) as e:
         logger.error(f"PDF Parsing Error: {e}")
         return []
 
@@ -233,7 +254,14 @@ def main():
             # Clean up temp file if json save successful
             if TEMP_PDF_PATH.exists():
                 TEMP_PDF_PATH.unlink()
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"Save failed: {e}")
     else:
         logger.warning("No records extracted.")

@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -63,7 +64,13 @@ def check_instamart(lat, lng):
         # 2. Parse JSON
         try:
             data = response.json()
-        except Exception:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ):
             print(response.text)
             logger.error("   -> Failed to parse response JSON")
             return None
@@ -96,13 +103,25 @@ def check_instamart(lat, lng):
                     or status == "SERVICEABILITY_STATUS_SERVICEABLE"
                 ):
                     return 1
-        except Exception:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ):
             pass
 
         # Default fallback: If we got a valid 200 JSON but no explicit "Not Present" flag,
         return 0
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"   -> Request failed: {e}")
         return None
 
@@ -125,9 +144,9 @@ def main():
         if not pin or not lat or not lng:
             continue
 
-        if pin not in output_map:
-            pending_items.append(item)
-        elif "instamart" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "instamart" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

@@ -1,7 +1,6 @@
 import asyncio
 import logging
 import random
-import time
 
 import utils
 from fake_useragent import UserAgent
@@ -65,13 +64,11 @@ async def get_browser_context(browser):
     await context.route("**/*", route_handler)
 
     # Init script to hide webdriver property
-    await context.add_init_script(
-        """
+    await context.add_init_script("""
         Object.defineProperty(navigator, 'webdriver', {
             get: () => undefined
         });
-    """
-    )
+    """)
     return context
 
 
@@ -95,7 +92,7 @@ async def check_pincode_worker(context, pincode, retries=0, is_pincode=True):
                 LCTR["header_location_btn"], state="visible", timeout=5000
             )
             await page.click(LCTR["header_location_btn"])
-        except Exception:
+        except (PlaywrightTimeoutError, OSError, ValueError):
             # If button not found, we might already be in a session or stuck
             if retries < MAX_RETRIES:
                 logger.warning(f"[{pincode}] Header button missing. Retrying...")
@@ -140,16 +137,16 @@ async def check_pincode_worker(context, pincode, retries=0, is_pincode=True):
             first_address = await page.locator(LCTR["first_result"]).inner_text()
             logger.info(f"Clicking on: {first_address.strip()}")
             await page.locator(LCTR["first_result"]).hover()
-            time.sleep(random.uniform(0.5, 1.0))
+            await asyncio.sleep(random.uniform(0.5, 1.0))
             await page.locator(LCTR["first_result"]).click()
-            time.sleep(random.uniform(2.0, 3.0))
-        except Exception as e:
+            await asyncio.sleep(random.uniform(2.0, 3.0))
+        except (PlaywrightTimeoutError, OSError, ValueError) as e:
             logger.error(f"   -> Failed to click result: {e}")
             await page.keyboard.press("Escape")
             return None, []
 
         await page.wait_for_timeout(2000)  # Give UI a moment to react
-        time.sleep(1)
+        await asyncio.sleep(1)
 
         # Look for the "Working on it" text immediately
         if (
@@ -172,7 +169,7 @@ async def check_pincode_worker(context, pincode, retries=0, is_pincode=True):
                     )
                     if status == 1:
                         break
-    except Exception as e:
+    except (PlaywrightTimeoutError, OSError, ValueError, TypeError) as e:
         logger.error(f"[{pincode}] Error: {str(e)[:50]}")
         if retries < MAX_RETRIES:
             await page.close()

@@ -3,7 +3,6 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import googlemaps
 import pandas as pd
@@ -29,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def load_existing_data(filepath: Path) -> List[Dict]:
+def load_existing_data(filepath: Path) -> list[dict]:
     """Loads existing JSON data to prevent re-fetching."""
     if filepath.exists():
         try:
@@ -42,7 +41,7 @@ def load_existing_data(filepath: Path) -> List[Dict]:
     return []
 
 
-def save_data(filepath: Path, data: List[Dict]):
+def save_data(filepath: Path, data: list[dict]):
     """Atomic write to temp JSON file to prevent corruption."""
     temp_file = filepath.with_suffix(".tmp")
     try:
@@ -50,11 +49,17 @@ def save_data(filepath: Path, data: List[Dict]):
             json.dump(data, f, indent=2)
         temp_file.replace(filepath)
         logger.info(f"Checkpoint saved. Total records: {len(data)}")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Failed to save data: {e}")
 
 
-def process_single_pincode(row, gmaps_client) -> Optional[Dict]:
+def process_single_pincode(row, gmaps_client) -> dict | None:
     """
     Worker function to fetch data for a single pincode.
     Priority: Google Maps -> OpenCage -> Input CSV (Government Data)
@@ -79,7 +84,13 @@ def process_single_pincode(row, gmaps_client) -> Optional[Dict]:
                     "place_id": res.get("place_id", ""),
                     "address": res.get("formatted_address", ""),
                 }
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"GMaps Error {pincode}: {e}")
 
     # --- STRATEGY 2: OpenCage Fallback ---
@@ -108,7 +119,13 @@ def process_single_pincode(row, gmaps_client) -> Optional[Dict]:
                         "place_id": "",
                         "address": res.get("formatted", ""),
                     }
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"OpenCage Error {pincode}: {e}")
 
     # --- STRATEGY 3: CSV / Government Data Fallback ---
@@ -136,7 +153,7 @@ def process_single_pincode(row, gmaps_client) -> Optional[Dict]:
     except ValueError:
         # Conversion failed, just ignore
         pass
-    except Exception as e:
+    except (requests.RequestException, KeyError, json.JSONDecodeError, TypeError) as e:
         logger.error(f"CSV Fallback Error {pincode}: {e}")
 
     return None
@@ -201,7 +218,7 @@ def main():
                 else:
                     # Log failures so you can retry them specifically later
                     logger.warning(f"⚠️ No data found for PIN: {pin}")
-            except Exception as exc:
+            except (OSError, RuntimeError, ValueError, TypeError) as exc:
                 logger.error(f"Unhandled exception for PIN: {pin}: {exc}")
 
             # Incremental Save

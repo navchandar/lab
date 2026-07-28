@@ -64,7 +64,7 @@ def init_session():
         else:
             logger.warning(f"CSRF endpoint failed: {csrf_resp.status_code}")
 
-    except Exception as e:
+    except (requests.RequestException, ValueError, KeyError, json.JSONDecodeError) as e:
         logger.warning(f"Session init failed: {e}")
     return session
 
@@ -163,7 +163,7 @@ def check_zomato_serviceability(session, lat, lng, place_id):
 
         return 0
 
-    except Exception as e:
+    except (requests.RequestException, ValueError, KeyError, json.JSONDecodeError) as e:
         logger.error(f"Zomato check failed for {lat},{lng}: {e}")
         return None
 
@@ -186,7 +186,7 @@ def get_google_place_id(lat, lng):
         if data.get("status") == "OK" and data.get("results"):
             # Return the first result's place_id
             return data["results"][0]["place_id"]
-    except Exception as e:
+    except (requests.RequestException, ValueError, KeyError, json.JSONDecodeError) as e:
         logger.error(f"Google Maps Geocode failed: {e}")
 
     return None

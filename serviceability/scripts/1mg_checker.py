@@ -1,3 +1,4 @@
+import json
 import logging
 import math
 import os
@@ -77,7 +78,13 @@ def fetch_1mg_cities(session):
         cities = [c.get("name", "").strip() for c in raw_list if c.get("name")]
         logger.info(f"Loaded {len(cities)} cities from 1mg.")
         return cities
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Failed to fetch master list: {e}")
         return []
 
@@ -98,7 +105,13 @@ def get_city_coordinates(city_name):
         geometry = data["results"][0]["geometry"]["location"]
         return {"lat": geometry["lat"], "lng": geometry["lng"]}
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Geocode Request Failed: {e}")
         return None
 
@@ -116,7 +129,13 @@ def check_serviceability(session, city_name):
         if is_serviceable and is_pharma:
             return 1
         return 0
-    except Exception:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ):
         return 0
 
 

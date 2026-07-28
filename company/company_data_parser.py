@@ -8,7 +8,7 @@ import re
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import pandas as pd
@@ -97,7 +97,9 @@ class LnSearch:
     """Discover company URLs via LinkedIn Guest Job APIs."""
 
     @staticmethod
-    def get_search_params(keyword: str, start: int, geo: dict = None) -> Dict[str, str]:
+    def get_search_params(
+        keyword: str, start: int, geo: dict | None = None
+    ) -> dict[str, str]:
         """Constructs params for the LinkedIn Guest Job API."""
         if not geo:
             geo = random.choice(GEO_IDs)
@@ -120,7 +122,7 @@ class LnSearch:
         )
 
     @staticmethod
-    def get_handle(url: str) -> Optional[str]:
+    def get_handle(url: str) -> str | None:
         """Extracts the unique 'handle' from a LinkedIn company URL."""
         if not url or "/company/" not in url:
             return None
@@ -131,9 +133,9 @@ class LnSearch:
             return None
 
     @staticmethod
-    def get_companies(keyword: str, seen: Set) -> tuple[list, set]:
+    def get_companies(keyword: str, seen: set) -> tuple[list, set]:
         max_range = 100 if keyword else 500
-        comp_list = list()
+        comp_list = []
         # Exponential Decay - index 0 a weight of 10, and index 1 onwards a weight of 1
         weights = [10 if i == 0 else 1 for i in range(len(GEO_IDs))]
         geo = random.choices(GEO_IDs, weights=weights, k=1)[0]
@@ -184,7 +186,13 @@ class LnSearch:
                 )
                 time.sleep(random.uniform(0.5, 2.0))
 
-            except Exception as e:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                AttributeError,
+                TypeError,
+            ) as e:
                 logger.error(f"Exception during search crawl: {e}")
                 time.sleep(random.uniform(1.0, 3.0))
         return comp_list, seen
@@ -194,7 +202,7 @@ class FinancialService:
     """Handles Ticker lookups and Stock market performance data."""
 
     @staticmethod
-    def find_ticker(name: str) -> Optional[str]:
+    def find_ticker(name: str) -> str | None:
         if not name:
             return None
         try:
@@ -204,9 +212,10 @@ class FinancialService:
             # Priority 1: Indian Exchanges with Fuzzy Match
             for q in equities:
                 sym, official = q.get("symbol", ""), q.get("longname", "")
-                if fuzz.token_sort_ratio(name.lower(), official.lower()) > 70:
-                    if sym.endswith(".NS") or sym.endswith(".BO"):
-                        return sym
+                if fuzz.token_sort_ratio(
+                    name.lower(), official.lower()
+                ) > 70 and sym.endswith((".NS", ".BO")):
+                    return sym
 
             # Priority 2: Global/US Exchanges
             for q in equities:
@@ -215,7 +224,7 @@ class FinancialService:
                     return sym
 
             return equities[0].get("symbol") if equities else None
-        except Exception as e:
+        except (ValueError, KeyError, TypeError, AttributeError, OSError) as e:
             logger.error(f"Ticker lookup error for {name}: {e}")
             return None
 
@@ -249,7 +258,7 @@ class GrowthAnalytics:
         return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
 
     @staticmethod
-    def get_trend(history: dict, handle: str, days: int) -> Optional[float]:
+    def get_trend(history: dict, handle: str, days: int) -> float | None:
         """Calculates growth % over a period with noise filters."""
         company_history = history.get(handle, [])
         if len(company_history) < 2:
@@ -297,12 +306,12 @@ class GrowthAnalytics:
                 return 0.0
 
             return round(growth, 2)
-        except Exception as e:
+        except (ValueError, KeyError, TypeError, ZeroDivisionError) as e:
             logger.error(f"Trend calculation error for {handle}: {e}")
             return None
 
     @staticmethod
-    def generate_sparkline_svg(item: Dict) -> Optional[str]:
+    def generate_sparkline_svg(item: dict) -> str | None:
         """Generates a compact, theme-aware SVG sparkline string."""
         # Get trends: [Yearly, 90d, 30d]
         points_raw = [
@@ -373,7 +382,7 @@ class GrowthAnalytics:
                     date_updates[d][handle] = c
 
         # Sort dates chronologically
-        sorted_dates = sorted(list(all_dates))
+        sorted_dates = sorted(all_dates)
 
         # Track the "Current State" of the entire market
         # This keeps the last known count for EVERY company
@@ -574,7 +583,9 @@ class GrowthAnalytics:
             try:
                 parsed_history.append(
                     {
-                        "d_obj": datetime.strptime(item["d"], "%Y-%m-%d"),
+                        "d_obj": datetime.strptime(item["d"], "%Y-%m-%d").replace(
+                            tzinfo=timezone.utc
+                        ),
                         "d_str": item["d"],
                         "c": item["c"],
                     }
@@ -616,7 +627,13 @@ class GrowthAnalytics:
             logger.info(
                 f"Chart data updated with history & snapshot in {CHARTS_DATA_FILE.name}"
             )
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to save charts_data.json: {e}")
 
     @staticmethod
@@ -636,7 +653,13 @@ class GrowthAnalytics:
                         history[handle] = []
                     history[handle].append({"d": row["date"], "c": int(row["count"])})
             return history
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to read CSV history: {e}")
             return {}
 
@@ -656,7 +679,13 @@ class GrowthAnalytics:
                     for record in sorted_records:
                         writer.writerow([handle, record["d"], record["c"]])
             logger.info(f"Saved history to {HISTORY_FILE.name}")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to save CSV history: {e}")
 
 
@@ -666,7 +695,7 @@ class CompanyParser:
     ticker_error_count = 0
 
     @staticmethod
-    def get_employee_count(text: str) -> Optional[str]:
+    def get_employee_count(text: str) -> str | None:
         """
         Extracts a numeric employee count from text like "5,001 - 10,000 employees" or "10,000+ employees".
             - For ranges, it returns the full range (e.g. "5001-10000").
@@ -690,9 +719,7 @@ class CompanyParser:
         return m.group(1) if m else None
 
     @staticmethod
-    def get_company_details(
-        i: int, company: Dict[str, Any]
-    ) -> Optional[Dict[str, Any]]:
+    def get_company_details(i: int, company: dict[str, Any]) -> dict[str, Any] | None:
         name, url = company.get("name"), company.get("linkedin")
         # avoid blank names and unwanted company names
         if not name or any(word in name.lower() for word in avoid_words):
@@ -748,7 +775,13 @@ class CompanyParser:
 
             time.sleep(random.uniform(0.25, 0.5))
             return company
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Scrape failed for {name}: {e}")
             time.sleep(random.uniform(1.0, 3.0))
         return company
@@ -858,7 +891,7 @@ class DataCoordinator:
         logger.info("------------------------------------------------")
 
     @staticmethod
-    def _get_target_urls() -> List[Dict]:
+    def _get_target_urls() -> list[dict]:
         targets, seen = [], set()
 
         # If REFRESH_ALL is True, this adds existing company data to targets.
@@ -888,7 +921,7 @@ class DataCoordinator:
             logger.warning(f"{JOBS_DATA} missing. Skipping local jobs data!")
             return targets, seen
         logger.info(f"Finding new companies from {JOBS_DATA.name}")
-        comp_list = list()
+        comp_list = []
         with open(JOBS_DATA, "r") as f:
             for j in json.load(f).get("data", []):
                 url = LnSearch.normalize_url(j.get("companyUrl"))
@@ -984,7 +1017,7 @@ class DataCoordinator:
     def _find_new_comp(targets, seen) -> tuple:
         # Find companies from job posts
         logger.info("Finding new companies from current Linkedin jobs!")
-        comp_list = list()
+        comp_list = []
         # Load Keywords from txt file
         keyword_list = [""]
         if not KEYWORDS_FILE.exists():
@@ -1078,7 +1111,14 @@ class DataCoordinator:
                 seen.add(handle)
                 seen_websites.add(web_domain)
                 logger.info(f"Added: {company_data['name']} | Ticker: {sym}")
-            except Exception:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ) as e:
+                logger.debug(f"Skipping symbol {sym}: {e}")
                 continue
 
         return targets, seen
@@ -1095,7 +1135,13 @@ class DataCoordinator:
                 nse_symbols = df_nse[df_nse[" SERIES"] == "EQ"]["SYMBOL"].tolist()
                 symbols.update([f"{s}.NS" for s in nse_symbols])
                 logger.info(f"Found {len(nse_symbols)} symbols from NSE")
-            except Exception as e:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ) as e:
                 logger.error(f"NSE CSV Parse Error: {e}")
 
             #  Parse BSE (Scrip Code)
@@ -1109,13 +1155,19 @@ class DataCoordinator:
                 bse_codes = df_bse["Scrip code"].dropna().tolist()
                 symbols.update([f"{s}.BO" for s in bse_codes])
                 logger.info(f"Found {len(bse_codes)} symbols from BSE")
-            except Exception as e:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ) as e:
                 logger.error(f"BSE CSV Parse Error: {e}")
 
         return list(symbols)
 
     @staticmethod
-    def _enrich_from_screener(symbol: str) -> Optional[Dict]:
+    def _enrich_from_screener(symbol: str) -> dict | None:
         """Scrapes Screener to find the official website."""
         # Use only the prefix for Screener (works for both NSE symbol and BSE code)
         ticker = symbol.split(".")[0]
@@ -1133,9 +1185,8 @@ class DataCoordinator:
             # Extract Website Link
             website = None
             links_container = soup.find("div", class_="company-links")
-            if links_container:
-                if a_tag := links_container.find("a", href=True):
-                    website = a_tag["href"].strip().split("?")[0].rstrip("/")
+            if links_container and (a_tag := links_container.find("a", href=True)):
+                website = a_tag["href"].strip().split("?")[0].rstrip("/")
 
             if not website:
                 logger.error(f"Website NOT found in {url=}")
@@ -1158,12 +1209,18 @@ class DataCoordinator:
                     "public": True,
                 }
 
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Screener error for {symbol}: {e}")
         return None
 
     @staticmethod
-    def _extract_linkedin_url(soup: BeautifulSoup) -> Optional[str]:
+    def _extract_linkedin_url(soup: BeautifulSoup) -> str | None:
         """Helper to find a LinkedIn company link within a soup object."""
         for a in soup.find_all("a", href=True):
             href = a["href"]
@@ -1176,7 +1233,7 @@ class DataCoordinator:
         return None
 
     @staticmethod
-    def _find_linkedin_on_website(url: str) -> Optional[str]:
+    def _find_linkedin_on_website(url: str) -> str | None:
         """Scans homepage and optionally a contact page for LinkedIn links."""
         try:
             logger.info(f"Loading {url=}")
@@ -1237,7 +1294,13 @@ class DataCoordinator:
                             if ln := DataCoordinator._extract_linkedin_url(c_soup):
                                 return ln
 
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.warning(f"Error loading {url=}: {e}")
         return None
 
@@ -1273,7 +1336,13 @@ class DataCoordinator:
                 with open(DATA_FILE, "w") as f:
                     json.dump(list(master_map.values()), f, indent=2)
                 logger.info(f"Sync complete: Updated {updated_count} companies.")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to sync temp file: {e}")
 
     @staticmethod
@@ -1286,7 +1355,7 @@ class DataCoordinator:
         return []
 
     @staticmethod
-    def _save_to_disk(new_batch: List[Dict], last_updated_date=True) -> int:
+    def _save_to_disk(new_batch: list[dict], last_updated_date=True) -> int:
         if not new_batch:
             return 0
 
@@ -1421,7 +1490,8 @@ class DataCoordinator:
         path = os.environ.get("GITHUB_STEP_SUMMARY")
         if path:
             try:
-                Path(path).open("a", encoding="utf-8").write(DataCoordinator.summary)
+                with Path(path).open("a", encoding="utf-8") as summary_file:
+                    summary_file.write(DataCoordinator.summary)
             except OSError as e:
                 print(f"Error writing summary: {e}", flush=True)
         else:

@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -63,7 +63,7 @@ def clean_text(text: Any) -> str:
     return " ".join(str(text).split())
 
 
-def fetch_unrecognized_hospitals(session: requests.Session) -> List[Dict]:
+def fetch_unrecognized_hospitals(session: requests.Session) -> list[dict]:
     """
     Fetches the raw JSON list from Niva Bupa API.
     """
@@ -83,12 +83,18 @@ def fetch_unrecognized_hospitals(session: requests.Session) -> List[Dict]:
         logger.info(f"API returned {len(raw_list)} records.")
         return raw_list
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Failed to fetch data: {e}")
         return []
 
 
-def transform_data(raw_data: List[Dict]) -> List[Dict]:
+def transform_data(raw_data: list[dict]) -> list[dict]:
     """
     Maps Niva Bupa JSON keys to the project standard format.
     """
@@ -131,7 +137,13 @@ def main():
         with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
             json.dump(clean_data, f, indent=4, ensure_ascii=False)
         logger.info(f"Successfully saved to {OUTPUT_FILENAME}")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error saving file: {e}")
 
 

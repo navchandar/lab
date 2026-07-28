@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -44,7 +45,13 @@ def get_session():
     try:
         logger.info("Initializing session (Fetching Cookies)...")
         session.get("https://www.dmart.in/", impersonate="chrome", timeout=30)
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"Failed to fetch homepage cookies: {e}")
 
     return session
@@ -86,7 +93,13 @@ def check_pincode(session, pin, place_id):
         else:
             return 0
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -112,10 +125,9 @@ def main():
             continue
 
         # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'dmart ready' data is missing
-        elif "dmart ready" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "dmart ready" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import pdfplumber
@@ -143,14 +143,20 @@ def get_source_url(company_name: str, url_key: str) -> str:
                         break
         else:
             logger.warning(f"Source file not found at {SOURCE_FILE}")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error reading JSON source file: {e}")
     if not url:
         logger.warning(f"No {url_key} found for {company_name} in sources.json")
     return url
 
 
-def fetch_url_content(url: str) -> Optional[bytes]:
+def fetch_url_content(url: str) -> bytes | None:
     try:
         logger.info(f"Fetching URL: {url}")
         response = requests.get(url, headers=HEADERS_UA, timeout=30)
@@ -163,7 +169,7 @@ def fetch_url_content(url: str) -> Optional[bytes]:
 
 def find_pdf_link(
     base_url: str, html_content: bytes, search_keyword: str = "exclude"
-) -> Optional[str]:
+) -> str | None:
     try:
         soup = BeautifulSoup(html_content, "html.parser")
 
@@ -189,12 +195,18 @@ def find_pdf_link(
         logger.warning(f"No PDF link found for keyword '{search_keyword}'")
         return None
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error parsing HTML: {e}")
         return None
 
 
-def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
+def extract_raw_data_from_pdf(pdf_bytes: bytes) -> list[dict[str, Any]]:
     """
     Extracts data using dynamic header mapping.
     """
@@ -238,7 +250,7 @@ def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
                         data = table
 
                 # --- Row Extraction ---
-                print(data[0]) 
+                print(data[0])
                 for row in data:
                     if not any(row):  # Skip completely empty rows
                         continue
@@ -259,12 +271,18 @@ def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[Dict[str, Any]]:
 
         return all_rows
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"PDF Processing error: {e}")
         return []
 
 
-def merge_fragmented_rows(raw_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def merge_fragmented_rows(raw_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Merges rows split across lines.
     Relies on 'Sr. No.' being present to identify a 'Fresh' row.
@@ -370,7 +388,7 @@ def clean_punctuation(text: str) -> str:
     return text.strip(" ,.-")
 
 
-def normalize_records(record: Dict[str, Any]) -> Dict[str, Any]:
+def normalize_records(record: dict[str, Any]) -> dict[str, Any]:
     """
     Cleans up the record by searching all available text fields for
     misplaced Dates or Pin Codes.
@@ -394,7 +412,7 @@ def normalize_records(record: Dict[str, Any]) -> Dict[str, Any]:
         "Overflow_Text",
     ]
     # Add any dynamically created extra columns
-    keys_to_check += [k for k in record.keys() if k.startswith("Extra_Col")]
+    keys_to_check += [k for k in record if k.startswith("Extra_Col")]
 
     for key in keys_to_check:
         val = record.get(key)
@@ -478,7 +496,7 @@ def normalize_records(record: Dict[str, Any]) -> Dict[str, Any]:
     return cleanup_address_fields(final_record)
 
 
-def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
+def cleanup_address_fields(record: dict[str, str]) -> dict[str, str]:
     """
     Removes redundant city/state names from the address field.
     """
@@ -631,7 +649,13 @@ def get_excluded_hospitals_data():
         logger.info(
             f"Successfully saved {len(cleaned_data)} records to {OUTPUT_FILENAME}"
         )
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error saving JSON: {e}")
 
 

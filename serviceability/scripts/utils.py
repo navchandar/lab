@@ -39,7 +39,7 @@ def load_json(file_path):
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return json.load(f)
-    except Exception as e:
+    except (OSError, json.JSONDecodeError, ValueError) as e:
         print(f"Could not read {file_path}: {e}")
         return []
 
@@ -49,7 +49,7 @@ def save_json(file_path, data):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)
         print(f"Saved {file_path}")
-    except Exception as e:
+    except (OSError, TypeError, ValueError) as e:
         print(f"Failed to save {file_path}:\n{e}")
 
 
@@ -68,11 +68,10 @@ def sort_and_save_json(file_path: Path, data_list: list):
         data_list.sort(
             key=lambda x: int(x["pin"]) if str(x["pin"]).isdigit() else x["pin"]
         )
-    except Exception as e:
+    except (ValueError, KeyError, TypeError) as e:
         print(
             f"Failed to sort {file_path.name} numerically, falling back to string sort. ({e})"
         )
         data_list.sort(key=lambda x: x["pin"])
     # Save to disk
     save_json(file_path, data_list)
-

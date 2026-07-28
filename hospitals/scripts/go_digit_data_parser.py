@@ -2,7 +2,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from playwright.sync_api import sync_playwright
 
@@ -45,7 +45,14 @@ def get_source_url(company_name: str, url_key: str) -> str:
                         break
         else:
             logger.warning(f"Source file not found at {SOURCE_FILE}")
-    except Exception as e:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        json.JSONDecodeError,
+    ) as e:
         logger.error(f"Error reading JSON source file: {e}")
     if not url:
         logger.warning(f"No {url_key} found for {company_name} in sources.json")
@@ -60,7 +67,7 @@ def clean_text(text: Any) -> str:
     return re.sub(r"\s+", " ", str(text)).strip()
 
 
-def scrape_godigit_hospitals(target_url) -> List[Dict]:
+def scrape_godigit_hospitals(target_url) -> list[dict]:
     """
     Uses Playwright with resource blocking and stealth args.
     """
@@ -96,8 +103,7 @@ def scrape_godigit_hospitals(target_url) -> List[Dict]:
             page.wait_for_selector("#hospitalTableBody tr", timeout=30000)
             # Using 'textContent' instead of 'innerText' is faster and safer against CSS hiding.
             logger.info("Extracting data from DOM...")
-            raw_data = page.evaluate(
-                """() => {
+            raw_data = page.evaluate("""() => {
                 const rows = document.querySelectorAll('#hospitalTableBody tr');
                 const results = [];
                 
@@ -115,20 +121,26 @@ def scrape_godigit_hospitals(target_url) -> List[Dict]:
                     }
                 });
                 return results;
-            }"""
-            )
+            }""")
 
             logger.info(f"Extracted {len(raw_data)} rows.")
             return raw_data
 
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"Error during scraping: {e}")
             return []
         finally:
             browser.close()
 
 
-def transform_data(raw_data: List[Dict]) -> List[Dict]:
+def transform_data(raw_data: list[dict]) -> list[dict]:
     """Cleans and standardizes the scraped data."""
     standardized_list = []
 
@@ -166,7 +178,14 @@ def main():
         logger.info(
             f"Successfully saved {len(clean_data)} records to {OUTPUT_FILENAME}"
         )
-    except Exception as e:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        json.JSONDecodeError,
+    ) as e:
         logger.error(f"Error saving file: {e}")
 
 

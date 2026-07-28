@@ -8,7 +8,7 @@ import time
 import uuid
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -48,12 +48,12 @@ SAVE_INTERVAL = 10  # Save every N API calls
 
 class GeocodingPipeline:
     def __init__(self):
-        self.data: Dict[str, Dict[str, Any]] = {}
+        self.data: dict[str, dict[str, Any]] = {}
         self.session = self._init_session()
         self.api_hits = 0
         # Flag to disable place search if API key fails
         self.places_api_enabled = True
-        self.city_coords_cache: Dict[str, Dict[str, float]] = {}
+        self.city_coords_cache: dict[str, dict[str, float]] = {}
 
     def _init_session(self) -> requests.Session:
         """Configures a resilient HTTP session."""
@@ -100,7 +100,13 @@ class GeocodingPipeline:
                 # Ensure internal flag is False by default
                 self.data[uid]["_needs_update"] = False
             logger.info(f"Loaded {len(self.data)} existing records.")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to load existing data: {e}")
 
     # --- MERGE LOGIC ---
@@ -129,7 +135,13 @@ class GeocodingPipeline:
                     uid = self._process_source_record(record, company_name)
                     if uid:
                         active_source_uids.add(uid)
-            except Exception as e:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ) as e:
                 logger.error(f"Error reading {file_path.name}: {e}")
 
         # --- PRUNING LOGIC ---
@@ -146,7 +158,7 @@ class GeocodingPipeline:
                 f"Pruned {removed_count} records that are no longer in source files."
             )
 
-    def _process_source_record(self, record: Dict, company: str):
+    def _process_source_record(self, record: dict, company: str):
         # Extract fields
         src_name = (
             record.get("Hospital Name", "") if record.get("Hospital Name") else ""
@@ -212,7 +224,7 @@ class GeocodingPipeline:
         return uid
 
     # --- GEOCODING HELPERS ---
-    def _get_city_coordinates(self, city: str, state: str) -> Dict[str, float]:
+    def _get_city_coordinates(self, city: str, state: str) -> dict[str, float]:
         key = f"{city}|{state}".lower()
         if key in self.city_coords_cache:
             return self.city_coords_cache[key]
@@ -230,7 +242,13 @@ class GeocodingPipeline:
                 self.city_coords_cache[key] = result
                 logger.info(f"Cached City Coords for {city}: {result}")
                 return result
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.warning(f"City Geocode failed for {city}: {e}")
 
         # Cache failure as None, Don't retry request for same location
@@ -238,7 +256,7 @@ class GeocodingPipeline:
         return None
 
     # --- HELPER: GOOGLE PLACE DETAILS ---
-    def _fetch_gmaps_place_details(self, place_id: str) -> Optional[Dict[str, Any]]:
+    def _fetch_gmaps_place_details(self, place_id: str) -> dict[str, Any] | None:
         """
         Fetches Lat/Lng directly from Google using a Place ID.
         This is more accurate and cheaper/same cost as Geocoding.
@@ -268,11 +286,17 @@ class GeocodingPipeline:
                     "accuracy": "HIGH",
                     "place_id": place_id,  # Store ID for future reference
                 }
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.warning(f"Place Details API failed: {e}")
         return None
 
-    def _search_bb_places(self, query: str) -> Optional[Dict[str, Any]]:
+    def _search_bb_places(self, query: str) -> dict[str, Any] | None:
         """
         Uses fresh UUID for every request to mimic unique user session.
         """
@@ -296,14 +320,20 @@ class GeocodingPipeline:
                 predictions = data.get("predictions", [])
                 if predictions:
                     return predictions[0]
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.warning(f"BB Search Error: {e}")
         finally:
             # Reset headers to default
             self.session.headers = def_headers
         return None
 
-    def _get_city_location_bias(self, city: str, state: str) -> Optional[str]:
+    def _get_city_location_bias(self, city: str, state: str) -> str | None:
         """Fetches City lat/lng for search biasing."""
         # Reuse the city coord logic to get a bias circle
         loc = self._get_city_coordinates(city, state)
@@ -313,7 +343,7 @@ class GeocodingPipeline:
         return None
 
     # --- GEOCODING MAIN LOGIC ---
-    def fetch_geocoding(self, record: Dict) -> Dict[str, Any]:
+    def fetch_geocoding(self, record: dict) -> dict[str, Any]:
         """
         Queries Google Maps with a Fallback Strategy:
         1. Try Name + Address + Pin (Specific Business Search)
@@ -386,7 +416,13 @@ class GeocodingPipeline:
                                 "accuracy": "HIGH",
                                 "place_id": candidate["place_id"],
                             }
-            except Exception as e:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ) as e:
                 logger.warning(f"Places API call failed: {e}")
 
         # --- STRATEGY B: BB AutoComplete API ---
@@ -411,7 +447,13 @@ class GeocodingPipeline:
                 logger.info("BB No Match. Using Raw Address.")
                 full_address = f"{address}, {city}, {state}"
                 accuracy = "LOW"
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"BB Autocomplete failed: {e}")
             full_address = f"{address}, {city}, {state}"
 
@@ -473,7 +515,13 @@ class GeocodingPipeline:
                 logger.info(f"LOW Accuracy: {name}")
                 return best_result
 
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Geocoding API failed: {e}")
 
         # --- STRATEGY D: CITY LOCATION FALLBACK ---
@@ -555,12 +603,15 @@ class GeocodingPipeline:
 
         # Containment Bonus (e.g. "Sanjeevani" inside "Sanjeevani Multispeciality")
         containment_bonus = 0.0
-        if len(norm_a) > 4 and len(norm_b) > 4:
-            if norm_a in norm_b or norm_b in norm_a:
-                containment_bonus = 0.2
+        if (
+            len(norm_a) > 4
+            and len(norm_b) > 4
+            and (norm_a in norm_b or norm_b in norm_a)
+        ):
+            containment_bonus = 0.2
         return ratio + containment_bonus
 
-    def _merge_record_data(self, primary: Dict[str, Any], secondary: Dict[str, Any]):
+    def _merge_record_data(self, primary: dict[str, Any], secondary: dict[str, Any]):
         """
         Merges secondary data into primary.
         - Unions the 'excluded_by' lists.
@@ -740,12 +791,18 @@ class GeocodingPipeline:
                             ):
                                 source["excluded_count"] = count
                                 updated = True
-                            if "excluded_count" not in source.keys():
+                            if "excluded_count" not in source:
                                 source["excluded_count"] = count
                                 updated = True
                             logger.info(f"{company} Excluded Count: {count}")
 
-                    except Exception as e:
+                    except (
+                        requests.RequestException,
+                        ValueError,
+                        KeyError,
+                        json.JSONDecodeError,
+                        TypeError,
+                    ) as e:
                         logger.error(f"Error reading {excluded_file.name}: {e}")
                 else:
                     logger.error(f"No excluded file found for {company}.")
@@ -763,11 +820,17 @@ class GeocodingPipeline:
                             ):
                                 source["network_count"] = count
                                 updated = True
-                            if "network_count" not in source.keys():
+                            if "network_count" not in source:
                                 source["network_count"] = count
                                 updated = True
                             logger.info(f"{company} Network Count: {count}")
-                    except Exception as e:
+                    except (
+                        requests.RequestException,
+                        ValueError,
+                        KeyError,
+                        json.JSONDecodeError,
+                        TypeError,
+                    ) as e:
                         logger.error(f"Error reading {network_file.name}: {e}")
                 else:
                     logger.error(f"No network file found for {company}.")
@@ -779,7 +842,13 @@ class GeocodingPipeline:
             else:
                 logger.info("No changes needed in sources.json.")
 
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to enrich source metadata: {e}")
 
     # --- RUNNER ---
@@ -889,7 +958,13 @@ class GeocodingPipeline:
             if is_final:
                 shutil.move(str(TEMP_FILE), str(OUTPUT_FILE))
                 logger.info(f"Saved {len(clean_list)} records to {OUTPUT_FILE}")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to save data: {e}")
 
 

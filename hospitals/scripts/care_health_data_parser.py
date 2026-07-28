@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import pdfplumber
@@ -80,14 +80,20 @@ def get_source_url(company_name: str, url_key: str) -> str:
                     if i.get("company") == company_name:
                         url = i.get(url_key, "")
                         break
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error reading JSON source file: {e}")
     if not url:
         logger.warning(f"No {url_key} found for {company_name} in sources.json")
     return url
 
 
-def fetch_url_content(url: str) -> Optional[bytes]:
+def fetch_url_content(url: str) -> bytes | None:
     try:
         logger.info(f"Downloading PDF from: {url}")
         try:
@@ -104,7 +110,7 @@ def fetch_url_content(url: str) -> Optional[bytes]:
         return None
 
 
-def find_pdf_link(base_url: str, html_content: bytes) -> Optional[str]:
+def find_pdf_link(base_url: str, html_content: bytes) -> str | None:
     try:
         soup = BeautifulSoup(html_content, "html.parser")
         # Look for PDF links containing 'list' or 'exclude'
@@ -117,12 +123,18 @@ def find_pdf_link(base_url: str, html_content: bytes) -> Optional[str]:
         if link:
             return urljoin(base_url, link["href"])
         return None
-    except Exception:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ):
         return None
 
 
 # --- Core Extraction (Returns List of Lists) ---
-def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[List[str]]:
+def extract_raw_data_from_pdf(pdf_bytes: bytes) -> list[list[str]]:
     """
     Extracts raw rows as lists.
     - Stops at 'Excluded Doctors'.
@@ -188,7 +200,13 @@ def extract_raw_data_from_pdf(pdf_bytes: bytes) -> List[List[str]]:
 
         return all_rows
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"PDF Parsing Error: {e}")
         return []
 
@@ -210,7 +228,7 @@ def clean_punctuation(text: str) -> str:
 
 
 # --- Normalization (Maps List Indices -> Dict) ---
-def normalize_records(row: List[str], index: int) -> Dict[str, Any]:
+def normalize_records(row: list[str], index: int) -> dict[str, Any]:
     """
     Dynamically maps non-empty row values to keys based on COLUMN_ORDER.
     """
@@ -225,14 +243,14 @@ def normalize_records(row: List[str], index: int) -> Dict[str, Any]:
     addr_parts = []
     if mapped_data.get("Address_1"):
         addr_parts.append(mapped_data["Address_1"])
-    if mapped_data.get("Address_2"):
-        # exclude if Address_2 is part of any of the partial add_parts
-        if not any(mapped_data["Address_2"] in part for part in addr_parts):
-            addr_parts.append(mapped_data["Address_2"])
-    if mapped_data.get("Location"):
-        # exclude if Location is part of any of the partial add_parts
-        if not any(mapped_data["Location"] in part for part in addr_parts):
-            addr_parts.append(mapped_data["Location"])
+    if mapped_data.get("Address_2") and not any(
+        mapped_data["Address_2"] in part for part in addr_parts
+    ):
+        addr_parts.append(mapped_data["Address_2"])
+    if mapped_data.get("Location") and not any(
+        mapped_data["Location"] in part for part in addr_parts
+    ):
+        addr_parts.append(mapped_data["Location"])
     full_address = ", ".join(addr_parts)
 
     # 4. Fix City
@@ -251,7 +269,7 @@ def normalize_records(row: List[str], index: int) -> Dict[str, Any]:
     return cleanup_address_fields(final_record)
 
 
-def cleanup_address_fields(record: Dict[str, str]) -> Dict[str, str]:
+def cleanup_address_fields(record: dict[str, str]) -> dict[str, str]:
     """Removes City/State from Address if they appear at the end."""
     addr = record.get("Address")
     city = record.get("City")
@@ -352,7 +370,13 @@ def main():
         with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
             json.dump(cleaned_data, f, indent=4, ensure_ascii=False)
         logger.info(f"Saved {len(cleaned_data)} records to {OUTPUT_FILENAME}")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Save failed: {e}")
 
 

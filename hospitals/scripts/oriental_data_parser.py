@@ -5,7 +5,7 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import pandas as pd
 from playwright.sync_api import sync_playwright
@@ -175,13 +175,20 @@ class ReferenceDataManager:
                     data = json.load(f)
                     self._process_file_data(data)
                     count += 1
-            except Exception as e:
+            except (
+                OSError,
+                ValueError,
+                KeyError,
+                TypeError,
+                AttributeError,
+                json.JSONDecodeError,
+            ) as e:
                 logger.warning(f"Could not load reference file {file_path.name}: {e}")
 
         logger.info(f"Loaded references from {count} files.")
         logger.info(f"Knowledge Base: {len(self.city_state_map)} cities mapped.")
 
-    def _process_file_data(self, data: List[Dict]):
+    def _process_file_data(self, data: list[dict]):
         for item in data:
             city = str(item.get("City", "")).strip()
             state = str(item.get("State", "")).strip()
@@ -237,7 +244,7 @@ class DataCleaner:
 
     @staticmethod
     def cleanup_address(
-        address: str, pincode: str, city: str = None, state: str = None
+        address: str, pincode: str, city: str | None = None, state: str | None = None
     ) -> str:
         """
         Removes Pincode, and redundantly listed City/State from the end of the address.
@@ -285,7 +292,14 @@ class DataCleaner:
 
             return cleaned.strip()
 
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"Error cleaning address: {e}")
             return address
 
@@ -325,13 +339,21 @@ class DataCleaner:
                 return state
         return ""
 
+
 def delete_excel():
     """Deletes the Excel file if it exists."""
     if EXCEL_FILE.exists():
         try:
             os.remove(EXCEL_FILE)
             logger.info(f"Deleted existing file: {EXCEL_FILE.name}")
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"Error deleting file {EXCEL_FILE.name}: {e}")
 
 
@@ -340,7 +362,7 @@ def download_file_with_playwright():
     Launches browser, navigates to page, passes WAF, finds the link, and downloads the file.
     """
     delete_excel()
-    
+
     with sync_playwright() as p:
         logger.info("Launching Browser...")
         browser = p.chromium.launch(
@@ -384,7 +406,14 @@ def download_file_with_playwright():
             logger.info(f"Saved to {EXCEL_FILE}")
             time.sleep(2)
 
-        except Exception as e:
+        except (
+            OSError,
+            ValueError,
+            KeyError,
+            TypeError,
+            AttributeError,
+            json.JSONDecodeError,
+        ) as e:
             logger.error(f"Playwright Error: {e}")
         finally:
             browser.close()
@@ -484,7 +513,14 @@ def parse_excel_to_json():
             json.dump(data_list, f, indent=4, ensure_ascii=False)
         logger.info(f"Successfully saved JSON to {OUTPUT_JSON_FILE}")
         delete_excel()
-    except Exception as e:
+    except (
+        OSError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+        json.JSONDecodeError,
+    ) as e:
         logger.error(f"Excel Parsing Error: {e}")
 
 

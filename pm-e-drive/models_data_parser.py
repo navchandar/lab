@@ -306,15 +306,15 @@ class EV_DATA_PARSER:
 
     def process_and_save_image(self, image_content, filepath):
         """
-        Validates image. Creates a standardized image by using a blurred, 
-        zoomed-in version of the original as the background, and placing 
+        Validates image. Creates a standardized image by using a blurred,
+        zoomed-in version of the original as the background, and placing
         the sharp, resized original in the center.
         """
         try:
             # Validation - open and verify the image
             img_stream = BytesIO(image_content)
             original_img = Image.open(img_stream)
-            original_img.verify() # Verify integrity
+            original_img.verify()  # Verify integrity
 
             # Re-open stream after verify, convert to RGB (handles PNGs/palette images)
             img_stream.seek(0)
@@ -337,7 +337,13 @@ class EV_DATA_PARSER:
             background.paste(foreground, (offset_x, offset_y))
             background.save(filepath, "JPEG", optimize=True, quality=80)
             return True
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             _, _, exc_traceback = sys.exc_info()
             # Extract the line number from the traceback object
             line = exc_traceback.tb_lineno
@@ -375,7 +381,13 @@ class EV_DATA_PARSER:
                 return filename
             else:
                 logger.error(f"File save failed: {filepath}")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Failed to download image for {item['name']}: {e}")
         return None
 
@@ -475,7 +487,13 @@ class EV_DATA_PARSER:
             for winner in oem_groups.values():
                 winner["is_best_in_oem"] = True
 
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             # Get the traceback object
             _, _, exc_traceback = sys.exc_info()
             line = exc_traceback.tb_lineno
@@ -501,7 +519,7 @@ class EV_DATA_PARSER:
                 "category": category_code,
                 "category_desc": category_desc,
                 "status": cells[8].text.strip(),
-                "temp_image_url": None # Placeholder
+                "temp_image_url": None,  # Placeholder
             }
 
             # Find the hidden modal for this row
@@ -551,7 +569,13 @@ class EV_DATA_PARSER:
 
             return DataUtils.enrich_item(model_entry)
 
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Error processing model entry: {e}")
         return model_entry
 

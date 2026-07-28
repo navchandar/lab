@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -47,7 +48,13 @@ def refresh_session(session):
     try:
         logger.info("Refreshing session cookies...")
         session.get("https://blinkit.com/", timeout=10, impersonate="chrome")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"Session refresh failed: {e}")
 
 
@@ -77,7 +84,13 @@ def get_lat_lng_from_place_id(session, place_id):
 
             if lat and lng:
                 return lat, lng
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"BigBasket Place lookup failed: {e}")
 
     # --- BLINKIT (First Fallback) ---
@@ -94,7 +107,13 @@ def get_lat_lng_from_place_id(session, place_id):
             lng = coord.get("lon")
             if lat and lng:
                 return lat, lng
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.warning(f"Blinkit Place lookup failed: {e}")
     return None, None
 
@@ -143,7 +162,13 @@ def check_pincode(session, place_id, pin):
             logger.warning(f"PIN {pin}: 'is_serviceable' key missing in response.")
             return None
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -174,10 +199,9 @@ def main():
             continue
 
         # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'blinkit' data is missing
-        elif "blinkit" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "blinkit" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

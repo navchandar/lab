@@ -92,7 +92,7 @@ def check_pincode(session, pin):
             f"PIN {pin}: Response was not valid JSON. Treating as unserviceable."
         )
         return 0
-    except Exception as e:
+    except (requests.RequestException, ValueError, KeyError, TypeError) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -118,10 +118,9 @@ def main():
             continue
 
         # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'pharmeasy' data is missing
-        elif "pharmeasy" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "pharmeasy" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

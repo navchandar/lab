@@ -54,7 +54,7 @@ def get_serviceable_pins():
         data = json.loads(json_str)
         valid_pins = set()
 
-        for region_id, items in data.items():
+        for items in data.values():
             for item in items:
                 # Remove slashes used for comments (e.g., "//560001")
                 clean_item = item.replace("/", "").strip()
@@ -66,7 +66,13 @@ def get_serviceable_pins():
         logger.info(f"Extracted {len(valid_pins)} serviceable PINs.")
         return valid_pins
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error fetching/parsing FreshToHome data: {e}")
         return set()
 

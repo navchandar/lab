@@ -1,3 +1,4 @@
+import json
 import logging
 import random
 import time
@@ -70,7 +71,13 @@ def check_pincode(session, lat, lng, pin):
                     return 0
                 if "Error" in data.get("statusMessage", ""):
                     return 0
-            except Exception:
+            except (
+                requests.RequestException,
+                ValueError,
+                KeyError,
+                json.JSONDecodeError,
+                TypeError,
+            ):
                 pass
 
             if "hub-ids" in cookies or "current-city-id" in cookies:
@@ -88,7 +95,13 @@ def check_pincode(session, lat, lng, pin):
         logger.error(f"API Error {response.status_code} for PIN {pin}")
         return None
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Request failed for PIN {pin}: {e}")
         return None
 
@@ -116,10 +129,9 @@ def main():
             continue
 
         # Condition 1: Pin doesn't exist in output at all
-        if pin not in output_map:
-            pending_items.append(item)
-        # Condition 2: Pin exists, but 'licious' data is missing
-        elif "licious" not in output_map[pin].get("partners", {}):
+        if pin not in output_map or "licious" not in output_map[pin].get(
+            "partners", {}
+        ):
             pending_items.append(item)
 
     total_pending = len(pending_items)

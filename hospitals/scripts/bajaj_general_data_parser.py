@@ -2,7 +2,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -68,7 +68,7 @@ def clean_text(text: Any) -> str:
     return cleaned.title()
 
 
-def send_request(session: requests.Session, endpoint: str, request_json: Dict) -> Dict:
+def send_request(session: requests.Session, endpoint: str, request_json: dict) -> dict:
     """
     Sends a POST request using multipart/form-data.
     Uses 'files' param to force correct Content-Type header generation.
@@ -99,13 +99,19 @@ def send_request(session: requests.Session, endpoint: str, request_json: Dict) -
             )
             return {}
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Request failed to {endpoint}: {e}")
         return {}
 
 
 # --- Parsing Helpers ---
-def transform_hospital_data(raw_item: Dict) -> Optional[Dict]:
+def transform_hospital_data(raw_item: dict) -> dict | None:
     """
     Maps the specific 'stringval' keys from the response to standard format.
     Based on sample:
@@ -139,7 +145,7 @@ def transform_hospital_data(raw_item: Dict) -> Optional[Dict]:
 
 
 # --- Core Logic ---
-def get_states(session: requests.Session) -> List[str]:
+def get_states(session: requests.Session) -> list[str]:
     """Fetches list of states."""
     logger.info("Fetching State List...")
     # Payload: {"requestJson":{"flag":"Y"},...}
@@ -159,12 +165,18 @@ def get_states(session: requests.Session) -> List[str]:
 
         logger.info(f"Found {len(states)} states.")
         return sorted(states)
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error parsing states: {e}")
         return []
 
 
-def get_cities(session: requests.Session, state: str) -> List[str]:
+def get_cities(session: requests.Session, state: str) -> list[str]:
     """Fetches cities for a state."""
     # Payload: {"requestJson":{"stateName":"ANDHRA PRADESH"},...}
     req_json = {"stateName": state}
@@ -179,12 +191,18 @@ def get_cities(session: requests.Session, state: str) -> List[str]:
         cities = [c for c in cities if c and c != "null"]
         logger.info(f"Found {len(cities)} cities in {state}")
         return sorted(cities)
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error parsing cities for {state}: {e}")
         return []
 
 
-def get_pincodes(session: requests.Session, state: str, city: str) -> List[str]:
+def get_pincodes(session: requests.Session, state: str, city: str) -> list[str]:
     """Fetches pincodes for a city."""
     # Payload: {"requestJson":{"cityName":"X", "stateName":"Y"},...}
     req_json = {"cityName": city, "stateName": state}
@@ -197,14 +215,20 @@ def get_pincodes(session: requests.Session, state: str, city: str) -> List[str]:
         pins = [p for p in pins if p and p != "null"]
         logger.info(f"Found {len(pins)} pincodes in {city}, {state}")
         return sorted(pins)
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error parsing pins for {city}: {e}")
         return []
 
 
 def get_hospital_details(
     session: requests.Session, state: str, city: str, pincode: str
-) -> List[Dict]:
+) -> list[dict]:
     """Fetches hospital details."""
     # Payload: {"requestJson":{"hospitalName":"", "pinCode":"...", "stateName":"...", "cityName":"..."},...}
     req_json = {
@@ -226,7 +250,13 @@ def get_hospital_details(
             if rec:
                 hospitals.append(rec)
         return hospitals
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error parsing hospitals for {city}-{pincode}: {e}")
         return []
 
@@ -271,7 +301,13 @@ def main():
                         all_data.extend(hospitals)
                         logger.info(f"Found {len(hospitals)} hospitals in {pin}")
                     time.sleep(1)  # Small delay
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Error processing state {state}: {e}")
         finally:
             state_session.close()
@@ -283,7 +319,13 @@ def main():
             with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
                 json.dump(all_data, f, indent=4, ensure_ascii=False)
             logger.info("Done.")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Error saving file: {e}")
     else:
         logger.warning("No data extracted.")

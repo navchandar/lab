@@ -3,7 +3,7 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from urllib.parse import urljoin
 
 import pdfplumber
@@ -54,7 +54,13 @@ def get_source_url(company_name: str, url_key: str) -> str:
                         break
         else:
             logger.warning(f"Source file not found at {SOURCE_FILE}")
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error reading JSON source file: {e}")
     if not url:
         logger.warning(f"No {url_key} found for {company_name} in sources.json")
@@ -81,7 +87,7 @@ def clean_text(text: Any) -> str:
     return re.sub(r"\s+", " ", str(text)).strip()
 
 
-def fetch_pdf_url(session: requests.Session, url: str) -> Optional[str]:
+def fetch_pdf_url(session: requests.Session, url: str) -> str | None:
     """
     Scrapes the landing page to find the 'Excluded Provider' PDF link.
     """
@@ -114,23 +120,35 @@ def fetch_pdf_url(session: requests.Session, url: str) -> Optional[str]:
         logger.error("Could not find the Excluded Provider PDF link on the page.")
         return None
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Error fetching PDF URL: {e}")
         return None
 
 
-def download_pdf(session: requests.Session, url: str) -> Optional[bytes]:
+def download_pdf(session: requests.Session, url: str) -> bytes | None:
     logger.info("Downloading PDF...")
     try:
         response = session.get(url, timeout=60)
         response.raise_for_status()
         return response.content
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"Download failed: {e}")
         return None
 
 
-def parse_pdf_content(pdf_bytes: bytes) -> List[Dict]:
+def parse_pdf_content(pdf_bytes: bytes) -> list[dict]:
     """
     Extracts table data using grid lines and anchor-based mapping.
     """
@@ -259,7 +277,13 @@ def parse_pdf_content(pdf_bytes: bytes) -> List[Dict]:
 
         return data_list
 
-    except Exception as e:
+    except (
+        requests.RequestException,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError,
+        TypeError,
+    ) as e:
         logger.error(f"PDF Parsing Error: {e}")
         return []
 
@@ -288,7 +312,13 @@ def main():
             with open(OUTPUT_FILENAME, "w", encoding="utf-8") as f:
                 json.dump(cleaned_data, f, indent=4, ensure_ascii=False)
             logger.info(f"Saved to {OUTPUT_FILENAME}")
-        except Exception as e:
+        except (
+            requests.RequestException,
+            ValueError,
+            KeyError,
+            json.JSONDecodeError,
+            TypeError,
+        ) as e:
             logger.error(f"Save failed: {e}")
     else:
         logger.warning("No records extracted.")
