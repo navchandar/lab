@@ -83,7 +83,6 @@ def check_jiomart(pincode):
             return 0  # No service
 
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,

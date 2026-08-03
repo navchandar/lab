@@ -46,7 +46,6 @@ def get_session():
         logger.info("Initializing session (Fetching Cookies)...")
         session.get("https://www.dmart.in/", impersonate="chrome", timeout=30)
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,
@@ -94,7 +93,6 @@ def check_pincode(session, pin, place_id):
             return 0
 
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,

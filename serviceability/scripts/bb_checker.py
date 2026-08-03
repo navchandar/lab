@@ -41,7 +41,6 @@ def refresh_session(session):
         logger.info("Refreshing session cookies...")
         session.get("https://www.bigbasket.com/", timeout=20, impersonate="chrome")
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,
@@ -77,7 +76,6 @@ def get_lat_lng_from_place_id(session, place_id):
             if lat and lng:
                 return lat, lng
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,
@@ -100,7 +98,6 @@ def get_lat_lng_from_place_id(session, place_id):
             if lat and lng:
                 return lat, lng
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,
@@ -158,7 +155,6 @@ def check_pincode(session, lat, lng, pin):
         return 0
 
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,
@@ -213,7 +209,6 @@ def get_pin_places(session, pin):
                             return 1
             return 0
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,

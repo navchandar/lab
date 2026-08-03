@@ -65,7 +65,6 @@ def check_instamart(lat, lng):
         try:
             data = response.json()
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -104,7 +103,6 @@ def check_instamart(lat, lng):
                 ):
                     return 1
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -116,7 +114,6 @@ def check_instamart(lat, lng):
         return 0
 
     except (
-        requests.RequestException,
         ValueError,
         KeyError,
         json.JSONDecodeError,

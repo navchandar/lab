@@ -187,7 +187,6 @@ class LnSearch:
                 time.sleep(random.uniform(0.5, 2.0))
 
             except (
-                requests.RequestException,
                 ValueError,
                 KeyError,
                 AttributeError,
@@ -628,7 +627,6 @@ class GrowthAnalytics:
                 f"Chart data updated with history & snapshot in {CHARTS_DATA_FILE.name}"
             )
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -654,7 +652,6 @@ class GrowthAnalytics:
                     history[handle].append({"d": row["date"], "c": int(row["count"])})
             return history
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -680,7 +677,6 @@ class GrowthAnalytics:
                         writer.writerow([handle, record["d"], record["c"]])
             logger.info(f"Saved history to {HISTORY_FILE.name}")
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -776,7 +772,6 @@ class CompanyParser:
             time.sleep(random.uniform(0.25, 0.5))
             return company
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -1112,7 +1107,6 @@ class DataCoordinator:
                 seen_websites.add(web_domain)
                 logger.info(f"Added: {company_data['name']} | Ticker: {sym}")
             except (
-                requests.RequestException,
                 ValueError,
                 KeyError,
                 json.JSONDecodeError,
@@ -1136,7 +1130,6 @@ class DataCoordinator:
                 symbols.update([f"{s}.NS" for s in nse_symbols])
                 logger.info(f"Found {len(nse_symbols)} symbols from NSE")
             except (
-                requests.RequestException,
                 ValueError,
                 KeyError,
                 json.JSONDecodeError,
@@ -1156,7 +1149,6 @@ class DataCoordinator:
                 symbols.update([f"{s}.BO" for s in bse_codes])
                 logger.info(f"Found {len(bse_codes)} symbols from BSE")
             except (
-                requests.RequestException,
                 ValueError,
                 KeyError,
                 json.JSONDecodeError,
@@ -1210,7 +1202,6 @@ class DataCoordinator:
                 }
 
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -1295,7 +1286,6 @@ class DataCoordinator:
                                 return ln
 
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
@@ -1337,7 +1327,6 @@ class DataCoordinator:
                     json.dump(list(master_map.values()), f, indent=2)
                 logger.info(f"Sync complete: Updated {updated_count} companies.")
         except (
-            requests.RequestException,
             ValueError,
             KeyError,
             json.JSONDecodeError,
