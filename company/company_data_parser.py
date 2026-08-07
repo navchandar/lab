@@ -13,8 +13,10 @@ from urllib.parse import urljoin, urlparse
 
 import pandas as pd
 import yfinance as yf
+from yfinance.exceptions import YFRateLimitError, YFException
 from bs4 import BeautifulSoup
 from curl_cffi import requests
+from curl_cffi.requests.errors import RequestsError
 from rapidfuzz import fuzz
 
 # --- Setup Logging ---
@@ -223,10 +225,17 @@ class FinancialService:
                     return sym
 
             return equities[0].get("symbol") if equities else None
-        except (ValueError, KeyError, TypeError, AttributeError, OSError) as e:
+        except YFRateLimitError as e:
+            logger.error(f"Yahoo Finance rate limited for {name}: {e}")
+            CompanyParser.ticker_error_count = 50  # reuse existing skip logic
+            return None
+        except YFException as e:
+            # catches other yfinance API/data errors
             logger.error(f"Ticker lookup error for {name}: {e}")
             return None
-
+        except (RequestsError, ValueError, KeyError, TypeError, AttributeError, OSError) as e:
+            logger.error(f"Ticker lookup error for {name}: {e}")
+            return None
 
 class GrowthAnalytics:
     """Manages historical headcount data and growth trend calculations."""
@@ -305,7 +314,7 @@ class GrowthAnalytics:
                 return 0.0
 
             return round(growth, 2)
-        except (ValueError, KeyError, TypeError, ZeroDivisionError) as e:
+        except (RequestsError, ValueError, KeyError, TypeError, ZeroDivisionError) as e:
             logger.error(f"Trend calculation error for {handle}: {e}")
             return None
 
@@ -1134,6 +1143,9 @@ class DataCoordinator:
                 KeyError,
                 json.JSONDecodeError,
                 TypeError,
+                RequestsError, 
+                pd.errors.ParserError, 
+                pd.errors.EmptyDataError
             ) as e:
                 logger.error(f"NSE CSV Parse Error: {e}")
 
