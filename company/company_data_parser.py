@@ -11,13 +11,13 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
-import pandas as pd
-import yfinance as yf
-from yfinance.exceptions import YFRateLimitError, YFException
 from bs4 import BeautifulSoup
 from curl_cffi import requests
 from curl_cffi.requests.errors import RequestsError
+import pandas as pd
 from rapidfuzz import fuzz
+import yfinance as yf
+from yfinance.exceptions import YFRateLimitError, YFException
 
 # --- Setup Logging ---
 logging.basicConfig(
