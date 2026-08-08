@@ -31,6 +31,7 @@ class SharkApp {
         this._lastFilter = null;
         this._lastTransform = null;
         this._lastTailDur = null;
+        this._lastEyeTransform = null
 
         this._bounds = { pad: 80, w: window.innerWidth, h: window.innerHeight };
 
@@ -49,6 +50,16 @@ class SharkApp {
             this._bounds.w = window.innerWidth;
             this._bounds.h = window.innerHeight;
         }, { passive: true });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && this._paused) {
+                this._paused = false;
+                requestAnimationFrame((t) => this.loop(t));
+            }
+            this._paused = document.hidden;
+        }, { passive: true });
+
+
 
         this.bindInteraction();
         this.loop();
@@ -597,6 +608,9 @@ class SharkApp {
 
 
     loop(now = performance.now()) {
+        if (this._paused) {
+            return;
+        }
         // 1. declare parameter with fallback
         const speed = Math.hypot(this.vel.x, this.vel.y);
 
@@ -620,9 +634,11 @@ class SharkApp {
         const blur = depthFade * 4;
         const w = this.sharkSize.w * depthScale;
         const h = this.sharkSize.h * depthScale;
-        const display = this.getDisplayPos();
-        const cx = display.x - w / 2;
-        const cy = display.y - h / 2;
+        const bleedX = this.sharkSize.w * 0.5;
+        const bleedY = this.sharkSize.h * 0.5;
+        const b = this._bounds;
+        const cx = Math.max(-bleedX, Math.min(b.w + bleedX, this.pos.x)) - w / 2;
+        const cy = Math.max(-bleedY, Math.min(b.h + bleedY, this.pos.y)) - h / 2;
         const facingSnap = this.facing >= 0 ? 1 : -1;
 
         // Opacity
@@ -674,7 +690,14 @@ class SharkApp {
             ex = Math.sin(eyeTime * 1.3) * 2;
             ey = Math.cos(eyeTime * 0.7) * 1.2;
         }
-        this.pupil.style.transform = `translate(${ex}px, ${ey}px)`;
+
+        if (this.state !== 'hidden') {
+            const eyeTransform = `translate(${ex.toFixed(3)}px,${ey.toFixed(3)}px)`;
+            if (eyeTransform !== this._lastEyeTransform) {
+                this.pupil.style.transform = eyeTransform;
+                this._lastEyeTransform = eyeTransform;
+            }
+        }
 
         if (this.tailGroup) {
             // ✅ Round speed contribution so string only changes on meaningful speed shifts
