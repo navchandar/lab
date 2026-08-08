@@ -1,0 +1,345 @@
+:root {
+    --water-surface: #29B6F6;
+    --water-mid: #0288D1;
+    --water-deep: #01579B;
+    --water-abyss: #002F4A;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    background: var(--water-abyss);
+}
+
+body {
+    position: fixed;
+    inset: 0;
+}
+
+.ocean {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    contain: layout paint;
+    background:
+        radial-gradient(ellipse 120% 40% at 50% -10%, rgba(129, 212, 250, 0.35) 0%, transparent 55%),
+        linear-gradient(180deg,
+            var(--water-surface) 0%,
+            var(--water-mid) 28%,
+            var(--water-deep) 62%,
+            var(--water-abyss) 100%);
+}
+
+.water-surface {
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            105deg,
+            transparent 0px,
+            rgba(255, 255, 255, 0.03) 40px,
+            transparent 80px
+        );
+    animation: surface-drift 18s linear infinite;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+@keyframes surface-drift {
+    from { transform: translateX(-80px); }
+    to { transform: translateX(80px); }
+}
+
+.light-rays {
+    position: absolute;
+    inset: 0;
+    background:
+        conic-gradient(from 180deg at 50% -5%,
+            transparent 0deg,
+            rgba(255, 255, 255, 0.06) 8deg,
+            transparent 16deg,
+            transparent 30deg,
+            rgba(255, 255, 255, 0.04) 38deg,
+            transparent 48deg,
+            transparent 70deg,
+            rgba(255, 255, 255, 0.05) 78deg,
+            transparent 88deg);
+    animation: rays-sway 12s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes rays-sway {
+    from { transform: skewX(-2deg) scale(1); opacity: 0.7; }
+    to { transform: skewX(2deg) scale(1.02); opacity: 1; }
+}
+
+.caustics {
+    position: absolute;
+    inset: 0;
+    background-image:
+        radial-gradient(ellipse 80px 40px at 20% 70%, rgba(255, 255, 255, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 60px 30px at 60% 80%, rgba(255, 255, 255, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 90px 45px at 85% 60%, rgba(255, 255, 255, 0.07) 0%, transparent 70%),
+        radial-gradient(ellipse 70px 35px at 35% 45%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+    animation: caustics-shift 8s ease-in-out infinite alternate;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+@keyframes caustics-shift {
+    from { transform: translate(0, 0) scale(1); filter: blur(0px); }
+    to { transform: translate(30px, -15px) scale(1.05); filter: blur(1px); }
+}
+
+.depth-fog {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+        transparent 0%,
+        transparent 40%,
+        rgba(0, 20, 40, 0.15) 70%,
+        rgba(0, 10, 25, 0.45) 100%);
+    pointer-events: none;
+}
+
+.bubbles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.bubble {
+    position: absolute;
+    bottom: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08));
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    animation: bubble-rise linear forwards;
+}
+
+@keyframes bubble-rise {
+    0% {
+        transform: translateY(0) translateX(0) scale(1);
+        opacity: 0;
+    }
+    10% { opacity: 0.7; }
+    80% { opacity: 0.4; }
+    100% {
+        transform: translateY(calc(-100vh - 40px)) translateX(var(--drift, 20px)) scale(0.6);
+        opacity: 0;
+    }
+}
+
+.shark-actor {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 180px;
+    height: auto;
+    will-change: transform, opacity, filter;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+    transform-origin: 50% 50%;
+    cursor: pointer;
+    touch-action: manipulation;
+    z-index: 2;
+    pointer-events: auto;
+}
+
+.shark-hit {
+    cursor: pointer;
+}
+
+.shark-actor.boop .shark-rig {
+    animation: shark-boop 0.45s ease-out;
+}
+
+.shark-actor.happy .shark-rig {
+    animation: shark-wiggle 0.7s ease-in-out;
+}
+
+@keyframes shark-boop {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.14) rotate(-3deg); }
+    60% { transform: scale(0.94) rotate(2deg); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shark-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    20% { transform: rotate(-6deg); }
+    40% { transform: rotate(7deg); }
+    60% { transform: rotate(-5deg); }
+    80% { transform: rotate(4deg); }
+}
+
+.fx-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+    overflow: hidden;
+}
+
+.tap-marker {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    margin: -18px 0 0 -18px;
+    border: 3px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    animation: tap-marker-pop 1s ease-out forwards;
+}
+
+@keyframes tap-marker-pop {
+    0% { transform: scale(0.3); opacity: 1; }
+    100% { transform: scale(2.2); opacity: 0; }
+}
+
+.tap-particle {
+    position: absolute;
+    font-size: 22px;
+    line-height: 1;
+    animation: particle-pop 1s ease-out forwards;
+    pointer-events: none;
+    user-select: none;
+}
+
+@keyframes particle-pop {
+    0% {
+        transform: translate(0, 0) scale(0.4) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx, 0), var(--dy, -50px)) scale(1.1) rotate(var(--spin, 20deg));
+        opacity: 0;
+    }
+}
+
+.shark-rig {
+    transform-origin: 110px 50px;
+    transform-box: fill-box;
+    --shark-fin: #1A4D45;
+    --shark-fin-mid: #2A6B62;
+    --shark-detail: #0D3D36;
+    --shark-accent: #4DB6AC;
+}
+
+.shark-fin { fill: var(--shark-fin); }
+.shark-fin-mid { fill: var(--shark-fin-mid); }
+.shark-fin-stem { stroke: var(--shark-fin); fill: none; }
+.shark-detail { stroke: var(--shark-detail); }
+.snout-highlight { stroke: var(--shark-accent); }
+
+/* Tail sways side-to-side at the peduncle (real shark propulsion) */
+.tail-group {
+    transform-origin: 38px 50px;
+    transform-box: fill-box;
+    animation: tail-sway 1s ease-in-out infinite;
+}
+
+@keyframes tail-sway {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(11deg); }
+    75% { transform: rotate(-11deg); }
+}
+
+/* Subtle torso flex — not full flip */
+.torso {
+    transform-origin: 110px 50px;
+    transform-box: fill-box;
+    animation: body-flex 1s ease-in-out infinite;
+}
+
+@keyframes body-flex {
+    0%, 100% { transform: scaleY(1) skewY(0deg); }
+    25% { transform: scaleY(0.985) skewY(0.6deg); }
+    75% { transform: scaleY(0.985) skewY(-0.6deg); }
+}
+
+/* Pectoral fin — stabilizer, dips slightly on beat */
+.pectoral-group {
+    transform-origin: 108px 62px;
+    transform-box: fill-box;
+    animation: pectoral-stabilize 2s ease-in-out infinite;
+}
+
+@keyframes pectoral-stabilize {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    50% { transform: rotate(6deg) translateY(2px); }
+}
+
+/* When turning, pectoral banks via CSS variable from JS */
+.shark-actor[data-turn="left"] .pectoral-group {
+    animation: pectoral-bank-left 0.6s ease-out forwards;
+}
+
+.shark-actor[data-turn="right"] .pectoral-group {
+    animation: pectoral-bank-right 0.6s ease-out forwards;
+}
+
+@keyframes pectoral-bank-left {
+    to { transform: rotate(14deg) translateY(3px); }
+}
+
+@keyframes pectoral-bank-right {
+    to { transform: rotate(-4deg) translateY(1px); }
+}
+
+/* Dorsal fin — rigid, tiny sway only */
+.dorsal-fin {
+    transform-origin: 118px 22px;
+    transform-box: fill-box;
+    animation: dorsal-steady 3.5s ease-in-out infinite;
+}
+
+@keyframes dorsal-steady {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-2deg); }
+}
+
+.ripple {
+    position: absolute;
+    border: 1.5px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple-effect 3.5s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes ripple-effect {
+    0% {
+        transform: scale(0);
+        opacity: 0.6;
+        border-width: 2px;
+    }
+    100% {
+        transform: scale(5);
+        opacity: 0;
+        border-width: 0.5px;
+    }
+}
+
+.wake {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    animation: wake-fade 1.2s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes wake-fade {
+    to { transform: scale(3); opacity: 0; }
+}
+
+@media (max-width: 600px) {
+    .shark-actor { width: 125px; }
+}
