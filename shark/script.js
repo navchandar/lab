@@ -78,7 +78,9 @@ class SharkApp {
             this.bellyGradMid.setAttribute('stop-color', palette.bellyMid);
         }
 
-        if (!this.sharkRig) return;
+        if (!this.sharkRig) {
+            return;
+        }
         const r = this.sharkRig.style;
         r.setProperty('--shark-fin', palette.fin);
         r.setProperty('--shark-fin-mid', palette.finMid);
@@ -104,14 +106,18 @@ class SharkApp {
         });
 
         this.ocean.addEventListener('pointerdown', (e) => {
-            if (e.target.closest('#shark')) return;
+            if (e.target.closest('#shark')) {
+                return;
+            }
             this.onOceanTap(e.clientX, e.clientY);
         });
     }
 
     /** Tap the shark — startled dart, bubbles, and a silly wiggle */
     onSharkTap(x, y) {
-        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') return;
+        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') {
+            return;
+        }
 
         const now = performance.now();
         const isDoubleTap = now - this.lastTapTime < 450;
@@ -145,7 +151,9 @@ class SharkApp {
 
     /** Tap the water — shark swims over to say hello */
     onOceanTap(x, y) {
-        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') return;
+        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') {
+            return;
+        }
 
         this.playTarget = { x, y };
         this.state = 'playful';
@@ -207,7 +215,9 @@ class SharkApp {
 
     /** Wait for active movement to settle slightly before exiting */
     requestDepart() {
-        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') return;
+        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') {
+            return;
+        }
 
         const busy = this.state === 'startled' || this.state === 'playful' || this.state === 'happy';
         const speed = Math.hypot(this.vel.x, this.vel.y);
@@ -248,7 +258,9 @@ class SharkApp {
     }
 
     beginDepart() {
-        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') return;
+        if (this.state === 'depart' || this.state === 'hidden' || this.state === 'approach') {
+            return;
+        }
 
         const exit = this.pickEdgePoint(null);
         this.exitEdge = exit.name;
@@ -408,7 +420,9 @@ class SharkApp {
 
     /** Occasional glide — fish coast with minimal tail use */
     maybeGlide() {
-        if (this.state !== 'swim') return;
+        if (this.state !== 'swim') {
+            return;
+        }
         if (Math.random() < 0.002) {
             this.state = 'glide';
             this.stateTimer = 90 + Math.random() * 120;
@@ -492,7 +506,9 @@ class SharkApp {
 
     spawnRipple(x, y, scale = 1) {
         const b = this.bounds();
-        if (x < -20 || x > b.w + 20 || y < -20 || y > b.h + 20) return;
+        if (x < -20 || x > b.w + 20 || y < -20 || y > b.h + 20) {
+            return;
+        }
 
         const r = document.createElement('div');
         r.className = 'ripple';
@@ -507,7 +523,9 @@ class SharkApp {
 
     spawnWake(x, y) {
         const b = this.bounds();
-        if (x < 0 || x > b.w || y < 0 || y > b.h) return;
+        if (x < 0 || x > b.w || y < 0 || y > b.h) {
+            return;
+        }
 
         const w = document.createElement('div');
         w.className = 'wake';

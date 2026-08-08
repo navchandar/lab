@@ -5,7 +5,8 @@
     --water-abyss: #002F4A;
 }
 
-body, html {
+body,
+html {
     margin: 0;
     padding: 0;
     width: 100%;
@@ -40,20 +41,23 @@ body {
     position: absolute;
     inset: 0;
     background:
-        repeating-linear-gradient(
-            105deg,
+        repeating-linear-gradient(105deg,
             transparent 0px,
             rgba(255, 255, 255, 0.03) 40px,
-            transparent 80px
-        );
+            transparent 80px);
     animation: surface-drift 18s linear infinite;
     pointer-events: none;
     opacity: 0.6;
 }
 
 @keyframes surface-drift {
-    from { transform: translateX(-80px); }
-    to { transform: translateX(80px); }
+    from {
+        transform: translateX(-80px);
+    }
+
+    to {
+        transform: translateX(80px);
+    }
 }
 
 .light-rays {
@@ -75,8 +79,15 @@ body {
 }
 
 @keyframes rays-sway {
-    from { transform: skewX(-2deg) scale(1); opacity: 0.7; }
-    to { transform: skewX(2deg) scale(1.02); opacity: 1; }
+    from {
+        transform: skewX(-2deg) scale(1);
+        opacity: 0.7;
+    }
+
+    to {
+        transform: skewX(2deg) scale(1.02);
+        opacity: 1;
+    }
 }
 
 .caustics {
@@ -93,18 +104,25 @@ body {
 }
 
 @keyframes caustics-shift {
-    from { transform: translate(0, 0) scale(1); filter: blur(0px); }
-    to { transform: translate(30px, -15px) scale(1.05); filter: blur(1px); }
+    from {
+        transform: translate(0, 0) scale(1);
+        filter: blur(0px);
+    }
+
+    to {
+        transform: translate(30px, -15px) scale(1.05);
+        filter: blur(1px);
+    }
 }
 
 .depth-fog {
     position: absolute;
     inset: 0;
     background: linear-gradient(180deg,
-        transparent 0%,
-        transparent 40%,
-        rgba(0, 20, 40, 0.15) 70%,
-        rgba(0, 10, 25, 0.45) 100%);
+            transparent 0%,
+            transparent 40%,
+            rgba(0, 20, 40, 0.15) 70%,
+            rgba(0, 10, 25, 0.45) 100%);
     pointer-events: none;
 }
 
@@ -129,8 +147,15 @@ body {
         transform: translateY(0) translateX(0) scale(1);
         opacity: 0;
     }
-    10% { opacity: 0.7; }
-    80% { opacity: 0.4; }
+
+    10% {
+        opacity: 0.7;
+    }
+
+    80% {
+        opacity: 0.4;
+    }
+
     100% {
         transform: translateY(calc(-100vh - 40px)) translateX(var(--drift, 20px)) scale(0.6);
         opacity: 0;
@@ -165,18 +190,45 @@ body {
 }
 
 @keyframes shark-boop {
-    0% { transform: scale(1); }
-    30% { transform: scale(1.14) rotate(-3deg); }
-    60% { transform: scale(0.94) rotate(2deg); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+
+    30% {
+        transform: scale(1.14) rotate(-3deg);
+    }
+
+    60% {
+        transform: scale(0.94) rotate(2deg);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 @keyframes shark-wiggle {
-    0%, 100% { transform: rotate(0deg); }
-    20% { transform: rotate(-6deg); }
-    40% { transform: rotate(7deg); }
-    60% { transform: rotate(-5deg); }
-    80% { transform: rotate(4deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    20% {
+        transform: rotate(-6deg);
+    }
+
+    40% {
+        transform: rotate(7deg);
+    }
+
+    60% {
+        transform: rotate(-5deg);
+    }
+
+    80% {
+        transform: rotate(4deg);
+    }
 }
 
 .fx-layer {
@@ -198,8 +250,15 @@ body {
 }
 
 @keyframes tap-marker-pop {
-    0% { transform: scale(0.3); opacity: 1; }
-    100% { transform: scale(2.2); opacity: 0; }
+    0% {
+        transform: scale(0.3);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(2.2);
+        opacity: 0;
+    }
 }
 
 .tap-particle {
@@ -216,6 +275,7 @@ body {
         transform: translate(0, 0) scale(0.4) rotate(0deg);
         opacity: 1;
     }
+
     100% {
         transform: translate(var(--dx, 0), var(--dy, -50px)) scale(1.1) rotate(var(--spin, 20deg));
         opacity: 0;
@@ -231,11 +291,26 @@ body {
     --shark-accent: #4DB6AC;
 }
 
-.shark-fin { fill: var(--shark-fin); }
-.shark-fin-mid { fill: var(--shark-fin-mid); }
-.shark-fin-stem { stroke: var(--shark-fin); fill: none; }
-.shark-detail { stroke: var(--shark-detail); }
-.snout-highlight { stroke: var(--shark-accent); }
+.shark-fin {
+    fill: var(--shark-fin);
+}
+
+.shark-fin-mid {
+    fill: var(--shark-fin-mid);
+}
+
+.shark-fin-stem {
+    stroke: var(--shark-fin);
+    fill: none;
+}
+
+.shark-detail {
+    stroke: var(--shark-detail);
+}
+
+.snout-highlight {
+    stroke: var(--shark-accent);
+}
 
 /* Tail sways side-to-side at the peduncle (real shark propulsion) */
 .tail-group {
@@ -245,9 +320,19 @@ body {
 }
 
 @keyframes tail-sway {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(11deg); }
-    75% { transform: rotate(-11deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    25% {
+        transform: rotate(11deg);
+    }
+
+    75% {
+        transform: rotate(-11deg);
+    }
 }
 
 /* Subtle torso flex — not full flip */
@@ -258,9 +343,19 @@ body {
 }
 
 @keyframes body-flex {
-    0%, 100% { transform: scaleY(1) skewY(0deg); }
-    25% { transform: scaleY(0.985) skewY(0.6deg); }
-    75% { transform: scaleY(0.985) skewY(-0.6deg); }
+
+    0%,
+    100% {
+        transform: scaleY(1) skewY(0deg);
+    }
+
+    25% {
+        transform: scaleY(0.985) skewY(0.6deg);
+    }
+
+    75% {
+        transform: scaleY(0.985) skewY(-0.6deg);
+    }
 }
 
 /* Pectoral fin — stabilizer, dips slightly on beat */
@@ -271,8 +366,15 @@ body {
 }
 
 @keyframes pectoral-stabilize {
-    0%, 100% { transform: rotate(0deg) translateY(0); }
-    50% { transform: rotate(6deg) translateY(2px); }
+
+    0%,
+    100% {
+        transform: rotate(0deg) translateY(0);
+    }
+
+    50% {
+        transform: rotate(6deg) translateY(2px);
+    }
 }
 
 /* When turning, pectoral banks via CSS variable from JS */
@@ -285,11 +387,15 @@ body {
 }
 
 @keyframes pectoral-bank-left {
-    to { transform: rotate(14deg) translateY(3px); }
+    to {
+        transform: rotate(14deg) translateY(3px);
+    }
 }
 
 @keyframes pectoral-bank-right {
-    to { transform: rotate(-4deg) translateY(1px); }
+    to {
+        transform: rotate(-4deg) translateY(1px);
+    }
 }
 
 /* Dorsal fin — rigid, tiny sway only */
@@ -300,8 +406,15 @@ body {
 }
 
 @keyframes dorsal-steady {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-2deg); }
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(-2deg);
+    }
 }
 
 .ripple {
@@ -319,6 +432,7 @@ body {
         opacity: 0.6;
         border-width: 2px;
     }
+
     100% {
         transform: scale(5);
         opacity: 0;
@@ -337,9 +451,14 @@ body {
 }
 
 @keyframes wake-fade {
-    to { transform: scale(3); opacity: 0; }
+    to {
+        transform: scale(3);
+        opacity: 0;
+    }
 }
 
 @media (max-width: 600px) {
-    .shark-actor { width: 125px; }
+    .shark-actor {
+        width: 125px;
+    }
 }
