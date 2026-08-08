@@ -338,7 +338,9 @@ class SharkApp {
         }
 
         this.steerToward(this.exitTarget.x, this.exitTarget.y, steerStrength);
-        if (this.exitEdge !== 'top') this.vel.y += 0.004 * blend;
+        if (this.exitEdge !== 'top') {
+            this.vel.y += 0.004 * blend;
+        }
 
         const dampFactor = 0.993 - blend * 0.008;
         this.dampVelocity(dampFactor);
@@ -362,7 +364,9 @@ class SharkApp {
 
     updateHidden() {
         this.stateTimer--;
-        if (this.stateTimer <= 0) this.beginApproach();
+        if (this.stateTimer <= 0) {
+            this.beginApproach();
+        }
     }
 
     updateApproach() {
@@ -412,10 +416,10 @@ class SharkApp {
         this.vel.y += (midY - this.pos.y) * 0.00004;
 
         // Soft boundary steering — turn away from edges
-        if (this.pos.x < b.pad) this.vel.x += 0.02;
-        if (this.pos.x > b.w - b.pad) this.vel.x -= 0.02;
-        if (this.pos.y < b.pad) this.vel.y += 0.02;
-        if (this.pos.y > b.h - b.pad) this.vel.y -= 0.02;
+        if (this.pos.x < b.pad) { this.vel.x += 0.02; }
+        if (this.pos.x > b.w - b.pad) { this.vel.x -= 0.02; }
+        if (this.pos.y < b.pad) { this.vel.y += 0.02; }
+        if (this.pos.y > b.h - b.pad) { this.vel.y -= 0.02; }
     }
 
     /** Occasional glide — fish coast with minimal tail use */
@@ -442,14 +446,14 @@ class SharkApp {
         if (this.state === 'glide') {
             this.stateTimer--;
             this.dampVelocity(0.992);
-            if (this.stateTimer <= 0) this.state = 'swim';
+            if (this.stateTimer <= 0) { this.state = 'swim'; }
         }
     }
 
     updateStartled() {
         this.stateTimer--;
         this.dampVelocity(0.965);
-        if (this.stateTimer <= 0) this.state = 'swim';
+        if (this.stateTimer <= 0) { this.state = 'swim'; }
     }
 
     updatePlayful() {
@@ -491,7 +495,7 @@ class SharkApp {
         this.stateTimer--;
         this.wander();
         this.dampVelocity(0.97);
-        if (this.stateTimer <= 0) this.state = 'swim';
+        if (this.stateTimer <= 0) { this.state = 'swim'; }
     }
 
     getDisplayPos() {
@@ -578,19 +582,21 @@ class SharkApp {
                 setTimeout(() => delete this.shark.dataset.turn, 600);
             }
             this.facing += (targetFacing - this.facing) * 0.04;
-            if (Math.abs(this.facing - targetFacing) < 0.05) this.facing = targetFacing;
+            if (Math.abs(this.facing - targetFacing) < 0.05) {
+                this.facing = targetFacing;
+            }
         }
     }
 
     loop() {
         const speed = Math.hypot(this.vel.x, this.vel.y);
 
-        if (this.state === 'depart') this.updateDepart();
-        else if (this.state === 'hidden') this.updateHidden();
-        else if (this.state === 'approach') this.updateApproach();
-        else if (this.state === 'startled') this.updateStartled();
-        else if (this.state === 'playful') this.updatePlayful();
-        else if (this.state === 'happy') this.updateHappy();
+        if (this.state === 'depart') { this.updateDepart(); }
+        else if (this.state === 'hidden') { this.updateHidden(); }
+        else if (this.state === 'approach') { this.updateApproach(); }
+        else if (this.state === 'startled') { this.updateStartled(); }
+        else if (this.state === 'playful') { this.updatePlayful(); }
+        else if (this.state === 'happy') { this.updateHappy(); }
         else this.updateSwim();
 
         if (this.state !== 'hidden') {
