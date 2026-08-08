@@ -5,6 +5,7 @@ class SharkApp {
         this.ocean = document.getElementById('ocean');
         this.bubblesEl = document.getElementById('bubbles');
         this.fxLayer = document.getElementById('fx-layer');
+        this.tailGroup = this.shark.querySelector('.tail-group');
 
         this.pos = { x: window.innerWidth * 0.3, y: window.innerHeight * 0.4 };
         this.vel = { x: 0.5, y: 0 };
@@ -26,12 +27,12 @@ class SharkApp {
         this.lastTapTime = 0;
         this.lastPaletteIndex = -1;
         this.sharkRig = null;
+        this._lastOpacity = null;
+        this._lastFilter = null;
+        this._lastTransform = null;
+        this._lastTailDur = null;
 
-        this.bounds = () => ({
-            pad: 80,
-            w: window.innerWidth,
-            h: window.innerHeight
-        });
+        this._bounds = { pad: 80, w: window.innerWidth, h: window.innerHeight };
 
         this.init();
     }
@@ -43,6 +44,12 @@ class SharkApp {
         this.bodyGradDeep = document.getElementById('bodyGradDeep');
         this.bellyGradLight = document.getElementById('bellyGradLight');
         this.bellyGradMid = document.getElementById('bellyGradMid');
+
+        window.addEventListener('resize', () => {
+            this._bounds.w = window.innerWidth;
+            this._bounds.h = window.innerHeight;
+        }, { passive: true });
+
         this.bindInteraction();
         this.loop();
         this.spawnAmbientRipple();
@@ -231,7 +238,7 @@ class SharkApp {
     }
 
     pickEdgePoint(preferDifferentFrom) {
-        const b = this.bounds();
+        const b = this._bounds;
         const edges = [
             { name: 'left', x: -b.pad * 1.2, y: b.h * (0.25 + Math.random() * 0.5) },
             { name: 'right', x: b.w + b.pad * 1.2, y: b.h * (0.25 + Math.random() * 0.5) },
@@ -295,7 +302,7 @@ class SharkApp {
         this.state = 'approach';
         this.stateTimer = 0;
 
-        const b = this.bounds();
+        const b = this._bounds;
         const aimX = b.w * (0.3 + Math.random() * 0.4);
         const aimY = b.h * (0.3 + Math.random() * 0.4);
         const dx = aimX - this.pos.x;
@@ -317,7 +324,7 @@ class SharkApp {
         this.vel.y += (dy / dist) * strength;
     }
 
-    updateDepart() {
+    updateDepart(now) {
         this.stateTimer++;
         this.departBlend = Math.min(1, this.departBlend + 0.014);
 
@@ -332,7 +339,7 @@ class SharkApp {
 
         if (wanderWeight > 0.05) {
             this.wanderAngle += (Math.random() - 0.5) * 0.05 * wanderWeight;
-            const cruise = 0.55 + Math.sin(performance.now() * 0.0008) * 0.15;
+            const cruise = 0.55 + Math.sin(now * 0.0008) * 0.15;
             this.vel.x += Math.cos(this.wanderAngle) * 0.013 * cruise * wanderWeight;
             this.vel.y += Math.sin(this.wanderAngle) * 0.013 * cruise * wanderWeight;
         }
@@ -345,7 +352,7 @@ class SharkApp {
         const dampFactor = 0.993 - blend * 0.008;
         this.dampVelocity(dampFactor);
 
-        const b = this.bounds();
+        const b = this._bounds;
         const exitDist = Math.hypot(this.exitTarget.x - this.pos.x, this.exitTarget.y - this.pos.y);
         const progress = 1 - Math.min(1, exitDist / Math.max(b.w, b.h));
         const depthRamp = Math.max(0, (blend - 0.3) / 0.7);
@@ -382,7 +389,7 @@ class SharkApp {
         this.vel.y += Math.sin(this.wanderAngle) * 0.004;
         this.dampVelocity(0.988);
 
-        const b = this.bounds();
+        const b = this._bounds;
         const inView =
             this.pos.x > b.pad * 0.6 &&
             this.pos.x < b.w - b.pad * 0.6 &&
@@ -404,14 +411,14 @@ class SharkApp {
     }
 
     /** Organic wander — smooth S-curves like a cruising fish */
-    wander() {
+    wander(now) {
         this.wanderAngle += (Math.random() - 0.5) * 0.08;
-        const speed = 0.55 + Math.sin(performance.now() * 0.0008) * 0.15;
+        const speed = 0.55 + Math.sin(now * 0.0008) * 0.15;
         this.vel.x += Math.cos(this.wanderAngle) * 0.015 * speed;
         this.vel.y += Math.sin(this.wanderAngle) * 0.015 * speed;
 
         // Gentle pull toward mid-depth (fish prefer mid-water)
-        const b = this.bounds();
+        const b = this._bounds;
         const midY = b.h * 0.45;
         this.vel.y += (midY - this.pos.y) * 0.00004;
 
@@ -438,8 +445,8 @@ class SharkApp {
         this.vel.y *= factor;
     }
 
-    updateSwim() {
-        this.wander();
+    updateSwim(now) {
+        this.wander(now);
         this.dampVelocity(0.985);
         this.maybeGlide();
 
@@ -491,15 +498,15 @@ class SharkApp {
         this.dampVelocity(0.97);
     }
 
-    updateHappy() {
+    updateHappy(now) {
         this.stateTimer--;
-        this.wander();
+        this.wander(now);
         this.dampVelocity(0.97);
         if (this.stateTimer <= 0) { this.state = 'swim'; }
     }
 
     getDisplayPos() {
-        const b = this.bounds();
+        const b = this._bounds;
         const bleedX = this.sharkSize.w * 0.5;
         const bleedY = this.sharkSize.h * 0.5;
         return {
@@ -509,7 +516,7 @@ class SharkApp {
     }
 
     spawnRipple(x, y, scale = 1) {
-        const b = this.bounds();
+        const b = this._bounds;
         if (x < -20 || x > b.w + 20 || y < -20 || y > b.h + 20) {
             return;
         }
@@ -522,11 +529,11 @@ class SharkApp {
         r.style.left = `${x - size / 2}px`;
         r.style.top = `${y - size / 2}px`;
         this.fxLayer.appendChild(r);
-        setTimeout(() => r.remove(), 3500);
+        r.addEventListener('animationend', () => r.remove(), { once: true });
     }
 
     spawnWake(x, y) {
-        const b = this.bounds();
+        const b = this._bounds;
         if (x < 0 || x > b.w || y < 0 || y > b.h) {
             return;
         }
@@ -536,11 +543,11 @@ class SharkApp {
         w.style.left = `${x}px`;
         w.style.top = `${y}px`;
         this.fxLayer.appendChild(w);
-        setTimeout(() => w.remove(), 1200);
+        w.addEventListener('animationend', () => w.remove(), { once: true });
     }
 
     spawnAmbientRipple() {
-        const b = this.bounds();
+        const b = this._bounds;
         this.spawnRipple(
             Math.random() * b.w,
             Math.random() * b.h,
@@ -588,16 +595,18 @@ class SharkApp {
         }
     }
 
-    loop() {
+
+    loop(now = performance.now()) {
+        // 1. declare parameter with fallback
         const speed = Math.hypot(this.vel.x, this.vel.y);
 
-        if (this.state === 'depart') { this.updateDepart(); }
+        if (this.state === 'depart') { this.updateDepart(now); }
         else if (this.state === 'hidden') { this.updateHidden(); }
         else if (this.state === 'approach') { this.updateApproach(); }
         else if (this.state === 'startled') { this.updateStartled(); }
         else if (this.state === 'playful') { this.updatePlayful(); }
-        else if (this.state === 'happy') { this.updateHappy(); }
-        else { this.updateSwim(); }
+        else if (this.state === 'happy') { this.updateHappy(now); }
+        else { this.updateSwim(now); }
 
         if (this.state !== 'hidden') {
             this.pos.x += this.vel.x;
@@ -607,7 +616,7 @@ class SharkApp {
 
         const depthFade = this.depth * this.depth;
         const depthScale = 1 - depthFade * 0.4;
-        const opacity = this.state === 'hidden' ? 0 : 1 - depthFade * 0.92;
+        const opacity = this.state === 'hidden' ? 0 : (1 - depthFade * 0.92);
         const blur = depthFade * 4;
         const w = this.sharkSize.w * depthScale;
         const h = this.sharkSize.h * depthScale;
@@ -616,14 +625,33 @@ class SharkApp {
         const cy = display.y - h / 2;
         const facingSnap = this.facing >= 0 ? 1 : -1;
 
-        this.shark.style.opacity = opacity;
-        this.shark.style.filter =
-            `drop-shadow(0 ${8 + this.depth * 12}px ${16 + this.depth * 8}px rgba(0,0,0,${0.2 + this.depth * 0.2})) blur(${blur}px)`;
-        this.shark.style.transform =
-            `translate(${cx}px, ${cy}px) ` +
-            `scale(${depthScale}) ` +
-            `rotate(${this.pitch}deg) ` +
+        // Opacity
+        if (opacity !== this._lastOpacity) {
+            this.shark.style.opacity = opacity;
+            this._lastOpacity = opacity;
+        }
+
+        // Filter
+        const shadowY    = (8  + this.depth * 12).toFixed(1);
+        const shadowBlur = (16 + this.depth * 8).toFixed(1);
+        const shadowAlpha = (0.2 + this.depth * 0.2).toFixed(3);
+        const blurVal    = blur.toFixed(3);
+        const newFilter  = `drop-shadow(0 ${shadowY}px ${shadowBlur}px rgba(0,0,0,${shadowAlpha})) blur(${blurVal}px)`;
+        if (newFilter !== this._lastFilter) {
+            this.shark.style.filter = newFilter;
+            this._lastFilter = newFilter;
+        }
+
+        // Transform
+        const newTransform =
+            `translate(${cx.toFixed(2)}px,${cy.toFixed(2)}px) ` +
+            `scale(${depthScale.toFixed(4)}) ` +
+            `rotate(${this.pitch.toFixed(3)}deg) ` +
             `scaleX(${facingSnap})`;
+        if (newTransform !== this._lastTransform) {
+            this.shark.style.transform = newTransform;
+            this._lastTransform = newTransform;
+        }
 
         if (speed > 0.4 && Math.random() < 0.08 && this.depth < 0.5) {
             this.spawnWake(this.pos.x, this.pos.y);
@@ -642,18 +670,24 @@ class SharkApp {
             ey = Math.max(-2, Math.min(2, ldy / 60 * 2));
             this.lookAtTimer--;
         } else {
-            const eyeTime = performance.now() * 0.001;
+            const eyeTime = now * 0.001;
             ex = Math.sin(eyeTime * 1.3) * 2;
             ey = Math.cos(eyeTime * 0.7) * 1.2;
         }
         this.pupil.style.transform = `translate(${ex}px, ${ey}px)`;
 
-        const tailGroup = this.shark.querySelector('.tail-group');
-        if (tailGroup) {
-            tailGroup.style.animationDuration = `${Math.max(0.55, 1.2 - speed * 0.25)}s`;
+        if (this.tailGroup) {
+            // ✅ Round speed contribution so string only changes on meaningful speed shifts
+            const tailDur = `${Math.max(0.55, 1.2 - speed * 0.25).toFixed(3)}s`;
+            if (tailDur !== this._lastTailDur) {
+                this.tailGroup.style.animationDuration = tailDur;
+                this._lastTailDur = tailDur;
+            }
         }
 
-        requestAnimationFrame(() => this.loop());
+        // schedule next frame — rAF passes its timestamp as the argument
+        requestAnimationFrame((t) => this.loop(t));
+
     }
 }
 
