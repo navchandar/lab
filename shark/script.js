@@ -31,7 +31,7 @@ class SharkApp {
         this._lastFilter = null;
         this._lastTransform = null;
         this._lastTailDur = null;
-        this._lastEyeTransform = null
+        this._lastEyeTransform = null;
 
         this._bounds = { pad: 80, w: window.innerWidth, h: window.innerHeight };
 
