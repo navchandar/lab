@@ -1,4 +1,4 @@
-// version=v2026.08.08
+// version=v2026.08.09
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel"];
 
@@ -63,6 +63,9 @@ const urlsToCache = [
   'shapes/preview.png',
   'shapes/script.js',
   'shapes/style.css',
+  'shark/index.html',
+  'shark/script.js',
+  'shark/style.css',
   'simon-says/index.html',
   'simon-says/preview.png',
   'simon-says/script.js',
