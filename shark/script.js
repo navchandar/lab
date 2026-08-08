@@ -597,7 +597,7 @@ class SharkApp {
         else if (this.state === 'startled') { this.updateStartled(); }
         else if (this.state === 'playful') { this.updatePlayful(); }
         else if (this.state === 'happy') { this.updateHappy(); }
-        else this.updateSwim();
+        else { this.updateSwim(); }
 
         if (this.state !== 'hidden') {
             this.pos.x += this.vel.x;
