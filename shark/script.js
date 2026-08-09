@@ -65,7 +65,28 @@ class SharkApp {
         this.loop();
         this.spawnAmbientRipple();
         this.spawnBubbleLoop();
-        this.scheduleHide();
+        if (SharkApp.isNightTime()) {
+            // Night mode: appear once, depart, never return
+            this.scheduleHide();          // first (and only) hide
+            // Override requestDepart so after the first depart it goes permanently dead
+            const _orig = this.requestDepart.bind(this);
+            this.requestDepart = () => {
+                _orig();
+                // After this depart completes, mark dead so approach never fires
+                const watchForHidden = setInterval(() => {
+                    if (this.state === 'hidden') {
+                        clearInterval(watchForHidden);
+                        this.state = 'dead';
+                        this.shark.style.opacity = 0;
+                        this.shark.style.pointerEvents = 'none';
+                    }
+                }, 300);
+            };
+        } else {
+            // Normal mode: swim freely, but hard-stop after 10 minutes
+            this.scheduleHide();
+            this.schedulePermamentHide();
+        }
     }
 
     /** Original teal shark — used on first load only */
@@ -229,6 +250,18 @@ class SharkApp {
     scheduleHide() {
         const delay = 14000 + Math.random() * 16000;
         setTimeout(() => this.requestDepart(), delay);
+    }
+    
+    /** Called once on init — sets the 10-min kill timer */
+    schedulePermamentHide() {
+        const TEN_MINUTES = 10 * 60 * 1000;
+        setTimeout(() => this.permanentlyHide(), TEN_MINUTES);
+    }
+    
+    /** Returns true if current LOCAL hour is in the night window (20:00–06:59) */
+    static isNightTime() {
+        const h = new Date().getHours();
+        return h >= 20 || h < 7;
     }
 
     /** Wait for active movement to settle slightly before exiting */
@@ -606,9 +639,23 @@ class SharkApp {
         }
     }
 
+    permanentlyHide() {
+        this.state = 'depart';
+        this.beginDepart();
+        // After depart animation finishes, kill the loop entirely
+        const checkGone = setInterval(() => {
+            if (this.state === 'hidden') {
+                clearInterval(checkGone);
+                this.state = 'dead';          // sentinel — loop will bail out
+                this.shark.style.opacity = 0;
+                this.shark.style.pointerEvents = 'none';
+            }
+        }, 500);
+    }
+
 
     loop(now = performance.now()) {
-        if (this._paused) {
+        if (this._paused || this.state === 'dead') {
             return;
         }
         // 1. declare parameter with fallback
