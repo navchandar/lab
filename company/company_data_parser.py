@@ -195,7 +195,7 @@ class LnSearch:
                 TypeError,
             ) as e:
                 logger.error(f"Exception during search crawl: {e}")
-                time.sleep(random.uniform(1.0, 3.0))
+                time.sleep(random.uniform(1.0, 1.5))
         return comp_list, seen
 
 
@@ -209,7 +209,7 @@ class FinancialService:
         try:
             search = yf.Search(name, max_results=5)
             equities = [q for q in search.quotes if q.get("quoteType") == "EQUITY"]
-            time.sleep(random.uniform(0.5, 1.0))
+            time.sleep(random.uniform(0.25, 0.50))
             # Priority 1: Indian Exchanges with Fuzzy Match
             for q in equities:
                 sym, official = q.get("symbol", ""), q.get("longname", "")
@@ -747,12 +747,12 @@ class CompanyParser:
                     f"Company page not found (404): {name}. Marking as inactive!"
                 )
                 company["active"] = False
-                time.sleep(random.uniform(1.0, 3.0))
+                time.sleep(random.uniform(1.0, 1.5))
                 return company
 
             if status != 200:
                 logger.error(f"Failed to load: {url}")
-                time.sleep(random.uniform(1.0, 3.0))
+                time.sleep(random.uniform(1.0, 1.5))
                 return company
 
             # Parse the html response
@@ -785,9 +785,10 @@ class CompanyParser:
             KeyError,
             json.JSONDecodeError,
             TypeError,
+            RequestsError,
         ) as e:
             logger.error(f"Scrape failed for {name}: {e}")
-            time.sleep(random.uniform(1.0, 3.0))
+            time.sleep(random.uniform(1.0, 1.5))
         return company
 
     @staticmethod
@@ -1011,11 +1012,11 @@ class DataCoordinator:
         # Check inactive companies every 10 days regardless of size
         if not company.get("active", True):
             return days_old >= 10
-        # Large companies: Refresh every day
+        # Large companies: Refresh every 3 days
         if ln_count > 50:
-            return True
-        # Small companies (<=50): Only refresh if at least 2 days old
-        return days_old >= 2
+            return days_old >= 3
+        # Small companies (<=50): Only refresh if at least 7 days old
+        return days_old >= 7
 
     @staticmethod
     def _find_new_comp(targets, seen) -> tuple:
@@ -1076,7 +1077,7 @@ class DataCoordinator:
         if not new_symbols:
             return targets, seen
 
-        MAX_PROCESS = 200
+        MAX_PROCESS = 100
         error_count = 0
         # Use random.sample to get a diverse subset across the alphabet
         if len(new_symbols) > MAX_PROCESS:
@@ -1086,7 +1087,7 @@ class DataCoordinator:
         logger.info(f"Screening a subset of tickers: {len(symbol_sample)}")
 
         for sym in symbol_sample:
-            time.sleep(random.uniform(0.25, 0.5))
+            time.sleep(random.uniform(0.15, 0.25))
             try:
                 company_data = None
                 if error_count < MAX_PROCESS:
@@ -1165,6 +1166,7 @@ class DataCoordinator:
                 KeyError,
                 json.JSONDecodeError,
                 TypeError,
+                RequestsError,
             ) as e:
                 logger.error(f"BSE CSV Parse Error: {e}")
 
@@ -1218,6 +1220,7 @@ class DataCoordinator:
             KeyError,
             json.JSONDecodeError,
             TypeError,
+            RequestsError,
         ) as e:
             logger.error(f"Screener error for {symbol}: {e}")
         return None
@@ -1242,7 +1245,7 @@ class DataCoordinator:
             logger.info(f"Loading {url=}")
             resp = requests.get(url, impersonate="chrome", timeout=20)
             if resp.status_code != 200:
-                logger.warning(f"Error loading {url}")
+                logger.warning(f"Error loading {url} | status={resp.status_code}")
                 return None
 
             soup = BeautifulSoup(resp.text, "html.parser")
@@ -1286,18 +1289,24 @@ class DataCoordinator:
                 # deduplicate and limit to 10 urls max per site
                 contact_urls = list(set(contact_urls))
                 random.shuffle(contact_urls)
-                for contact_url in contact_urls[:10]:
-                    if contact_url != url:
+                for contact_url in contact_urls[:5]:
+                    if contact_url == url:
+                        continue
+                    try:
                         logger.info(f"Loading {contact_url=}")
                         c_resp = requests.get(
-                            contact_url, impersonate="chrome", timeout=20
+                            contact_url, impersonate="chrome", timeout=10
                         )
                         if c_resp.status_code == 200:
                             c_soup = BeautifulSoup(c_resp.text, "html.parser")
                             if ln := DataCoordinator._extract_linkedin_url(c_soup):
                                 return ln
+                    except RequestsError as e:
+                        logger.warning(f"Timeout/error loading {contact_url}: {e}")
+                        continue
 
         except (
+            RequestsError,
             ValueError,
             KeyError,
             json.JSONDecodeError,
