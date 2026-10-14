@@ -6,7 +6,7 @@ import os
 import random
 import re
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -53,7 +53,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 BSE_URL = "https://www.bseindia.com/downloads1/List_of_companies.csv"
 
-now = datetime.now(timezone.utc)
+now = datetime.now(datetime.UTC)
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 # Discovery: Only crawl for NEW companies on Mon, Wed (0,2)
 CHECK_JOB_POSTS = day_of_week in [0, 2]
@@ -263,7 +263,7 @@ class GrowthAnalytics:
     @staticmethod
     def _parse_date(date_str: str) -> datetime:
         """Helper to ensure all dates are UTC aware for comparison."""
-        return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
+        return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=datetime.UTC)
 
     @staticmethod
     def get_trend(history: dict, handle: str, days: int) -> float | None:
@@ -592,7 +592,7 @@ class GrowthAnalytics:
                 parsed_history.append(
                     {
                         "d_obj": datetime.strptime(item["d"], "%Y-%m-%d").replace(
-                            tzinfo=timezone.utc
+                            tzinfo=datetime.UTC
                         ),
                         "d_str": item["d"],
                         "c": item["c"],
@@ -994,11 +994,11 @@ class DataCoordinator:
             return True
         try:
             # Parse the date string and replace 'Z' with '+00:00' for older Python compatibility
-            last_upd = datetime.fromisoformat(last_upd_str.replace("Z", "+00:00"))
+            last_upd = datetime.fromisoformat(last_upd_str)
             # Ensure last_upd is aware
             if last_upd.tzinfo is None:
-                last_upd = last_upd.replace(tzinfo=timezone.utc)
-            # date now has timezone.utc
+                last_upd = last_upd.replace(tzinfo=datetime.UTC)
+            # date now has datetime.UTC
             days_old = (now - last_upd).days
         except ValueError:
             # If date is corrupted, refresh the data
@@ -1400,11 +1400,11 @@ class DataCoordinator:
             if handle in data_map:
                 data_map[handle].update(clean)
                 if last_updated_date:
-                    t = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                    t = datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
                     data_map[handle]["last_updated"] = t
             else:
                 if last_updated_date:
-                    t = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+                    t = datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
                     clean["last_updated"] = t
                 data_map[handle] = clean
 
