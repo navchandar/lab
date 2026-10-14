@@ -22,7 +22,11 @@ const MAX_UNDO_STEPS = 15;
 
 function applyTheme() {
     const hour = new Date().getHours();
-    if (hour >= 18 || hour < 6) document.body.classList.add('dark-mode');
+    if (hour >= 18 || hour <= 6) {
+        document.body.classList.add('dark-mode');
+    } else {
+        document.body.classList.remove('dark-mode');
+    }
 }
 applyTheme();
 
@@ -39,7 +43,9 @@ function resizeCanvas() {
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = canvas.width;
     tempCanvas.height = canvas.height;
-    if (canvas.width > 0) tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    if (canvas.width > 0) {
+        tempCanvas.getContext('2d').drawImage(canvas, 0, 0);
+    }
 
     const container = document.getElementById('canvas-container');
     canvas.width = container.clientWidth;
@@ -165,7 +171,9 @@ previewCanvas.addEventListener('pointerdown', (e) => {
 });
 
 previewCanvas.addEventListener('pointermove', (e) => {
-    if (!isDrawing) return;
+    if (!isDrawing) {
+        return;
+    }
     
     const rect = previewCanvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -189,7 +197,9 @@ previewCanvas.addEventListener('pointermove', (e) => {
 });
 
 const handlePointerUp = () => {
-    if (!isDrawing) return;
+    if (!isDrawing) {
+        return;
+    }
     isDrawing = false;
     
     if (currentTool !== 'brush') {
@@ -228,10 +238,18 @@ saveBtn.addEventListener('pointerdown', () => {
     for (let y = 0; y < canvas.height; y++) {
         for (let x = 0; x < canvas.width; x++) {
             if (data[(y * canvas.width + x) * 4 + 3] > 0) {
-                if (x < minX) minX = x;
-                if (x > maxX) maxX = x;
-                if (y < minY) minY = y;
-                if (y > maxY) maxY = y;
+                if (x < minX) {
+                    minX = x;
+                }
+                if (x > maxX) {
+                    maxX = x;
+                }
+                if (y < minY) {
+                    minY = y;
+                }
+                if (y > maxY) {
+                    maxY = y;
+                }
                 hasPixels = true;
             }
         }
