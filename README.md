@@ -26,6 +26,9 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🌍 <a href="https://navchandar.github.io/lab/world/" target="_blank">**World Explorer**</a>  | Learn country names, flags, and capitals with a simple quiz mode. | 🟩🟩🟩🟩🟩 100% |
 | 👑 <a href="https://navchandar.github.io/lab/simon-says/" target="_blank">**Simon Says**</a>  | Play Simon Says activity for children | 🟩🟩🟩🟩🟩 100% |
 | 🐟 <a href="https://navchandar.github.io/lab/shark/" target="_blank">**Baby Shark**</a>  | A moving baby shark animation player | 🟩🟩🟩🟩🟩 100% |
+| 🎨 <a href="https://navchandar.github.io/lab/paint/" target="_blank">**Paint**</a>  | A simpler paint with shapes and colors | 🟩🟩🟩🟩🟩 100% |
+
+
 
 
 ### [Tools](https://navchandar.github.io/lab/#tools)

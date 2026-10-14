@@ -40,7 +40,7 @@ html {
     align-items: center;
     background-color: var(--toolbar-bg);
     padding: 10px;
-    gap: 15px;
+    gap: 12px;
     min-height: 80px;
     border-bottom: 2px solid var(--border-color);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -51,7 +51,9 @@ html {
 #colors,
 #actions {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
     align-items: center;
 }
 
@@ -60,9 +62,13 @@ button {
     /* Pointer (hand) cursor applied globally to all buttons */
 }
 
+button:hover {
+    box-shadow: 0px 1px 3px gray;
+}
+
 .color-btn {
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: none;
     transition: transform 0.1s ease;
@@ -70,23 +76,31 @@ button {
 
 .tool-btn,
 #actions button {
-    padding: 10px 15px;
-    font-size: 22px;
+    padding: 8px 12px;
+    font-size: 20px;
     border-radius: 8px;
     border: 2px solid var(--border-color);
     background-color: var(--bg-color);
     color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .color-btn.active,
 .tool-btn.active {
-    transform: scale(1.15);
+    transform: scale(1.1);
     border: 3px solid var(--text-color) !important;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.color-btn:active,
+.tool-btn:active {
+    transform: scale(0.95);
 }
 
 #actions button:active {
-    transform: scale(0.95);
+    transform: scale(0.9);
 }
 
 #canvas-container {
@@ -108,5 +122,23 @@ canvas {
 
 #previewBoard {
     z-index: 10;
-    /* Ensures the transparent canvas catches all touches/mouse events */
+}
+
+/* Mobile Responsiveness for all the new buttons */
+@media (max-width: 768px) {
+    #toolbar {
+        padding: 8px 5px;
+        gap: 8px;
+    }
+
+    .color-btn {
+        width: 32px;
+        height: 32px;
+    }
+
+    .tool-btn,
+    #actions button {
+        padding: 6px 10px;
+        font-size: 16px;
+    }
 }

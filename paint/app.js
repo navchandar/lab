@@ -7,6 +7,7 @@ const colorBtns = document.querySelectorAll('.color-btn');
 const toolBtns = document.querySelectorAll('.tool-btn');
 const clearBtn = document.getElementById('clearBtn');
 const saveBtn = document.getElementById('saveBtn');
+const undoBtn = document.getElementById('undoBtn');
 
 let isDrawing = false;
 let currentTool = 'brush';
@@ -14,6 +15,10 @@ let currentColor = '#FF0000';
 let lastPoint = { x: 0, y: 0 };
 let prevMidPoint = { x: 0, y: 0 };
 let shapeStart = { x: 0, y: 0 };
+
+// Array to store previous canvas states for Undo
+let undoStack = [];
+const MAX_UNDO_STEPS = 15;
 
 function applyTheme() {
     const hour = new Date().getHours();
@@ -46,9 +51,27 @@ function resizeCanvas() {
     ctx.lineJoin = 'round';
     ctx.lineWidth = 18; 
     ctx.drawImage(tempCanvas, 0, 0);
+    
+    // Clear undo history on resize to prevent size-mismatch errors
+    undoStack = []; 
 }
 window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
+
+
+function updateBrowserThemeColor(colorHex) {
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    
+    // If the meta tag exists, update it. If not, create it dynamically.
+    if (!metaThemeColor) {
+        metaThemeColor = document.createElement('meta');
+        metaThemeColor.name = "theme-color";
+        document.head.appendChild(metaThemeColor);
+    }
+    
+    metaThemeColor.setAttribute("content", colorHex);
+}
+updateBrowserThemeColor(currentColor);
 
 toolBtns.forEach(btn => {
     btn.addEventListener('pointerdown', (e) => {
@@ -64,8 +87,17 @@ colorBtns.forEach(btn => {
         colorBtns.forEach(b => b.classList.remove('active'));
         e.currentTarget.classList.add('active');
         currentColor = e.currentTarget.getAttribute('data-color');
+        updateBrowserThemeColor(currentColor);
     });
 });
+
+// Saves the current canvas state BEFORE a new stroke begins
+function saveState() {
+    if (undoStack.length >= MAX_UNDO_STEPS) {
+        undoStack.shift(); // Remove oldest state to save memory
+    }
+    undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+}
 
 function drawShape(targetCtx, startX, startY, endX, endY, shapeType) {
     targetCtx.beginPath();
@@ -74,11 +106,22 @@ function drawShape(targetCtx, startX, startY, endX, endY, shapeType) {
     targetCtx.lineCap = 'round';
     targetCtx.lineJoin = 'round';
 
-    if (shapeType === 'rect') {
+    if (shapeType === 'line') {
+        targetCtx.moveTo(startX, startY);
+        targetCtx.lineTo(endX, endY);
+        targetCtx.stroke();
+    } else if (shapeType === 'rect') {
         targetCtx.strokeRect(startX, startY, endX - startX, endY - startY);
     } else if (shapeType === 'circle') {
         const radius = Math.hypot(endX - startX, endY - startY);
         targetCtx.arc(startX, startY, radius, 0, Math.PI * 2);
+        targetCtx.stroke();
+    } else if (shapeType === 'triangle') {
+        // Draws an isosceles triangle radiating outward based on drag
+        targetCtx.moveTo(startX, startY - (endY - startY)); // Top point
+        targetCtx.lineTo(endX, endY); // Bottom Right
+        targetCtx.lineTo(startX - (endX - startX), endY); // Bottom Left
+        targetCtx.closePath();
         targetCtx.stroke();
     } else if (shapeType === 'star') {
         const radius = Math.hypot(endX - startX, endY - startY);
@@ -102,6 +145,8 @@ function drawShape(targetCtx, startX, startY, endX, endY, shapeType) {
 
 previewCanvas.addEventListener('pointerdown', (e) => {
     isDrawing = true;
+    saveState(); // Save state for undo BEFORE drawing
+
     const rect = previewCanvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
@@ -157,10 +202,21 @@ previewCanvas.addEventListener('pointerup', handlePointerUp);
 previewCanvas.addEventListener('pointercancel', handlePointerUp);
 previewCanvas.addEventListener('pointerout', handlePointerUp);
 
+// Undo Logic
+undoBtn.addEventListener('pointerdown', () => {
+    if (undoStack.length > 0) {
+        const previousState = undoStack.pop();
+        ctx.putImageData(previousState, 0, 0);
+    }
+});
+
+// Clear Logic
 clearBtn.addEventListener('pointerdown', () => {
+    saveState(); // Allow un-clearing
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 });
 
+// Save Logic
 saveBtn.addEventListener('pointerdown', () => {
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const data = imageData.data;
@@ -203,7 +259,6 @@ saveBtn.addEventListener('pointerdown', () => {
     const isDarkMode = document.body.classList.contains('dark-mode');
     tCtx.fillStyle = isDarkMode ? '#1a1a1a' : '#f4f4f9';
     tCtx.fillRect(0, 0, cropW, cropH);
-
     tCtx.drawImage(canvas, minX, minY, cropW, cropH, 0, 0, cropW, cropH);
 
     const link = document.createElement('a');
@@ -211,3 +266,4 @@ saveBtn.addEventListener('pointerdown', () => {
     link.href = tempC.toDataURL('image/png');
     link.click();
 });
+
