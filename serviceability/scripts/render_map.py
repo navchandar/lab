@@ -242,7 +242,7 @@ class MapRenderer:
                 logger.warning(f"Skipped {service}: ({count} points)")
 
         # CAPTURE CURRENT UTC TIME
-        current_time = datetime.now(datetime.UTC).isoformat()
+        current_time = datetime.now(datetime.timezone.utc).isoformat()
         # Get the bounds in Meters (EPSG:3857) from the dataframe
         min_x, min_y, max_x, max_y = self.total_bounds
         to_latlng = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
