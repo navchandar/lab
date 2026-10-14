@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="UTF-8">
-    <!-- Critical for touch devices: disables pinch-to-zoom and double-tap zoom completely -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Paint</title>
     <link rel="stylesheet" href="style.css">
@@ -11,6 +10,12 @@
 
 <body>
     <nav id="toolbar">
+        <div id="tools">
+            <button class="tool-btn active" data-tool="brush">🖌️</button>
+            <button class="tool-btn" data-tool="rect">⬜</button>
+            <button class="tool-btn" data-tool="circle">⭕</button>
+            <button class="tool-btn" data-tool="star">⭐</button>
+        </div>
         <div id="colors">
             <button class="color-btn active" data-color="#FF0000" style="background-color: #FF0000;"></button>
             <button class="color-btn" data-color="#0000FF" style="background-color: #0000FF;"></button>
@@ -23,11 +28,16 @@
                 style="background-color: #FFFFFF; border: 2px solid #ccc;"></button>
         </div>
         <div id="actions">
-            <button id="clearBtn">🗑️ Clear</button>
-            <button id="saveBtn">💾 Save</button>
+            <button id="clearBtn">🗑️</button>
+            <button id="saveBtn">💾</button>
         </div>
     </nav>
-    <canvas id="board"></canvas>
+    <div id="canvas-container">
+        <!-- Main canvas where final artwork lives -->
+        <canvas id="board"></canvas>
+        <!-- Transparent top canvas for live shape stretching -->
+        <canvas id="previewBoard"></canvas>
+    </div>
     <script src="app.js"></script>
 </body>
 
