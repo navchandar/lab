@@ -1,6 +1,6 @@
 // version=v2026.10.15
 
-const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel"];
+const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel","'.ruff_cache"];
 
 const CACHE_NAME = 'lab-full-app-v1-' + new Date().getTime();
 const urlsToCache = [
