@@ -1,0 +1,90 @@
+:root {
+    --bg-color: #f4f4f9;
+    --toolbar-bg: #ffffff;
+    --text-color: #333333;
+    --border-color: #dddddd;
+}
+
+body.dark-mode {
+    --bg-color: #1a1a1a;
+    --toolbar-bg: #2d2d2d;
+    --text-color: #f4f4f9;
+    --border-color: #444444;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Hard-lock the body to prevent any rubber-banding or text selection */
+body,
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+#toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--toolbar-bg);
+    padding: 10px 20px;
+    height: 80px;
+    border-bottom: 2px solid var(--border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#colors,
+#actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* Big, chunky targets for fine-motor forgiveness */
+.color-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.color-btn.active {
+    transform: scale(1.25);
+    border: 4px solid var(--text-color) !important;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+#actions button {
+    padding: 15px 25px;
+    font-size: 20px;
+    font-weight: bold;
+    border-radius: 12px;
+    border: 2px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+}
+
+#actions button:active {
+    transform: scale(0.95);
+}
+
+#board {
+    display: block;
+    width: 100%;
+    height: calc(100% - 80px);
+    touch-action: none;
+    /* Crucial for preventing mobile scrolling while drawing */
+}
