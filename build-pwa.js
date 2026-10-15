@@ -28,6 +28,7 @@ const HIDDEN_TOOLS = [
   "polyforge",
   "whistle-counter",
   "snacks",
+  "video-convertor",
 ];
 
 const IGNORED_FILES = [

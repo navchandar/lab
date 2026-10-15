@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Converter</title>
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+
+    <!-- COI Service Worker for SharedArrayBuffer (Multi-threading support on GitHub Pages) -->
+    <!-- This will automatically reload the page once on the first visit to inject COOP/COEP headers -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/coi-serviceworker/0.1.6/coi-serviceworker.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --danger: #ef4444;
+            --border: #334155;
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            border-radius: var(--radius);
+            padding: 32px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        /* Styled File Input */
+        input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            background-color: #0f172a;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+
+        input[type="file"]:hover {
+            border-color: var(--primary);
+        }
+
+        /* Styled Select */
+        select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #0f172a;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            appearance: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* Button */
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: var(--border);
+            color: var(--text-muted);
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Progress Area */
+        .status-area {
+            margin-top: 24px;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .progress-track {
+            width: 100%;
+            height: 8px;
+            background-color: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        /* Logs */
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: #000;
+            color: #0f0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            resize: none;
+        }
+
+        /* Download Section */
+        .download-area {
+            display: none;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .download-area a {
+            display: inline-block;
+            text-decoration: none;
+            background-color: #10b981;
+            /* Green */
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .download-area a:hover {
+            background-color: #059669;
+        }
+
+        .error-text {
+            color: var(--danger);
+            font-size: 0.9rem;
+            margin-top: 8px;
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>FFMPEG Video Converter</h1>
+            <p>100% Client-Side • Multi-threaded • Local and Private</p>
+        </div>
+
+        <div class="form-group">
+            <label for="file-input">Select Video File (Max 500MB)</label>
+            <input type="file" id="file-input" accept="video/*" disabled>
+            <div id="file-error" class="error-text">File exceeds 500MB limit.</div>
+        </div>
+
+        <div class="form-group">
+            <label for="preset-select">Conversion Preset</label>
+            <select id="preset-select" disabled>
+                <option value="mp4_standard">Standard MP4 (Good Quality)</option>
+                <option value="mov_apple">Apple QuickTime (.MOV)</option>
+                <option value="mp4_compress">Light Compression (CRF 28, 96k Audio)</option>
+                <option value="mp4_heavy_compress">Heavy Compression (CRF 32, 64k Audio)</option>
+                <option value="mp4_shrink_1080p">Scale to 1080p + Compress (For 4K/2K videos)</option>
+                <option value="mp4_shrink_720p">Scale to 720p + Compress (Smallest File Size)</option>
+                <option value="speed_2x">Speed Up 2x (Fast Motion)</option>
+            </select>
+
+        </div>
+
+        <button id="convert-btn" disabled>Waiting for Core to Load...</button>
+
+        <div class="status-area">
+            <div class="status-text">
+                <span id="status-label" class="pulse">Downloading WASM Engine...</span>
+                <span id="status-percent"></span>
+            </div>
+            <div class="progress-track">
+                <div id="progress-fill" class="progress-fill"></div>
+            </div>
+            <textarea id="log-area" readonly placeholder="FFmpeg logs will be shown here..."></textarea>
+        </div>
+
+        <div id="download-area" class="download-area">
+            <p style="margin-bottom: 12px;">Conversion successful!</p>
+            <a id="download-link" href="#" download>Download Video</a>
+        </div>
+    </div>
+
+    <!-- Import ES Modules using module script -->
+    <!-- Import ES Modules using module script -->
+    <script type="module">
+        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
+        import { fetchFile } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+
+        // Initialization
+        const ffmpeg = new FFmpeg();
+        const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB in bytes
+
+        // DOM Elements
+        const fileInput = document.getElementById('file-input');
+        const fileError = document.getElementById('file-error');
+        const presetSelect = document.getElementById('preset-select');
+        const convertBtn = document.getElementById('convert-btn');
+        const statusLabel = document.getElementById('status-label');
+        const statusPercent = document.getElementById('status-percent');
+        const progressFill = document.getElementById('progress-fill');
+        const logArea = document.getElementById('log-area');
+        const downloadArea = document.getElementById('download-area');
+        const downloadLink = document.getElementById('download-link');
+
+        // Advanced Caching Function
+        async function getCachedFile(url, mimeType) {
+            const cacheName = 'ffmpeg-core-cache-v1';
+            const cache = await caches.open(cacheName);
+
+            // Check if the file is already in our local cache
+            let response = await cache.match(url);
+
+            if (!response) {
+                statusLabel.innerText = `Downloading core engine (first time only)...`;
+                response = await fetch(url);
+
+                if (response.ok) {
+                    // Save a clone of the response to the cache for next time
+                    await cache.put(url, response.clone());
+                } else {
+                    throw new Error(`Failed to download ${url}`);
+                }
+            } else {
+                statusLabel.innerText = `Loading core engine from local cache...`;
+            }
+
+            // Convert the file into a local Blob URL with strict MIME typing
+            const blob = await response.blob();
+            const typedBlob = new Blob([blob], { type: mimeType });
+            return URL.createObjectURL(typedBlob);
+        }
+
+        async function initFFmpeg() {
+            try {
+                // Hook up logger
+                ffmpeg.on('log', ({ message }) => {
+                    logArea.value += message + '\n';
+                    logArea.scrollTop = logArea.scrollHeight; // Auto-scroll to bottom
+                });
+
+                // Hook up progress tracker
+                ffmpeg.on('progress', ({ progress }) => {
+                    // Progress comes as a decimal (0.0 to 1.0)
+                    let percent = Math.max(0, Math.min(100, Math.round(progress * 100)));
+                    if (Number.isNaN(percent)) percent = 0;
+
+                    progressFill.style.width = `${percent}%`;
+                    statusPercent.innerText = `${percent}%`;
+                    statusLabel.innerText = "Converting...";
+                });
+
+                // Core URLs mapped to the Multi-Threaded version
+                const baseURL = 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm';
+
+                // Fetch via cache to bypass CORS/COEP issues and speed up future loads
+                await ffmpeg.load({
+                    coreURL: await getCachedFile(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+                    wasmURL: await getCachedFile(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+                    workerURL: await getCachedFile(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
+                });
+
+                // Engine Ready UI State
+                statusLabel.innerText = "FFmpeg Ready";
+                statusLabel.classList.remove('pulse');
+                convertBtn.innerText = "Start Conversion";
+                fileInput.disabled = false;
+                presetSelect.disabled = false;
+
+                // Only enable button if a valid file is selected
+                checkFileState();
+
+            } catch (error) {
+                console.error("FFmpeg Load Error:", error);
+                statusLabel.innerText = "Failed to load FFmpeg. Check console.";
+                statusLabel.classList.remove('pulse');
+                statusLabel.style.color = "var(--danger)";
+            }
+        }
+
+        // File validation listener
+        function checkFileState() {
+            fileError.style.display = 'none';
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                if (file.size > MAX_FILE_SIZE) {
+                    fileError.style.display = 'block';
+                    convertBtn.disabled = true;
+                } else {
+                    convertBtn.disabled = false;
+                }
+            } else {
+                convertBtn.disabled = true;
+            }
+        }
+
+        fileInput.addEventListener('change', checkFileState);
+
+        // Conversion Execution
+        convertBtn.addEventListener('click', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Reset UI for processing
+            convertBtn.disabled = true;
+            fileInput.disabled = true;
+            presetSelect.disabled = true;
+            downloadArea.style.display = 'none';
+            logArea.value = '';
+            progressFill.style.width = '0%';
+            statusPercent.innerText = '0%';
+            statusLabel.innerText = 'Reading file to memory...';
+            statusLabel.classList.add('pulse');
+
+            // Set up input and output names safely
+            const originalExt = file.name.substring(file.name.lastIndexOf('.'));
+            const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
+
+            // Clean names to prevent command line escaping issues
+            const inputName = `input${originalExt.toLowerCase()}`;
+            const preset = presetSelect.value;
+
+            let outputExt = '.mp4';
+            let mimeType = 'video/mp4';
+            if (preset === 'mov_apple') {
+                outputExt = '.mov';
+                mimeType = 'video/quicktime';
+            }
+            const outputName = `output${outputExt}`;
+
+            try {
+                // 1. Write the file to the virtual memory file system (MEMFS)
+                await ffmpeg.writeFile(inputName, await fetchFile(file));
+
+                // 2. Build the command arguments array based on the selected preset
+                // 2. Build the command arguments array based on the selected preset
+                let args = [];
+                switch (preset) {
+                    case 'mp4_standard':
+                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', outputName];
+                        break;
+                    case 'mov_apple':
+                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '192k', outputName];
+                        break;
+
+                    // --- SIZE REDUCTION PRESETS ---
+                    case 'mp4_compress':
+                        // CRF 28 reduces quality slightly but shrinks file. Drops audio to 96k.
+                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outputName];
+                        break;
+                    case 'mp4_heavy_compress':
+                        // CRF 32 is aggressive compression. Noticeable quality drop but very small file. Audio at 64k.
+                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '32', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart', outputName];
+                        break;
+                    case 'mp4_shrink_1080p':
+                        // Scales video down to maximum 1920 width, keeps aspect ratio intact (-2), applies CRF 28.
+                        args = ['-i', inputName, '-vf', 'scale=1920:-2', '-c:v', 'libx264', '-preset', 'fast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outputName];
+                        break;
+                    case 'mp4_shrink_720p':
+                        // Scales video down to maximum 1280 width. Excellent for email attachments or sharing.
+                        args = ['-i', inputName, '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-preset', 'fast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outputName];
+                        break;
+
+                    case 'speed_2x':
+                        args = ['-i', inputName, '-filter_complex', '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]', '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outputName];
+                        break;
+                }
+                // 3. Execute the FFmpeg command
+                await ffmpeg.exec(args);
+
+                // 4. Retrieve the output file from MEMFS
+                statusLabel.innerText = "Finalizing file...";
+                const outputData = await ffmpeg.readFile(outputName);
+
+                // 5. Create a Blob and Object URL for downloading
+                const blob = new Blob([outputData.buffer], { type: mimeType });
+                const url = URL.createObjectURL(blob);
+
+                // Setup the download link
+                downloadLink.href = url;
+                downloadLink.download = `${baseName}_converted${outputExt}`;
+                downloadArea.style.display = 'block';
+
+                statusLabel.innerText = "Conversion Complete!";
+                statusLabel.classList.remove('pulse');
+                progressFill.style.width = '100%';
+                statusPercent.innerText = '100%';
+
+            } catch (error) {
+                console.error("Conversion Error:", error);
+                statusLabel.innerText = "Error during conversion. See logs.";
+                statusLabel.classList.remove('pulse');
+                statusLabel.style.color = "var(--danger)";
+            } finally {
+                // 6. Mandatory Cleanup: Delete files from memory to prevent memory leaks
+                try {
+                    await ffmpeg.deleteFile(inputName);
+                    await ffmpeg.deleteFile(outputName);
+                } catch (cleanupError) {
+                    // Ignore errors if the file didn't exist
+                }
+
+                // Re-enable UI
+                fileInput.disabled = false;
+                presetSelect.disabled = false;
+                convertBtn.disabled = false;
+            }
+        });
+
+        // Initialize immediately upon page load
+        window.onload = initFFmpeg;
+    </script>
+
+</body>
+
+</html>

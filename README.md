@@ -46,6 +46,8 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 🔰 <a href="https://navchandar.github.io/lab/polyforge/" target="_blank">**PolyForge CSS Clip**</a> | Web utility to convert complex geometric shapes into CSS clip-path polygon data. | 🟩🟩🟩🟩🟩 100%  |
 | ⏲️ <a href="https://navchandar.github.io/lab/whistle-counter/" target="_blank">**Whistle Counter**</a> | Web utility to detect whistles using Local Audio processing. | 🟩🟩🟩🟩⬜ 80%  |
 | 🍱 <a href="https://navchandar.github.io/lab/snacks/" target="_blank">**Snack a Day**</a> | Simple daily snack tracker for kids. | 🟩🟩🟩🟩🟩 100%  |
+| 🎬 <a href="https://navchandar.github.io/lab/video-convertor/" target="_blank">**Video Convertor**</a> | Local Video convertor using FFMPEG WASM | 🟩🟩🟩⬜⬜ 60%  |
+
 
 
 ### Status 
