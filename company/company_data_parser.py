@@ -6,7 +6,7 @@ import os
 import random
 import re
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -53,7 +53,7 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTM
 NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 BSE_URL = "https://www.bseindia.com/downloads1/List_of_companies.csv"
 
-now = datetime.now(timezone.utc)
+now = datetime.now(UTC)
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 # Discovery: Only crawl for NEW companies on Mon, Wed (0,2)
 CHECK_JOB_POSTS = day_of_week in [0, 2]

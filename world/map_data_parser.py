@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build map geometry and country metadata for the world map.
 
 Requires:
@@ -9,7 +8,6 @@ Outputs:
     map_data.json      Minified TopoJSON, approximately sorted north to south.
     country_data.json  Country metadata keyed by three-digit numeric code.
 """
-
 from __future__ import annotations
 
 import json
