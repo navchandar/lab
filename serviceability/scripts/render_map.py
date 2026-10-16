@@ -2,7 +2,7 @@ import io
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 import matplotlib
@@ -224,7 +224,7 @@ class MapRenderer:
             logger.info(f"   -> {service}: {count} points")
         return service_counts
 
-    def save_bounds_json(self) -> None:
+    def save_bounds_json(self) -> list[str]:
         """Exports bounds, colors and timestamp so Leaflet knows placement and branding."""
 
         counts = self._get_counts()
@@ -242,7 +242,7 @@ class MapRenderer:
                 logger.warning(f"Skipped {service}: ({count} points)")
 
         # CAPTURE CURRENT UTC TIME
-        current_time = datetime.now(datetime.timezone.utc).isoformat()
+        current_time = datetime.now(timezone.utc).isoformat()
         # Get the bounds in Meters (EPSG:3857) from the dataframe
         min_x, min_y, max_x, max_y = self.total_bounds
         to_latlng = Transformer.from_crs("EPSG:3857", "EPSG:4326", always_xy=True)
@@ -263,8 +263,8 @@ class MapRenderer:
         }
 
         out_path = self.cfg.MAPS_DIR / self.cfg.BOUNDS_FILE
-        with open(out_path, "w") as f:
-            json.dump(data, f, indent=2)
+        with out_path.open("w", encoding="utf-8") as output:
+            json.dump(data, output, indent=2)
         logger.info(f"Saved bounds to {out_path} at {current_time}")
 
         return valid_services
