@@ -13,7 +13,8 @@ const IGNORED_DIRS = [
   "__pycache__",
   "Lychee",
   "stefanzweifel",
-  "'.ruff_cache",
+  ".ruff_cache",
+  "ruff_cache",
 ];
 
 const HIDDEN_TOOLS = [
