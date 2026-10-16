@@ -881,6 +881,7 @@
         const $ = (id) => document.getElementById(id);
         $("copyright-year").textContent = new Date().getFullYear();
 
+
         const ui = {
             file: $("file"),
             fileInfo: $("file-info"),
@@ -1110,6 +1111,10 @@
 
             progressUX.track.dataset.indeterminate =
                 String(indeterminate);
+
+            if (value === 100) {
+                scrollToResult();
+            }
 
             if (indeterminate) {
                 ui.progress.removeAttribute("value");
@@ -1702,7 +1707,6 @@
                 setProgress(100, "100%");
                 ui.detail.textContent =
                     "The output is local. Use Save video button to download it.";
-                scrollToResult();
 
             } catch (error) {
                 if (job.cancelled || error.name === "AbortError") {
@@ -1812,8 +1816,27 @@
         });
 
         ui.file.addEventListener("change", validateFile);
-        ui.preset.addEventListener("change", syncUI);
         ui.convert.addEventListener("click", convert);
+        const presetSpeedDefaults = {
+            standard: "veryfast",
+            mov: "veryfast",
+            compress: "fast",
+            heavy: "fast",
+            "1080": "veryfast",
+            "720": "veryfast",
+            speed2: "ultrafast"
+        };
+
+        ui.preset.addEventListener("change", () => {
+            const defaultSpeed = presetSpeedDefaults[ui.preset.value];
+            // Copy mode has no encoding-speed setting.
+            // Preserve the current value; syncUI() disables the selector.
+            if (defaultSpeed) {
+                ui.speed.value = defaultSpeed;
+            }
+            // Update the UI
+            syncUI();
+        });
 
         ui.cancel.addEventListener("click", () => {
             if (
@@ -2154,14 +2177,36 @@
                 window.crossOriginIsolated &&
                 typeof SharedArrayBuffer !== "undefined";
 
-            ui.mode.textContent = supportsThreads
-                ? "Multi-threading supported."
-                : "Single-thread mode supported.";
+
+            if (supportsThreads) {
+                ui.mode.textContent = "Multi-thread mode";
+                console.log("Multi-thread mode; Engine loads when conversion starts.")
+            } else if (!window.isSecureContext) {
+                ui.mode.textContent = "Single-thread mode";
+                console.log("Single-thread mode: open through HTTPS or localhost.")
+            } else if (!window.crossOriginIsolated) {
+                ui.mode.textContent = "Single-thread mode";
+                console.log("Single-thread mode: this page is not cross-origin isolated.")
+            } else {
+                ui.mode.textContent = "Single-thread mode";
+                console.log("Single-thread mode: SharedArrayBuffer is unavailable.")
+            }
 
             validateFile();
 
             // Preload ffmpeg wasm: users can select a file immediately.
             void preloadCoreAssets();
+
+            console.table({
+                pageURL: window.location.href,
+                topLevelPage: window.self === window.top,
+                secureContext: window.isSecureContext,
+                crossOriginIsolated: window.crossOriginIsolated,
+                sharedArrayBufferAvailable:
+                    typeof SharedArrayBuffer !== "undefined",
+                serviceWorkerController:
+                    navigator.serviceWorker?.controller?.scriptURL ?? "None"
+            });
         }
 
         boot().catch((error) => {

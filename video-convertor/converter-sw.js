@@ -91,32 +91,37 @@ self.addEventListener("fetch", (event) => {
 
     const url = new URL(request.url);
 
-    if (url.origin !== BASE.origin) {
+    if (
+        url.origin !== BASE.origin ||
+        !url.pathname.startsWith(BASE.pathname)
+    ) {
         return;
     }
 
-    if (!url.pathname.startsWith(BASE.pathname)) {
+    // IMPORTANT: handle document navigations BEFORE checking
+    // request.cache. Reloads must receive isolation headers too.
+    if (request.mode === "navigate") {
+        event.respondWith(
+            fetch(request).then(withIsolationHeaders)
+        );
+
         return;
     }
 
-    // App-managed parallel preloads write directly to Cache Storage.
-    // Let these requests reach the network normally.
+    // Only handle engine assets below this point.
+    if (!url.pathname.startsWith(VENDOR.pathname)) {
+        return;
+    }
+
+    // Background asset preloads write directly to Cache Storage.
+    // This bypass no longer affects document navigations.
     if (request.cache === "no-cache") {
         return;
     }
 
-    if (request.mode === "navigate") {
-        // Do not cache HTML: changes should be picked up from the server.
-        event.respondWith(
-            fetch(request).then(withIsolationHeaders)
-        );
+    if (request.headers.has("Range")) {
         return;
     }
 
-    if (
-        url.pathname.startsWith(VENDOR.pathname) &&
-        !request.headers.has("Range")
-    ) {
-        event.respondWith(getAsset(request));
-    }
+    event.respondWith(getAsset(request));
 });
