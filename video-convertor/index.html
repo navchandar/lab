@@ -3,513 +3,1142 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f172a">
     <title>Video Converter</title>
     <link rel="icon"
         href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
 
-    <!-- COI Service Worker for SharedArrayBuffer (Multi-threading support on GitHub Pages) -->
-    <!-- This will automatically reload the page once on the first visit to inject COOP/COEP headers -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/coi-serviceworker/0.1.6/coi-serviceworker.min.js"></script>
 
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --primary: #3b82f6;
-            --primary-hover: #2563eb;
-            --danger: #ef4444;
-            --border: #334155;
-            --radius: 12px;
+            color-scheme: dark;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --border: #475569;
+            --text: #f8fafc;
+            --muted: #cbd5e1;
+            --primary: #2563eb;
+            --danger: #fca5a5;
         }
 
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin: 0;
+            padding: 24px;
             min-height: 100vh;
-            padding: 20px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
             line-height: 1.5;
         }
 
-        .container {
-            background-color: var(--card-bg);
-            width: 100%;
-            max-width: 600px;
-            border-radius: var(--radius);
-            padding: 32px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        main {
+            max-width: 720px;
+            margin: 24px auto;
+            padding: 28px;
+            background: var(--card);
             border: 1px solid var(--border);
+            border-radius: 16px;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 24px;
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.6rem;
         }
 
-        .header h1 {
-            font-size: 1.5rem;
-            margin-bottom: 8px;
+        p {
+            margin: 8px 0 20px;
         }
 
-        .header p {
-            color: var(--text-muted);
-            font-size: 0.9rem;
+        .muted,
+        small {
+            color: var(--muted);
         }
 
-        .form-group {
-            margin-bottom: 20px;
+        .field {
+            margin: 20px 0;
         }
 
-        .form-group label {
+        label {
             display: block;
             margin-bottom: 8px;
-            font-weight: 500;
-            font-size: 0.95rem;
+            font-weight: 600;
         }
 
-        /* Styled File Input */
-        input[type="file"] {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border: 1px dashed var(--border);
-            border-radius: 8px;
-            background-color: #0f172a;
-            color: var(--text-main);
-            cursor: pointer;
-            transition: border-color 0.2s;
-        }
-
-        input[type="file"]:hover {
-            border-color: var(--primary);
-        }
-
-        /* Styled Select */
+        input[type="file"],
         select {
             width: 100%;
             padding: 12px;
-            border-radius: 8px;
-            background-color: #0f172a;
-            color: var(--text-main);
+            background: var(--bg);
+            color: var(--text);
             border: 1px solid var(--border);
-            appearance: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        select:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-
-        /* Button */
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
             border-radius: 8px;
-            background-color: var(--primary);
+            font: inherit;
+        }
+
+        input[type="file"] {
+            border-style: dashed;
+        }
+
+        .checkbox {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-weight: 400;
+        }
+
+        .checkbox input {
+            margin-top: 6px;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button,
+        .download {
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 8px;
+            background: var(--primary);
             color: white;
-            font-size: 1rem;
+            font: inherit;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s, opacity 0.2s;
+            text-decoration: none;
         }
 
-        button:hover:not(:disabled) {
-            background-color: var(--primary-hover);
+        button.secondary {
+            background: #475569;
         }
 
         button:disabled {
-            background-color: var(--border);
-            color: var(--text-muted);
+            opacity: 0.5;
             cursor: not-allowed;
-            opacity: 0.7;
         }
 
-        /* Progress Area */
+        button:hover:not(:disabled),
+        .download:hover {
+            filter: brightness(1.12);
+        }
+
+        :focus-visible {
+            outline: 3px solid #93c5fd;
+            outline-offset: 3px;
+        }
+
         .status-area {
             margin-top: 24px;
         }
 
-        .status-text {
-            font-size: 0.9rem;
-            margin-bottom: 8px;
+        .status-row {
             display: flex;
             justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
         }
 
-        .progress-track {
+        progress {
+            display: block;
             width: 100%;
-            height: 8px;
-            background-color: var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 12px;
+            height: 14px;
+            accent-color: #60a5fa;
         }
 
-        .progress-fill {
-            height: 100%;
-            width: 0%;
-            background-color: var(--primary);
-            transition: width 0.3s ease;
+        #detail,
+        #file-info,
+        #mode {
+            font-size: 0.9rem;
+            overflow-wrap: anywhere;
         }
 
-        .pulse {
-            animation: pulse 1.5s infinite;
+        .error {
+            color: var(--danger);
         }
 
-        @keyframes pulse {
-            0% {
-                opacity: 0.6;
-            }
-
-            50% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0.6;
-            }
-        }
-
-        /* Logs */
-        textarea {
-            width: 100%;
-            height: 100px;
-            background-color: #000;
-            color: #0f0;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            resize: none;
-        }
-
-        /* Download Section */
-        .download-area {
-            display: none;
-            margin-top: 20px;
+        #result {
+            margin-top: 24px;
             padding-top: 20px;
             border-top: 1px solid var(--border);
-            text-align: center;
         }
 
-        .download-area a {
+        .download {
             display: inline-block;
-            text-decoration: none;
-            background-color: #10b981;
-            /* Green */
-            color: white;
-            padding: 12px 24px;
+            background: #047857;
+        }
+
+        details {
+            margin-top: 24px;
+        }
+
+        summary {
+            cursor: pointer;
+        }
+
+        textarea {
+            display: block;
+            width: 100%;
+            height: 180px;
+            margin-top: 12px;
+            padding: 12px;
+            resize: vertical;
+            border: 1px solid var(--border);
             border-radius: 8px;
-            font-weight: 600;
-            transition: background-color 0.2s;
+            background: #020617;
+            color: #a7f3d0;
+            font: 12px/1.5 monospace;
         }
 
-        .download-area a:hover {
-            background-color: #059669;
+        [hidden] {
+            display: none !important;
         }
 
-        .error-text {
-            color: var(--danger);
-            font-size: 0.9rem;
-            margin-top: 8px;
-            display: none;
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            main {
+                margin: 8px auto;
+                padding: 20px;
+            }
+
+            .actions button {
+                flex: 1 1 auto;
+            }
         }
     </style>
 </head>
 
 <body>
+    <main>
+        <h1>Local Video Converter</h1>
+        <p class="muted">
+            Video processing stays in your browser.
+            The engine is downloaded only when needed.
+        </p>
 
-    <div class="container">
-        <div class="header">
-            <h1>FFMPEG Video Converter</h1>
-            <p>100% Client-Side • Multi-threaded • Local and Private</p>
+        <div class="field">
+            <label for="file">Video file</label>
+            <input id="file" type="file" accept="video/*,.mkv,.avi,.mov,.webm,.m4v,.ts">
+            <p id="file-info" class="muted">
+                Maximum selection size: 500 MiB.
+                Large files may exceed your browser’s available memory.
+            </p>
         </div>
 
-        <div class="form-group">
-            <label for="file-input">Select Video File (Max 500MB)</label>
-            <input type="file" id="file-input" accept="video/*" disabled>
-            <div id="file-error" class="error-text">File exceeds 500MB limit.</div>
-        </div>
-
-        <div class="form-group">
-            <label for="preset-select">Conversion Preset</label>
-            <select id="preset-select" disabled>
-                <option value="mp4_standard">Standard MP4 (Good Quality)</option>
-                <option value="mov_apple">Apple QuickTime (.MOV)</option>
-                <option value="mp4_compress">Light Compression (CRF 28, 96k Audio)</option>
-                <option value="mp4_heavy_compress">Heavy Compression (CRF 32, 64k Audio)</option>
-                <option value="mp4_shrink_1080p">Scale to 1080p + Compress (For 4K/2K videos)</option>
-                <option value="mp4_shrink_720p">Scale to 720p + Compress (Smallest File Size)</option>
-                <option value="speed_2x">Speed Up 2x (Fast Motion)</option>
+        <div class="field">
+            <label for="preset">Conversion preset</label>
+            <select id="preset">
+                <option value="standard">Standard MP4 - good quality</option>
+                <option value="mov">QuickTime MOV - H.264 / AAC</option>
+                <option value="compress">Smaller MP4 - CRF 28, 96k audio</option>
+                <option value="heavy">Heavy compression - CRF 32, 64k audio</option>
+                <option value="1080">Fit within 1920 × 1080 - no upscaling</option>
+                <option value="720">Fit within 1280 × 720 - no upscaling</option>
+                <option value="speed2">Speed up 2×</option>
+                <option value="copy">Fastest MP4 - copy compatible streams</option>
             </select>
-
         </div>
 
-        <button id="convert-btn" disabled>Waiting for Core to Load...</button>
+        <div class="field">
+            <label for="speed">Encoding speed</label>
+            <select id="speed">
+                <option value="veryfast">Very fast - recommended</option>
+                <option value="ultrafast">Fastest encoding - usually larger files</option>
+                <option value="fast">Better compression - slower</option>
+            </select>
+            <small>Not used when copying streams.</small>
+        </div>
 
-        <div class="status-area">
-            <div class="status-text">
-                <span id="status-label" class="pulse">Downloading WASM Engine...</span>
-                <span id="status-percent"></span>
+        <div class="field">
+            <label class="checkbox">
+                <input id="faststart" type="checkbox" checked>
+                <span>
+                    Optimize for web playback
+                    <small>
+                        - moves metadata to the beginning; adds finalization work.
+                    </small>
+                </span>
+            </label>
+        </div>
+
+        <div class="actions">
+            <button id="convert" disabled>Convert video</button>
+            <button id="cancel" class="secondary" disabled>Cancel</button>
+            <button id="clear-cache" class="secondary" disabled>
+                Clear engine cache
+            </button>
+        </div>
+
+        <section class="status-area" aria-label="Conversion status">
+            <div class="status-row">
+                <span id="status" role="status" aria-live="polite">
+                    Preparing application…
+                </span>
+                <span id="percent"></span>
             </div>
-            <div class="progress-track">
-                <div id="progress-fill" class="progress-fill"></div>
-            </div>
-            <textarea id="log-area" readonly placeholder="FFmpeg logs will be shown here..."></textarea>
-        </div>
 
-        <div id="download-area" class="download-area">
-            <p style="margin-bottom: 12px;">Conversion successful!</p>
-            <a id="download-link" href="#" download>Download Video</a>
-        </div>
-    </div>
+            <progress id="progress" max="100" value="0" aria-label="Conversion progress"></progress>
 
-    <!-- Import ES Modules using module script -->
-    <!-- Import ES Modules using module script -->
+            <p id="detail" class="muted"></p>
+            <p id="mode" class="muted"></p>
+        </section>
+
+        <section id="result" hidden>
+            <p id="result-info"></p>
+            <a id="download" class="download" download>Save converted video</a>
+        </section>
+
+        <details>
+            <summary>FFmpeg logs</summary>
+            <textarea id="logs" readonly aria-label="FFmpeg logs"></textarea>
+        </details>
+    </main>
+
     <script type="module">
-        import { FFmpeg } from 'https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js';
-        import { fetchFile } from 'https://unpkg.com/@ffmpeg/util@0.12.1/dist/esm/index.js';
+        const BASE = new URL("./", window.location.href);
+        const CACHE_PREFIX = `video-converter:${BASE.pathname}:`;
+        const CACHE_NAME = `${CACHE_PREFIX}assets-v1`;
 
-        // Initialization
-        const ffmpeg = new FFmpeg();
-        const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB in bytes
+        const MAX_SIZE = 500 * 1024 * 1024;   // 500MB in bytes
+        const RELEASE_AFTER_SIZE = 150 * 1024 * 1024;
 
-        // DOM Elements
-        const fileInput = document.getElementById('file-input');
-        const fileError = document.getElementById('file-error');
-        const presetSelect = document.getElementById('preset-select');
-        const convertBtn = document.getElementById('convert-btn');
-        const statusLabel = document.getElementById('status-label');
-        const statusPercent = document.getElementById('status-percent');
-        const progressFill = document.getElementById('progress-fill');
-        const logArea = document.getElementById('log-area');
-        const downloadArea = document.getElementById('download-area');
-        const downloadLink = document.getElementById('download-link');
+        const $ = (id) => document.getElementById(id);
 
-        // Advanced Caching Function
-        async function getCachedFile(url, mimeType) {
-            const cacheName = 'ffmpeg-core-cache-v1';
-            const cache = await caches.open(cacheName);
+        const ui = {
+            file: $("file"),
+            fileInfo: $("file-info"),
+            preset: $("preset"),
+            speed: $("speed"),
+            faststart: $("faststart"),
+            convert: $("convert"),
+            cancel: $("cancel"),
+            clearCache: $("clear-cache"),
+            status: $("status"),
+            percent: $("percent"),
+            progress: $("progress"),
+            detail: $("detail"),
+            mode: $("mode"),
+            result: $("result"),
+            resultInfo: $("result-info"),
+            download: $("download"),
+            logs: $("logs")
+        };
 
-            // Check if the file is already in our local cache
-            let response = await cache.match(url);
+        let ready = false;
+        let busy = false;
+        let maintenance = false;
+        let engine = null;
+        let activeJob = null;
+        let outputURL = null;
+        let phase = "idle";
 
-            if (!response) {
-                statusLabel.innerText = `Downloading core engine (first time only)...`;
-                response = await fetch(url);
+        // Keep logging bounded and avoid updating the textarea per message.
+        let logLines = [];
+        let logsDirty = false;
 
-                if (response.ok) {
-                    // Save a clone of the response to the cache for next time
-                    await cache.put(url, response.clone());
-                } else {
-                    throw new Error(`Failed to download ${url}`);
-                }
+        function log(message) {
+            logLines.push(String(message));
+
+            if (logLines.length > 200) {
+                logLines.splice(0, logLines.length - 200);
+            }
+
+            logsDirty = true;
+        }
+
+        function flushLogs() {
+            if (!logsDirty) {
+                return;
+            }
+
+            ui.logs.value = logLines.join("\n");
+            ui.logs.scrollTop = ui.logs.scrollHeight;
+            logsDirty = false;
+        }
+
+        setInterval(flushLogs, 200);
+
+        function bytes(value) {
+            return `${(value / 1024 / 1024).toFixed(1)} MiB`;
+        }
+
+        function duration(seconds) {
+            const total = Math.max(0, Math.round(seconds));
+            const minutes = Math.floor(total / 60);
+            const remainder = total % 60;
+
+            return `${minutes}m ${String(remainder).padStart(2, "0")}s`;
+        }
+
+        function setStatus(message, isError = false) {
+            ui.status.textContent = message;
+            ui.status.classList.toggle("error", isError);
+        }
+
+        function setProgress(value = null, text = "") {
+            if (value === null) {
+                ui.progress.removeAttribute("value");
             } else {
-                statusLabel.innerText = `Loading core engine from local cache...`;
+                ui.progress.value = value;
             }
 
-            // Convert the file into a local Blob URL with strict MIME typing
-            const blob = await response.blob();
-            const typedBlob = new Blob([blob], { type: mimeType });
-            return URL.createObjectURL(typedBlob);
+            ui.percent.textContent = text;
         }
 
-        async function initFFmpeg() {
-            try {
-                // Hook up logger
-                ffmpeg.on('log', ({ message }) => {
-                    logArea.value += message + '\n';
-                    logArea.scrollTop = logArea.scrollHeight; // Auto-scroll to bottom
-                });
-
-                // Hook up progress tracker
-                ffmpeg.on('progress', ({ progress }) => {
-                    // Progress comes as a decimal (0.0 to 1.0)
-                    let percent = Math.max(0, Math.min(100, Math.round(progress * 100)));
-                    if (Number.isNaN(percent)) percent = 0;
-
-                    progressFill.style.width = `${percent}%`;
-                    statusPercent.innerText = `${percent}%`;
-                    statusLabel.innerText = "Converting...";
-                });
-
-                // Core URLs mapped to the Multi-Threaded version
-                const baseURL = 'https://unpkg.com/@ffmpeg/core-mt@0.12.6/dist/esm';
-
-                // Fetch via cache to bypass CORS/COEP issues and speed up future loads
-                await ffmpeg.load({
-                    coreURL: await getCachedFile(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-                    wasmURL: await getCachedFile(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-                    workerURL: await getCachedFile(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
-                });
-
-                // Engine Ready UI State
-                statusLabel.innerText = "FFmpeg Ready";
-                statusLabel.classList.remove('pulse');
-                convertBtn.innerText = "Start Conversion";
-                fileInput.disabled = false;
-                presetSelect.disabled = false;
-
-                // Only enable button if a valid file is selected
-                checkFileState();
-
-            } catch (error) {
-                console.error("FFmpeg Load Error:", error);
-                statusLabel.innerText = "Failed to load FFmpeg. Check console.";
-                statusLabel.classList.remove('pulse');
-                statusLabel.style.color = "var(--danger)";
-            }
+        function selectedFile() {
+            return ui.file.files?.[0] ?? null;
         }
 
-        // File validation listener
-        function checkFileState() {
-            fileError.style.display = 'none';
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                if (file.size > MAX_FILE_SIZE) {
-                    fileError.style.display = 'block';
-                    convertBtn.disabled = true;
-                } else {
-                    convertBtn.disabled = false;
-                }
+        function validFile(file) {
+            return Boolean(file && file.size > 0 && file.size <= MAX_SIZE);
+        }
+
+        function syncUI() {
+            const locked = !ready || busy || maintenance;
+
+            ui.file.disabled = locked;
+            ui.preset.disabled = locked;
+            ui.faststart.disabled = locked;
+            ui.speed.disabled = locked || ui.preset.value === "copy";
+
+            ui.convert.disabled = locked || !validFile(selectedFile());
+            ui.cancel.disabled = !busy || Boolean(activeJob?.cancelled);
+            ui.clearCache.disabled = locked;
+        }
+
+        function validateFile() {
+            const file = selectedFile();
+            ui.fileInfo.classList.remove("error");
+
+            if (!file) {
+                ui.fileInfo.textContent =
+                    "Maximum selection size: 500 MiB. Large files need substantial memory.";
+            } else if (file.size === 0) {
+                ui.fileInfo.textContent = "The selected file is empty.";
+                ui.fileInfo.classList.add("error");
+            } else if (file.size > MAX_SIZE) {
+                ui.fileInfo.textContent =
+                    `${file.name} - ${bytes(file.size)}. The limit is 500 MiB.`;
+                ui.fileInfo.classList.add("error");
             } else {
-                convertBtn.disabled = true;
+                ui.fileInfo.textContent = `${file.name} - ${bytes(file.size)}`;
+            }
+
+            syncUI();
+        }
+
+        function checkCancelled(job) {
+            if (job.cancelled || job.abort.signal.aborted) {
+                throw new DOMException("Conversion cancelled", "AbortError");
             }
         }
 
-        fileInput.addEventListener('change', checkFileState);
-
-        // Conversion Execution
-        convertBtn.addEventListener('click', async () => {
-            const file = fileInput.files[0];
-            if (!file) return;
-
-            // Reset UI for processing
-            convertBtn.disabled = true;
-            fileInput.disabled = true;
-            presetSelect.disabled = true;
-            downloadArea.style.display = 'none';
-            logArea.value = '';
-            progressFill.style.width = '0%';
-            statusPercent.innerText = '0%';
-            statusLabel.innerText = 'Reading file to memory...';
-            statusLabel.classList.add('pulse');
-
-            // Set up input and output names safely
-            const originalExt = file.name.substring(file.name.lastIndexOf('.'));
-            const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
-
-            // Clean names to prevent command line escaping issues
-            const inputName = `input${originalExt.toLowerCase()}`;
-            const preset = presetSelect.value;
-
-            let outputExt = '.mp4';
-            let mimeType = 'video/mp4';
-            if (preset === 'mov_apple') {
-                outputExt = '.mov';
-                mimeType = 'video/quicktime';
+        function discardOutput() {
+            if (outputURL) {
+                URL.revokeObjectURL(outputURL);
+                outputURL = null;
             }
-            const outputName = `output${outputExt}`;
+
+            ui.download.removeAttribute("href");
+            ui.result.hidden = true;
+        }
+
+        function destroyEngine(instance) {
+            try {
+                instance?.terminate();
+            } catch {
+                // Already terminated.
+            }
+
+            if (engine?.instance === instance) {
+                engine = null;
+            }
+        }
+
+        // Stream missing assets into Cache Storage in parallel.
+        // The service worker then serves them at their normal local URLs.
+        async function warmAssets(urls, job) {
+            if (!navigator.serviceWorker?.controller || !("caches" in window)) {
+                return;
+            }
+
+            let cache;
 
             try {
-                // 1. Write the file to the virtual memory file system (MEMFS)
-                await ffmpeg.writeFile(inputName, await fetchFile(file));
+                cache = await caches.open(CACHE_NAME);
+            } catch {
+                log("Cache Storage is unavailable; using normal browser loading.");
+                return;
+            }
 
-                // 2. Build the command arguments array based on the selected preset
-                // 2. Build the command arguments array based on the selected preset
-                let args = [];
-                switch (preset) {
-                    case 'mp4_standard':
-                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', outputName];
-                        break;
-                    case 'mov_apple':
-                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '192k', outputName];
-                        break;
+            await Promise.all(urls.map(async (url) => {
+                checkCancelled(job);
 
-                    // --- SIZE REDUCTION PRESETS ---
-                    case 'mp4_compress':
-                        // CRF 28 reduces quality slightly but shrinks file. Drops audio to 96k.
-                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outputName];
-                        break;
-                    case 'mp4_heavy_compress':
-                        // CRF 32 is aggressive compression. Noticeable quality drop but very small file. Audio at 64k.
-                        args = ['-i', inputName, '-c:v', 'libx264', '-preset', 'fast', '-crf', '32', '-c:a', 'aac', '-b:a', '64k', '-movflags', '+faststart', outputName];
-                        break;
-                    case 'mp4_shrink_1080p':
-                        // Scales video down to maximum 1920 width, keeps aspect ratio intact (-2), applies CRF 28.
-                        args = ['-i', inputName, '-vf', 'scale=1920:-2', '-c:v', 'libx264', '-preset', 'fast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outputName];
-                        break;
-                    case 'mp4_shrink_720p':
-                        // Scales video down to maximum 1280 width. Excellent for email attachments or sharing.
-                        args = ['-i', inputName, '-vf', 'scale=1280:-2', '-c:v', 'libx264', '-preset', 'fast', '-crf', '28', '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', outputName];
-                        break;
+                const cached = await cache.match(url);
 
-                    case 'speed_2x':
-                        args = ['-i', inputName, '-filter_complex', '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2.0[a]', '-map', '[v]', '-map', '[a]', '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', outputName];
-                        break;
+                if (cached) {
+                    log(`Cached: ${new URL(url).pathname}`);
+                    return;
                 }
-                // 3. Execute the FFmpeg command
-                await ffmpeg.exec(args);
 
-                // 4. Retrieve the output file from MEMFS
-                statusLabel.innerText = "Finalizing file...";
-                const outputData = await ffmpeg.readFile(outputName);
+                log(`Downloading: ${new URL(url).pathname}`);
 
-                // 5. Create a Blob and Object URL for downloading
-                const blob = new Blob([outputData.buffer], { type: mimeType });
-                const url = URL.createObjectURL(blob);
+                // The service worker intentionally bypasses no-cache requests.
+                // This avoids recursively caching the same preload request.
+                const response = await fetch(url, {
+                    signal: job.abort.signal,
+                    cache: "no-cache"
+                });
 
-                // Setup the download link
-                downloadLink.href = url;
-                downloadLink.download = `${baseName}_converted${outputExt}`;
-                downloadArea.style.display = 'block';
+                if (!response.ok) {
+                    throw new Error(
+                        `Asset download failed: ${response.status} ${url}`
+                    );
+                }
 
-                statusLabel.innerText = "Conversion Complete!";
-                statusLabel.classList.remove('pulse');
-                progressFill.style.width = '100%';
-                statusPercent.innerText = '100%';
-
-            } catch (error) {
-                console.error("Conversion Error:", error);
-                statusLabel.innerText = "Error during conversion. See logs.";
-                statusLabel.classList.remove('pulse');
-                statusLabel.style.color = "var(--danger)";
-            } finally {
-                // 6. Mandatory Cleanup: Delete files from memory to prevent memory leaks
                 try {
-                    await ffmpeg.deleteFile(inputName);
-                    await ffmpeg.deleteFile(outputName);
-                } catch (cleanupError) {
-                    // Ignore errors if the file didn't exist
+                    await cache.put(url, response);
+                } catch (error) {
+                    checkCancelled(job);
+                    log(`Could not retain asset in cache: ${error.message}`);
+                    // FFmpeg can still load the asset directly afterward.
                 }
 
-                // Re-enable UI
-                fileInput.disabled = false;
-                presetSelect.disabled = false;
-                convertBtn.disabled = false;
+                checkCancelled(job);
+            }));
+        }
+
+        function updateConversionProgress(instance, progress) {
+            if (
+                activeJob?.engine !== instance ||
+                activeJob.cancelled ||
+                phase !== "convert"
+            ) {
+                return;
+            }
+
+            // Duration-changing filters make FFmpeg's percentage unreliable.
+            if (activeJob.preset === "speed2") {
+                setProgress(null, "Working…");
+                return;
+            }
+
+            if (!Number.isFinite(progress) || progress <= 0) {
+                return;
+            }
+
+            const fraction = Math.min(0.99, Math.max(0, progress));
+            const percent = Math.floor(fraction * 100);
+
+            setProgress(percent, `~${percent}%`);
+
+            const elapsed = (performance.now() - activeJob.encodeStarted) / 1000;
+
+            if (fraction > 0.02 && elapsed > 3) {
+                const remaining = elapsed * (1 - fraction) / fraction;
+
+                ui.detail.textContent =
+                    `Elapsed ${duration(elapsed)} · ` +
+                    `Estimated remaining ${duration(remaining)}. Progress is approximate.`;
+            }
+        }
+
+        async function getEngine(job) {
+            if (engine?.instance.loaded) {
+                job.engine = engine.instance;
+                return engine;
+            }
+
+            setStatus("Loading video engine…");
+            setProgress(null, "Loading");
+
+            const wrapperURL =
+                new URL("vendor/ffmpeg-0.12.10/index.js", BASE).href;
+
+            const { FFmpeg } = await import(wrapperURL);
+            checkCancelled(job);
+
+            const supportsThreads =
+                window.crossOriginIsolated &&
+                typeof SharedArrayBuffer !== "undefined";
+
+            const modes = supportsThreads ? ["mt", "st"] : ["st"];
+
+            for (const mode of modes) {
+                const directory = mode === "mt"
+                    ? "vendor/core-mt-0.12.6/"
+                    : "vendor/core-0.12.6/";
+
+                const coreBase = new URL(directory, BASE);
+
+                const config = {
+                    coreURL: new URL("ffmpeg-core.js", coreBase).href,
+                    wasmURL: new URL("ffmpeg-core.wasm", coreBase).href
+                };
+
+                if (mode === "mt") {
+                    config.workerURL =
+                        new URL("ffmpeg-core.worker.js", coreBase).href;
+                }
+
+                const instance = new FFmpeg();
+                job.engine = instance;
+
+                instance.on("log", ({ message }) => {
+                    if (activeJob?.engine === instance) {
+                        log(message);
+                    }
+                });
+
+                instance.on("progress", ({ progress }) => {
+                    updateConversionProgress(instance, progress);
+                });
+
+                try {
+                    ui.detail.textContent =
+                        "First use downloads the engine; later uses can read cached assets.";
+
+                    await warmAssets(Object.values(config), job);
+                    checkCancelled(job);
+
+                    await instance.load(config);
+                    checkCancelled(job);
+
+                    engine = { instance, mode };
+
+                    ui.mode.textContent = mode === "mt"
+                        ? "Engine: multi-threaded"
+                        : "Engine: single-threaded";
+
+                    return engine;
+                } catch (error) {
+                    destroyEngine(instance);
+                    checkCancelled(job);
+
+                    if (mode === "st") {
+                        throw error;
+                    }
+
+                    log(`Multi-thread initialization failed: ${error.message}`);
+                    log("Trying the single-thread engine.");
+                    setStatus("Trying single-thread engine…");
+                }
+            }
+
+            throw new Error("No usable FFmpeg engine.");
+        }
+
+        function buildArgs(inputPath, outputPath, job, mode) {
+            const args = [
+                "-hide_banner",
+                "-y",
+                "-i", inputPath,
+                "-map", "0:v:0",
+                "-map", "0:a:0?",
+                "-sn",
+                "-dn"
+            ];
+
+            if (job.preset === "copy") {
+                args.push("-c", "copy");
+            } else {
+                let crf = "23";
+                let audioRate = "192k";
+
+                // Ensure even dimensions for H.264 / yuv420p output.
+                const filters = [
+                    "scale=trunc(iw/2)*2:trunc(ih/2)*2"
+                ];
+
+                switch (job.preset) {
+                    case "compress":
+                        crf = "28";
+                        audioRate = "96k";
+                        break;
+
+                    case "heavy":
+                        crf = "32";
+                        audioRate = "64k";
+                        break;
+
+                    case "1080":
+                    case "720": {
+                        const width = job.preset === "1080" ? 1920 : 1280;
+                        const height = job.preset === "1080" ? 1080 : 720;
+
+                        filters[0] =
+                            `scale=w='min(${width},iw)':h='min(${height},ih)'` +
+                            ":force_original_aspect_ratio=decrease" +
+                            ":force_divisible_by=2";
+
+                        filters.push("setsar=1");
+                        crf = "28";
+                        audioRate = "96k";
+                        break;
+                    }
+
+                    case "speed2":
+                        filters.unshift("setpts=0.5*(PTS-STARTPTS)");
+                        args.push("-af", "atempo=2.0,asetpts=PTS-STARTPTS");
+                        audioRate = "128k";
+                        break;
+                }
+
+                const threads = mode === "mt"
+                    ? Math.min(
+                        4,
+                        Math.max(1, (navigator.hardwareConcurrency || 2) - 1)
+                    )
+                    : 1;
+
+                args.push(
+                    "-vf", filters.join(","),
+                    "-c:v", "libx264",
+                    "-preset", job.speed,
+                    "-crf", crf,
+                    "-pix_fmt", "yuv420p",
+                    "-threads", String(threads),
+                    "-c:a", "aac",
+                    "-b:a", audioRate
+                );
+            }
+
+            if (job.faststart) {
+                args.push("-movflags", "+faststart");
+            }
+
+            args.push(outputPath);
+            return args;
+        }
+
+        async function cleanFiles(instance, mounted, inputPath, outputPath) {
+            if (!instance?.loaded) {
+                return;
+            }
+
+            // Each operation is independent: one missing file should not prevent
+            // the remaining cleanup.
+            const operations = [];
+
+            if (mounted) {
+                operations.push(() => instance.unmount("/input"));
+            } else if (inputPath) {
+                operations.push(() => instance.deleteFile(inputPath));
+            }
+
+            operations.push(
+                () => instance.deleteFile(outputPath),
+                () => instance.deleteDir("/input")
+            );
+
+            for (const operation of operations) {
+                try {
+                    await operation();
+                } catch {
+                    // File/directory may not exist after cancellation or failure.
+                }
+            }
+        }
+
+        async function convert() {
+            const file = selectedFile();
+
+            if (busy || maintenance || !validFile(file)) {
+                return;
+            }
+
+            const job = {
+                cancelled: false,
+                abort: new AbortController(),
+                engine: null,
+                preset: ui.preset.value,
+                speed: ui.speed.value,
+                faststart: ui.faststart.checked,
+                started: performance.now(),
+                encodeStarted: 0
+            };
+
+            activeJob = job;
+            busy = true;
+            phase = "load";
+
+            discardOutput();
+            logLines = [];
+            logsDirty = true;
+            ui.detail.textContent = "";
+            setStatus("Preparing conversion…");
+            setProgress(null);
+            syncUI();
+
+            let instance = null;
+            let mounted = false;
+            let inputPath = null;
+            let succeeded = false;
+
+            const extension = job.preset === "mov" ? ".mov" : ".mp4";
+            const outputPath = `/output${extension}`;
+
+            try {
+                const loaded = await getEngine(job);
+                instance = loaded.instance;
+                checkCancelled(job);
+
+                setStatus("Preparing input…");
+
+                await instance.createDir("/input");
+                checkCancelled(job);
+
+                try {
+                    // Avoid copying the complete input into MEMFS when supported.
+                    mounted = await instance.mount(
+                        "WORKERFS",
+                        { files: [file] },
+                        "/input"
+                    );
+
+                    if (!mounted) {
+                        throw new Error("WORKERFS mount was unavailable.");
+                    }
+
+                    inputPath = `/input/${file.name}`;
+                    log("Input mounted with WORKERFS.");
+                } catch (error) {
+                    checkCancelled(job);
+
+                    log(`Using copied input instead: ${error.message}`);
+
+                    inputPath = "/input/input.bin";
+                    const inputData = new Uint8Array(await file.arrayBuffer());
+
+                    checkCancelled(job);
+                    await instance.writeFile(inputPath, inputData);
+                }
+
+                checkCancelled(job);
+
+                const args = buildArgs(inputPath, outputPath, job, loaded.mode);
+
+                phase = "convert";
+                job.encodeStarted = performance.now();
+
+                setStatus(
+                    job.preset === "copy" ? "Copying compatible streams…" : "Converting…"
+                );
+                setProgress(null, "Working…");
+                log(`Arguments: ${JSON.stringify(args)}`);
+
+                const exitCode = await instance.exec(args);
+                checkCancelled(job);
+
+                if (exitCode !== 0) {
+                    const hint = job.preset === "copy"
+                        ? " The input codecs may not support MP4; try Standard MP4."
+                        : " Expand the FFmpeg logs for details.";
+
+                    throw new Error(`FFmpeg exited with code ${exitCode}.${hint}`);
+                }
+
+                phase = "finalize";
+                setStatus("Preparing local download…");
+                setProgress(null, "Finalizing");
+                ui.detail.textContent = "";
+
+                const data = await instance.readFile(outputPath);
+                checkCancelled(job);
+
+                if (!(data instanceof Uint8Array) || data.byteLength === 0) {
+                    throw new Error("FFmpeg did not produce a non-empty video.");
+                }
+
+                const blob = new Blob([data], {
+                    type: extension === ".mov" ? "video/quicktime" : "video/mp4"
+                });
+
+                outputURL = URL.createObjectURL(blob);
+
+                const baseName =
+                    file.name.replace(/\.[^.]+$/, "") || "video";
+
+                ui.download.href = outputURL;
+                ui.download.download = `${baseName}_converted${extension}`;
+
+                const elapsed = (performance.now() - job.started) / 1000;
+                const change = (1 - blob.size / file.size) * 100;
+
+                const comparison = change >= 0
+                    ? `${change.toFixed(1)}% smaller`
+                    : `${Math.abs(change).toFixed(1)}% larger`;
+
+                ui.resultInfo.textContent =
+                    `${bytes(file.size)} → ${bytes(blob.size)} ` +
+                    `(${comparison}) · Total time ${duration(elapsed)}`;
+
+                ui.result.hidden = false;
+                succeeded = true;
+
+                setStatus("Conversion complete");
+                setProgress(100, "100%");
+                ui.detail.textContent =
+                    "The output is local. Use Save converted video to save it.";
+            } catch (error) {
+                if (job.cancelled || error.name === "AbortError") {
+                    setStatus("Cancelled");
+                    ui.detail.textContent =
+                        "The next conversion will restart the engine if necessary.";
+                } else {
+                    console.error(error);
+                    log(error.stack || error.message || String(error));
+
+                    setStatus("Conversion failed", true);
+                    ui.detail.textContent = error.message || String(error);
+                }
+
+                setProgress(0);
+            } finally {
+                phase = "cleanup";
+
+                await cleanFiles(instance, mounted, inputPath, outputPath);
+
+                if (
+                    instance &&
+                    (!succeeded || file.size >= RELEASE_AFTER_SIZE)
+                ) {
+                    destroyEngine(instance);
+                }
+
+                activeJob = null;
+                busy = false;
+                phase = "idle";
+
+                flushLogs();
+                syncUI();
+            }
+        }
+
+        ui.file.addEventListener("change", validateFile);
+        ui.preset.addEventListener("change", syncUI);
+        ui.convert.addEventListener("click", convert);
+
+        ui.cancel.addEventListener("click", () => {
+            if (!activeJob || activeJob.cancelled) {
+                return;
+            }
+
+            activeJob.cancelled = true;
+            activeJob.abort.abort();
+
+            destroyEngine(activeJob.engine);
+
+            setStatus("Stopping…");
+            syncUI();
+        });
+
+        ui.clearCache.addEventListener("click", async () => {
+            if (busy || maintenance) {
+                return;
+            }
+
+            maintenance = true;
+            syncUI();
+
+            try {
+                if ("caches" in window) {
+                    const keys = await caches.keys();
+
+                    await Promise.all(
+                        keys
+                            .filter((key) => key.startsWith(CACHE_PREFIX))
+                            .map((key) => caches.delete(key))
+                    );
+                }
+
+                destroyEngine(engine?.instance);
+                ui.mode.textContent = "";
+
+                setStatus("Engine cache cleared");
+                ui.detail.textContent =
+                    "This clears this app’s Cache Storage and loaded engine, " +
+                    "not the browser’s separate HTTP cache.";
+            } catch (error) {
+                setStatus("Could not clear engine cache", true);
+                ui.detail.textContent = error.message;
+            } finally {
+                maintenance = false;
+                syncUI();
             }
         });
 
-        // Initialize immediately upon page load
-        window.onload = initFFmpeg;
-    </script>
+        window.addEventListener("beforeunload", (event) => {
+            if (busy) {
+                event.preventDefault();
+                event.returnValue = "";
+            }
+        });
 
+        /**
+     * Wait briefly for our service worker to control this document.
+     *
+     * Failure or timeout is non-fatal: the app can still use the
+     * single-thread engine and normal browser HTTP caching.
+     */
+        function waitForAppController(scriptURL, timeoutMs = 5000) {
+            const expectedURL = new URL(scriptURL, BASE).href;
+
+            function isOurController() {
+                return navigator.serviceWorker.controller?.scriptURL === expectedURL;
+            }
+
+            if (isOurController()) {
+                return Promise.resolve(true);
+            }
+
+            return new Promise((resolve) => {
+                let timer;
+
+                const finish = (controlled) => {
+                    clearTimeout(timer);
+
+                    navigator.serviceWorker.removeEventListener(
+                        "controllerchange",
+                        onControllerChange
+                    );
+
+                    resolve(controlled);
+                };
+
+                const onControllerChange = () => {
+                    if (isOurController()) {
+                        finish(true);
+                    }
+                };
+
+                navigator.serviceWorker.addEventListener(
+                    "controllerchange",
+                    onControllerChange
+                );
+
+                timer = setTimeout(() => {
+                    finish(isOurController());
+                }, timeoutMs);
+
+                // Avoid missing a controller change between the initial check
+                // and attaching the event listener.
+                onControllerChange();
+            });
+        }
+
+        /**
+         * Register or update this app's service worker without reloading.
+         *
+         * Registering a new script at an existing registration's scope
+         * updates that registration. Unregistering it first is unnecessary.
+         */
+        async function prepareServiceWorker() {
+            if (
+                !window.isSecureContext ||
+                !("serviceWorker" in navigator)
+            ) {
+                log(
+                    "Service workers are unavailable. " +
+                    "Continuing without app-managed asset caching."
+                );
+
+                return;
+            }
+
+            const workerURL = new URL("converter-sw.js", BASE).href;
+
+            try {
+                const registration = await navigator.serviceWorker.register(
+                    workerURL,
+                    {
+                        scope: BASE.pathname,
+
+                        // Check the worker script against the network rather
+                        // than relying on a stale HTTP-cached worker script.
+                        // This does not disable caching of FFmpeg assets.
+                        updateViaCache: "none"
+                    }
+                );
+
+                // The supplied converter-sw.js already calls skipWaiting()
+                // during installation. This also supports a waiting version
+                // that implements the message handler shown below.
+                registration.waiting?.postMessage({
+                    type: "SKIP_WAITING"
+                });
+
+                const controlled = await waitForAppController(workerURL);
+
+                if (controlled) {
+                    log("App service worker is active. No reload was requested.");
+                } else {
+                    log(
+                        "Service worker registration succeeded, but this page is " +
+                        "not yet controlled by the new worker. Continuing without reloading."
+                    );
+                }
+
+                if (window.crossOriginIsolated) {
+                    log("Cross-origin isolation is enabled.");
+                } else {
+                    log(
+                        "This document is not cross-origin isolated. " +
+                        "Using the single-thread engine for this visit. " +
+                        "A later normal navigation may enable multi-threading."
+                    );
+                }
+            } catch (error) {
+                log(
+                    `Service worker setup failed: ${error.message}. ` +
+                    "Continuing without forcing a reload."
+                );
+            }
+        }
+
+        async function boot() {
+            if (window.location.protocol === "file:") {
+                setStatus("Open this app through localhost or HTTPS", true);
+
+                ui.detail.textContent =
+                    "Do not open index.html directly. " +
+                    "Serve it through localhost or deploy it to HTTPS hosting.";
+
+                return;
+            }
+
+            await prepareServiceWorker();
+
+            ready = true;
+
+            setStatus("Choose a video to begin");
+            setProgress(0);
+
+            const supportsThreads =
+                window.crossOriginIsolated &&
+                typeof SharedArrayBuffer !== "undefined";
+
+            ui.mode.textContent = supportsThreads
+                ? "Multi-threading is available."
+                : "Single-thread mode for this visit - no reload required.";
+
+            validateFile();
+        }
+        boot().catch((error) => {
+            setStatus("Application initialization failed", true);
+            ui.detail.textContent = error.message;
+            console.error(error);
+        });
+    </script>
 </body>
 
 </html>

@@ -1,0 +1,84 @@
+name: Fetch Video Converter Assets
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: video-converter-assets-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare_assets:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install dependencies and prepare assets
+        working-directory: ./video-converter
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Initialize only when package.json does not already exist.
+          if [ ! -f package.json ]; then
+            npm init -y
+          fi
+
+          # Keep node_modules out of Git.
+          if ! grep -qxF 'node_modules/' .gitignore 2>/dev/null; then
+            printf '\nnode_modules/\n' >> .gitignore
+          fi
+
+          # Install the exact versions expected by setup-assets.mjs.
+          npm install --save-exact --no-audit --no-fund \
+            @ffmpeg/ffmpeg@0.12.10 \
+            @ffmpeg/core@0.12.6 \
+            @ffmpeg/core-mt@0.12.6
+
+          # Generate vendor/ and .nojekyll.
+          node setup-assets.mjs
+
+      - name: Commit and push generated files
+        shell: bash
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Stage only files belonging to this build.
+          git add -- \
+            video-converter/package.json \
+            video-converter/package-lock.json \
+            video-converter/.gitignore \
+            video-converter/.nojekyll \
+            video-converter/vendor/
+
+          if git diff --cached --quiet; then
+            echo "No asset changes to commit."
+            exit 0
+          fi
+
+          git commit -m "build: prepare video converter assets"
+
+          # Incorporate changes pushed while the workflow was running.
+          # Conflicts fail the workflow instead of overwriting changes.
+          git pull --rebase origin "$BRANCH"
+
+          git push origin "HEAD:$BRANCH"
