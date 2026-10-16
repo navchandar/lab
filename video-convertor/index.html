@@ -13,13 +13,26 @@
     <style>
         :root {
             color-scheme: dark;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --border: #475569;
-            --text: #f8fafc;
-            --muted: #cbd5e1;
-            --primary: #2563eb;
-            --danger: #fca5a5;
+
+            --bg: #0b1020;
+            --card: #131c30;
+            --surface: #0e1628;
+            --surface-hover: #1c2842;
+
+            --border: #34425e;
+            --text: #f2f5fc;
+            --muted: #acbad2;
+
+            --primary: #818cf8;
+            --primary-hover: #a5b4fc;
+            --primary-text: #10152f;
+
+            --success: #5eead4;
+            --success-bg: #102d2c;
+            --danger: #fda4af;
+            --warning: #fcd34d;
+
+            --radius: 20px;
         }
 
         * {
@@ -28,30 +41,54 @@
 
         body {
             margin: 0;
-            padding: 24px;
             min-height: 100vh;
-            background: var(--bg);
+            min-height: 100dvh;
+            padding: 32px 20px 20px;
+
+            display: flex;
+            flex-direction: column;
+
+            background:
+                radial-gradient(ellipse at 15% 0%,
+                    rgba(99, 102, 241, 0.13),
+                    transparent 45%),
+                var(--bg);
+
             color: var(--text);
             font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-            line-height: 1.5;
+            line-height: 1.6;
         }
 
         main {
-            max-width: 720px;
-            margin: 24px auto;
-            padding: 28px;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
+            width: 100%;
+            max-width: 1080px;
+            margin: 0 auto 32px;
+        }
+
+        h1,
+        h2,
+        h3,
+        p {
+            margin: 0;
         }
 
         h1 {
-            margin: 0 0 8px;
-            font-size: 1.6rem;
+            margin-top: 6px;
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            line-height: 1.2;
+            letter-spacing: -0.04em;
         }
 
-        p {
-            margin: 8px 0 20px;
+        h2 {
+            font-size: 1.05rem;
+            letter-spacing: -0.01em;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
         }
 
         .muted,
@@ -59,259 +96,789 @@
             color: var(--muted);
         }
 
-        .field {
-            margin: 20px 0;
+        small {
+            font-size: 0.82rem;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 28px;
+        }
+
+        .eyebrow {
+            color: var(--primary-hover);
+            font-size: 0.75rem;
+            font-weight: 750;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            max-width: 580px;
+            margin-top: 12px;
+            color: var(--muted);
+        }
+
+        .privacy-badge {
+            padding: 8px 12px;
+            border: 1px solid #285650;
+            border-radius: 999px;
+            background: var(--success-bg);
+            color: var(--success);
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+
+        .workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+            gap: 22px;
+            align-items: start;
+        }
+
+        .panel {
+            min-width: 0;
+            padding: 26px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--card);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .panel-heading {
+            margin-bottom: 24px;
+        }
+
+        .panel-heading p {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .field+.field {
+            margin-top: 24px;
         }
 
         label {
             display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
+            margin-bottom: 9px;
+            font-size: 0.9rem;
+            font-weight: 650;
         }
 
         input[type="file"],
         select {
+            display: block;
             width: 100%;
+            min-height: 48px;
             padding: 12px;
-            background: var(--bg);
-            color: var(--text);
             border: 1px solid var(--border);
-            border-radius: 8px;
-            font: inherit;
+            border-radius: 12px;
+            background: var(--surface);
+            color: var(--text);
         }
 
         input[type="file"] {
+            padding: 16px;
             border-style: dashed;
+            line-height: 1.8;
+            font-size: 0.85rem;
+        }
+
+        input[type="file"]::file-selector-button {
+            margin-right: 12px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--surface-hover);
+            color: var(--text);
+            font: inherit;
+            font-weight: 650;
+            cursor: pointer;
+        }
+
+        input[type="file"]:hover:not(:disabled),
+        select:hover:not(:disabled) {
+            border-color: var(--primary);
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        .field-help,
+        #file-info {
+            margin-top: 9px;
+            color: var(--muted);
+            font-size: 0.8rem;
+            overflow-wrap: anywhere;
+        }
+
+        #file-info.error,
+        .error {
+            color: var(--danger);
         }
 
         .checkbox {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             align-items: flex-start;
-            font-weight: 400;
+            margin: 0;
+            font-weight: 500;
+            cursor: pointer;
         }
 
         .checkbox input {
-            margin-top: 6px;
+            flex: 0 0 auto;
+            width: 18px;
+            height: 18px;
+            margin: 4px 0 0;
+            accent-color: var(--primary);
+        }
+
+        .checkbox small {
+            display: block;
+            margin-top: 4px;
+            font-weight: 400;
+        }
+
+        details {
+            border-top: 1px solid var(--border);
+        }
+
+        .advanced {
+            margin-top: 26px;
+            padding-top: 18px;
+        }
+
+        summary {
+            color: var(--muted);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        details[open]>summary {
+            margin-bottom: 20px;
         }
 
         .actions {
             display: flex;
             flex-wrap: wrap;
             gap: 12px;
-            margin-top: 20px;
+            margin-top: 26px;
         }
 
         button,
         .download {
+            display: inline-flex;
+            min-height: 48px;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
             padding: 12px 18px;
-            border: 0;
-            border-radius: 8px;
+
+            border: 1px solid transparent;
+            border-radius: 12px;
+
             background: var(--primary);
-            color: white;
-            font: inherit;
-            font-weight: 600;
-            cursor: pointer;
+            color: var(--primary-text);
+            font-weight: 750;
             text-decoration: none;
+            cursor: pointer;
+
+            transition:
+                background-color 150ms ease,
+                border-color 150ms ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--primary-hover);
+        }
+
+        #convert {
+            flex: 1;
         }
 
         button.secondary {
-            background: #475569;
+            border-color: var(--border);
+            background: var(--surface);
+            color: var(--text);
         }
 
-        button:disabled {
+        button.secondary:hover:not(:disabled) {
+            border-color: var(--primary);
+            background: var(--surface-hover);
+        }
+
+        button:disabled,
+        input:disabled,
+        select:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        button:hover:not(:disabled),
-        .download:hover {
-            filter: brightness(1.12);
-        }
-
         :focus-visible {
-            outline: 3px solid #93c5fd;
-            outline-offset: 3px;
+            outline: 3px solid var(--primary-hover);
+            outline-offset: 4px;
         }
 
         .status-area {
-            margin-top: 24px;
+            position: sticky;
+            top: 24px;
         }
 
         .status-row {
             display: flex;
             justify-content: space-between;
-            gap: 12px;
-            margin-bottom: 10px;
+            align-items: flex-start;
+            gap: 16px;
+            margin-top: 20px;
         }
 
-        progress {
-            display: block;
-            width: 100%;
-            height: 14px;
-            accent-color: #60a5fa;
-        }
-
-        #detail,
-        #file-info,
-        #mode {
-            font-size: 0.9rem;
+        #status {
+            font-size: 0.95rem;
+            font-weight: 650;
             overflow-wrap: anywhere;
         }
 
-        .error {
-            color: var(--danger);
+        #percent {
+            flex-shrink: 0;
+            color: var(--primary-hover);
+            font-size: 1.5rem;
+            font-weight: 750;
+            line-height: 1.2;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .progress-track {
+            position: relative;
+            height: 10px;
+            margin-top: 18px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #29354d;
+        }
+
+        .progress-fill {
+            height: 100%;
+            width: 0;
+            border-radius: inherit;
+            background: linear-gradient(90deg, #818cf8, #67e8f9);
+            transition: width 220ms ease;
+        }
+
+        .progress-track[data-indeterminate="true"] .progress-fill {
+            width: 35% !important;
+            animation: progress-slide 1.5s ease-in-out infinite;
+        }
+
+        @keyframes progress-slide {
+            from {
+                transform: translateX(-110%);
+            }
+
+            to {
+                transform: translateX(390%);
+            }
+        }
+
+        .progress-note {
+            margin-top: 10px;
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin: 26px 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .step {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+
+        .step-number {
+            display: grid;
+            place-items: center;
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            background: var(--surface);
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .step[data-state="active"] {
+            color: var(--text);
+        }
+
+        .step[data-state="active"] .step-number {
+            border-color: var(--primary);
+            background: #292e54;
+            color: #c7d2fe;
+        }
+
+        .step[data-state="done"] .step-number {
+            border-color: #28786d;
+            background: var(--success-bg);
+            color: var(--success);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 0;
+        }
+
+        .metrics>div {
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--surface);
+        }
+
+        .metrics dt {
+            color: var(--muted);
+            font-size: 0.75rem;
+        }
+
+        .metrics dd {
+            margin: 5px 0 0;
+            font-size: 1.05rem;
+            font-weight: 650;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #detail {
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 0.82rem;
+            overflow-wrap: anywhere;
+        }
+
+        #mode {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 0.75rem;
+            overflow-wrap: anywhere;
+        }
+
+        .status-area[data-state="done"] #status,
+        .status-area[data-state="done"] #percent {
+            color: var(--success);
+        }
+
+        .status-area[data-state="done"] .progress-fill {
+            background: var(--success);
+        }
+
+        .status-area[data-state="error"] .progress-fill {
+            background: var(--danger);
+        }
+
+        .status-area[data-state="cancelled"] #status {
+            color: var(--warning);
         }
 
         #result {
-            margin-top: 24px;
-            padding-top: 20px;
-            border-top: 1px solid var(--border);
+            margin-top: 22px;
+            border-color: #285650;
+        }
+
+        .result-heading {
+            color: var(--success);
+        }
+
+        #result-info {
+            margin-top: 8px;
+            color: var(--muted);
+            overflow-wrap: anywhere;
         }
 
         .download {
-            display: inline-block;
-            background: #047857;
+            background: var(--success);
+            color: #052a25;
         }
 
-        details {
+        .download:hover {
+            background: #99f6e4;
+        }
+
+        #video-preview {
+            display: block;
+            width: 100%;
+            max-height: 560px;
+            margin-top: 22px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: #000;
+        }
+
+        #preview-message {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+
+        .tools {
             margin-top: 24px;
-        }
-
-        summary {
-            cursor: pointer;
+            padding-top: 18px;
         }
 
         textarea {
             display: block;
             width: 100%;
             height: 180px;
-            margin-top: 12px;
-            padding: 12px;
+            margin-top: 14px;
+            padding: 14px;
             resize: vertical;
             border: 1px solid var(--border);
-            border-radius: 8px;
-            background: #020617;
-            color: #a7f3d0;
-            font: 12px/1.5 monospace;
+            border-radius: 12px;
+            background: #080e1b;
+            color: #b9d6c9;
+            font: 12px/1.6 monospace;
+        }
+
+        .site-footer {
+            width: 100%;
+            max-width: 1080px;
+            margin: auto auto 0;
+            padding: 12px 8px 4px;
+            color: var(--muted);
+            text-align: center;
+            font-size: 0.76rem;
+        }
+
+        .site-footer p+p {
+            margin-top: 5px;
+        }
+
+        .site-footer a {
+            color: #b4bdff;
+            text-underline-offset: 3px;
+        }
+
+        .site-footer a:hover {
+            color: #e0e7ff;
+        }
+
+        /* Accessible native progress element; custom track is visual only. */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+            border: 0;
         }
 
         [hidden] {
             display: none !important;
         }
 
+        @media (max-width: 800px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+
+            .status-area {
+                position: static;
+            }
+        }
+
         @media (max-width: 480px) {
             body {
-                padding: 12px;
+                padding: 20px 12px;
             }
 
-            main {
-                margin: 8px auto;
+            .panel {
                 padding: 20px;
+                border-radius: 16px;
             }
 
-            .actions button {
+            .actions>* {
                 flex: 1 1 auto;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation: none !important;
+                transition: none !important;
+            }
+
+            .progress-track[data-indeterminate="true"] .progress-fill {
+                width: 100% !important;
+                opacity: 0.5;
             }
         }
     </style>
 </head>
 
 <body>
+
     <main>
-        <h1>Local Video Converter</h1>
-        <p class="muted">
-            Video processing stays in your browser.
-            The engine is downloaded only when needed.
-        </p>
+        <header class="app-header">
+            <div>
+                <h1>Video Converter</h1>
+                <p class="subtitle">
+                    Convert, compress, or resize your video on your device.
+                </p>
+            </div>
+        </header>
 
-        <div class="field">
-            <label for="file">Video file</label>
-            <input id="file" type="file" accept="video/*,.mkv,.avi,.mov,.webm,.m4v,.ts">
-            <p id="file-info" class="muted">
-                Maximum selection size: 500 MiB.
-                Large files may exceed your browser’s available memory.
-            </p>
+        <div class="workspace">
+            <section class="panel" aria-labelledby="settings-title">
+                <div class="panel-heading">
+                    <h2 id="settings-title">Create your video</h2>
+                    <p>Choose a file and an output preset to get started.</p>
+                </div>
+
+                <div class="field">
+                    <label for="file">1. Choose a video</label>
+
+                    <input id="file" type="file" accept="video/*,.mkv,.avi,.mov,.webm,.m4v,.ts"
+                        aria-describedby="file-info" disabled>
+
+                    <p id="file-info">
+                        Up to 500 MiB. Large videos may exceed available browser memory.
+                    </p>
+                </div>
+
+                <div class="field">
+                    <label for="preset">2. Choose your output</label>
+
+                    <select id="preset" aria-describedby="preset-help" disabled>
+                        <option value="standard">
+                            MP4 · Balanced quality
+                        </option>
+                        <option value="mov">
+                            MOV · H.264 / AAC
+                        </option>
+                        <option value="compress">
+                            Smaller MP4 · More compression
+                        </option>
+                        <option value="heavy">
+                            Heavy compression · Lower quality
+                        </option>
+                        <option value="1080">
+                            Resize · Fit within 1080p
+                        </option>
+                        <option value="720">
+                            Resize · Fit within 720p
+                        </option>
+                        <option value="speed2">
+                            Fast motion · 2× speed
+                        </option>
+                        <option value="copy">
+                            Quick MP4 · Copy compatible streams
+                        </option>
+                    </select>
+
+                    <p id="preset-help" class="field-help">
+                        Balanced MP4 is a good starting point.
+                        Resizing won't enlarge smaller videos.
+                    </p>
+                </div>
+
+                <details class="advanced">
+                    <summary>Advanced settings</summary>
+
+                    <div class="field">
+                        <label for="speed">Encoding speed</label>
+
+                        <select id="speed" aria-describedby="speed-help" disabled>
+                            <option value="veryfast">
+                                Very fast · Recommended
+                            </option>
+                            <option value="ultrafast">
+                                Fastest · Usually larger files
+                            </option>
+                            <option value="fast">
+                                Better compression · Slower
+                            </option>
+                        </select>
+
+                        <p id="speed-help" class="field-help">
+                            Faster encoding can produce larger files.
+                            Not used when copying streams.
+                        </p>
+                    </div>
+
+                    <div class="field">
+                        <label class="checkbox">
+                            <input id="faststart" type="checkbox" checked disabled>
+
+                            <span>
+                                Optimize for web playback
+                                <small>
+                                    Moves video metadata to the beginning.
+                                    May add finalization time.
+                                </small>
+                            </span>
+                        </label>
+                    </div>
+                </details>
+
+                <div class="actions">
+                    <button id="convert" type="button" disabled>
+                        Convert video
+                    </button>
+
+                    <button id="cancel" type="button" class="secondary" disabled>
+                        Cancel
+                    </button>
+                </div>
+            </section>
+
+            <section id="progress-panel" class="panel status-area" data-state="idle" aria-labelledby="progress-title">
+                <h2 id="progress-title">Conversion progress</h2>
+
+                <div class="status-row">
+                    <span id="status" role="status" aria-live="polite">
+                        Preparing application…
+                    </span>
+
+                    <!-- Visual updates are not announced on every frame. -->
+                    <span id="percent" aria-hidden="true">-</span>
+                </div>
+
+                <progress id="progress" class="sr-only" max="100" value="0" aria-label="Encoding progress"></progress>
+
+                <div id="progress-track" class="progress-track" data-indeterminate="false" aria-hidden="true">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+
+                <p class="progress-note">
+                    Percentages describe encoding, not total loading time.
+                </p>
+
+                <ol class="steps" aria-label="Conversion stages">
+                    <li class="step" data-state="pending">
+                        <span class="step-number" aria-hidden="true">1</span>
+                        <span>Prepare</span>
+                    </li>
+
+                    <li class="step" data-state="pending">
+                        <span class="step-number" aria-hidden="true">2</span>
+                        <span>Convert</span>
+                    </li>
+
+                    <li class="step" data-state="pending">
+                        <span class="step-number" aria-hidden="true">3</span>
+                        <span>Prepare download</span>
+                    </li>
+                </ol>
+
+                <dl class="metrics">
+                    <div>
+                        <dt>Total elapsed</dt>
+                        <dd id="elapsed-time">-</dd>
+                    </div>
+
+                    <div>
+                        <dt>Encoding time left</dt>
+                        <dd id="remaining-time">-</dd>
+                    </div>
+                </dl>
+
+                <p id="detail"></p>
+                <p id="mode"></p>
+            </section>
         </div>
 
-        <div class="field">
-            <label for="preset">Conversion preset</label>
-            <select id="preset">
-                <option value="standard">Standard MP4 - good quality</option>
-                <option value="mov">QuickTime MOV - H.264 / AAC</option>
-                <option value="compress">Smaller MP4 - CRF 28, 96k audio</option>
-                <option value="heavy">Heavy compression - CRF 32, 64k audio</option>
-                <option value="1080">Fit within 1920 × 1080 - no upscaling</option>
-                <option value="720">Fit within 1280 × 720 - no upscaling</option>
-                <option value="speed2">Speed up 2×</option>
-                <option value="copy">Fastest MP4 - copy compatible streams</option>
-            </select>
-        </div>
+        <section id="result" class="panel" aria-labelledby="result-title" hidden>
+            <h2 id="result-title" class="result-heading">
+                Video is ready
+            </h2>
 
-        <div class="field">
-            <label for="speed">Encoding speed</label>
-            <select id="speed">
-                <option value="veryfast">Very fast - recommended</option>
-                <option value="ultrafast">Fastest encoding - usually larger files</option>
-                <option value="fast">Better compression - slower</option>
-            </select>
-            <small>Not used when copying streams.</small>
-        </div>
+            <p id="result-info"></p>
 
-        <div class="field">
-            <label class="checkbox">
-                <input id="faststart" type="checkbox" checked>
-                <span>
-                    Optimize for web playback
-                    <small>
-                        - moves metadata to the beginning; adds finalization work.
-                    </small>
-                </span>
-            </label>
-        </div>
+            <div class="actions">
+                <a id="download" class="download" download>
+                    ▼ Save video
+                </a>
 
-        <div class="actions">
-            <button id="convert" disabled>Convert video</button>
-            <button id="cancel" class="secondary" disabled>Cancel</button>
-            <button id="clear-cache" class="secondary" disabled>
-                Clear engine cache
-            </button>
-        </div>
-
-        <section class="status-area" aria-label="Conversion status">
-            <div class="status-row">
-                <span id="status" role="status" aria-live="polite">
-                    Preparing application…
-                </span>
-                <span id="percent"></span>
+                <button id="play-video" type="button" class="secondary" aria-controls="video-preview">
+                    ▶ Preview video
+                </button>
             </div>
 
-            <progress id="progress" max="100" value="0" aria-label="Conversion progress"></progress>
+            <video id="video-preview" controls playsinline preload="metadata" aria-label="Converted video preview"
+                hidden></video>
 
-            <p id="detail" class="muted"></p>
-            <p id="mode" class="muted"></p>
+            <p id="preview-message" role="status" hidden></p>
         </section>
 
-        <section id="result" hidden>
-            <p id="result-info"></p>
-            <a id="download" class="download" download>Save converted video</a>
-        </section>
+        <details class="tools">
+            <summary>Diagnostics &amp; storage</summary>
 
-        <details>
-            <summary>FFmpeg logs</summary>
-            <textarea id="logs" readonly aria-label="FFmpeg logs"></textarea>
+            <p class="field-help">
+                Having trouble? Inspect the FFmpeg logs below.
+                Clearing the engine cache does not delete your original video.
+            </p>
+
+            <div class="actions">
+                <button id="clear-cache" type="button" class="secondary" disabled>
+                    Clear engine cache
+                </button>
+            </div>
+
+            <textarea id="logs" readonly spellcheck="false" aria-label="FFmpeg logs"></textarea>
         </details>
     </main>
+
+    <footer class="site-footer">
+        <p>
+            <a href="https://github.com/navchandar/lab/tree/main/video-convertor" target="_blank"
+                rel="noopener noreferrer">View on GitHub</a>
+            · Powered by
+            <a href="https://ffmpeg.org/" target="_blank" rel="noopener noreferrer">FFmpeg</a>
+            &amp;
+            <a href="https://github.com/ffmpegwasm/ffmpeg.wasm" target="_blank"
+                rel="noopener noreferrer">ffmpeg.wasm</a>
+        </p>
+
+        <p>
+            &copy; <span id="copyright-year"></span> Naveenchandar
+            ·
+            <a href="https://github.com/navchandar/lab/blob/main/LICENSE" target="_blank"
+                rel="noopener noreferrer license">GNU GPLv3</a>
+        </p>
+    </footer>
+
 
     <script type="module">
         const BASE = new URL("./", window.location.href);
         const CACHE_PREFIX = `video-converter:${BASE.pathname}:`;
         const CACHE_NAME = `${CACHE_PREFIX}assets-v1`;
 
-        const MAX_SIZE = 500 * 1024 * 1024;   // 500MB in bytes
+        const MAX_SIZE = 500 * 1024 * 1024; // 500 MiB
         const RELEASE_AFTER_SIZE = 150 * 1024 * 1024;
 
         const $ = (id) => document.getElementById(id);
+        $("copyright-year").textContent = new Date().getFullYear();
 
         const ui = {
             file: $("file"),
@@ -330,7 +897,10 @@
             result: $("result"),
             resultInfo: $("result-info"),
             download: $("download"),
-            logs: $("logs")
+            logs: $("logs"),
+            playVideo: $("play-video"),
+            videoPreview: $("video-preview"),
+            previewMessage: $("preview-message")
         };
 
         let ready = false;
@@ -355,6 +925,15 @@
             logsDirty = true;
         }
 
+        const progressUX = {
+            panel: $("progress-panel"),
+            track: $("progress-track"),
+            fill: $("progress-fill"),
+            steps: [...document.querySelectorAll(".steps .step")],
+            elapsed: $("elapsed-time"),
+            remaining: $("remaining-time")
+        };
+
         function flushLogs() {
             if (!logsDirty) {
                 return;
@@ -366,6 +945,115 @@
         }
 
         setInterval(flushLogs, 200);
+
+        function formatClock(seconds) {
+            if (!Number.isFinite(seconds)) {
+                return "—";
+            }
+
+            const total = Math.max(0, Math.round(seconds));
+            const hours = Math.floor(total / 3600);
+            const minutes = Math.floor((total % 3600) / 60);
+            const remainder = total % 60;
+
+            if (hours > 0) {
+                return (
+                    `${hours}:` +
+                    `${String(minutes).padStart(2, "0")}:` +
+                    String(remainder).padStart(2, "0")
+                );
+            }
+
+            return `${minutes}:${String(remainder).padStart(2, "0")}`;
+        }
+
+        /**
+         * Visual stage only.
+         * Keep the existing `phase` variable used by conversion logic.
+         *
+         * Stages:
+         * idle → prepare → convert → finalize → done
+         *                        ↘ error / cancelled
+         */
+        function setStage(stage) {
+            progressUX.panel.dataset.state = stage;
+
+            const activeIndex = {
+                prepare: 0,
+                convert: 1,
+                finalize: 2
+            }[stage];
+
+            progressUX.steps.forEach((step, index) => {
+                let state = "pending";
+
+                if (stage === "done") {
+                    state = "done";
+                } else if (activeIndex !== undefined) {
+                    state = index < activeIndex
+                        ? "done"
+                        : index === activeIndex
+                            ? "active"
+                            : "pending";
+                } else if (stage === "error" || stage === "cancelled") {
+                    // Preserve completed stages, but remove the active marker.
+                    state = step.dataset.state === "done"
+                        ? "done"
+                        : "pending";
+                }
+
+                step.dataset.state = state;
+                step.removeAttribute("aria-current");
+
+                if (state === "active") {
+                    step.setAttribute("aria-current", "step");
+                }
+
+                step.querySelector(".step-number").textContent =
+                    state === "done" ? "✓" : String(index + 1);
+            });
+
+            progressUX.remaining.textContent = "—";
+
+            if (stage === "prepare") {
+                progressUX.elapsed.textContent = "0:00";
+            }
+
+            if (["prepare", "convert", "finalize"].includes(stage)) {
+                setProgress(null, "—");
+            }
+
+            if (stage === "done") {
+                setProgress(100, "100%");
+            }
+
+            if (
+                ["done", "error", "cancelled"].includes(stage) &&
+                activeJob
+            ) {
+                progressUX.elapsed.textContent = formatClock(
+                    (performance.now() - activeJob.started) / 1000
+                );
+            }
+        }
+
+        // Update elapsed time even when FFmpeg emits no progress events.
+        // These values are intentionally not aria-live.
+        setInterval(() => {
+            const stage = progressUX.panel.dataset.state;
+
+            if (
+                !activeJob ||
+                activeJob.cancelled ||
+                !["prepare", "convert", "finalize"].includes(stage)
+            ) {
+                return;
+            }
+
+            progressUX.elapsed.textContent = formatClock(
+                (performance.now() - activeJob.started) / 1000
+            );
+        }, 1000);
 
         function bytes(value) {
             return `${(value / 1024 / 1024).toFixed(1)} MiB`;
@@ -385,13 +1073,36 @@
         }
 
         function setProgress(value = null, text = "") {
-            if (value === null) {
+            const indeterminate =
+                value === null || !Number.isFinite(value);
+
+            progressUX.track.dataset.indeterminate =
+                String(indeterminate);
+
+            if (indeterminate) {
                 ui.progress.removeAttribute("value");
-            } else {
-                ui.progress.value = value;
+
+                ui.progress.setAttribute(
+                    "aria-valuetext",
+                    "Working; percentage unavailable"
+                );
+
+                progressUX.fill.style.width = "0%";
+                ui.percent.textContent = text || "—";
+
+                return;
             }
 
-            ui.percent.textContent = text;
+            const bounded = Math.min(100, Math.max(0, value));
+
+            ui.progress.value = bounded;
+            ui.progress.setAttribute(
+                "aria-valuetext",
+                text || `${Math.round(bounded)} percent`
+            );
+
+            progressUX.fill.style.width = `${bounded}%`;
+            ui.percent.textContent = text || "—";
         }
 
         function selectedFile() {
@@ -411,8 +1122,17 @@
             ui.speed.disabled = locked || ui.preset.value === "copy";
 
             ui.convert.disabled = locked || !validFile(selectedFile());
-            ui.cancel.disabled = !busy || Boolean(activeJob?.cancelled);
+            ui.cancel.disabled =
+                !busy ||
+                !activeJob ||
+                activeJob.cancelled ||
+                phase === "cleanup";
             ui.clearCache.disabled = locked;
+        }
+
+        function showPreviewMessage(message) {
+            ui.previewMessage.textContent = message;
+            ui.previewMessage.hidden = false;
         }
 
         function validateFile() {
@@ -443,6 +1163,14 @@
         }
 
         function discardOutput() {
+            ui.videoPreview.pause();
+            ui.videoPreview.removeAttribute("src");
+            ui.videoPreview.load();
+            ui.videoPreview.hidden = true;
+
+            ui.previewMessage.textContent = "";
+            ui.previewMessage.hidden = true;
+
             if (outputURL) {
                 URL.revokeObjectURL(outputURL);
                 outputURL = null;
@@ -480,7 +1208,7 @@
                 return;
             }
 
-            await Promise.all(urls.map(async (url) => {
+            const results = await Promise.allSettled(urls.map(async (url) => {
                 checkCancelled(job);
 
                 const cached = await cache.match(url);
@@ -515,20 +1243,48 @@
 
                 checkCancelled(job);
             }));
+
+            // All downloads/cache writes have now either completed or failed.
+            checkCancelled(job);
+
+            const failure = results.find(
+                (result) => result.status === "rejected"
+            );
+
+            if (failure) {
+                throw failure.reason;
+            }
         }
 
         function updateConversionProgress(instance, progress) {
+            const job = activeJob;
+
             if (
-                activeJob?.engine !== instance ||
-                activeJob.cancelled ||
+                !job ||
+                job.engine !== instance ||
+                job.cancelled ||
                 phase !== "convert"
             ) {
                 return;
             }
 
-            // Duration-changing filters make FFmpeg's percentage unreliable.
-            if (activeJob.preset === "speed2") {
-                setProgress(null, "Working…");
+            const now = performance.now();
+
+            // Avoid excessive DOM updates.
+            if (now - (job.lastProgressPaint ?? 0) < 200) {
+                return;
+            }
+
+            job.lastProgressPaint = now;
+
+            if (job.preset === "speed2") {
+                setProgress(null, "—");
+                progressUX.remaining.textContent = "—";
+
+                ui.detail.textContent =
+                    "Creating your 2× video. A reliable percentage is " +
+                    "unavailable because this preset changes the duration.";
+
                 return;
             }
 
@@ -536,20 +1292,39 @@
                 return;
             }
 
-            const fraction = Math.min(0.99, Math.max(0, progress));
+            // Progress is approximate. Never show completion before
+            // FFmpeg succeeds and the output has been read.
+            const fraction = Math.min(
+                0.99,
+                Math.max(job.displayedFraction ?? 0, progress)
+            );
+
+            job.displayedFraction = fraction;
+
             const percent = Math.floor(fraction * 100);
 
             setProgress(percent, `~${percent}%`);
 
-            const elapsed = (performance.now() - activeJob.encodeStarted) / 1000;
+            const encodingElapsed =
+                (now - job.encodeStarted) / 1000;
 
-            if (fraction > 0.02 && elapsed > 3) {
-                const remaining = elapsed * (1 - fraction) / fraction;
+            // Avoid unstable estimates at the very beginning.
+            if (fraction >= 0.03 && encodingElapsed >= 5) {
+                const estimate =
+                    encodingElapsed * (1 - fraction) / fraction;
 
-                ui.detail.textContent =
-                    `Elapsed ${duration(elapsed)} · ` +
-                    `Estimated remaining ${duration(remaining)}. Progress is approximate.`;
+                // Smooth the estimate to reduce distracting jumps.
+                job.smoothedETA = job.smoothedETA === undefined
+                    ? estimate
+                    : job.smoothedETA * 0.75 + estimate * 0.25;
+
+                progressUX.remaining.textContent =
+                    `≈ ${formatClock(job.smoothedETA)}`;
             }
+
+            ui.detail.textContent = job.preset === "copy"
+                ? "Copying compatible streams without re-encoding."
+                : "Encoding your video. Progress and remaining time are approximate.";
         }
 
         async function getEngine(job) {
@@ -607,11 +1382,19 @@
                     ui.detail.textContent =
                         "First use downloads the engine; later uses can read cached assets.";
 
+                    // If conversion starts during background downloading, wait for
+                    // those downloads rather than starting a second set.
+                    await waitForCorePreload(job);
+                    checkCancelled(job);
+
+                    // Confirms the selected core is cached, retries missing assets,
+                    // or downloads the single-thread core if fallback is needed.
                     await warmAssets(Object.values(config), job);
                     checkCancelled(job);
 
                     await instance.load(config);
                     checkCancelled(job);
+
 
                     engine = { instance, mode };
 
@@ -770,6 +1553,7 @@
             activeJob = job;
             busy = true;
             phase = "load";
+            setStage("prepare");
 
             discardOutput();
             logLines = [];
@@ -829,6 +1613,7 @@
 
                 phase = "convert";
                 job.encodeStarted = performance.now();
+                setStage("convert");
 
                 setStatus(
                     job.preset === "copy" ? "Copying compatible streams…" : "Converting…"
@@ -848,6 +1633,7 @@
                 }
 
                 phase = "finalize";
+                setStage("finalize");
                 setStatus("Preparing local download…");
                 setProgress(null, "Finalizing");
                 ui.detail.textContent = "";
@@ -884,6 +1670,7 @@
 
                 ui.result.hidden = false;
                 succeeded = true;
+                setStage("done");
 
                 setStatus("Conversion complete");
                 setProgress(100, "100%");
@@ -891,20 +1678,26 @@
                     "The output is local. Use Save converted video to save it.";
             } catch (error) {
                 if (job.cancelled || error.name === "AbortError") {
+                    setStage("cancelled");
                     setStatus("Cancelled");
+
                     ui.detail.textContent =
                         "The next conversion will restart the engine if necessary.";
                 } else {
                     console.error(error);
                     log(error.stack || error.message || String(error));
 
+                    setStage("error");
                     setStatus("Conversion failed", true);
-                    ui.detail.textContent = error.message || String(error);
+
+                    ui.detail.textContent =
+                        error.message || String(error);
                 }
 
                 setProgress(0);
             } finally {
                 phase = "cleanup";
+                syncUI();
 
                 await cleanFiles(instance, mounted, inputPath, outputPath);
 
@@ -924,15 +1717,67 @@
             }
         }
 
+
+        ui.playVideo.addEventListener("click", async () => {
+            if (!outputURL) {
+                return;
+            }
+
+            // Attach the existing local output only when preview is requested.
+            if (ui.videoPreview.getAttribute("src") !== outputURL) {
+                ui.videoPreview.src = outputURL;
+            }
+
+            ui.videoPreview.hidden = false;
+            ui.previewMessage.hidden = true;
+
+            try {
+                await ui.videoPreview.play();
+            } catch (error) {
+                // Can happen when a new conversion clears the player while
+                // a previous play request is still pending.
+                if (error.name === "AbortError") {
+                    return;
+                }
+
+                if (error.name === "NotAllowedError") {
+                    showPreviewMessage(
+                        "Playback did not start automatically. " +
+                        "Press Play in the video controls."
+                    );
+                } else {
+                    showPreviewMessage(
+                        "This browser could not play the output. " +
+                        "You can still save it and open it in a compatible video player."
+                    );
+                }
+            }
+        });
+
+        ui.videoPreview.addEventListener("error", () => {
+            if (!ui.videoPreview.getAttribute("src")) {
+                return;
+            }
+
+            showPreviewMessage(
+                "Preview is unavailable. The browser may not support " +
+                "this video’s container or codecs. Try the Standard MP4 preset, " +
+                "or save the file and open it in a compatible video player."
+            );
+        });
+
         ui.file.addEventListener("change", validateFile);
         ui.preset.addEventListener("change", syncUI);
         ui.convert.addEventListener("click", convert);
 
         ui.cancel.addEventListener("click", () => {
-            if (!activeJob || activeJob.cancelled) {
+            if (
+                !activeJob ||
+                activeJob.cancelled ||
+                phase === "cleanup"
+            ) {
                 return;
             }
-
             activeJob.cancelled = true;
             activeJob.abort.abort();
 
@@ -950,7 +1795,22 @@
             maintenance = true;
             syncUI();
 
+            setStatus("Clearing engine cache…");
+
             try {
+                // Stop background fetches and wait for their cache writes
+                // to settle before deleting the cache.
+                corePreloadJob?.abort.abort();
+
+                if (corePreloadPromise) {
+                    await corePreloadPromise;
+                }
+
+                corePreloadJob = null;
+                corePreloadPromise = null;
+
+                destroyEngine(engine?.instance);
+
                 if ("caches" in window) {
                     const keys = await caches.keys();
 
@@ -961,21 +1821,33 @@
                     );
                 }
 
-                destroyEngine(engine?.instance);
                 ui.mode.textContent = "";
 
+                setStage("idle");
+                setProgress(0);
+                progressUX.elapsed.textContent = "—";
+
                 setStatus("Engine cache cleared");
+
                 ui.detail.textContent =
-                    "This clears this app’s Cache Storage and loaded engine, " +
-                    "not the browser’s separate HTTP cache.";
+                    "Cached engine assets and the loaded engine were cleared. " +
+                    "Your videos are unchanged. The engine will download again " +
+                    "when needed. The browser’s separate HTTP cache is not cleared.";
             } catch (error) {
+                console.error(error);
+
+                setStage("error");
+                setProgress(0);
                 setStatus("Could not clear engine cache", true);
-                ui.detail.textContent = error.message;
+
+                ui.detail.textContent =
+                    error.message || String(error);
             } finally {
                 maintenance = false;
                 syncUI();
             }
         });
+
 
         window.addEventListener("beforeunload", (event) => {
             if (busy) {
@@ -983,6 +1855,116 @@
                 event.returnValue = "";
             }
         });
+
+        let corePreloadPromise = null;
+        let corePreloadJob = null;
+
+        function preloadCoreAssets() {
+            if (corePreloadPromise) {
+                return corePreloadPromise;
+            }
+
+            // warmAssets() relies on the service worker and Cache Storage.
+            if (
+                !navigator.serviceWorker?.controller ||
+                !("caches" in window)
+            ) {
+                log(
+                    "Background core caching is unavailable. " +
+                    "The engine will load normally when conversion starts."
+                );
+
+                return Promise.resolve();
+            }
+
+            const supportsThreads =
+                window.crossOriginIsolated &&
+                typeof SharedArrayBuffer !== "undefined";
+
+            const directory = supportsThreads
+                ? "vendor/core-mt-0.12.6/"
+                : "vendor/core-0.12.6/";
+
+            const coreBase = new URL(directory, BASE);
+
+            const urls = [
+                new URL("ffmpeg-core.js", coreBase).href,
+                new URL("ffmpeg-core.wasm", coreBase).href
+            ];
+
+            if (supportsThreads) {
+                urls.push(
+                    new URL("ffmpeg-core.worker.js", coreBase).href
+                );
+            }
+
+            // Independent from a conversion: background caching can continue
+            // even if the user cancels a conversion.
+            const preloadJob = {
+                cancelled: false,
+                abort: new AbortController()
+            };
+            corePreloadJob = preloadJob;
+
+            log("Preparing core assets in the background…");
+
+            corePreloadPromise = warmAssets(urls, preloadJob)
+                .then(() => {
+                    log("Background core preparation finished.");
+                })
+                .catch((error) => {
+                    if (preloadJob.abort.signal.aborted) {
+                        log("Background core preparation stopped.");
+                        return;
+                    }
+
+                    // Conversion can retry through getEngine().
+                    log(`Background core preparation failed: ${error.message}`);
+                });
+
+            return corePreloadPromise;
+        }
+
+        /**
+         * Wait for shared preloading, while allowing a conversion to cancel.
+         * Cancelling the wait does not stop shared background downloads.
+         */
+        function waitForCorePreload(job) {
+            checkCancelled(job);
+
+            if (!corePreloadPromise) {
+                return Promise.resolve();
+            }
+
+            return new Promise((resolve, reject) => {
+                const signal = job.abort.signal;
+
+                const onAbort = () => {
+                    signal.removeEventListener("abort", onAbort);
+
+                    reject(
+                        new DOMException("Conversion cancelled", "AbortError")
+                    );
+                };
+
+                signal.addEventListener("abort", onAbort, { once: true });
+
+                corePreloadPromise.then(
+                    () => {
+                        signal.removeEventListener("abort", onAbort);
+                        resolve();
+                    },
+                    (error) => {
+                        signal.removeEventListener("abort", onAbort);
+                        reject(error);
+                    }
+                );
+
+                if (signal.aborted) {
+                    onAbort();
+                }
+            });
+        }
 
         /**
      * Wait briefly for our service worker to control this document.
@@ -1128,14 +2110,22 @@
                 typeof SharedArrayBuffer !== "undefined";
 
             ui.mode.textContent = supportsThreads
-                ? "Multi-threading is available."
-                : "Single-thread mode for this visit - no reload required.";
+                ? "Multi-threading supported."
+                : "Single-thread mode supported.";
 
             validateFile();
+
+            // Preload ffmpeg wasm: users can select a file immediately.
+            void preloadCoreAssets();
         }
+
         boot().catch((error) => {
+            setStage("error");
+            setProgress(0);
+
             setStatus("Application initialization failed", true);
-            ui.detail.textContent = error.message;
+            ui.detail.textContent = error.message || String(error);
+
             console.error(error);
         });
     </script>

@@ -2,6 +2,13 @@ name: Fetch Video Convertor Assets
 
 on:
   workflow_dispatch:
+  push:
+      branches:
+        - main
+      paths:
+        - "video-convertor/setup-assets.mjs"
+        - ".github/workflows/fetch-videoconvertor-assets.yml"
+
 
 permissions:
   contents: write
