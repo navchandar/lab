@@ -820,7 +820,8 @@
                     ▼ Save video
                 </a>
 
-                <button id="play-video" type="button" class="secondary" aria-controls="video-preview">
+                <button id="play-video" type="button" class="secondary" aria-controls="video-preview"
+                    aria-expanded="false">
                     ▶ Preview video
                 </button>
             </div>
@@ -948,7 +949,7 @@
 
         function formatClock(seconds) {
             if (!Number.isFinite(seconds)) {
-                return "—";
+                return "-";
             }
 
             const total = Math.max(0, Math.round(seconds));
@@ -965,6 +966,37 @@
             }
 
             return `${minutes}:${String(remainder).padStart(2, "0")}`;
+        }
+
+        function scrollToResult() {
+            // Wait until the revealed section participates in layout.
+            requestAnimationFrame(() => {
+                const reduceMotion = window.matchMedia(
+                    "(prefers-reduced-motion: reduce)"
+                ).matches;
+
+                ui.result.scrollIntoView({
+                    behavior: reduceMotion ? "instant" : "smooth",
+                    block: "center",
+                    inline: "nearest"
+                });
+            });
+        }
+
+        function closeVideoPreview() {
+            ui.videoPreview.pause();
+            ui.videoPreview.hidden = true;
+
+            // Detach the player without revoking the output URL.
+            // The download link and reopening the preview still work.
+            ui.videoPreview.removeAttribute("src");
+            ui.videoPreview.load();
+
+            ui.playVideo.textContent = "▶ Preview video";
+            ui.playVideo.setAttribute("aria-expanded", "false");
+
+            ui.previewMessage.textContent = "";
+            ui.previewMessage.hidden = true;
         }
 
         /**
@@ -1013,14 +1045,14 @@
                     state === "done" ? "✓" : String(index + 1);
             });
 
-            progressUX.remaining.textContent = "—";
+            progressUX.remaining.textContent = "-";
 
             if (stage === "prepare") {
                 progressUX.elapsed.textContent = "0:00";
             }
 
             if (["prepare", "convert", "finalize"].includes(stage)) {
-                setProgress(null, "—");
+                setProgress(null, "-");
             }
 
             if (stage === "done") {
@@ -1088,7 +1120,7 @@
                 );
 
                 progressUX.fill.style.width = "0%";
-                ui.percent.textContent = text || "—";
+                ui.percent.textContent = text || "-";
 
                 return;
             }
@@ -1102,7 +1134,7 @@
             );
 
             progressUX.fill.style.width = `${bounded}%`;
-            ui.percent.textContent = text || "—";
+            ui.percent.textContent = text || "-";
         }
 
         function selectedFile() {
@@ -1163,13 +1195,7 @@
         }
 
         function discardOutput() {
-            ui.videoPreview.pause();
-            ui.videoPreview.removeAttribute("src");
-            ui.videoPreview.load();
-            ui.videoPreview.hidden = true;
-
-            ui.previewMessage.textContent = "";
-            ui.previewMessage.hidden = true;
+            closeVideoPreview();
 
             if (outputURL) {
                 URL.revokeObjectURL(outputURL);
@@ -1278,8 +1304,8 @@
             job.lastProgressPaint = now;
 
             if (job.preset === "speed2") {
-                setProgress(null, "—");
-                progressUX.remaining.textContent = "—";
+                setProgress(null, "-");
+                progressUX.remaining.textContent = "-";
 
                 ui.detail.textContent =
                     "Creating your 2× video. A reliable percentage is " +
@@ -1675,7 +1701,9 @@
                 setStatus("Conversion complete");
                 setProgress(100, "100%");
                 ui.detail.textContent =
-                    "The output is local. Use Save converted video to save it.";
+                    "The output is local. Use Save video button to download it.";
+                scrollToResult();
+
             } catch (error) {
                 if (job.cancelled || error.name === "AbortError") {
                     setStage("cancelled");
@@ -1719,24 +1747,37 @@
 
 
         ui.playVideo.addEventListener("click", async () => {
+            // A second click closes the current preview.
+            if (!ui.videoPreview.hidden) {
+                closeVideoPreview();
+                return;
+            }
+
             if (!outputURL) {
                 return;
             }
 
-            // Attach the existing local output only when preview is requested.
-            if (ui.videoPreview.getAttribute("src") !== outputURL) {
-                ui.videoPreview.src = outputURL;
-            }
+            const previewURL = outputURL;
 
-            ui.videoPreview.hidden = false;
+            ui.previewMessage.textContent = "";
             ui.previewMessage.hidden = true;
+
+            ui.videoPreview.src = previewURL;
+            ui.videoPreview.hidden = false;
+
+            ui.playVideo.textContent = "✕ Close preview";
+            ui.playVideo.setAttribute("aria-expanded", "true");
 
             try {
                 await ui.videoPreview.play();
             } catch (error) {
-                // Can happen when a new conversion clears the player while
-                // a previous play request is still pending.
-                if (error.name === "AbortError") {
+                // Ignore a pending play request interrupted by closing the
+                // preview or starting a different conversion.
+                if (
+                    error.name === "AbortError" ||
+                    ui.videoPreview.hidden ||
+                    outputURL !== previewURL
+                ) {
                     return;
                 }
 
@@ -1748,7 +1789,7 @@
                 } else {
                     showPreviewMessage(
                         "This browser could not play the output. " +
-                        "You can still save it and open it in a compatible video player."
+                        "You can still save it and open it in a supported video player."
                     );
                 }
             }
@@ -1764,6 +1805,10 @@
                 "this video’s container or codecs. Try the Standard MP4 preset, " +
                 "or save the file and open it in a compatible video player."
             );
+
+
+            ui.playVideo.textContent = "▶ Preview video";
+            ui.playVideo.setAttribute("aria-expanded", "false");
         });
 
         ui.file.addEventListener("change", validateFile);
@@ -1825,7 +1870,7 @@
 
                 setStage("idle");
                 setProgress(0);
-                progressUX.elapsed.textContent = "—";
+                progressUX.elapsed.textContent = "-";
 
                 setStatus("Engine cache cleared");
 
