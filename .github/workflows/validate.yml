@@ -39,9 +39,17 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate Python (Ruff)
+      - name: Setup Ruff
         uses: astral-sh/ruff-action@v3
+        with:
+          args: --version
 
+
+      - name: Lint and format
+        run: |
+          ruff check --fix .
+          ruff format .
+          
       - name: Generate PWA files
         if: github.event_name == 'push'
         env:

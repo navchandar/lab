@@ -22,7 +22,6 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-
 # ---------- Configuration ----------
 
 SCRIPT_DIR = (
