@@ -31,8 +31,8 @@ SCRIPT_DIR = (
 TOPO_URL = "https://cdn.jsdelivr.net/npm/visionscarto-world-atlas@1/world/50m.json"
 
 COUNTRIES_URL = (
-    "https://restcountries.com/v3.1/all"
-    "?fields=ccn3,cca2,name,capital,region,languages,currencies"
+    "https://raw.githubusercontent.com/"
+    "mledoze/countries/master/countries.json"
 )
 
 FLAG_URL_TEMPLATE = "https://flagcdn.com/{alpha2}.svg"
@@ -259,7 +259,7 @@ def build_country_details(
     for index, country in enumerate(countries):
         if not isinstance(country, dict):
             raise DataUpdateError(
-                f"RestCountries entry {index}: expected dict, "
+                f"Countries entry {index}: expected dict, "
                 f"received {type(country).__name__}. "
                 f"Value: {str(country)[:200]!r}"
             )
@@ -511,7 +511,7 @@ def update_map_data() -> None:
         countries = fetch_json_api(
             COUNTRIES_URL,
             session,
-            "RestCountries",
+            "Country dataset",
             expected_type=list,
         )
 
