@@ -263,7 +263,7 @@ class GrowthAnalytics:
     @staticmethod
     def _parse_date(date_str: str) -> datetime:
         """Helper to ensure all dates are UTC aware for comparison."""
-        return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=datetime.UTC)
+        return datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=UTC)
 
     @staticmethod
     def get_trend(history: dict, handle: str, days: int) -> float | None:
@@ -592,7 +592,7 @@ class GrowthAnalytics:
                 parsed_history.append(
                     {
                         "d_obj": datetime.strptime(item["d"], "%Y-%m-%d").replace(
-                            tzinfo=datetime.UTC
+                            tzinfo=UTC
                         ),
                         "d_str": item["d"],
                         "c": item["c"],
@@ -997,8 +997,8 @@ class DataCoordinator:
             last_upd = datetime.fromisoformat(last_upd_str)
             # Ensure last_upd is aware
             if last_upd.tzinfo is None:
-                last_upd = last_upd.replace(tzinfo=datetime.UTC)
-            # date now has datetime.UTC
+                last_upd = last_upd.replace(tzinfo=UTC)
+            # date now has UTC
             days_old = (now - last_upd).days
         except ValueError:
             # If date is corrupted, refresh the data
@@ -1400,11 +1400,11 @@ class DataCoordinator:
             if handle in data_map:
                 data_map[handle].update(clean)
                 if last_updated_date:
-                    t = datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+                    t = datetime.now(UTC).isoformat().replace("+00:00", "Z")
                     data_map[handle]["last_updated"] = t
             else:
                 if last_updated_date:
-                    t = datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z")
+                    t = datetime.now(UTC).isoformat().replace("+00:00", "Z")
                     clean["last_updated"] = t
                 data_map[handle] = clean
 
