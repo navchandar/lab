@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>Paint</title>
-    <link rel="icon"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>"
+    />
 
     <link rel="canonical" href="https://navchandar.github.io/lab/paint/" />
 
@@ -29,10 +33,7 @@
       content="A fun and responsive digital whiteboard for kids with easy shapes, colors, and an auto-cropping save feature."
     />
     <meta property="og:type" content="website" />
-    <meta
-      property="og:url"
-      content="https://navchandar.github.io/lab/paint/"
-    />
+    <meta property="og:url" content="https://navchandar.github.io/lab/paint/" />
     <meta
       name="image"
       property="og:image"
@@ -42,48 +43,117 @@
     <meta name="theme-color" content="#f4f4f9" />
 
     <link rel="stylesheet" href="style.css" />
-</head>
+  </head>
 
-<body class="dark-mode">
+  <body class="dark-mode">
     <nav id="toolbar">
+      <div class="toolbar-group tools-group">
         <div id="tools">
-            <button class="tool-btn active" data-tool="brush" title="Brush">🖌️</button>
-            <button class="tool-btn" data-tool="line" title="Line">📏</button>
-            <button class="tool-btn" data-tool="rect" title="Rectangle">⬜</button>
-            <button class="tool-btn" data-tool="circle" title="Circle">⭕</button>
-            <button class="tool-btn" data-tool="triangle" title="Triangle">🔺</button>
-            <button class="tool-btn" data-tool="star" title="Star">⭐</button>
+          <button class="tool-btn active" data-tool="brush" title="Brush">
+            🖌️
+          </button>
+          <button class="tool-btn" data-tool="line" title="Line">📏</button>
+          <button class="tool-btn" data-tool="rect" title="Rectangle">
+            ⬜
+          </button>
+          <button class="tool-btn" data-tool="circle" title="Circle">⭕</button>
+          <button class="tool-btn" data-tool="triangle" title="Triangle">
+            🔺
+          </button>
+          <button class="tool-btn" data-tool="star" title="Star">⭐</button>
         </div>
+      </div>
+      <div class="toolbar-group colors-group">
         <div id="colors">
-            <!-- Expanded Color Palette -->
-            <button class="color-btn active" data-color="#FF0000" style="background-color: #FF0000;"></button>
-            <!-- Red -->
-            <button class="color-btn" data-color="#FFA500" style="background-color: #FFA500;"></button> <!-- Orange -->
-            <button class="color-btn" data-color="#FFFF00" style="background-color: #FFFF00;"></button> <!-- Yellow -->
-            <button class="color-btn" data-color="#008000" style="background-color: #008000;"></button> <!-- Green -->
-            <button class="color-btn" data-color="#00FF00" style="background-color: #00FF00;"></button> <!-- Lime -->
-            <button class="color-btn" data-color="#0000FF" style="background-color: #0000FF;"></button> <!-- Blue -->
-            <button class="color-btn" data-color="#00FFFF" style="background-color: #00FFFF;"></button> <!-- Cyan -->
-            <button class="color-btn" data-color="#800080" style="background-color: #800080;"></button> <!-- Purple -->
-            <button class="color-btn" data-color="#FFC0CB" style="background-color: #FFC0CB;"></button> <!-- Pink -->
-            <button class="color-btn" data-color="#8B4513" style="background-color: #8B4513;"></button> <!-- Brown -->
-            <button class="color-btn" data-color="#000000" style="background-color: #000000;"></button> <!-- Black -->
-            <button class="color-btn" data-color="#FFFFFF"
-                style="background-color: #FFFFFF; border: 2px solid #ccc;"></button> <!-- White -->
+          <!-- Expanded Color Palette -->
+          <button
+            class="color-btn active"
+            data-color="#FF0000"
+            style="background-color: #ff0000"
+          ></button>
+          <!-- Red -->
+          <button
+            class="color-btn"
+            data-color="#FFA500"
+            style="background-color: #ffa500"
+          ></button>
+          <!-- Orange -->
+          <button
+            class="color-btn"
+            data-color="#FFFF00"
+            style="background-color: #ffff00"
+          ></button>
+          <!-- Yellow -->
+          <button
+            class="color-btn"
+            data-color="#008000"
+            style="background-color: #008000"
+          ></button>
+          <!-- Green -->
+          <button
+            class="color-btn"
+            data-color="#00FF00"
+            style="background-color: #00ff00"
+          ></button>
+          <!-- Lime -->
+          <button
+            class="color-btn"
+            data-color="#0000FF"
+            style="background-color: #0000ff"
+          ></button>
+          <!-- Blue -->
+          <button
+            class="color-btn"
+            data-color="#00FFFF"
+            style="background-color: #00ffff"
+          ></button>
+          <!-- Cyan -->
+          <button
+            class="color-btn"
+            data-color="#800080"
+            style="background-color: #800080"
+          ></button>
+          <!-- Purple -->
+          <button
+            class="color-btn"
+            data-color="#FFC0CB"
+            style="background-color: #ffc0cb"
+          ></button>
+          <!-- Pink -->
+          <button
+            class="color-btn"
+            data-color="#8B4513"
+            style="background-color: #8b4513"
+          ></button>
+          <!-- Brown -->
+          <button
+            class="color-btn"
+            data-color="#000000"
+            style="background-color: #000000"
+          ></button>
+          <!-- Black -->
+          <button
+            class="color-btn"
+            data-color="#FFFFFF"
+            style="background-color: #ffffff; border: 2px solid #ccc"
+          ></button>
+          <!-- White -->
         </div>
+      </div>
+      <div class="toolbar-group actions-group">
         <div id="actions">
-            <button id="undoBtn" title="Undo">↩️</button>
-            <button id="clearBtn" title="Clear">🗑️</button>
-            <button id="saveBtn" title="Save">💾</button>
+          <button id="undoBtn" title="Undo">↩️</button>
+          <button id="clearBtn" title="Clear">🗑️</button>
+          <button id="saveBtn" title="Save">💾</button>
         </div>
+      </div>
     </nav>
     <div id="canvas-container">
-        <!-- Main canvas where final artwork lives -->
-        <canvas id="board"></canvas>
-        <!-- Transparent top canvas for live shape stretching -->
-        <canvas id="previewBoard"></canvas>
+      <!-- Main canvas where final artwork lives -->
+      <canvas id="board"></canvas>
+      <!-- Transparent top canvas for live shape stretching -->
+      <canvas id="previewBoard"></canvas>
     </div>
     <script src="app.js" defer></script>
-</body>
-
+  </body>
 </html>
