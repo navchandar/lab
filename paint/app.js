@@ -212,7 +212,7 @@ previewCanvas.addEventListener('pointerup', handlePointerUp);
 previewCanvas.addEventListener('pointercancel', handlePointerUp);
 previewCanvas.addEventListener('pointerout', handlePointerUp); 
 // Prevent right click on canvas
-previewCanvas.addEventListener("contextmenu", (event) => {
+previewCanvas.addEventListener('contextmenu', (event) => {
     event.preventDefault();
 });
 
