@@ -37,6 +37,7 @@ body, html  {
   flex-wrap: wrap;
   gap: 12px;
   padding: 12px;
+  padding-left: 8em;
   align-items: stretch;
 }
 
@@ -46,6 +47,7 @@ body, html  {
   border-radius: 12px;
   padding: 10px;
   box-shadow: 0 2px 4px rgb(0 0 0 / 10%);
+  align-content: center;
 }
 
 .group-title  {
@@ -130,7 +132,7 @@ canvas  {
   #toolbar  {
     flex-direction: column;
     align-items: stretch;
-    padding-top: 5px;
+    padding: 0;
     gap: 7px;
   }
 
