@@ -1318,6 +1318,15 @@
         function setStage(stage) {
             progressUX.panel.dataset.state = stage;
 
+            if (stage === "idle") {
+                progressUX.steps.forEach((step, index) => {
+                    step.dataset.state = "pending";
+                    step.removeAttribute("aria-current");
+                    step.querySelector(".step-number").textContent = String(index + 1);
+                });
+                return;
+            }
+
             const activeIndex = {
                 prepare: 0,
                 convert: 1,
@@ -1479,6 +1488,25 @@
             ui.previewMessage.hidden = false;
         }
 
+        function resetConversionUI() {
+            if (busy) {
+                return;
+            }
+        
+            setStage("idle");
+            setProgress(0);
+        
+            progressUX.elapsed.textContent = "-";
+            progressUX.remaining.textContent = "-";
+        
+            ui.detail.textContent = "";
+            ui.percent.textContent = "-";
+        
+            discardOutput();
+        
+            setStatus("Choose a video to begin");
+        }
+        
         function validateFile() {
             const file = selectedFile();
             ui.fileInfo.classList.remove("error");
@@ -1515,6 +1543,7 @@
             }
 
             ui.download.removeAttribute("href");
+            ui.resultInfo.textContent = "";
             ui.result.hidden = true;
         }
 
@@ -1891,6 +1920,8 @@
             activeJob = job;
             busy = true;
             phase = "load";
+            progressUX.elapsed.textContent = "0:00";
+            progressUX.remaining.textContent = "-";
             setStage("prepare");
 
             discardOutput();
@@ -2122,7 +2153,10 @@
             ui.playVideo.setAttribute("aria-expanded", "false");
         });
 
-        ui.file.addEventListener("change", validateFile);
+        ui.file.addEventListener("change", () => {
+            resetConversionUI();
+            validateFile();
+        });
         ui.convert.addEventListener("click", convert);
         const presetSpeedDefaults = {
             standard: "veryfast",
