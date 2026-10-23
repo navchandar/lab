@@ -950,7 +950,7 @@
             <div>
                 <h1>Video Converter</h1>
                 <p class="subtitle">
-                    Convert, compress, or resize your video on your device.
+                    Convert, compress, or resize your video on your device. Instant processing with zero upload/download time.
                 </p>
             </div>
         </header>
@@ -1076,10 +1076,6 @@
                 <div id="progress-track" class="progress-track" data-indeterminate="false" aria-hidden="true">
                     <div id="progress-fill" class="progress-fill"></div>
                 </div>
-
-                <p class="progress-note">
-                    Percentages describe encoding, not total loading time.
-                </p>
 
                 <ol class="steps" aria-label="Conversion stages">
                     <li class="step" data-state="pending">
@@ -1649,8 +1645,7 @@
                 progressUX.remaining.textContent = "-";
 
                 ui.detail.textContent =
-                    "Creating your 2× video. A reliable percentage is " +
-                    "unavailable because this preset changes the duration.";
+                    "Creating 2× speed video.";
 
                 return;
             }
@@ -1691,7 +1686,7 @@
 
             ui.detail.textContent = job.preset === "copy"
                 ? "Copying compatible streams without re-encoding."
-                : "Encoding your video. Progress and remaining time are approximate.";
+                : "Encoding your video now.";
         }
 
         async function getEngine(job) {
@@ -1747,7 +1742,7 @@
 
                 try {
                     ui.detail.textContent =
-                        "First use downloads the engine; later uses can read cached assets.";
+                        "First use downloads the FFMPEG engine; later uses can read cached assets.";
 
                     // If conversion starts during background downloading, wait for
                     // those downloads rather than starting a second set.
@@ -2052,7 +2047,7 @@
                     setStatus("Cancelled");
 
                     ui.detail.textContent =
-                        "The next conversion will restart the engine if necessary.";
+                        "The next conversion will restart the engine when necessary.";
                 } else {
                     console.error(error);
                     log(error.stack || error.message || String(error));
@@ -2241,7 +2236,7 @@
                 ui.detail.textContent =
                     "Cached engine assets and the loaded engine were cleared. " +
                     "Your videos are unchanged. The engine will download again " +
-                    "when needed. The browser’s separate HTTP cache is not cleared.";
+                    "when needed.";
             } catch (error) {
                 console.error(error);
 
