@@ -4,6 +4,7 @@ let mapBounds = null;
 let brandColors = {};
 let brandShortcuts = {};
 let brandCounts = {};
+let map = null;
 // Tracks the currently active service name to prevent image swapping race conditions
 let activeServiceRequest = null;
 let isLayerSwitching = false;
@@ -126,8 +127,18 @@ window.addEventListener("online", () => {
 // MAP INSTANCE SETUP
 const defaultLocation = [22.5937, 78.9629];
 const Zoom = { zoomControl: false };
-const map = L.map("map", Zoom).setView(defaultLocation, 5);
-L.control.zoom({ position: "bottomright" }).addTo(map);
+function initMap() {
+  const mapContainer = document.getElementById("map");
+  if (!mapContainer) {
+    console.error("Map container #map not found in DOM");
+    return null;
+  }
+  // Create Leaflet map
+  map = L.map("map", Zoom).setView(defaultLocation, 5);
+  L.control.zoom({ position: "bottomright" }).addTo(map);
+  return map;
+}
+
 
 // Define custom Canvas Renderer Globally
 const MaskedCanvas = L.Canvas.extend({
@@ -196,7 +207,7 @@ const myCanvasRenderer = new MaskedCanvas();
 function setupMapTiles(mapInstance) {
   console.log("mapInstance", mapInstance);
   if (!mapInstance) {
-    console.error("Map instance is null");
+    console.error("setupMapTiles: Map instance is null or undefined.");
     return;
   }
 
@@ -231,42 +242,21 @@ function setupMapTiles(mapInstance) {
       },
     },
   ];
-
   let currentLayer = null;
   let activeIndex = 0;
   let errorCount = 0;
   const ERROR_THRESHOLD = 5;
-  console.log({
-    mapInstance,
-    currentLayer,
-    hasMap: !!mapInstance,
-    hasAddLayer: typeof mapInstance?.addLayer
-  });
-
   function loadLayer(index) {
-    if (index >= PROVIDERS.length) {
-      return;
-    }
-
+    if (index >= PROVIDERS.length) return;
     const provider = PROVIDERS[index];
     console.log(`Setting map provider to: ${provider.name}`);
-
-    // 1. Remove the old layer (Clean up previous tiles/settings)
-    if (currentLayer) {
+    // Remove old layer if exists
+    if (currentLayer && mapInstance.hasLayer(currentLayer)) {
       mapInstance.removeLayer(currentLayer);
     }
-
-    // 2. Create the new layer
     currentLayer = L.tileLayer(provider.url, provider.options);
-
-    // 3. Attach Error Logic
     currentLayer.on("tileerror", () => {
-      // Check if user is offline. If so, do not count this as a server error.
-      if (!navigator.onLine) {
-        console.warn("Tile load failed, because device is offline.");
-        return;
-      }
-      // if tile load fails even if device is online, then count and switch map providers
+      if (!navigator.onLine) return;
       errorCount++;
       if (errorCount > ERROR_THRESHOLD) {
         // Only switch if we haven't exhausted providers
@@ -289,14 +279,17 @@ function setupMapTiles(mapInstance) {
         errorCount = 0;
       }
     });
-
-    // 5. Add to map
-    currentLayer.addTo(mapInstance);
+    // Safe add to map
+    if (mapInstance && typeof mapInstance.addLayer === "function") {
+      currentLayer.addTo(mapInstance);
+    } else {
+      console.error("Cannot add tile layer: mapInstance is invalid", mapInstance);
+    }
   }
-
   // Initial Load
   loadLayer(0);
 }
+
 
 // Helper: Capitalize first letter
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -1526,9 +1519,12 @@ window.addEventListener("popstate", (event) => {
 
 // Start the App
 document.addEventListener("DOMContentLoaded", () => {
-  console.log("map", map);
-  setupMapTiles(map);
-  initApp();
+  const mapInstance = initMap();
+  if (mapInstance) {
+    setupMapTiles(mapInstance);
+    initApp();
+  } else {
+    console.error("App initialization halted: Map could not be created.");
+  }
   initModal();
 });
-
