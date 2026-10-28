@@ -951,74 +951,110 @@ class DataCoordinator:
         return (comp_list + targets), seen
 
     @staticmethod
-    def _get_existing_comp(refresh, targets, seen) -> tuple:
+    def _get_company_size(company: dict) -> int:
+        """Extracts numerical employee count using ln_count first, falling back to emp_count."""
+        ln_cnt = str(company.get("ln_count", "")).strip()
+        if ln_cnt.isdigit():
+            return int(ln_cnt)
+        emp_cnt = str(company.get("emp_count", "")).strip().replace(",", "")
+        if "-" in emp_cnt:
+            upper = emp_cnt.split("-")[1]
+            if upper.isdigit():
+                return int(upper)
+        elif emp_cnt.endswith("+"):
+            base = emp_cnt.rstrip("+")
+            if base.isdigit():
+                return int(base)
+        elif emp_cnt.isdigit():
+            return int(emp_cnt)
+        return 0
 
+    @staticmethod
+    def _get_target_interval_hours(company: dict) -> int:
+        """
+        Cadence mapped directly to the actual company distribution:
+        - 50k+: Daily (~20h)
+        - 10k-50k: Every 2 days (~44h)
+        - 5k-10k: Every 3 days (~68h)
+        - 1k-5k: Every 4 days (~92h)
+        - 201-1k: Every 6 days (~140h)
+        - 51-200: Every 10 days (~236h)
+        - 11-50: Every 16 days (~380h)
+        - 1-10 / Unknown: Every 25 days (~596h)
+        - Inactive / 404: Every 30 days (~720h)
+        """
+        if not company.get("active", True):
+            return 30 * 24  # 30 days for inactive/broken pages
+        size = DataCoordinator._get_company_size(company)
+        if size > 50_000:
+            return 20       # Daily (buffer to catch next day's run)
+        elif size > 10_000:
+            return 44       # Every 2 days
+        elif size > 5_000:
+            return 68       # Every 3 days
+        elif size > 1_000:
+            return 92       # Every 4 days
+        elif size > 200:
+            return 140      # Every 6 days
+        elif size > 50:
+            return 236      # Every 10 days
+        elif size > 10:
+            return 380      # Every 16 days
+        else:
+            return 596      # Every 25 days
+
+    @staticmethod
+    def _calculate_urgency(company: dict, reference_time: datetime) -> float:
+        """
+        Calculates Urgency Ratio = elapsed_hours / target_interval_hours.
+        >= 1.0 means due or overdue.
+        """
+        last_upd_str = company.get("last_updated")
+        if not last_upd_str:
+            return float("inf")  # Brand new entries go straight to front
+        try:
+            last_upd = datetime.fromisoformat(last_upd_str)
+            if last_upd.tzinfo is None:
+                last_upd = last_upd.replace(tzinfo=UTC)
+            hours_old = max(0.0, (reference_time - last_upd).total_seconds() / 3600.0)
+        except ValueError:
+            return float("inf")
+        target_hours = DataCoordinator._get_target_interval_hours(company)
+        return hours_old / target_hours
+
+    @staticmethod
+    def _get_existing_comp(refresh: bool, targets: list, seen: set) -> tuple:
         if not DATA_FILE.exists():
             logger.warning(f"{DATA_FILE} missing. No existing data found!")
             return targets, seen
 
-        # Load existing data
         current_data = DataCoordinator._load_data_file()
+         # Track handles so discovery methods won't duplicate them
         for c in current_data:
             handle = LnSearch.get_handle(c.get("linkedin", ""))
-            if not handle:
-                continue
-
-            # ALWAYS add to seen so we don't re-discover them as "new"
-            seen.add(handle)
-
-            # ONLY add to targets if it's a refresh day (or if it meets recheck criteria)
-            if refresh:
-                should_refresh = DataCoordinator._should_refresh(c)
-                if should_refresh:
-                    # Pass the whole dict to keep existing tickers/metadata
-                    targets.append(c)
+            if handle:
+                seen.add(handle)
 
         if refresh:
-            logger.info(f"Added {len(targets)} existing companies to Refresh")
+            now_utc = datetime.now(UTC)
+            candidates = []
+            for c in current_data:
+                urgency = DataCoordinator._calculate_urgency(c, now_utc)
+                # Include companies that have reached at least 95% of their interval
+                if urgency >= 0.95:
+                    candidates.append((urgency, c))
+
+            # Sort descending: Highest urgency (most overdue relative to size) first
+            candidates.sort(key=lambda item: item[0], reverse=True)
+            sorted_existing = [c for _, c in candidates]
+            targets.extend(sorted_existing)
+
+            logger.info(
+                f"Queue built: {len(sorted_existing)} of {len(current_data)} companies due for refresh "
+                f"(Cadence-weighted by size)"
+            )
         DataCoordinator.summary += f"Initial existing company count: **{len(seen)}**\n"
-
-        mid = len(targets) // 2
-        bottom_half = targets[mid:]
-        # Shuffle only the bottom half of extracted list for randomness
-        random.shuffle(bottom_half)
-        # Re-assign it back to the original list's bottom half range
-        targets[mid:] = bottom_half
         return targets, seen
-
-    @staticmethod
-    def _should_refresh(company: dict) -> bool:
-        """Return True if a specific company needs data refreshed today"""
-        # Default to a long time ago if no date exists so it definitely refreshes
-        last_upd_str = company.get("last_updated")
-        # Handle missing date: Refresh immediately
-        if not last_upd_str:
-            return True
-        try:
-            # Parse the date string and replace 'Z' with '+00:00' for older Python compatibility
-            last_upd = datetime.fromisoformat(last_upd_str)
-            # Ensure last_upd is aware
-            if last_upd.tzinfo is None:
-                last_upd = last_upd.replace(tzinfo=UTC)
-            # date now has UTC
-            days_old = (now - last_upd).days
-        except ValueError:
-            # If date is corrupted, refresh the data
-            logger.warning("last_updated date may be invalid")
-            return True
-
-        # Get employee count (default to 0 if missing)
-        ln_count_str = str(company.get("ln_count", 0))
-        ln_count = int(ln_count_str) if ln_count_str.isdigit() else 0
-
-        # Check inactive companies every 10 days regardless of size
-        if not company.get("active", True):
-            return days_old >= 10
-        # Large companies: Refresh every 3 days
-        if ln_count > 50:
-            return days_old >= 3
-        # Small companies (<=50): Only refresh if at least 7 days old
-        return days_old >= 7
 
     @staticmethod
     def _find_new_comp(targets, seen) -> tuple:
