@@ -723,12 +723,16 @@ function loadSparkline() {
     ["YoY", "yoy"],
   ];
   const fmt = (v) => {
-    if (v === "" || v === undefined || isNaN(v)) return "—";
+    if (v === "" || v === undefined || isNaN(v)) {
+      return "—";
+    }
     const num = parseFloat(v);
     return `${num > 0 ? "+" : ""}${num.toFixed(2)}%`;
   };
   const cls = (v) => {
-    if (v === "" || v === undefined || isNaN(v)) return "";
+    if (v === "" || v === undefined || isNaN(v)) {
+      return "";
+    }
     return parseFloat(v) >= 0 ? "up" : "down";
   };
   let pinned = null;
@@ -758,7 +762,9 @@ function loadSparkline() {
   };
   // Mouse hover (Desktop)
   document.addEventListener("pointermove", (e) => {
-    if (e.pointerType !== "mouse") return;
+    if (e.pointerType !== "mouse") {
+      return;
+    }
     const svg = e.target.closest("svg.sparkline");
     if (svg) {
       show(svg, e.clientX, e.clientY);
@@ -768,7 +774,9 @@ function loadSparkline() {
   });
   // Touch tap (Mobile)
   document.addEventListener("pointerdown", (e) => {
-    if (e.pointerType === "mouse") return;
+    if (e.pointerType === "mouse") {
+      return;
+    }
     const svg = e.target.closest("svg.sparkline");
     if (svg && svg !== pinned) {
       pinned = svg;

@@ -325,8 +325,8 @@ class MapRenderer:
         2. Saves Low-Res PNG (Atomic write, Optimized)
         """
         # Create Paths
-        webp_path = self.cfg.MAPS_DIR / f"{service}.webp"
-        png_path = self.cfg.MAPS_DIR / f"{service}.png"
+        webp_path = self.cfg.MAPS_DIR /  f"{service.replace('|', '_')}.webp"
+        png_path = self.cfg.MAPS_DIR /  f"{service.replace('|', '_')}.png"
 
         try:
             logger.info(f"Rendering Temp image for service '{service}'")
@@ -449,7 +449,7 @@ class MapRenderer:
                 lng = round(loc["lng"], 4)
                 active_points.append([lat, lng])
 
-        out_path = self.cfg.MAPS_DIR / f"{service}.json"
+        out_path = self.cfg.MAPS_DIR / f"{service.replace('|', '_')}.json"
         with open(out_path, "w") as f:
             # remove whitespace to save space
             json.dump(active_points, f, separators=(",", ":"))
