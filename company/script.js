@@ -512,13 +512,13 @@ function renderMarketCharts() {
 function updateMomentumUI(momentum) {
   // If you have a div for this, you can inject the comparison directly
   const container = document.getElementById("momentumStats");
-  if (!container) {
+  if (!container || !momentum) {
     return;
   }
 
   const pub = momentum.public_avg_30d_chg;
   const priv = momentum.private_avg_30d_chg;
-  if (pub && pub > 0 && priv && priv > 0) {
+  if (pub !== undefined && priv !== undefined) {
     container.innerHTML = `
         <div class="momentum-card" style="text-align: center;">
             <span>Public Market Momentum: <strong>${pub > 0 ? "+" : ""}${pub}%</strong></span>
@@ -617,11 +617,11 @@ const workerLogic = `
 
   function getGrowthTitle(item) {
     const parts = [];
-    if (item["Δ_10d"] !== null && item["Δ_10d"] !== undefined) parts.push("Δ10d: " + item["Δ_10d"] + "%");
-    if (item["Δ_30d"] !== null && item["Δ_30d"] !== undefined) parts.push("Δ30d: " + item["Δ_30d"] + "%");
-    if (item["Δ_90d"] !== null && item["Δ_90d"] !== undefined) parts.push("Δ90d: " + item["Δ_90d"] + "%");
-    if (item["Δ_365d"] !== null && item["Δ_365d"] !== undefined) parts.push("Δ1yr: " + item["Δ_365d"] + "%");
-    return parts.length > 0 ? "Growth Trend = " + parts.join("  |  ") : "";
+    if (item["Δ_30d"] !== null && item["Δ_30d"] !== undefined) parts.push("MoM: " + (item["Δ_30d"] > 0 ? "+" : "") + item["Δ_30d"] + "%");
+    if (item["Δ_90d"] !== null && item["Δ_90d"] !== undefined) parts.push("3M: " + (item["Δ_90d"] > 0 ? "+" : "") + item["Δ_90d"] + "%");
+    if (item["Δ_180d"] !== null && item["Δ_180d"] !== undefined) parts.push("6M: " + (item["Δ_180d"] > 0 ? "+" : "") + item["Δ_180d"] + "%");
+    if (item["Δ_365d"] !== null && item["Δ_365d"] !== undefined) parts.push("YoY: " + (item["Δ_365d"] > 0 ? "+" : "") + item["Δ_365d"] + "%");
+    return parts.length > 0 ? parts.join("  |  ") : "";
   }
 
   self.onmessage = async function(e) {
@@ -705,6 +705,82 @@ const workerLogic = `
   };
 `;
 
+// FLOATING SPARKLINE TOOLTIP (HOVER & TAP)
+function loadSparkline() {
+  // Ensure the tooltip element exists in DOM even if omitted from HTML
+  let tip = document.getElementById("spark-tip");
+  if (!tip) {
+    tip = document.createElement("div");
+    tip.id = "spark-tip";
+    tip.className = "spark-tip";
+    tip.hidden = true;
+    document.body.appendChild(tip);
+  }
+  const rows = [
+    ["MoM", "mom"],
+    ["3M", "m3"],
+    ["6M", "m6"],
+    ["YoY", "yoy"],
+  ];
+  const fmt = (v) => {
+    if (v === "" || v === undefined || isNaN(v)) return "—";
+    const num = parseFloat(v);
+    return `${num > 0 ? "+" : ""}${num.toFixed(2)}%`;
+  };
+  const cls = (v) => {
+    if (v === "" || v === undefined || isNaN(v)) return "";
+    return parseFloat(v) >= 0 ? "up" : "down";
+  };
+  let pinned = null;
+  function show(svg, x, y) {
+    const d = svg.dataset;
+    const nowCount = d.now && !isNaN(d.now) ? Number(d.now).toLocaleString() : "—";
+    const sinceText = d.since ? ` · since ${d.since}` : "";
+    tip.innerHTML =
+      rows
+        .map(
+          ([label, k]) =>
+            `<div class="row"><span>${label}</span><b class="${cls(d[k])}">${fmt(d[k])}</b></div>`
+        )
+        .join("") +
+      `<div class="meta">${nowCount} employees${sinceText}</div>`;
+    tip.hidden = false;
+    const r = tip.getBoundingClientRect();
+    // Prevent tooltip from overflowing screen boundaries
+    const left = Math.min(x + 12, window.innerWidth - r.width - 12);
+    const top = Math.max(y - r.height - 12, 12);
+    tip.style.left = `${left}px`;
+    tip.style.top = `${top}px`;
+  }
+  const hide = () => {
+    tip.hidden = true;
+    pinned = null;
+  };
+  // Mouse hover (Desktop)
+  document.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    const svg = e.target.closest("svg.sparkline");
+    if (svg) {
+      show(svg, e.clientX, e.clientY);
+    } else if (!pinned) {
+      hide();
+    }
+  });
+  // Touch tap (Mobile)
+  document.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse") return;
+    const svg = e.target.closest("svg.sparkline");
+    if (svg && svg !== pinned) {
+      pinned = svg;
+      show(svg, e.clientX, e.clientY);
+    } else {
+      hide();
+    }
+  });
+  window.addEventListener("scroll", hide, { passive: true });
+}
+
+
 function loadData() {
   const tableBody = document.getElementById("tableBody");
 
@@ -766,9 +842,8 @@ function loadData() {
       const rowData = settings.aoData[dataIndex]._aData;
       const sortRank = rowData.sortRank || 0;
       const [min, max] = selectedRange.split("-").map(Number);
-
       if (isNaN(max)) {
-        return sortRank >= min; // Handle "500+" cases
+        return sortRank >= min; // Correctly handles "100001+"
       }
       return sortRank >= min && sortRank <= max; // Handle "50-100" cases
     });
@@ -809,10 +884,9 @@ function loadData() {
             data: "sortRank",
             render: function (data, type, row) {
               if (type === "display" || type === "filter") {
-                // uses the pre-calculated tooltip string
                 const sparklineHtml = row.sparkline
-                  ? `<div class="sparkline-wrapper" title="${row.tooltipText}">${row.sparkline}</div>`
-                  : ``;
+                  ? `<div class="sparkline-wrapper">${row.sparkline}</div>`
+                  : "";
                 return `<div class="emp-cell"><span>${row.displayCount}</span>${sparklineHtml}</div>`;
               }
               return data;
@@ -876,7 +950,7 @@ function loadData() {
                 <option value="5001-10000">Giant (5001-10000)</option>
                 <option value="10001-50000">Conglomerate (10001-50000)</option>
                 <option value="50001-100000">Global Corp (50001-100000)</option>
-                <option value="100001">Mega Corp (100000+)</option>
+                <option value="100001+">Mega Corp (100000+)</option>
               </select>
             </div>`;
 
@@ -1003,6 +1077,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupModals();
   fetchTrendData();
   loadData();
+  loadSparkline();
 
   // Trigger initial check for hash
   handleHashChange();

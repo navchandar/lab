@@ -1,1026 +1,1006 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Company Data</title>
 
-    <link
-      rel="shortcut icon"
-      href="data:image/svg+xml;base64,PHN2ZyBpZD0iZW1vamkiIHZpZXdCb3g9IjAgMCA3MiA3MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBpZD0iY29sb3IiPgogICAgPHJlY3QgeD0iOS41IiB5PSIzOCIgd2lkdGg9IjUzIiBoZWlnaHQ9IjE3IiBmaWxsPSIjRUE1QTQ3IiBzdHJva2U9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjE0LjUiIHk9IjQzIiB3aWR0aD0iMTMiIGhlaWdodD0iMTIiIGZpbGw9IiNEMENGQ0UiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iMzIuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iMzcuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iNDIuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iNDcuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iNTIuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHBvbHlnb24gZmlsbD0iIzNGM0YzRiIgc3Ryb2tlPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBwb2ludHM9IjU2LDM4IDUwLDM4IDUxLDIyIDU1LDIyIi8+CiAgICA8cG9seWdvbiBmaWxsPSIjRDBDRkNFIiBzdHJva2U9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHBvaW50cz0iMTQuNDk2OCwzMSAxNC41MDE3LDM4IDI0LjQ5NjgsMzgiLz4KICAgIDxwb2x5Z29uIGZpbGw9IiNEMENGQ0UiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgcG9pbnRzPSIyNSwzMSAyNS4wMDQ5LDM4IDM1LDM4Ii8+CiAgICA8cG9seWdvbiBmaWxsPSIjRDBDRkNFIiBzdHJva2U9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHBvaW50cz0iMzUsMzEgMzUuMDA0OSwzOCA0NSwzOCIvPgogIDwvZz4KICA8ZyBpZD0iaGFpciIvPgogIDxnIGlkPSJza2luIi8+CiAgPGcgaWQ9InNraW4tc2hhZG93Ii8+CiAgPGcgaWQ9ImxpbmUiPgogICAgPHJlY3QgeD0iOS41IiB5PSIzOCIgd2lkdGg9IjUzIiBoZWlnaHQ9IjE3IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjE0LjUiIHk9IjQzIiB3aWR0aD0iMTMiIGhlaWdodD0iMTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGxpbmUgeDE9IjE0LjUiIHgyPSIyNy41IiB5MT0iNDciIHkyPSI0NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8bGluZSB4MT0iMTQuNSIgeDI9IjI3LjUiIHkxPSI1MSIgeTI9IjUxIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjMyLjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjM3LjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjQyLjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjQ3LjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjUyLjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgcG9pbnRzPSI1NiwzOCA1MCwzOCA1MSwyMiA1NSwyMiIvPgogICAgPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBwb2ludHM9IjE0LjQ5NjgsMzEgMTQuNTAxNywzOCAyNC40OTY4LDM4Ii8+CiAgICA8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHBvaW50cz0iMjUsMzEgMjUuMDA0OSwzOCAzNSwzOCIvPgogICAgPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBwb2ludHM9IjM1LDMxIDM1LjAwNDksMzggNDUsMzgiLz4KICAgIDxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTU0LDE5IGMwLjA0MzUtMS45NTY0LTAuMzI1Mi00LjAwMTktMi4wNzg2LTUuNTY1OWMtMS40ODc1LTEuMzI2OC0zLjA0Mi0xLjA0OTQtNS42MTkyLTIuMTAzNUM0NC43ODM1LDEwLjcwOTQsNDUsNyw0Mi4wODU0LDUuNDgwOSIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJNNTEsMTkgYy0wLjY0NTItMS44NDc1LTAuODA5NS0zLjE1LTMtNGMtMS44NTgzLTAuNzIxMS02LDAtNy0yIi8+CiAgPC9nPgo8L3N2Zz4K"
-    />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Company Data</title>
 
-    <meta
-      name="description"
-      content="A curated dashboard of company insights, employee counts, and website links."
-    />
-    <meta name="author" content="Naveenchandar">
-    <meta property="article:author" content="Naveenchandar">
+  <link rel="shortcut icon"
+    href="data:image/svg+xml;base64,PHN2ZyBpZD0iZW1vamkiIHZpZXdCb3g9IjAgMCA3MiA3MiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZyBpZD0iY29sb3IiPgogICAgPHJlY3QgeD0iOS41IiB5PSIzOCIgd2lkdGg9IjUzIiBoZWlnaHQ9IjE3IiBmaWxsPSIjRUE1QTQ3IiBzdHJva2U9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjE0LjUiIHk9IjQzIiB3aWR0aD0iMTMiIGhlaWdodD0iMTIiIGZpbGw9IiNEMENGQ0UiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iMzIuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iMzcuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iNDIuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iNDcuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHJlY3QgeD0iNTIuNSIgeT0iNDMiIHdpZHRoPSI1IiBoZWlnaHQ9IjUiIGZpbGw9IiM5MkQzRjUiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPHBvbHlnb24gZmlsbD0iIzNGM0YzRiIgc3Ryb2tlPSJub25lIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBwb2ludHM9IjU2LDM4IDUwLDM4IDUxLDIyIDU1LDIyIi8+CiAgICA8cG9seWdvbiBmaWxsPSIjRDBDRkNFIiBzdHJva2U9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHBvaW50cz0iMTQuNDk2OCwzMSAxNC41MDE3LDM4IDI0LjQ5NjgsMzgiLz4KICAgIDxwb2x5Z29uIGZpbGw9IiNEMENGQ0UiIHN0cm9rZT0ibm9uZSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgcG9pbnRzPSIyNSwzMSAyNS4wMDQ5LDM4IDM1LDM4Ii8+CiAgICA8cG9seWdvbiBmaWxsPSIjRDBDRkNFIiBzdHJva2U9Im5vbmUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHBvaW50cz0iMzUsMzEgMzUuMDA0OSwzOCA0NSwzOCIvPgogIDwvZz4KICA8ZyBpZD0iaGFpciIvPgogIDxnIGlkPSJza2luIi8+CiAgPGcgaWQ9InNraW4tc2hhZG93Ii8+CiAgPGcgaWQ9ImxpbmUiPgogICAgPHJlY3QgeD0iOS41IiB5PSIzOCIgd2lkdGg9IjUzIiBoZWlnaHQ9IjE3IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjE0LjUiIHk9IjQzIiB3aWR0aD0iMTMiIGhlaWdodD0iMTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIvPgogICAgPGxpbmUgeDE9IjE0LjUiIHgyPSIyNy41IiB5MT0iNDciIHkyPSI0NyIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIi8+CiAgICA8bGluZSB4MT0iMTQuNSIgeDI9IjI3LjUiIHkxPSI1MSIgeTI9IjUxIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjMyLjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjM3LjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjQyLjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjQ3LjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxyZWN0IHg9IjUyLjUiIHk9IjQzIiB3aWR0aD0iNSIgaGVpZ2h0PSI1IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiLz4KICAgIDxwb2x5Z29uIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgcG9pbnRzPSI1NiwzOCA1MCwzOCA1MSwyMiA1NSwyMiIvPgogICAgPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBwb2ludHM9IjE0LjQ5NjgsMzEgMTQuNTAxNywzOCAyNC40OTY4LDM4Ii8+CiAgICA8cG9seWdvbiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLW1pdGVybGltaXQ9IjEwIiBzdHJva2Utd2lkdGg9IjIiIHBvaW50cz0iMjUsMzEgMjUuMDA0OSwzOCAzNSwzOCIvPgogICAgPHBvbHlnb24gZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBwb2ludHM9IjM1LDMxIDM1LjAwNDksMzggNDUsMzgiLz4KICAgIDxwYXRoIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbWl0ZXJsaW1pdD0iMTAiIHN0cm9rZS13aWR0aD0iMiIgZD0iTTU0LDE5IGMwLjA0MzUtMS45NTY0LTAuMzI1Mi00LjAwMTktMi4wNzg2LTUuNTY1OWMtMS40ODc1LTEuMzI2OC0zLjA0Mi0xLjA0OTQtNS42MTkyLTIuMTAzNUM0NC43ODM1LDEwLjcwOTQsNDUsNyw0Mi4wODU0LDUuNDgwOSIvPgogICAgPHBhdGggZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1taXRlcmxpbWl0PSIxMCIgc3Ryb2tlLXdpZHRoPSIyIiBkPSJNNTEsMTkgYy0wLjY0NTItMS44NDc1LTAuODA5NS0zLjE1LTMtNGMtMS44NTgzLTAuNzIxMS02LDAtNy0yIi8+CiAgPC9nPgo8L3N2Zz4K" />
 
-    <link
-      rel="preload"
-      href="company_data.json"
-      as="fetch"
-      crossorigin="anonymous"
-    />
+  <meta name="description" content="A curated dashboard of company insights, employee counts, and website links." />
+  <meta name="author" content="Naveenchandar">
+  <meta property="article:author" content="Naveenchandar">
 
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap"
-      rel="stylesheet"
-      media="print"
-      onload="this.media = 'all'"
-    />
+  <link rel="preload" href="company_data.json" as="fetch" crossorigin="anonymous" />
 
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
-      media="print"
-      onload="this.media = 'all'"
-    />
-    <!-- DataTables FixedHeader CSS -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.datatables.net/fixedheader/3.3.1/css/fixedHeader.dataTables.min.css"
-      media="print"
-      onload="this.media = 'all'"
-    />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet"
+    media="print" onload="this.media = 'all'" />
 
-    <style>
-      :root {
-        --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-        --bg-color: #0f172a;
-        --title-gradient: linear-gradient(to right, #30daec, #db28c8);
-        --table-head-gradient: linear-gradient(0deg, #1e2638 0%, #0e1525 100%);
-        --table-head-gradient-hover: linear-gradient(
-          0deg,
+  <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
+    media="print" onload="this.media = 'all'" />
+  <!-- DataTables FixedHeader CSS -->
+  <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.3.1/css/fixedHeader.dataTables.min.css"
+    media="print" onload="this.media = 'all'" />
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      --bg-color: #0f172a;
+      --title-gradient: linear-gradient(to right, #30daec, #db28c8);
+      --table-head-gradient: linear-gradient(0deg, #1e2638 0%, #0e1525 100%);
+      --table-head-gradient-hover: linear-gradient(0deg,
           #0e1525 0%,
-          #000205 100%
-        );
-        --glass-bg: rgba(255, 255, 255, 0.05);
-        --glass-border: rgba(255, 255, 255, 0.1);
-        --accent-color: #38bdf8;
-        --text-main: #f1f5f9;
-        --text-muted: #94a3b8;
-        --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-        /* Adding variable for consistent borders in table cells */
-        --row-border: rgba(255, 255, 255, 0.05);
-      }
+          #000205 100%);
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --accent-color: #38bdf8;
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --card-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      /* Adding variable for consistent borders in table cells */
+      --row-border: rgba(255, 255, 255, 0.05);
+    }
 
-      @media (prefers-color-scheme: light) {
-        :root {
-          --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-          --bg-color: #f8fafc;
-          --title-gradient: linear-gradient(to right, #3b82f6, #9333ea);
-          --table-head-gradient: linear-gradient(
-            180deg,
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        --bg-color: #f8fafc;
+        --title-gradient: linear-gradient(to right, #3b82f6, #9333ea);
+        --table-head-gradient: linear-gradient(180deg,
             #f8fafc 0%,
-            #e2e8f0 100%
-          );
-          --table-head-gradient-hover: linear-gradient(
-            0deg,
+            #e2e8f0 100%);
+        --table-head-gradient-hover: linear-gradient(0deg,
             #e2e8f0 0%,
-            #becfe6 100%
-          );
-          --glass-bg: rgba(255, 255, 255, 0.7);
-          --glass-border: rgba(0, 0, 0, 0.1);
-          /* Darker border for light mode */
-          --accent-color: #2563eb;
-          --text-main: #1e293b;
-          --text-muted: #475569;
-          --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-          --row-border: rgba(0, 0, 0, 0.05);
-        }
-
-        .sparkline {
-          filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
-        }
-
-        .sparkline-wrapper:hover .sparkline {
-          filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
-        }
-
-        .chart-container {
-          background: rgba(255, 255, 255, 0.8) !important;
-        }
+            #becfe6 100%);
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(0, 0, 0, 0.1);
+        /* Darker border for light mode */
+        --accent-color: #2563eb;
+        --text-main: #1e293b;
+        --text-muted: #475569;
+        --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+        --row-border: rgba(0, 0, 0, 0.05);
       }
 
-      * {
-        transition:
-          background 0.3s ease,
-          color 0.3s ease,
-          border 0.3s ease;
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
+      .sparkline {
+        filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.1));
       }
 
-      html,
+      .sparkline-wrapper:hover .sparkline {
+        filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+      }
+
+      .chart-container {
+        background: rgba(255, 255, 255, 0.8) !important;
+      }
+    }
+
+    * {
+      transition:
+        background 0.3s ease,
+        color 0.3s ease,
+        border 0.3s ease;
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      margin: 0;
+      background-color: var(--bg-color);
+      padding: 0;
+      width: 100%;
+      min-width: fit-content;
+      overscroll-behavior-x: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-gradient);
+      background-attachment: fixed;
+      padding: 20px;
+      min-height: 100vh;
+      color: var(--text-main);
+      font-family: "Inter", sans-serif;
+    }
+
+    header {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      background: var(--title-gradient);
+      font-weight: 600;
+      font-size: 2.5rem;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -1px;
+    }
+
+    #loadingSpinner {
+      position: absolute;
+      top: 25%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+      transition: opacity 0.5s ease-out;
+      box-sizing: content-box;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 0%, #7053ef 100%);
+      width: 50px;
+      height: 50px;
+      -webkit-mask: radial-gradient(farthest-side,
+          transparent 80%,
+          black 81%);
+      opacity: 1;
+      mask: radial-gradient(farthest-side, transparent 80%, black 81%);
+      animation: spin 0.6s linear infinite;
+    }
+
+    .spinner-hidden {
+      opacity: 0 !important;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    .container {
+      flex-grow: 1;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .table-card {
+      backdrop-filter: blur(12px);
+      background: var(--glass-bg);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 24px;
+      overflow: visible !important;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      background-color: var(--glass-bg);
+      min-height: 250px;
+    }
+
+    #tableBody:empty {
+      animation: spin 1.5s infinite;
+      background: linear-gradient(90deg,
+          #f0f0f0 25%,
+          #e0e0e0 50%,
+          #f0f0f0 75%);
+      background-size: 200% 100%;
+    }
+
+    .fixedHeader-floating {
+      z-index: 1001 !important;
+    }
+
+    #companyTable {
+      width: 100% !important;
+      table-layout: fixed;
+    }
+
+    #companyTable td {
+      max-width: 150px;
+      /* Adjust as needed */
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    table.dataTable {
+      border: none !important;
+      border-collapse: collapse !important;
+      width: 100% !important;
+      color: var(--text-main) !important;
+    }
+
+    table.dataTable thead th {
+      border-bottom: 1px solid var(--glass-border) !important;
+      background: var(--table-head-gradient) !important;
+      padding: 15px !important;
+      color: var(--accent-color);
+      font-weight: 600;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      text-align: left;
+      text-transform: uppercase;
+    }
+
+    table.dataTable thead th:hover {
+      background: var(--table-head-gradient-hover) !important;
+    }
+
+    /* Specific widths for each column */
+    /* Company Name */
+    th:nth-child(1) {
+      width: 40% !important;
+    }
+
+    /* Employees */
+    th:nth-child(2) {
+      width: 15% !important;
+    }
+
+    /* Website */
+    th:nth-child(3) {
+      width: 20% !important;
+    }
+
+    /* LinkedIn */
+    th:nth-child(4) {
+      width: 10% !important;
+    }
+
+    /* Status/ Type */
+    th:nth-child(5) {
+      width: 10% !important;
+    }
+
+    /* Updated Date */
+    th:nth-child(6) {
+      width: 15% !important;
+    }
+
+    table.dataTable tbody td {
+      border-bottom: 1px solid var(--row-border) !important;
+      padding: 15px !important;
+      font-size: 0.9rem;
+    }
+
+    table.dataTable tbody td:nth-child(1) {
+      max-width: 400px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    table.dataTable tbody td:nth-child(4),
+    table.dataTable tbody td:nth-child(5) {
+      padding: 5px !important;
+    }
+
+    table.dataTable tbody tr {
+      background: transparent !important;
+    }
+
+    table.dataTable tbody tr:hover {
+      transform: scale(1.002);
+      background: rgba(150, 150, 150, 0.08) !important;
+    }
+
+    .paginate_button.current {
+      border: 1.5px solid rgba(0, 0, 0, 0.8) !important;
+      font-weight: 900 !important;
+    }
+
+    a {
+      transition: opacity 0.2s;
+      color: var(--accent-color);
+      text-decoration: none;
+    }
+
+    a:hover {
+      opacity: 0.8;
+      text-decoration: underline;
+    }
+
+    .dataTables_filter input {
+      margin-bottom: 10px;
+      outline: none;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 8px !important;
+      background: var(--glass-bg) !important;
+      padding: 8px 12px !important;
+      width: 400px;
+      color: var(--text-main) !important;
+    }
+
+    select {
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 6px !important;
+      background: var(--glass-bg) !important;
+      padding: 2px 5px;
+      color: var(--text-main) !important;
+    }
+
+    .dataTables_info,
+    .dataTables_paginate {
+      margin-top: 20px !important;
+      color: var(--text-muted) !important;
+    }
+
+    .paginate_button {
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 8px !important;
+    }
+
+    .icon {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+      border-radius: 10px;
+      width: 35px;
+      height: 35px;
+      font-size: 1.4em;
+    }
+
+    .no-link {
+      cursor: default;
+    }
+
+    .ln-icon-container {
+      display: flex;
+      margin: 0px auto;
+      border-radius: 10px;
+      width: 35px;
+      height: 35px;
+    }
+
+    .linkedin-icon {
+      display: inline-block;
+      margin: 6px;
+      border-radius: 0px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230077b5' d='M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z'/%3E%3C/svg%3E");
+      background-size: auto;
+      background-repeat: no-repeat;
+      width: 24px;
+      height: 24px;
+    }
+
+    .linkedin-icon:hover {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230088CF' d='M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z'/%3E%3C/svg%3E");
+    }
+
+    /* Specific styling for the ticker link */
+    .icon-link {
+      position: relative;
+      cursor: default;
+      border-bottom: 1px solid rgba(56, 189, 248, 0.75);
+      text-decoration: none !important;
+    }
+
+    .icon-link:hover {
+      transform: translateY(-2px) scale(1.1);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.9);
+    }
+
+    .emp-filter-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    label {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    #empFilter {
+      cursor: pointer;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 8px;
+      background: var(--glass-bg) !important;
+      min-width: 160px;
+      color: var(--text-main) !important;
+    }
+
+    select:hover {
+      background: rgba(150, 150, 150, 0.1) !important;
+    }
+
+    .text-center {
+      text-align: center !important;
+    }
+
+    td svg {
+      vertical-align: middle;
+    }
+
+    .top-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    /* --- Disclaimer Modal Styles --- */
+    .modal {
+      display: none;
+      /* Hidden by default */
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 2000;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .modal.show {
+      display: block;
+    }
+
+    .modal-content {
+      position: relative;
+      animation: modalFadeIn 0.3s ease-out;
+      margin: 10vh auto;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      background: var(--bg-color);
+      background-image: var(--bg-gradient);
+      padding: 30px;
+      width: 90%;
+      max-width: 600px;
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding-right: 10px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-body h3 {
+      margin: 20px 0 8px 0;
+      color: var(--accent-color);
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Close Button Styling (Material Icon Style) */
+    .modal-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      transition:
+        background-color 0.2s,
+        color 0.2s;
+      cursor: pointer;
+      border: none;
+      border-radius: 50%;
+      background: none;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      color: #2f2f2f;
+      font-weight: normal;
+      font-size: 24px;
+      line-height: 32px;
+      text-align: center;
+    }
+
+    .modal-close-btn:hover,
+    .modal-close-btn:focus {
+      outline: none;
+      background-color: #f5f5f5;
+      color: #121212;
+    }
+
+    @keyframes modalFadeIn {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      backdrop-filter: blur(8px);
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      -webkit-backdrop-filter: blur(8px);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* Modal Content Box */
+    .modal-content {
+      display: flex;
+      position: relative;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+      animation: modalSlideUp 0.3s ease-out;
+      box-shadow: var(--card-shadow);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      background: var(--glass-bg);
+      padding: 30px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow: hidden;
+      color: var(--text-main);
+    }
+
+    /* Specific size for Charts */
+    .chart-modal-content {
+      background: var(--table-head-gradient);
+      max-width: 1100px;
+    }
+
+    @keyframes modalSlideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal-body {
+      padding-right: 10px;
+      overflow-y: auto;
+    }
+
+    #sizeDistChart,
+    #ownershipSplitChart,
+    #employmentTrendChart {
+      backface-visibility: hidden;
+      will-change: transform;
+    }
+
+    .modal-header h2 {
+      background: var(--title-gradient);
+      -webkit-background-clip: text;
+      margin-bottom: 10px;
+      -webkit-text-fill-color: transparent;
+      font-weight: 700;
+    }
+
+    .chart-container {
+      margin: 15px 0;
+      border: 1px solid var(--row-border);
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 20px;
+    }
+
+    footer {
+      padding: 10px 5px 0px 5px;
+      color: var(--text-muted);
+      font-size: smaller;
+      line-height: 1.8;
+      text-align: center;
+    }
+
+    .error {
+      background: #ffebee;
+      padding: 20px;
+      color: #d32f2f;
+      text-align: center;
+    }
+
+    .emp-cell {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 5px;
+      width: 95%;
+    }
+
+    .sparkline-wrapper {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      padding: 0 4px;
+      width: 45px;
+    }
+
+    .sparkline {
+      /* Adds a subtle glow based on the stroke color */
+      filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
+      transition: filter 0.3s ease;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    .sparkline-wrapper:hover .sparkline {
+      filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.5));
+    }
+
+    .dataTables_filter input,
+    #empFilter,
+    .dataTables_length select {
+      margin: 5px 0;
+      border-radius: 10px !important;
+      height: 32px;
+      font-size: 15px !important;
+    }
+
+    svg.sparkline {
+      width: 120px;
+      height: 24px;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .spark-tip {
+      position: fixed;
+      z-index: 1000;
+      pointer-events: none;
+      background: #0f172a;
+      color: #e2e8f0;
+      font: 12px/1.4 system-ui, sans-serif;
+      padding: 8px 10px;
+      border-radius: 8px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+      min-width: 140px;
+    }
+
+    .spark-tip .row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .spark-tip .up {
+      color: #22c55e;
+    }
+
+    .spark-tip .down {
+      color: #ef4444;
+    }
+
+    .spark-tip .meta {
+      color: #94a3b8;
+      margin-top: 4px;
+      font-size: 11px;
+    }
+
+
+
+    /* Mobile view style*/
+    @media (max-width: 768px) {
       body {
-        margin: 0;
-        background-color: var(--bg-color);
-        padding: 0;
-        width: 100%;
-        min-width: fit-content;
-        overscroll-behavior-x: none;
-      }
-
-      body {
-        display: flex;
-        flex-direction: column;
-        background: var(--bg-gradient);
-        background-attachment: fixed;
-        padding: 20px;
-        min-height: 100vh;
-        color: var(--text-main);
-        font-family: "Inter", sans-serif;
+        padding: 10px;
       }
 
       header {
-        margin-bottom: 20px;
-        text-align: center;
+        margin-bottom: 0;
       }
 
       h1 {
-        background: var(--title-gradient);
-        font-weight: 600;
-        font-size: 2.5rem;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        letter-spacing: -1px;
-      }
-
-      #loadingSpinner {
-        position: absolute;
-        top: 25%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        z-index: 10;
-        transition: opacity 0.5s ease-out;
-        box-sizing: content-box;
-        border-radius: 50%;
-        background: conic-gradient(from 0deg, transparent 0%, #7053ef 100%);
-        width: 50px;
-        height: 50px;
-        -webkit-mask: radial-gradient(
-          farthest-side,
-          transparent 80%,
-          black 81%
-        );
-        opacity: 1;
-        mask: radial-gradient(farthest-side, transparent 80%, black 81%);
-        animation: spin 0.6s linear infinite;
-      }
-
-      .spinner-hidden {
-        opacity: 0 !important;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: translate(-50%, -50%) rotate(0deg);
-        }
-
-        100% {
-          transform: translate(-50%, -50%) rotate(360deg);
-        }
-      }
-
-      .container {
-        flex-grow: 1;
-        margin: 0 auto;
-        width: 100%;
-        max-width: 1200px;
-      }
-
-      .table-card {
-        backdrop-filter: blur(12px);
-        background: var(--glass-bg);
-        -webkit-backdrop-filter: blur(12px);
-        box-shadow: var(--card-shadow);
-        border: 1px solid var(--glass-border);
-        border-radius: 16px;
-        padding: 24px;
-        overflow: visible !important;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        opacity: 0;
-        transition: opacity 0.5s ease-in-out;
-        background-color: var(--glass-bg);
-        min-height: 250px;
-      }
-
-      #tableBody:empty {
-        animation: spin 1.5s infinite;
-        background: linear-gradient(
-          90deg,
-          #f0f0f0 25%,
-          #e0e0e0 50%,
-          #f0f0f0 75%
-        );
-        background-size: 200% 100%;
-      }
-
-      .fixedHeader-floating {
-        z-index: 1001 !important;
-      }
-
-      #companyTable {
-        width: 100% !important;
-        table-layout: fixed;
-      }
-
-      #companyTable td {
-        max-width: 150px; /* Adjust as needed */
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      table.dataTable {
-        border: none !important;
-        border-collapse: collapse !important;
-        width: 100% !important;
-        color: var(--text-main) !important;
-      }
-
-      table.dataTable thead th {
-        border-bottom: 1px solid var(--glass-border) !important;
-        background: var(--table-head-gradient) !important;
-        padding: 15px !important;
-        color: var(--accent-color);
-        font-weight: 600;
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        text-align: left;
-        text-transform: uppercase;
-      }
-
-      table.dataTable thead th:hover {
-        background: var(--table-head-gradient-hover) !important;
-      }
-
-      /* Specific widths for each column */
-      /* Company Name */
-      th:nth-child(1) {
-        width: 40% !important;
-      }
-
-      /* Employees */
-      th:nth-child(2) {
-        width: 15% !important;
-      }
-
-      /* Website */
-      th:nth-child(3) {
-        width: 20% !important;
-      }
-
-      /* LinkedIn */
-      th:nth-child(4) {
-        width: 10% !important;
-      }
-
-      /* Status/ Type */
-      th:nth-child(5) {
-        width: 10% !important;
-      }
-
-      /* Updated Date */
-      th:nth-child(6) {
-        width: 15% !important;
-      }
-
-      table.dataTable tbody td {
-        border-bottom: 1px solid var(--row-border) !important;
-        padding: 15px !important;
-        font-size: 0.9rem;
-      }
-
-      table.dataTable tbody td:nth-child(1) {
-        max-width: 400px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-
-      table.dataTable tbody td:nth-child(4),
-      table.dataTable tbody td:nth-child(5) {
-        padding: 5px !important;
-      }
-
-      table.dataTable tbody tr {
-        background: transparent !important;
-      }
-
-      table.dataTable tbody tr:hover {
-        transform: scale(1.002);
-        background: rgba(150, 150, 150, 0.08) !important;
-      }
-
-      .paginate_button.current {
-        border: 1.5px solid rgba(0, 0, 0, 0.8) !important;
-        font-weight: 900 !important;
-      }
-
-      a {
-        transition: opacity 0.2s;
-        color: var(--accent-color);
-        text-decoration: none;
-      }
-
-      a:hover {
-        opacity: 0.8;
-        text-decoration: underline;
-      }
-
-      .dataTables_filter input {
         margin-bottom: 10px;
-        outline: none;
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 8px !important;
-        background: var(--glass-bg) !important;
-        padding: 8px 12px !important;
-        width: 400px;
-        color: var(--text-main) !important;
-      }
-
-      select {
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 6px !important;
-        background: var(--glass-bg) !important;
-        padding: 2px 5px;
-        color: var(--text-main) !important;
-      }
-
-      .dataTables_info,
-      .dataTables_paginate {
-        margin-top: 20px !important;
-        color: var(--text-muted) !important;
-      }
-
-      .paginate_button {
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 8px !important;
-      }
-
-      .icon {
-        display: inline-flex;
-        justify-content: center;
-        align-items: center;
-        transition: all 0.2s ease;
-        border-radius: 10px;
-        width: 35px;
-        height: 35px;
-        font-size: 1.4em;
-      }
-
-      .no-link {
-        cursor: default;
-      }
-
-      .ln-icon-container {
-        display: flex;
-        margin: 0px auto;
-        border-radius: 10px;
-        width: 35px;
-        height: 35px;
-      }
-
-      .linkedin-icon {
-        display: inline-block;
-        margin: 6px;
-        border-radius: 0px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230077b5' d='M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z'/%3E%3C/svg%3E");
-        background-size: auto;
-        background-repeat: no-repeat;
-        width: 24px;
-        height: 24px;
-      }
-
-      .linkedin-icon:hover {
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%230088CF' d='M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z'/%3E%3C/svg%3E");
-      }
-
-      /* Specific styling for the ticker link */
-      .icon-link {
-        position: relative;
-        cursor: default;
-        border-bottom: 1px solid rgba(56, 189, 248, 0.75);
-        text-decoration: none !important;
-      }
-
-      .icon-link:hover {
-        transform: translateY(-2px) scale(1.1);
-        box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
-        border-bottom: 1px solid rgba(56, 189, 248, 0.9);
-      }
-
-      .emp-filter-wrapper {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-
-      label {
-        color: var(--text-muted);
-        font-weight: 600;
-        font-size: 0.8rem;
-        text-transform: uppercase;
-      }
-
-      #empFilter {
-        cursor: pointer;
-        border: 1px solid var(--glass-border) !important;
-        border-radius: 8px;
-        background: var(--glass-bg) !important;
-        min-width: 160px;
-        color: var(--text-main) !important;
-      }
-
-      select:hover {
-        background: rgba(150, 150, 150, 0.1) !important;
-      }
-
-      .text-center {
-        text-align: center !important;
-      }
-
-      td svg {
-        vertical-align: middle;
+        font-size: 1.5rem;
       }
 
       .top-wrapper {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 15px;
-        margin-bottom: 10px;
+        flex-direction: column;
+        /* Stack search and filters */
+        align-items: stretch;
+        gap: 10px;
       }
 
-      /* --- Disclaimer Modal Styles --- */
-      .modal {
-        display: none;
-        /* Hidden by default */
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 2000;
+      /* Make Search and Filter full width on mobile */
+      .dataTables_filter,
+      .emp-filter-wrapper,
+      .dataTables_length {
+        margin: 0 !important;
+        border-radius: 8px !important;
         width: 100%;
-        height: 100%;
-        overflow: hidden;
+        font-size: 13px !important;
       }
 
-      .modal.show {
-        display: block;
+      input {
+        margin-left: 0 !important;
+        border-radius: 8px !important;
+        width: 100% !important;
+        font-size: 13px !important;
       }
 
-      .modal-content {
-        position: relative;
-        animation: modalFadeIn 0.3s ease-out;
-        margin: 10vh auto;
-        box-shadow: var(--card-shadow);
-        border: 1px solid var(--glass-border);
-        border-radius: 20px;
-        background: var(--bg-color);
-        background-image: var(--bg-gradient);
-        padding: 30px;
-        width: 90%;
-        max-width: 600px;
-        color: var(--text-main);
+      select {
+        border-radius: 8px !important;
+        font-size: 13px !important;
+      }
+
+      .emp-filter-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+
+      #empFilter {
+        width: 100%;
+      }
+
+      /* Table Adjustments */
+      .table-card {
+        border-radius: 12px;
+        padding: 10px;
+      }
+
+      table.dataTable tbody td {
+        padding: 5px !important;
+      }
+
+      th {
+        padding: 10px 2px !important;
+        font-size: smaller;
+      }
+
+      /* Hide non-essential columns on very small screens */
+      label[for="empFilter"],
+      th:nth-child(3),
+      td:nth-child(3),
+      th:nth-child(6),
+      td:nth-child(6) {
+        display: none !important;
+      }
+
+      th:nth-child(1) {
+        width: 30% !important;
+      }
+
+      .dataTables_wrapper .dataTables_paginate {
+        font-size: smaller;
+      }
+
+      .dataTables_wrapper .dataTables_paginate .paginate_button {
+        margin-right: 2px !important;
+        margin-left: 2px !important;
+      }
+
+      .icon {
+        border-radius: 5px;
+        width: 30px;
+        height: 30px;
+      }
+
+      .ln-icon-container {
+        border-radius: 5px;
+        width: 30px;
+        height: 30px;
+      }
+
+      .linkedin-icon {
+        margin: 4px;
+      }
+
+      .emp-cell {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+
+      .sparkline-wrapper {
+        padding: 0;
+        width: 60px;
+        height: 18px;
+      }
+
+      .emp-cell span {
+        font-weight: 600;
+        font-size: 0.85rem;
+      }
+
+      /* Footer Refinement */
+      footer {
+        padding: 20px 10px;
+        font-size: 0.8rem;
       }
 
       .modal-body {
-        padding-right: 10px;
-        max-height: 80vh;
-        overflow-y: auto;
+        max-height: 70vh;
+        font-size: 0.8rem;
       }
 
-      .modal-body h3 {
-        margin: 20px 0 8px 0;
-        color: var(--accent-color);
-        font-size: 0.9rem;
-        letter-spacing: 1px;
-        text-transform: uppercase;
+      .modal-content {
+        margin: 5vh auto;
+        padding: 15px;
       }
 
-      /* Close Button Styling (Material Icon Style) */
       .modal-close-btn {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        transition:
-          background-color 0.2s,
-          color 0.2s;
-        cursor: pointer;
-        border: none;
-        border-radius: 50%;
-        background: none;
-        padding: 0;
-        width: 32px;
-        height: 32px;
-        color: #2f2f2f;
-        font-weight: normal;
-        font-size: 24px;
-        line-height: 32px;
-        text-align: center;
+        color: #cfcfcf;
       }
 
       .modal-close-btn:hover,
       .modal-close-btn:focus {
-        outline: none;
-        background-color: #f5f5f5;
-        color: #121212;
+        background-color: #121212;
+        color: #f5f5f5;
       }
 
-      @keyframes modalFadeIn {
-        from {
-          transform: translateY(-20px);
-          opacity: 0;
-        }
-
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      .modal-backdrop {
-        display: none;
-        position: fixed;
+      .footer-links {
+        display: flex;
+        flex-wrap: wrap;
         justify-content: center;
-        align-items: center;
-        z-index: 2000;
-        backdrop-filter: blur(8px);
-        inset: 0;
-        background: rgba(0, 0, 0, 0.75);
-        -webkit-backdrop-filter: blur(8px);
-        opacity: 0;
-        transition: opacity 0.3s ease;
+        gap: 6px;
+        margin-top: 10px;
       }
+    }
+  </style>
+  <link rel="stylesheet" href="../static/settings.css" />
+</head>
 
-      .modal-backdrop.show {
-        display: flex;
-        opacity: 1;
-      }
-
-      /* Modal Content Box */
-      .modal-content {
-        display: flex;
-        position: relative;
-        flex-direction: column;
-        backdrop-filter: blur(16px);
-        animation: modalSlideUp 0.3s ease-out;
-        box-shadow: var(--card-shadow);
-        border: 1px solid var(--glass-border);
-        border-radius: 24px;
-        background: var(--glass-bg);
-        padding: 30px;
-        width: 90%;
-        max-width: 600px;
-        max-height: 90vh;
-        overflow: hidden;
-        color: var(--text-main);
-      }
-
-      /* Specific size for Charts */
-      .chart-modal-content {
-        background: var(--table-head-gradient);
-        max-width: 1100px;
-      }
-
-      @keyframes modalSlideUp {
-        from {
-          transform: translateY(20px);
-          opacity: 0;
-        }
-
-        to {
-          transform: translateY(0);
-          opacity: 1;
-        }
-      }
-
-      .modal-body {
-        padding-right: 10px;
-        overflow-y: auto;
-      }
-
-      #sizeDistChart,
-      #ownershipSplitChart,
-      #employmentTrendChart {
-        backface-visibility: hidden;
-        will-change: transform;
-      }
-
-      .modal-header h2 {
-        background: var(--title-gradient);
-        -webkit-background-clip: text;
-        margin-bottom: 10px;
-        -webkit-text-fill-color: transparent;
-        font-weight: 700;
-      }
-
-      .chart-container {
-        margin: 15px 0;
-        border: 1px solid var(--row-border);
-        border-radius: 16px;
-        background: rgba(0, 0, 0, 0.2);
-        padding: 20px;
-      }
-
-      footer {
-        padding: 10px 5px 0px 5px;
-        color: var(--text-muted);
-        font-size: smaller;
-        line-height: 1.8;
-        text-align: center;
-      }
-
-      .error {
-        background: #ffebee;
-        padding: 20px;
-        color: #d32f2f;
-        text-align: center;
-      }
-
-      .emp-cell {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 5px;
-        width: 95%;
-      }
-
-      .sparkline-wrapper {
-        display: flex;
-        flex-shrink: 0;
-        align-items: center;
-        padding: 0 4px;
-        width: 45px;
-      }
-
-      .sparkline {
-        /* Adds a subtle glow based on the stroke color */
-        filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.1));
-        transition: filter 0.3s ease;
-        width: 100%;
-        height: 100%;
-        overflow: visible;
-      }
-
-      .sparkline-wrapper:hover .sparkline {
-        filter: drop-shadow(0 0 3px rgba(56, 189, 248, 0.5));
-      }
-
-      .dataTables_filter input,
-      #empFilter,
-      .dataTables_length select {
-        margin: 5px 0;
-        border-radius: 10px !important;
-        height: 32px;
-        font-size: 15px !important;
-      }
-
-      /* Mobile view style*/
-      @media (max-width: 768px) {
-        body {
-          padding: 10px;
-        }
-
-        header {
-          margin-bottom: 0;
-        }
-
-        h1 {
-          margin-bottom: 10px;
-          font-size: 1.5rem;
-        }
-
-        .top-wrapper {
-          flex-direction: column;
-          /* Stack search and filters */
-          align-items: stretch;
-          gap: 10px;
-        }
-
-        /* Make Search and Filter full width on mobile */
-        .dataTables_filter,
-        .emp-filter-wrapper,
-        .dataTables_length {
-          margin: 0 !important;
-          border-radius: 8px !important;
-          width: 100%;
-          font-size: 13px !important;
-        }
-
-        input {
-          margin-left: 0 !important;
-          border-radius: 8px !important;
-          width: 100% !important;
-          font-size: 13px !important;
-        }
-
-        select {
-          border-radius: 8px !important;
-          font-size: 13px !important;
-        }
-
-        .emp-filter-wrapper {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 5px;
-        }
-
-        #empFilter {
-          width: 100%;
-        }
-
-        /* Table Adjustments */
-        .table-card {
-          border-radius: 12px;
-          padding: 10px;
-        }
-
-        table.dataTable tbody td {
-          padding: 5px !important;
-        }
-
-        th {
-          padding: 10px 2px !important;
-          font-size: smaller;
-        }
-
-        /* Hide non-essential columns on very small screens */
-        label[for="empFilter"],
-        th:nth-child(3),
-        td:nth-child(3),
-        th:nth-child(6),
-        td:nth-child(6) {
-          display: none !important;
-        }
-
-        th:nth-child(1) {
-          width: 30% !important;
-        }
-
-        .dataTables_wrapper .dataTables_paginate {
-          font-size: smaller;
-        }
-
-        .dataTables_wrapper .dataTables_paginate .paginate_button {
-          margin-right: 2px !important;
-          margin-left: 2px !important;
-        }
-
-        .icon {
-          border-radius: 5px;
-          width: 30px;
-          height: 30px;
-        }
-
-        .ln-icon-container {
-          border-radius: 5px;
-          width: 30px;
-          height: 30px;
-        }
-
-        .linkedin-icon {
-          margin: 4px;
-        }
-
-        .emp-cell {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 4px;
-        }
-
-        .sparkline-wrapper {
-          padding: 0;
-          width: 60px;
-          height: 18px;
-        }
-
-        .emp-cell span {
-          font-weight: 600;
-          font-size: 0.85rem;
-        }
-
-        /* Footer Refinement */
-        footer {
-          padding: 20px 10px;
-          font-size: 0.8rem;
-        }
-
-        .modal-body {
-          max-height: 70vh;
-          font-size: 0.8rem;
-        }
-
-        .modal-content {
-          margin: 5vh auto;
-          padding: 15px;
-        }
-
-        .modal-close-btn {
-          color: #cfcfcf;
-        }
-
-        .modal-close-btn:hover,
-        .modal-close-btn:focus {
-          background-color: #121212;
-          color: #f5f5f5;
-        }
-
-        .footer-links {
-          display: flex;
-          flex-wrap: wrap;
-          justify-content: center;
-          gap: 6px;
-          margin-top: 10px;
-        }
-      }
-    </style>
-    <link rel="stylesheet" href="../static/settings.css" />
-  </head>
-
-  <body>
-    <noscript>
-      <div class="noscript-overlay">
-        <div class="noscript-content">
-          <h2>JavaScript is Required</h2>
-          <p>We rely on JavaScript to render the interactive website.</p>
-          <p>
-            Please enable JavaScript in your browser settings and reload the
-            page.
-          </p>
-          <a href="https://www.enable-javascript.com/" target="_blank"
-            >How to enable JavaScript
-          </a>
-        </div>
+<body>
+  <noscript>
+    <div class="noscript-overlay">
+      <div class="noscript-content">
+        <h2>JavaScript is Required</h2>
+        <p>We rely on JavaScript to render the interactive website.</p>
+        <p>
+          Please enable JavaScript in your browser settings and reload the
+          page.
+        </p>
+        <a href="https://www.enable-javascript.com/" target="_blank">How to enable JavaScript
+        </a>
       </div>
-    </noscript>
-    <header role="banner">
-      <h1>Company Data</h1>
-    </header>
-    <main role="main">
-      <div class="container">
-        <div
-          id="loadingSpinner"
-          role="status"
-          aria-label="Loading data"
-          class=""
-        ></div>
-        <div class="table-card" style="opacity: 0">
-          <table id="companyTable" class="responsive nowrap">
-            <thead>
-              <tr>
-                <th>Company Name</th>
-                <th>Employees</th>
-                <th>Website</th>
-                <th class="text-center">LinkedIn</th>
-                <th class="text-center">Type</th>
-                <th>Last Updated</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
-        </div>
-      </div>
-
-      <div
-        id="disclaimerModal"
-        class="modal-backdrop"
-        aria-hidden="true"
-        role="dialog"
-      >
-        <div class="modal-content">
-          <span class="modal-close-btn" aria-label="Close modal">&times;</span>
-          <h2>Disclaimer</h2>
-          <div class="modal-body">
-            <h3>Definition</h3>
-            <p>
-              This dashboard is an independent, non-commercial research project.
-              It functions as a data aggregator, collecting publicly available
-              information from different sites and financial market data
-              providers. We make no representations or warranties regarding the
-              accuracy, completeness, timeliness, or reliability of the
-              information provided. Users are encouraged to verify all
-              information directly with the respective companies or official
-              sources.
-            </p>
-
-            <h3>Non-Affiliation & Endorsement</h3>
-            <p>
-              The names, logos, and trademarks of the companies displayed are
-              the property of their respective owners. Their appearance on this
-              platform does not imply any affiliation with, endorsement by, or
-              partnership with the creators/maintainers of this project.
-            </p>
-
-            <h3>Data Integrity & Financial Notice</h3>
-            <p>
-              All metrics, including employee counts and growth trends, are
-              approximate estimates derived from third-party snapshots.
-              Financial tickers and performance data are delayed and provided
-              solely for research purposes. This is
-              <strong>not</strong> financial or career advice.
-            </p>
-
-            <h3>Intellectual Property & Takedown Policy</h3>
-            <p>
-              We respect intellectual property rights. If you are a
-              representative of a company listed here and wish to request a data
-              correction or the removal of your company profile from this
-              research dashboard, please contact the project maintainer via the
-              <a
-                href="https://github.com/navchandar/lab/issues"
-                target="_blank"
-              >
-                GitHub repository </a
-              >.
-            </p>
-
-            <p>
-              <small
-                ><em>Use of this data is at the user's own risk.</em></small
-              >
-            </p>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <div id="chartModal" class="modal-backdrop">
-      <div class="modal-content chart-modal-content">
-        <div class="modal-header">
-          <h2>Insights</h2>
-          <button class="modal-close-btn" id="closeCharts">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div class="chart-container">
-            <canvas id="sizeDistChart"></canvas>
-          </div>
-          <div class="chart-container">
-            <canvas id="ownershipSplitChart"></canvas>
-          </div>
-          <div class="chart-container">
-            <canvas id="employmentTrendChart"></canvas>
-          </div>
-          <div id="momentumStats" class="momentum-container"></div>
-        </div>
+    </div>
+  </noscript>
+  <header role="banner">
+    <h1>Company Data</h1>
+  </header>
+  <main role="main">
+    <div class="container">
+      <div id="loadingSpinner" role="status" aria-label="Loading data" class=""></div>
+      <div id="spark-tip" class="spark-tip" hidden></div>
+      <div class="table-card" style="opacity: 0">
+        <table id="companyTable" class="responsive nowrap">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>Employees</th>
+              <th>Website</th>
+              <th class="text-center">LinkedIn</th>
+              <th class="text-center">Type</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
       </div>
     </div>
 
-    <footer role="contentinfo">
-      <p>
-        Powered by
-        <a
-          href="https://github.com/navchandar/lab/tree/main/company/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          GitHub
-        </a>
-        | Copyright &copy; <span id="year"></span> Naveenchandar
-      </p>
-      <div class="footer-links">
-        <small>
-          This work is licensed under the
-          <a
-            href="https://github.com/navchandar/lab/blob/main/LICENSE"
-            target="_blank"
-          >
-            GNU GPLv3
-          </a>
-        </small>
-        <span class="text-muted">|</span>
-        <a href="#disclaimer" id="openDisclaimerModal">Disclaimer</a>
-        <span class="text-muted">|</span>
-        <a href="#charts" id="openCharts">Display Charts</a>
+    <div id="disclaimerModal" class="modal-backdrop" aria-hidden="true" role="dialog">
+      <div class="modal-content">
+        <span class="modal-close-btn" aria-label="Close modal">&times;</span>
+        <h2>Disclaimer</h2>
+        <div class="modal-body">
+          <h3>Definition</h3>
+          <p>
+            This dashboard is an independent, non-commercial research project.
+            It functions as a data aggregator, collecting publicly available
+            information from different sites and financial market data
+            providers. We make no representations or warranties regarding the
+            accuracy, completeness, timeliness, or reliability of the
+            information provided. Users are encouraged to verify all
+            information directly with the respective companies or official
+            sources.
+          </p>
+
+          <h3>Non-Affiliation & Endorsement</h3>
+          <p>
+            The names, logos, and trademarks of the companies displayed are
+            the property of their respective owners. Their appearance on this
+            platform does not imply any affiliation with, endorsement by, or
+            partnership with the creators/maintainers of this project.
+          </p>
+
+          <h3>Data Integrity & Financial Notice</h3>
+          <p>
+            All metrics, including employee counts and growth trends, are
+            approximate estimates derived from third-party snapshots.
+            Financial tickers and performance data are delayed and provided
+            solely for research purposes. This is
+            <strong>not</strong> financial or career advice.
+          </p>
+
+          <h3>Intellectual Property & Takedown Policy</h3>
+          <p>
+            We respect intellectual property rights. If you are a
+            representative of a company listed here and wish to request a data
+            correction or the removal of your company profile from this
+            research dashboard, please contact the project maintainer via the
+            <a href="https://github.com/navchandar/lab/issues" target="_blank">
+              GitHub repository </a>.
+          </p>
+
+          <p>
+            <small><em>Use of this data is at the user's own risk.</em></small>
+          </p>
+        </div>
       </div>
-    </footer>
+    </div>
+  </main>
 
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js" defer></script>
-    <script
-      src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"
-      defer
-    ></script>
-    <!-- DataTables FixedHeader JS -->
-    <script
-      src="https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js"
-      defer
-    ></script>
-    <!-- Chart JS -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
-    <script
-      src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"
-      defer
-    ></script>
+  <div id="chartModal" class="modal-backdrop">
+    <div class="modal-content chart-modal-content">
+      <div class="modal-header">
+        <h2>Insights</h2>
+        <button class="modal-close-btn" id="closeCharts">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="chart-container">
+          <canvas id="sizeDistChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="ownershipSplitChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <canvas id="employmentTrendChart"></canvas>
+        </div>
+        <div id="momentumStats" class="momentum-container"></div>
+      </div>
+    </div>
+  </div>
 
-    <script type="module" src="script.js"></script>
-  </body>
+  <footer role="contentinfo">
+    <p>
+      Powered by
+      <a href="https://github.com/navchandar/lab/tree/main/company/" target="_blank" rel="noopener noreferrer">
+        GitHub
+      </a>
+      | Copyright &copy; <span id="year"></span> Naveenchandar
+    </p>
+    <div class="footer-links">
+      <small>
+        This work is licensed under the
+        <a href="https://github.com/navchandar/lab/blob/main/LICENSE" target="_blank">
+          GNU GPLv3
+        </a>
+      </small>
+      <span class="text-muted">|</span>
+      <a href="#disclaimer" id="openDisclaimerModal">Disclaimer</a>
+      <span class="text-muted">|</span>
+      <a href="#charts" id="openCharts">Display Charts</a>
+    </div>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js" defer></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js" defer></script>
+  <!-- DataTables FixedHeader JS -->
+  <script src="https://cdn.datatables.net/fixedheader/3.3.1/js/dataTables.fixedHeader.min.js" defer></script>
+  <!-- Chart JS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2" defer></script>
+
+  <script type="module" src="script.js"></script>
+</body>
+
 </html>

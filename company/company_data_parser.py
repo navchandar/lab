@@ -68,6 +68,17 @@ logger.info(
     f"Job Post Search: {CHECK_JOB_POSTS} | Full Data Refresh: {REFRESH_ALL} | Search Public companies: {FIND_LISTED}"
 )
 
+# --- Trend & Sparkline Config ---
+SPARK_MONTHS = 12        # 12 monthly points + today = 13 points on the sparkline
+SPARK_STEP_DAYS = 30
+# (lookback_days, json_key, display_label)
+TREND_PERIODS = [
+    (30, "Δ_30d", "MoM"),
+    (90, "Δ_90d", "3M"),
+    (180, "Δ_180d", "6M"),
+    (365, "Δ_365d", "YoY"),
+]
+STALE_KEYS = ("Δ_10d",)  
 
 GEO_IDs = [
     {"location": "India", "geoId": "102713980"},
@@ -246,9 +257,9 @@ class GrowthAnalytics:
     def log_headcount(history: dict, handle: str, count: int) -> dict:
         """Records the employee count for today in the history file."""
         if not handle or not count:
-            return
+            return history
 
-        today = now.strftime("%Y-%m-%d")
+        today = datetime.now(UTC).strftime("%Y-%m-%d")
 
         records = history.get(handle, [])
         # Update if exists for today, else append
@@ -321,51 +332,85 @@ class GrowthAnalytics:
             return None
 
     @staticmethod
-    def generate_sparkline_svg(item: dict) -> str | None:
-        """Generates a compact, theme-aware SVG sparkline string."""
-        # Get trends: [Yearly, 90d, 30d]
-        points_raw = [
-            item.get("Δ_365d"),
-            item.get("Δ_90d"),
-            item.get("Δ_30d"),
-            item.get("Δ_10d"),
-        ]
+    def _headcount_near(parsed: list, target_dt: datetime, tolerance_days: int) -> int | None:
+        """Returns the count of the record closest to target_dt within tolerance."""
+        best = None
+        for dt, c in parsed:
+            diff = abs((dt - target_dt).days)
+            if diff <= tolerance_days and (best is None or diff < best[0]):
+                best = (diff, c)
+        return best[1] if best else None
 
-        # If no data is available for all, return None
-        if not any(p is not None for p in points_raw):
+    @staticmethod
+    def get_monthly_series(company_history: list) -> list[tuple[str, int | None]]:
+        """
+        Builds a calendar series: [(date, count), ...] from 12 months ago -> latest.
+        Missing months are None (company too new, or no scrape near that date).
+        """
+        if not company_history:
+            return []
+        # Parse dates once per company (strptime is the slow part for 50k companies)
+        parsed = [(GrowthAnalytics._parse_date(r["d"]), r["c"]) for r in company_history]
+        latest_dt, latest_c = parsed[-1]
+        # Half a step, so neighbouring months never pick the same record
+        tolerance = SPARK_STEP_DAYS // 2
+
+        series = []
+        for m in range(SPARK_MONTHS, -1, -1):
+            target = latest_dt - timedelta(days=m * SPARK_STEP_DAYS)
+            count = latest_c if m == 0 else GrowthAnalytics._headcount_near(parsed, target, tolerance)
+            series.append((target.strftime("%Y-%m-%d"), count))
+        return series
+
+    @staticmethod
+    def generate_sparkline_svg(series: list, growth: dict) -> str | None:
+        """
+        Headcount sparkline (line goes up = hiring) with growth deltas embedded
+        as data-* attributes for the hover/touch tooltip.
+        """
+        valid = [(i, c) for i, (_, c) in enumerate(series) if c is not None]
+        if len(valid) < 2:
             return None
 
-        # Get the company handle to create a unique Gradient ID
-        handle = LnSearch.get_handle(item.get("linkedin", "gen")) or str(
-            random.randint(0, 999)
+        counts = [c for _, c in valid]
+        lo, hi = min(counts), max(counts)
+        # 2% floor on the range, so 1000 -> 1003 doesn't look like a big jump
+        span = max(hi - lo, hi * 0.02, 1)
+        mid = (hi + lo) / 2
+
+        def y(c: int) -> float:
+            # SVG y=0 is the top; map to 2..18 inside a 20px-high viewBox
+            return round(10 - ((c - mid) / span) * 16, 2)
+
+        x_step = 10
+        width = (len(series) - 1) * x_step
+        # Fixed x per month, so gaps stay in the correct calendar position
+        coords = [f"{i * x_step},{y(c)}" for i, c in valid]
+        path = "M " + " L ".join(coords)
+        last_x, last_y = coords[-1].split(",")
+
+        first_c, last_c = counts[0], counts[-1]
+        color = "#22c55e" if last_c > first_c else "#ef4444" if last_c < first_c else "#94a3b8"
+
+        def attr(label: str) -> str:
+            v = growth.get(label)
+            return "" if v is None else str(v)
+
+        since = series[valid[0][0]][0]
+        aria = " · ".join(
+            f"{lbl} {growth[lbl]:+.2f}%" for _, _, lbl in TREND_PERIODS if growth.get(lbl) is not None
+        ) or "No growth data"
+
+        return (
+            f"<svg class='sparkline' viewBox='0 0 {width} 20' preserveAspectRatio='none' "
+            f"xmlns='http://www.w3.org/2000/svg' role='img' aria-label='{aria}' "
+            f"data-mom='{attr('MoM')}' data-m3='{attr('3M')}' data-m6='{attr('6M')}' "
+            f"data-yoy='{attr('YoY')}' data-now='{last_c}' data-since='{since}'>"
+            f"<path d='{path}' fill='none' stroke='{color}' stroke-width='2' "
+            f"stroke-linecap='round' stroke-linejoin='round' vector-effect='non-scaling-stroke'/>"
+            f"<circle cx='{last_x}' cy='{last_y}' r='1.8' fill='{color}'/></svg>"
         )
-        grad_id = f"grad-{handle}"
-        points = [p if p is not None else 0.0 for p in points_raw]
 
-        def normalize(val) -> float:
-            # Use float to work with rounding differences
-            return max(0, min(20, 10 - (val / 5)))
-
-        # Dynamic Width: 20 units per segment
-        x_step = 20
-        svg_width = (len(points) - 1) * x_step
-
-        coords = [f"{i * x_step},{normalize(p)}" for i, p in enumerate(points)]
-        path_data = "M " + " L ".join(coords)
-
-        # Determine colors for each stop in the gradient
-        # Left (365d), Middle (90d), Right (30d)
-        colors = ["#22c55e" if (p or 0) >= 0 else "#ef4444" for p in points]
-        # Generate evenly spaced gradient stops automatically
-        stops = []
-        for i, color in enumerate(colors):
-            pct = int((i / (len(points) - 1)) * 100)
-            stops.append(f"<stop offset='{pct}%' stop-color='{color}' />")
-        stops_str = "\n".join(stops)
-
-        return f"""<svg class='sparkline' viewBox='0 0 {svg_width} 20' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'>
-<defs><linearGradient id='{grad_id}' x1='0%' y1='0%' x2='100%' y2='0%'>{stops_str}</linearGradient></defs>
-<path d='{path_data}' fill='none' stroke='url(#{grad_id})' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/></svg>"""
 
     @staticmethod
     def aggregate_global_history() -> None:
@@ -1492,7 +1537,7 @@ class DataCoordinator:
 
     @staticmethod
     def update_all_trends() -> None:
-        """Calculates employee count trends and sparklines for ALL companies."""
+        """Calculates growth deltas and headcount sparklines for ALL companies."""
         logger.info("Calculating historical trends")
 
         if not DATA_FILE.exists() or not HISTORY_FILE.exists():
@@ -1507,27 +1552,28 @@ class DataCoordinator:
             if not handle:
                 continue
 
-            # Recalculate all trends
-            for period, key in [
-                (10, "Δ_10d"),
-                (30, "Δ_30d"),
-                (90, "Δ_90d"),
-                (365, "Δ_365d"),
-            ]:
-                val = GrowthAnalytics.get_trend(history, handle, period)
+            # Remove deprecated keys from older runs
+            for k in STALE_KEYS:
+                company.pop(k, None)
+
+            # Growth deltas: MoM, 3M, 6M, YoY
+            growth = {}
+            for days, key, label in TREND_PERIODS:
+                val = GrowthAnalytics.get_trend(history, handle, days)
                 if val is not None:
                     company[key] = val
+                    growth[label] = val
                 else:
-                    company.pop(key, None)  # Clear out stale trends
+                    company.pop(key, None)
 
-            # Update sparkline
-            spark = GrowthAnalytics.generate_sparkline_svg(company)
+            # Calendar headcount sparkline with the deltas embedded for the tooltip
+            series = GrowthAnalytics.get_monthly_series(history.get(handle, []))
+            spark = GrowthAnalytics.generate_sparkline_svg(series, growth)
             if spark:
                 company["sparkline"] = spark
             else:
                 company.pop("sparkline", None)
 
-        # Save back to disk once
         with open(DATA_FILE, "w") as f:
             json.dump(companies, f, indent=2)
         logger.info("Global trend recalculation complete!")
