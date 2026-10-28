@@ -1,4 +1,4 @@
-// version=v2026.10.23
+// version=v2026.10.28
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel",".ruff_cache","ruff_cache"];
 
