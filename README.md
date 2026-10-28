@@ -40,13 +40,13 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | 💼 <a href="https://navchandar.github.io/lab/jobs/" target="_blank">**Job Listings**</a> | Identify latest job posts and classify them to be sortable and searchable | 🟩🟩🟩🟩🟩 100% |
 | 🏭 <a href="https://navchandar.github.io/lab/company/" target="_blank">**Company Data**</a> | Identify top companies hiring in India and classify with employee count | 🟩🟩🟩🟩🟩 100% |
 | 🗺️ <a href="https://navchandar.github.io/lab/serviceability/" target="_blank">**Serviceability Map**</a> | Identify and visualize the delivery coverage for major platforms using an interactive Map | 🟩🟩🟩🟩⬜ 80% |
-| 🏥 <a href="https://navchandar.github.io/lab/hospitals/" target="_blank">**Hospitals Network**</a> | Identify and visualize the in-network and excluded hospitals using an interactive Map | 🟩🟩⬜⬜⬜ 40% |
+| 🏥 <a href="https://navchandar.github.io/lab/hospitals/" target="_blank">**Hospitals Network**</a> | Identify and visualize the in-network and excluded hospitals usi  ng an interactive Map | 🟩🟩⬜⬜⬜ 40% |
 | ⚡️ <a href="https://navchandar.github.io/lab/pm-e-drive/" target="_blank">**PM E-Drive EV Comparison**</a> | Compare EV models from different OEMs that are actively incentivized by Indian Govt. | 🟩🟩🟩🟩🟩 100% |
 | 𝜟 <a href="https://navchandar.github.io/lab/diff/" target="_blank">**URL Diff Tool**</a> | Data comparison tool that shows the differences between two websites or files with URLs. | 🟩🟩🟩🟩🟩 100% |
 | 🔰 <a href="https://navchandar.github.io/lab/polyforge/" target="_blank">**PolyForge CSS Clip**</a> | Web utility to convert complex geometric shapes into CSS clip-path polygon data. | 🟩🟩🟩🟩🟩 100%  |
 | ⏲️ <a href="https://navchandar.github.io/lab/whistle-counter/" target="_blank">**Whistle Counter**</a> | Web utility to detect whistles using Local Audio processing. | 🟩🟩🟩🟩⬜ 80%  |
 | 🍱 <a href="https://navchandar.github.io/lab/snacks/" target="_blank">**Snack a Day**</a> | Simple daily snack tracker for kids. | 🟩🟩🟩🟩🟩 100%  |
-| 🎬 <a href="https://navchandar.github.io/lab/video-convertor/" target="_blank">**Video Convertor**</a> | Local Video convertor using FFMPEG WASM | 🟩🟩🟩⬜⬜ 60%  |
+| 🎬 <a href="https://navchandar.github.io/lab/video-convertor/" target="_blank">**Video Convertor**</a> | Local Video convertor using FFMPEG WASM | 🟩🟩🟩🟩⬜ 80%  |
 
 
 
@@ -61,6 +61,8 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 
 [![Generate Maps](https://github.com/navchandar/lab/actions/workflows/generate-maps.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/generate-maps.yml)
 [![Fetch EV Data](https://github.com/navchandar/lab/actions/workflows/fetch-ev-data.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/fetch-ev-data.yml)
+
+[![Generate Previews](https://github.com/navchandar/lab/actions/workflows/generate-previews.yml/badge.svg)](https://github.com/navchandar/lab/actions/workflows/generate-previews.yml)
 
 [Project Gallery Preview](https://navchandar.github.io/lab/config/gallery)
 
