@@ -1,78 +1,45 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
 
-    <title>Hospital Network Map - India</title>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
-    <meta
-      name="description"
-      content="Interactive map to verify Health Insurance Network Hospitals and Excluded (Blacklisted) facilities in India. Avoid claim rejection by checking HDFC Ergo, ICICI, and other lists before admission."
-    />
+  <title>Hospital Network Map - India</title>
 
-    <meta
-      name="keywords"
-      content="excluded hospitals list, health insurance blacklist, cashless hospital locator, network hospitals india, HDFC Ergo excluded hospitals, ICICI Lombard network, insurance claim rejection, IRDAI hospital list, medical insurance coverage map, GIPSA PPN network, hospital pincode checker"
-    />
+  <meta name="description"
+    content="Interactive map to verify Health Insurance Network Hospitals and Excluded (Blacklisted) facilities in India. Avoid claim rejection by checking HDFC Ergo, ICICI, and other lists before admission." />
 
-    <meta name="robots" content="index, follow" />
-    <meta name="author" content="Naveenchandar">
-    <meta property="article:author" content="Naveenchandar">
+  <meta name="keywords"
+    content="excluded hospitals list, health insurance blacklist, cashless hospital locator, network hospitals india, HDFC Ergo excluded hospitals, ICICI Lombard network, insurance claim rejection, IRDAI hospital list, medical insurance coverage map, GIPSA PPN network, hospital pincode checker" />
 
-    <link rel="canonical" href="https://navchandar.github.io/lab/hospitals/" />
+  <meta name="robots" content="index, follow" />
+  <meta name="author" content="Naveenchandar">
+  <meta property="article:author" content="Naveenchandar">
 
-    <link
-      rel="shortcut icon"
-      href="data:image/png;base64,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"
-    />
+  <link rel="canonical" href="https://navchandar.github.io/lab/hospitals/" />
 
-    <meta property="og:type" content="website" />
-    <meta
-      property="og:url"
-      content="https://navchandar.github.io/lab/hospitals/"
-    />
-    <meta
-      name="image"
-      property="og:image"
-      content="https://navchandar.github.io/lab/hospitals/preview.png"
-    />
+  <link rel="shortcut icon"
+    href="data:image/png;base64,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" />
 
-    <meta property="og:title" content="Hospital Network Map - India" />
-    <meta
-      property="og:description"
-      content="Don't get your claim rejected. Instantly visualize In-Network (Cashless) and Excluded hospitals near you on an interactive map."
-    />
-    <meta
-      property="og:image"
-      content="https://navchandar.github.io/lab/hospitals/preview.jpg"
-    />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://navchandar.github.io/lab/hospitals/" />
+  <meta name="image" property="og:image" content="https://navchandar.github.io/lab/hospitals/preview.png" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Hospital Network Map - India" />
-    <meta
-      name="twitter:description"
-      content="Visual tool to find Cashless hospitals and avoid Excluded (Blacklisted) medical centers for health insurance claims in India."
-    />
-    <meta
-      name="twitter:image"
-      content="https://navchandar.github.io/lab/hospitals/preview.jpg"
-    />
+  <meta property="og:title" content="Hospital Network Map - India" />
+  <meta property="og:description"
+    content="Don't get your claim rejected. Instantly visualize In-Network (Cashless) and Excluded hospitals near you on an interactive map." />
+  <meta property="og:image" content="https://navchandar.github.io/lab/hospitals/preview.jpg" />
 
-    <meta
-      name="theme-color"
-      content="#2c3e50"
-      media="(prefers-color-scheme: light)"
-    />
-    <meta
-      name="theme-color"
-      content="#121212"
-      media="(prefers-color-scheme: dark)"
-    />
-    <script type="application/ld+json">
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Hospital Network Map - India" />
+  <meta name="twitter:description"
+    content="Visual tool to find Cashless hospitals and avoid Excluded (Blacklisted) medical centers for health insurance claims in India." />
+  <meta name="twitter:image" content="https://navchandar.github.io/lab/hospitals/preview.jpg" />
+
+  <meta name="theme-color" content="#2c3e50" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#121212" media="(prefers-color-scheme: dark)" />
+  <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
@@ -100,504 +67,542 @@
       }
     </script>
 
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css"
-    />
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css"
-    />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-    <style>
-      /* --- THEME VARIABLES --- */
+  <style>
+    /* --- THEME VARIABLES --- */
+    :root {
+      /* Modern Slate Palette (Light) */
+      --bg-color: #ffffff;
+      --sidebar-bg: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #4a5769;
+      --border-color: #e2e8f0;
+      --hover-bg: #d7ebff;
+      --active-bg: #eff6ff;
+      --primary-color: #0f172a;
+      --accent-color: #3b82f6;
+      --danger-color: #ef4444;
+      --success-color: #10b981;
+      --modal-overlay: rgba(15, 23, 42, 0.6);
+      --modal-bg: #ffffff;
+      --input-bg: #f8fafc;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md:
+        0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --radius-sm: 6px;
+      --radius-md: 8px;
+
+      /* Popup Vars */
+      --popup-bg: #ffffff;
+      --popup-text: #1e293b;
+
+      --header-bg: linear-gradient(135deg, #11274b 0%, #127bd3 100%);
+      --header-text: #ffffff;
+      --header-border: 1px solid var(--border-color);
+
+      /* LIGHT MODE CLUSTERS */
+      /* Small (<10): Teal/Cyan - Distinct from standard blue links/marker*/
+      --cluster-bg-small: #0891b2;
+      /* Cyan-600 */
+      /* Medium (10-100): Amber/Orange - high visibility */
+      --cluster-bg-medium: #f59e0b;
+      /* Amber-500 */
+      /* Large (>100): Red/Rose. Slightly desaturated to avoid eye strain */
+      --cluster-bg-large: #e11d48;
+      /* Rose-600 */
+
+      --cluster-text: #ffffff;
+      --cluster-border: rgba(255, 255, 255, 0.7);
+      /* White ring */
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 3px;
+      padding-right: 10px;
+      max-height: 75px;
+      overflow-y: auto;
+    }
+
+    .checkbox-item:has(input[type="checkbox"]:checked) {
+      color: var(--popup-text);
+    }
+
+    .leaflet-tile-pane {
+      filter: grayscale(100%) opacity(0.9);
+    }
+
+    @media (prefers-color-scheme: dark) {
       :root {
-        /* Modern Slate Palette (Light) */
-        --bg-color: #ffffff;
-        --sidebar-bg: #ffffff;
-        --text-primary: #1e293b;
-        --text-secondary: #4a5769;
-        --border-color: #e2e8f0;
-        --hover-bg: #d7ebff;
-        --active-bg: #eff6ff;
-        --primary-color: #0f172a;
-        --accent-color: #3b82f6;
-        --danger-color: #ef4444;
-        --success-color: #10b981;
-        --modal-overlay: rgba(15, 23, 42, 0.6);
-        --modal-bg: #ffffff;
-        --input-bg: #f8fafc;
-        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        --shadow-md:
-          0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        --radius-sm: 6px;
-        --radius-md: 8px;
+        /* Modern Slate Palette (Dark) */
+        --bg-color: #202124;
+        --sidebar-bg: #292a2d;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --border-color: #334155;
+        --hover-bg: #334155;
+        --active-bg: #1e3a8a;
+        --primary-color: #020617;
+        --accent-color: #60a5fa;
+        --danger-color: #f87171;
+        --success-color: #34d399;
+        --modal-overlay: rgba(0, 0, 0, 0.75);
+        --modal-bg: #292a2d;
+        --input-bg: #0f172a;
 
-        /* Popup Vars */
-        --popup-bg: #ffffff;
-        --popup-text: #1e293b;
+        /* Dark Popup Vars */
+        --popup-bg: #1e293b;
+        --popup-text: #f8fafc;
 
-        --header-bg: linear-gradient(135deg, #11274b 0%, #127bd3 100%);
-        --header-text: #ffffff;
-        --header-border: 1px solid var(--border-color);
+        --header-bg: linear-gradient(135deg, #030509 0%, #002f7c 100%);
+        --header-text: #dbdbdb;
+        --header-border: none;
 
-        /* LIGHT MODE CLUSTERS */
-        /* Small (<10): Teal/Cyan - Distinct from standard blue links/marker*/
-        --cluster-bg-small: #0891b2; /* Cyan-600 */
-        /* Medium (10-100): Amber/Orange - high visibility */
-        --cluster-bg-medium: #f59e0b; /* Amber-500 */
-        /* Large (>100): Red/Rose. Slightly desaturated to avoid eye strain */
-        --cluster-bg-large: #e11d48; /* Rose-600 */
+        /* DARK MODE CLUSTERS */
+        /* Small: A brighter Cyan/Teal  */
+        --cluster-bg-small: #22d3ee;
+        /* Cyan-400 */
+        /* Medium: Bright Yellow/Amber */
+        --cluster-bg-medium: #fbbf24;
+        /* Amber-400 */
+        /* Large: Bright Pink/Rose. */
+        --cluster-bg-large: #fb7185;
+        /* Rose-400 */
 
-        --cluster-text: #ffffff;
-        --cluster-border: rgba(255, 255, 255, 0.7); /* White ring */
+        --cluster-text: #0f172a;
+        /* Dark text often reads better on neon brights */
+        --cluster-border: rgba(30, 41, 59, 0.9);
+        /* Dark ring matches map */
       }
 
-      .checkbox-group {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-        gap: 3px;
-        padding-right: 10px;
-        max-height: 75px;
-        overflow-y: auto;
+      .leaflet-tile-pane {
+        filter: grayscale(100%) brightness(70%) contrast(120%);
       }
 
-      .checkbox-item:has(input[type="checkbox"]:checked) {
-        color: var(--popup-text);
-      }
+    }
+  </style>
 
-      @media (prefers-color-scheme: dark) {
-        :root {
-          /* Modern Slate Palette (Dark) */
-          --bg-color: #202124;
-          --sidebar-bg: #292a2d;
-          --text-primary: #f8fafc;
-          --text-secondary: #94a3b8;
-          --border-color: #334155;
-          --hover-bg: #334155;
-          --active-bg: #1e3a8a;
-          --primary-color: #020617;
-          --accent-color: #60a5fa;
-          --danger-color: #f87171;
-          --success-color: #34d399;
-          --modal-overlay: rgba(0, 0, 0, 0.75);
-          --modal-bg: #292a2d;
-          --input-bg: #0f172a;
+  <link rel="stylesheet" href="style.css" />
+</head>
 
-          /* Dark Popup Vars */
-          --popup-bg: #1e293b;
-          --popup-text: #f8fafc;
+<body>
+  <noscript>
+    <div class="noscript-overlay">
+      <div class="noscript-content">
+        <h2>JavaScript is Required</h2>
+        <p>We rely on JavaScript to render the interactive website.</p>
+        <p>
+          Please enable JavaScript in your browser settings and reload the
+          page.
+        </p>
+        <a href="https://www.enable-javascript.com/" target="_blank">How to enable JavaScript
+        </a>
+      </div>
+    </div>
+  </noscript>
 
-          --header-bg: linear-gradient(135deg, #030509 0%, #002f7c 100%);
-          --header-text: #dbdbdb;
-          --header-border: none;
+  <div id="toast"></div>
 
-          /* DARK MODE CLUSTERS */
-          /* Small: A brighter Cyan/Teal  */
-          --cluster-bg-small: #22d3ee; /* Cyan-400 */
-          /* Medium: Bright Yellow/Amber */
-          --cluster-bg-medium: #fbbf24; /* Amber-400 */
-          /* Large: Bright Pink/Rose. */
-          --cluster-bg-large: #fb7185; /* Rose-400 */
-
-          --cluster-text: #0f172a; /* Dark text often reads better on neon brights */
-          --cluster-border: rgba(30, 41, 59, 0.9); /* Dark ring matches map */
-        }
-      }
-    </style>
-
-    <link rel="stylesheet" href="style.css" />
-  </head>
-
-  <body>
-    <noscript>
-      <div class="noscript-overlay">
-        <div class="noscript-content">
-          <h2>JavaScript is Required</h2>
-          <p>We rely on JavaScript to render the interactive website.</p>
-          <p>
-            Please enable JavaScript in your browser settings and reload the
-            page.
-          </p>
-          <a href="https://www.enable-javascript.com/" target="_blank"
-            >How to enable JavaScript
-          </a>
+  <dialog id="genericModal" class="native-modal">
+    <div class="modal-wrapper">
+      <span class="modal-close" onclick="closeModal()">&times;</span>
+      <h2 class="modal-title" id="modalTitle">Title</h2>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </dialog>
+  <main role="main">
+    <div class="container">
+      <div class="sidebar">
+        <div class="header">
+          <h1>Hospital Network Map</h1>
+          <p>Know where to go and where not to!</p>
         </div>
-      </div>
-    </noscript>
 
-    <div id="toast"></div>
+        <div class="dataset-toggle">
+          <button class="toggle-btn active" id="btn-network" onclick="loadDataset('network')"
+            data-tooltip="View hospitals in-network of Insurance providers, where Cashless Treatment is eligible">
+            In-Network
+          </button>
+          <button class="toggle-btn" id="btn-excluded" onclick="loadDataset('excluded')"
+            data-tooltip="View hospitals that are excluded/blacklisted by Insurance providers and disqualified from claims">
+            Excluded
+          </button>
+        </div>
 
-    <dialog id="genericModal" class="native-modal">
-      <div class="modal-wrapper">
-        <span class="modal-close" onclick="closeModal()">&times;</span>
-        <h2 class="modal-title" id="modalTitle">Title</h2>
-        <div class="modal-body" id="modalBody"></div>
-      </div>
-    </dialog>
-    <main role="main">
-      <div class="container">
-        <div class="sidebar">
-          <div class="header">
-            <h1>Hospital Network Map</h1>
-            <p>Know where to go and where not to!</p>
+        <div class="controls">
+          <div class="search-wrapper">
+            <input type="search" id="searchInput" class="search-box" placeholder="Search hospital name, city..."
+              autocomplete="off" />
+            <span class="search-clear" id="searchClear">&times;</span>
           </div>
 
-          <div class="dataset-toggle">
-            <button
-              class="toggle-btn active"
-              id="btn-network"
-              onclick="loadDataset('network')"
-              data-tooltip="View hospitals in-network of Insurance providers, where Cashless Treatment is eligible"
-            >
-              In-Network
-            </button>
-            <button
-              class="toggle-btn"
-              id="btn-excluded"
-              onclick="loadDataset('excluded')"
-              data-tooltip="View hospitals that are excluded/blacklisted by Insurance providers and disqualified from claims"
-            >
-              Excluded
-            </button>
-          </div>
-
-          <div class="controls">
-            <div class="search-wrapper">
-              <input
-                type="search"
-                id="searchInput"
-                class="search-box"
-                placeholder="Search hospital name, city..."
-                autocomplete="off"
-              />
-              <span class="search-clear" id="searchClear">&times;</span>
-            </div>
-
-            <span class="filter-label">Filter by Insurance Company:</span>
-            <div class="checkbox-group" id="insurerFilters">
-              <span class="filter-loading">Loading filters...</span>
-            </div>
-          </div>
-
-          <div class="results-info">
-            <span id="resultsCount">Initializing...</span>
-          </div>
-
-          <ul class="hospital-list" id="hospitalList"></ul>
-
-          <div class="sidebar-footer">
-            <span class="footer-link" onclick="openSourcesModal()">
-              Sources
-            </span>
-            <span class="footer-link" onclick="openDisclaimerModal()">
-              Disclaimer
-            </span>
+          <span class="filter-label">Filter by Insurance Company:</span>
+          <div class="checkbox-group" id="insurerFilters">
+            <span class="filter-loading">Loading filters...</span>
           </div>
         </div>
 
-        <div id="map">
-          <div id="map-loader">
-            <div class="spinner"></div>
-            <span
-              id="map-loader-text"
-              style="font-size: 0.7rem; font-weight: 600"
-            >
-              Updating...
-            </span>
-          </div>
+        <div class="results-info">
+          <span id="resultsCount">Initializing...</span>
+        </div>
+
+        <ul class="hospital-list" id="hospitalList"></ul>
+
+        <div class="sidebar-footer">
+          <span class="footer-link" onclick="openSourcesModal()">
+            Sources
+          </span>
+          <span class="footer-link" onclick="openDisclaimerModal()">
+            Disclaimer
+          </span>
         </div>
       </div>
-    </main>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+      <div id="map">
+        <div id="map-loader">
+          <div class="spinner"></div>
+          <span id="map-loader-text" style="font-size: 0.7rem; font-weight: 600">
+            Updating...
+          </span>
+        </div>
+      </div>
+    </div>
+  </main>
 
-    <script>
-      /**
-       * MODULE: CONFIGURATION
-       * Centralized configuration for endpoints and map settings.
-       */
-      const CONFIG = {
-        network: {
-          url: "data/innetwork.json",
-          color: "#2e7d32",
-          label: "In-Network",
-        },
-        excluded: {
-          url: "data/excluded.json",
-          color: "#d32f2f",
-          label: "Excluded",
-        },
-      };
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
-      // --- Start fetching primary data immediately ---
-      const initialNetworkFetch = fetch(CONFIG.network.url)
-        .then((response) => {
-          if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-          return response.json();
-        })
-        .catch((err) => {
-          console.error("Pre-fetch failed:", err);
-          return null; // Return null so we can handle it gracefully in loadDataset
-        });
+  <script>
+    /**
+     * MODULE: CONFIGURATION
+     * Centralized configuration for endpoints and map settings.
+     */
+    const CONFIG = {
+      network: {
+        url: "data/innetwork.json",
+        color: "#2e7d32",
+        label: "In-Network",
+      },
+      excluded: {
+        url: "data/excluded.json",
+        color: "#d32f2f",
+        label: "Excluded",
+      },
+    };
 
-      const SOURCES_URL = "data/sources.json";
-
-      // preferCanvas -> Reduces memory usage by not creating DOM nodes for map paths
-      const MAP_DEFAULTS = {
-        center: [22.5937, 78.9629],
-        zoom: 5,
-        options: {
-          zoomControl: false,
-          preferCanvas: true,
-        },
-      };
-
-      /**
-       * UTILITY: DEBOUNCE
-       * Prevents the search filter from running on every single keystroke.
-       * It waits until the user stops typing for few milliseconds.
-       */
-      const debounce = (func, wait) => {
-        let timeout;
-        return function executedFunction(...args) {
-          const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-          };
-          clearTimeout(timeout);
-          timeout = setTimeout(later, wait);
-        };
-      };
-
-      /**
-       * MODULE: STATE MANAGEMENT
-       * Global state variables.
-       */
-      const AppState = {
-        map: null,
-        markersClusterGroup: null,
-        tileLayer: null,
-        currentType: "network",
-        currentDataset: [], // Raw data from JSON
-        currentFilteredData: [], // Data after search/checkbox filters
-
-        // Lazy Loading State
-        visibleItems: [], // Items currently visible in map bounds
-        renderedCount: 0, // How many currently shown in sidebar
-        batchSize: 30, // render 30 at a time for speed
-
-        markerMap: {}, // Quick lookup for markers by ID
-        clickedMarker: null, // Track sticky tooltip state
-        _sourcesDataCache: null, // Cache for sources modal
-      };
-
-      // --- INIT ---
-      document.addEventListener("DOMContentLoaded", () => {
-        // 1. Initialize Map (Synchronous)
-        MapManager.init();
-
-        // 2. Setup UI Events (Search, Toggles, Modals)
-        UIManager.setupEventListeners();
-
-        // 3. Load Data (Will use the pre-fetched promise if available)
-        DataManager.loadDataset("network");
+    // --- Start fetching primary data immediately ---
+    const initialNetworkFetch = fetch(CONFIG.network.url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+        return response.json();
+      })
+      .catch((err) => {
+        console.error("Pre-fetch failed:", err);
+        return null; // Return null so we can handle it gracefully in loadDataset
       });
 
-      // --- SVG ICON DEFINITIONS ---
-      const ICONS = {
-        // HIGH: Hospital Building
-        HIGH: `
+    const SOURCES_URL = "data/sources.json";
+
+    // preferCanvas -> Reduces memory usage by not creating DOM nodes for map paths
+    const MAP_DEFAULTS = {
+      center: [22.5937, 78.9629],
+      zoom: 5,
+      options: {
+        zoomControl: false,
+        preferCanvas: true,
+      },
+    };
+
+    /**
+     * UTILITY: DEBOUNCE
+     * Prevents the search filter from running on every single keystroke.
+     * It waits until the user stops typing for few milliseconds.
+     */
+    const debounce = (func, wait) => {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    };
+
+    /**
+     * MODULE: STATE MANAGEMENT
+     * Global state variables.
+     */
+    const AppState = {
+      map: null,
+      markersClusterGroup: null,
+      tileLayer: null,
+      currentType: "network",
+      currentDataset: [], // Raw data from JSON
+      currentFilteredData: [], // Data after search/checkbox filters
+
+      // Lazy Loading State
+      visibleItems: [], // Items currently visible in map bounds
+      renderedCount: 0, // How many currently shown in sidebar
+      batchSize: 30, // render 30 at a time for speed
+
+      markerMap: {}, // Quick lookup for markers by ID
+      clickedMarker: null, // Track sticky tooltip state
+      _sourcesDataCache: null, // Cache for sources modal
+    };
+
+    // --- INIT ---
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. Initialize Map (Synchronous)
+      MapManager.init();
+
+      // 2. Setup UI Events (Search, Toggles, Modals)
+      UIManager.setupEventListeners();
+
+      // 3. Load Data (Will use the pre-fetched promise if available)
+      DataManager.loadDataset("network");
+    });
+
+    // --- SVG ICON DEFINITIONS ---
+    const ICONS = {
+      // HIGH: Hospital Building
+      HIGH: `
         <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path d="M21.5,6.5h-3v-4c0-0.6-0.4-1-1-1h-11c-0.6,0-1,0.4-1,1v4h-3c-0.6,0-1,0.4-1,1v14c0,0.6,0.4,1,1,1h19c0.6,0,1-0.4,1-1v-14C22.5,6.9,22.1,6.5,21.5,6.5z M7.5,18.5h-1c-0.6,0-1-0.4-1-1s0.4-1,1-1h1c0.6,0,1,0.4,1,1S8.1,18.5,7.5,18.5z M7.5,14.5h-1c-0.6,0-1-0.4-1-1s0.4-1,1-1h1c0.6,0,1,0.4,1,1S8.1,14.5,7.5,14.5z M12.5,18.5h-1c-0.6,0-1-0.4-1-1s0.4-1,1-1h1c0.6,0,1,0.4,1,1S13.1,18.5,12.5,18.5z M12.5,14.5h-1c-0.6,0-1-0.4-1-1s0.4-1,1-1h1c0.6,0,1,0.4,1,1S13.1,14.5,12.5,14.5z M13.5,9H13v0.5c0,0.6-0.4,1-1,1s-1-0.4-1-1V9h-0.5c-0.6,0-1-0.4-1-1s0.4-1,1-1H11V6.5c0-0.6,0.4-1,1-1s1,0.4,1,1V7h0.5c0.6,0,1,0.4,1,1S14.1,9,13.5,9z M17.5,18.5h-1c-0.6,0-1-0.4-1-1s0.4-1,1-1h1c0.6,0,1,0.4,1,1S18.1,18.5,17.5,18.5z M17.5,14.5h-1c-0.6,0-1-0.4-1-1s0.4-1,1-1h1c0.6,0,1,0.4,1,1S18.1,14.5,17.5,14.5z"/>
         </svg>`,
 
-        // MEDIUM: Map Pin
-        MEDIUM: `
+      // MEDIUM: Map Pin
+      MEDIUM: `
         <svg viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
           <path clip-rule="evenodd" d="M2 6V6.29266C2 7.72154 2.4863 9.10788 3.37892 10.2236L8 16L12.6211 10.2236C13.5137 9.10788 14 7.72154 14 6.29266V6C14 2.68629 11.3137 0 8 0C4.68629 0 2 2.68629 2 6ZM8 8C9.10457 8 10 7.10457 10 6C10 4.89543 9.10457 4 8 4C6.89543 4 6 4.89543 6 6C6 7.10457 6.89543 8 8 8Z" fill-rule="evenodd"/>
         </svg>`,
 
-        // LOW: Location Base
-        LOW: `
+      // LOW: Location Base
+      LOW: `
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 16.016c1.245.529 2 1.223 2 1.984 0 1.657-3.582 3-8 3s-8-1.343-8-3c0-.76.755-1.456 2-1.984"/>
           <path fill="currentColor" fill-rule="evenodd" d="M11.262 17.675 12 17l-.738.675zm1.476 0 .005-.005.012-.014.045-.05.166-.186a38.19 38.19 0 0 0 2.348-2.957c.642-.9 1.3-1.92 1.801-2.933.49-.99.885-2.079.885-3.086C18 4.871 15.382 2 12 2S6 4.87 6 8.444c0 1.007.395 2.096.885 3.086.501 1.013 1.16 2.033 1.8 2.933a38.153 38.153 0 0 0 2.515 3.143l.045.05.012.014.005.005a1 1 0 0 0 1.476 0zM12 17l.738.674L12 17zm0-11a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" clip-rule="evenodd"/>
         </svg>`,
-      };
+    };
 
-      /**
-       * MODULE: MAP MANAGER
-       * Handles Leaflet initialization, layers, and interactions.
-       */
-      const MapManager = {
-        init: () => {
-          // Detect Dark Mode
-          const isDarkMode =
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const PROVIDERS = [
+      {
+        name: "OpenStreetMap",
+        url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        options: {
+          attribution: "© OpenStreetMap contributors",
+          maxZoom: 19
+        }
+      },
+      {
+        name: "Esri World Gray",
+        url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        options: {
+          attribution: "Tiles © Esri",
+          maxNativeZoom: 16,
+          maxZoom: 19
+        }
+      }
+    ];
 
-          // Map Tiles Setup
-          const lightTiles =
-            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
-          const darkTiles =
-            "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
-          const tilesUrl = isDarkMode ? darkTiles : lightTiles;
+    /**
+     * MODULE: MAP MANAGER
+     * Handles Leaflet initialization, layers, and interactions.
+     */
+    const MapManager = {
+      init: () => {
+        // Detect Dark Mode
+        const isDarkMode =
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches;
 
-          // Map Instantiation
-          AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
-            MAP_DEFAULTS.center,
-            MAP_DEFAULTS.zoom,
-          );
-          L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
+        // Map Tiles Setup
+        let currentProvider = 0;
+        let errorCount = 0;
+        const ERROR_THRESHOLD = 10;
 
-          // Custom Reset button Control
-          const ResetControl = L.Control.extend({
-            options: { position: "bottomright" },
-            onAdd: function (map) {
-              const container = L.DomUtil.create(
-                "div",
-                "leaflet-bar leaflet-control",
-              );
-              const btn = L.DomUtil.create(
-                "a",
-                "leaflet-control-reset-btn",
-                container,
-              );
-              btn.href = "#";
-              btn.title = "Reset View";
-              btn.innerHTML = "⟲";
-              btn.onclick = (e) => {
-                L.DomEvent.preventDefault(e);
-                MapManager.resetView();
-              };
-              return container;
-            },
-          });
-          AppState.map.addControl(new ResetControl());
+        function loadProvider(index) {
+          const provider = PROVIDERS[index];
 
-          // Layer Setup
-          AppState.tileLayer = L.tileLayer(tilesUrl, {
-            attribution: "&copy; OpenStreetMap &copy; CARTO",
-            subdomains: "abcd",
-            maxZoom: 19,
-          }).addTo(AppState.map);
+          if (AppState.tileLayer) {
+            AppState.map.removeLayer(AppState.tileLayer);
+          }
 
-          // Marker Cluster Configuration
-          AppState.markersClusterGroup = L.markerClusterGroup({
-            // Custom Icon Function for Modern styling
-            iconCreateFunction: function (cluster) {
-              const count = cluster.getChildCount();
-              // Determine size class based on count
-              let sizeClass = "cluster-small"; // Small (<10)
-              if (count >= 10) sizeClass = "cluster-medium";
-              if (count > 100) sizeClass = "cluster-large";
+          AppState.tileLayer = L.tileLayer(
+            provider.url,
+            provider.options,
+          ).addTo(AppState.map);
 
-              return L.divIcon({
-                html: `<span>${count}</span>`,
-                className: `modern-cluster ${sizeClass}`,
-                iconSize: L.point(40, 40), // Large touch target
-              });
-            },
-            // OPTIMIZATION 3: Cluster Performance Settings
-            chunkedLoading: true, // Process markers in chunks to keep UI responsive
-            maxClusterRadius: 45,
-            animate: false, // Disabling animation makes clustering instant
-            animateAddingMarkers: false,
-            spiderfyOnMaxZoom: true,
-            showCoverageOnHover: false,
-            removeOutsideVisibleBounds: true, // Aggressively remove off-screen markers
-          });
+          AppState.tileLayer.on("tileerror", () => {
+            errorCount++;
 
-          // Spiderfy logic on hover for small clusters
-          AppState.markersClusterGroup.on("clustermouseover", function (a) {
-            if (a.layer.getChildCount() < 10) {
-              a.layer.spiderfy();
+            if (
+              errorCount > ERROR_THRESHOLD &&
+              currentProvider < PROVIDERS.length - 1
+            ) {
+              currentProvider++;
+              errorCount = 0;
+
+              console.warn(`Switching to backup map provider: ${PROVIDERS[currentProvider].name}`,);
+              loadProvider(currentProvider);
             }
           });
 
-          AppState.map.addLayer(AppState.markersClusterGroup);
-
-          // Event Binding
-          AppState.map.on("moveend", () => UIManager.updateSidebarList(false));
-
-          AppState.map.on("click", () => {
-            AppState.clickedMarker = null;
-            AppState.map.closePopup();
+          AppState.tileLayer.on("tileload", () => {
+            errorCount = 0;
           });
+        }
 
-          // Theme Listener for dynamic tile switching
-          window
-            .matchMedia("(prefers-color-scheme: dark)")
-            .addEventListener("change", (e) => {
-              const newUrl = e.matches ? darkTiles : lightTiles;
-              AppState.tileLayer.setUrl(newUrl);
+        loadProvider(0);
+
+
+        // Map Instantiation
+        AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
+          MAP_DEFAULTS.center,
+          MAP_DEFAULTS.zoom,
+        );
+        L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
+
+        // Custom Reset button Control
+        const ResetControl = L.Control.extend({
+          options: { position: "bottomright" },
+          onAdd: function (map) {
+            const container = L.DomUtil.create(
+              "div",
+              "leaflet-bar leaflet-control",
+            );
+            const btn = L.DomUtil.create(
+              "a",
+              "leaflet-control-reset-btn",
+              container,
+            );
+            btn.href = "#";
+            btn.title = "Reset View";
+            btn.innerHTML = "⟲";
+            btn.onclick = (e) => {
+              L.DomEvent.preventDefault(e);
+              MapManager.resetView();
+            };
+            return container;
+          },
+        });
+        AppState.map.addControl(new ResetControl());
+
+        // Marker Cluster Configuration
+        AppState.markersClusterGroup = L.markerClusterGroup({
+          // Custom Icon Function for Modern styling
+          iconCreateFunction: function (cluster) {
+            const count = cluster.getChildCount();
+            // Determine size class based on count
+            let sizeClass = "cluster-small"; // Small (<10)
+            if (count >= 10) sizeClass = "cluster-medium";
+            if (count > 100) sizeClass = "cluster-large";
+
+            return L.divIcon({
+              html: `<span>${count}</span>`,
+              className: `modern-cluster ${sizeClass}`,
+              iconSize: L.point(40, 40), // Large touch target
             });
-        },
+          },
+          // OPTIMIZATION 3: Cluster Performance Settings
+          chunkedLoading: true, // Process markers in chunks to keep UI responsive
+          maxClusterRadius: 45,
+          animate: false, // Disabling animation makes clustering instant
+          animateAddingMarkers: false,
+          spiderfyOnMaxZoom: true,
+          showCoverageOnHover: false,
+          removeOutsideVisibleBounds: true, // Aggressively remove off-screen markers
+        });
 
-        resetView: () => {
-          AppState.map.flyTo(MAP_DEFAULTS.center, MAP_DEFAULTS.zoom, {
-            duration: 1.5,
-            easeLinearity: 0.5,
+        // Spiderfy logic on hover for small clusters
+        AppState.markersClusterGroup.on("clustermouseover", function (a) {
+          if (a.layer.getChildCount() < 10) {
+            a.layer.spiderfy();
+          }
+        });
+
+        AppState.map.addLayer(AppState.markersClusterGroup);
+
+        // Event Binding
+        AppState.map.on("moveend", () => UIManager.updateSidebarList(false));
+
+        AppState.map.on("click", () => {
+          AppState.clickedMarker = null;
+          AppState.map.closePopup();
+        });
+
+        // Theme Listener for dynamic tile switching
+        window
+          .matchMedia("(prefers-color-scheme: dark)")
+          .addEventListener("change", (e) => {
+            const newUrl = e.matches ? darkTiles : lightTiles;
+            AppState.tileLayer.setUrl(newUrl);
           });
-        },
+      },
 
-        renderMarkers: (data) => {
-          // Clear old markers before adding new ones
-          AppState.markersClusterGroup.clearLayers();
-          AppState.markerMap = {};
+      resetView: () => {
+        AppState.map.flyTo(MAP_DEFAULTS.center, MAP_DEFAULTS.zoom, {
+          duration: 1.5,
+          easeLinearity: 0.5,
+        });
+      },
 
-          const isExcluded = AppState.currentType === "excluded";
-          const color = CONFIG[AppState.currentType].color;
+      renderMarkers: (data) => {
+        // Clear old markers before adding new ones
+        AppState.markersClusterGroup.clearLayers();
+        AppState.markerMap = {};
 
-          // Map data to Leaflet Markers
-          const markers = data
-            .map((item, index) => {
-              if (!item.lat || !item.lng) return null;
-              if (item.lat == 0.0 || item.lng == 0.0) return null;
-              item._ui_id = index; // Link marker to data index
+        const isExcluded = AppState.currentType === "excluded";
+        const color = CONFIG[AppState.currentType].color;
 
-              const marker = L.marker([item.lat, item.lng]);
+        // Map data to Leaflet Markers
+        const markers = data
+          .map((item, index) => {
+            if (!item.lat || !item.lng) return null;
+            if (item.lat == 0.0 || item.lng == 0.0) return null;
+            item._ui_id = index; // Link marker to data index
 
-              // Safe access to array
-              const companyList = (
-                item.excluded_by ||
-                item.insurers ||
-                []
-              ).join(", ");
-              const badgeHtml = isExcluded
-                ? `<div class="badge excluded">⛔ EXCLUDED</div>`
-                : `<div class="badge network">✅ IN-NETWORK</div>`;
-              const titleList = isExcluded
-                ? `Excluded by: ${companyList}`
-                : `In-Network of: ${companyList}`;
+            const marker = L.marker([item.lat, item.lng]);
 
-              // --- 1. Determine Accuracy State ---
-              let accClass, accIcon, accText;
+            // Safe access to array
+            const companyList = (
+              item.excluded_by ||
+              item.insurers ||
+              []
+            ).join(", ");
+            const badgeHtml = isExcluded
+              ? `<div class="badge excluded">⛔ EXCLUDED</div>`
+              : `<div class="badge network">✅ IN-NETWORK</div>`;
+            const titleList = isExcluded
+              ? `Excluded by: ${companyList}`
+              : `In-Network of: ${companyList}`;
 
-              if (item.accuracy === "HIGH") {
-                accClass = "acc-high"; // Green Hospital Icon
-                accIconHtml = ICONS.HIGH;
-                accText = "High Accuracy";
-              } else if (item.accuracy === "LOW") {
-                accClass = "acc-medium"; // Greenish Pin
-                accIconHtml = ICONS.MEDIUM;
-                accText = "Moderate Accuracy";
-              } else {
-                accClass = "acc-low"; // Redish Pin
-                accIconHtml = ICONS.LOW;
-                accText = "Low Accuracy";
-              }
+            // --- 1. Determine Accuracy State ---
+            let accClass, accIcon, accText;
 
-              const accuracyHtml = `<div class="accuracy-icon ${accClass}"
+            if (item.accuracy === "HIGH") {
+              accClass = "acc-high"; // Green Hospital Icon
+              accIconHtml = ICONS.HIGH;
+              accText = "High Accuracy";
+            } else if (item.accuracy === "LOW") {
+              accClass = "acc-medium"; // Greenish Pin
+              accIconHtml = ICONS.MEDIUM;
+              accText = "Moderate Accuracy";
+            } else {
+              accClass = "acc-low"; // Redish Pin
+              accIconHtml = ICONS.LOW;
+              accText = "Low Accuracy";
+            }
+
+            const accuracyHtml = `<div class="accuracy-icon ${accClass}"
                 data-tooltip="${accText}">${accIconHtml}</div>`;
 
-              const popupContent = `
+            const popupContent = `
                       <div style="min-width:200px; font-family:inherit;">
                         <div class="popup-header">
                           ${badgeHtml} ${accuracyHtml}
@@ -611,516 +616,514 @@
                           <p class="pin"><strong>PIN:</strong>
                             ${item.pincode || "N/A"}
                           </p>
-                          ${
-                            companyList
-                              ? `<div class="companylist" title="${titleList}">${companyList}</div>`
-                              : ""
-                          }
+                          ${companyList
+                ? `<div class="companylist" title="${titleList}">${companyList}</div>`
+                : ""
+              }
                       </div>
                   `;
 
-              marker.bindPopup(popupContent);
-              if (accClass === "acc-low") {
-                marker.setOpacity(0.75);
-              }
-
-              // Hover/Click Logic
-              marker.on("mouseover", function () {
-                if (AppState.clickedMarker !== this) this.openPopup();
-              });
-              marker.on("mouseout", function () {
-                if (AppState.clickedMarker !== this) this.closePopup();
-              });
-              marker.on("click", function (e) {
-                AppState.clickedMarker = this;
-                this.openPopup();
-                L.DomEvent.stopPropagation(e);
-              });
-
-              AppState.markerMap[index] = marker;
-              return marker;
-            })
-            .filter((m) => m !== null);
-
-          // Bulk add to cluster group (faster than adding one by one)
-          AppState.markersClusterGroup.addLayers(markers);
-        },
-      };
-
-      /**
-       * MODULE: DATA MANAGER
-       * Handles fetching, caching, parsing, and error state for data.
-       */
-      const DataManager = {
-        // Simple in-memory cache for datasets
-        _cache: {},
-
-        resetState: () => {
-          // CRITICAL: Clear data immediately so map moves don't show stale info
-          AppState.currentDataset = [];
-          AppState.currentFilteredData = [];
-          AppState.markersClusterGroup.clearLayers();
-          AppState.markerMap = {};
-        },
-
-        loadDataset: async (type) => {
-          AppState.currentType = type;
-
-          // Immediate Reset before loading new data
-          DataManager.resetState();
-          UIManager.updateToggleUI();
-
-          // Optimization: If we have a pending pre-fetch for 'network', use it
-          let usePreFetch = type === "network" && initialNetworkFetch !== null;
-
-          // Only show loader if we don't have cache AND we aren't using the pre-fetch
-          // (If we use pre-fetch, it might resolve instantly, but showing loader briefly is safer)
-          if (!DataManager._cache[type]) {
-            const msg = `Loading ${CONFIG[type].label} Hospitals...`;
-            UIManager.showLoading(true, msg);
-          }
-
-          // Reset Sidebar & Filters immediately to "Loading" state
-          document.getElementById("hospitalList").innerHTML = "";
-          document.getElementById("resultsCount").classList.remove("error");
-          document.getElementById("resultsCount").innerText = "Loading data...";
-          document.getElementById("insurerFilters").innerHTML =
-            '<span class="filter-loading">Loading filters...</span>';
-
-          try {
-            let data;
-
-            // 1. Check Cache first
-            if (DataManager._cache[type]) {
-              console.log(`Using cached data for: ${type}`);
-              data = DataManager._cache[type];
-            }
-            // 2. Check Pre-fetch Promise (only for initial load)
-            else if (usePreFetch) {
-              console.log("Using pre-fetched network data...");
-              data = await initialNetworkFetch;
-              if (!data) throw new Error("Pre-fetch failed silently");
-
-              // Process and Cache it
-              data = DataManager._processData(data);
-              DataManager._cache[type] = data;
-            }
-            // 3. Normal Fetch (for 'Excluded' or refreshes)
-            else {
-              const response = await fetch(CONFIG[type].url);
-              if (!response.ok) {
-                throw new Error(
-                  `HTTP Error ${response.status}: File not found`,
-                );
-              }
-              data = await response.json();
-
-              // Process and Cache it
-              data = DataManager._processData(data);
-              DataManager._cache[type] = data;
+            marker.bindPopup(popupContent);
+            if (accClass === "acc-low") {
+              marker.setOpacity(0.75);
             }
 
-            // OPTIMIZATION 4: Object.freeze
-            // Hint V8 engine to keep this object immutable (reduces memory overhead)
-            AppState.currentDataset = Object.freeze(data);
-
-            if (
-              !Array.isArray(AppState.currentDataset) ||
-              AppState.currentDataset.length === 0
-            ) {
-              console.warn(type + " dataset is empty!");
-              AppState.currentDataset = [];
-            }
-
-            UIManager.generateCompanyFilters(AppState.currentDataset);
-            UIManager.applyFilters();
-          } catch (error) {
-            console.error("Data Load Error:", error);
-            DataManager.handleLoadError(error);
-          } finally {
-            UIManager.showLoading(false);
-          }
-        },
-
-        // Helper: Pre-compute search strings to speed up filtering later
-        _processData: (data) => {
-          if (!Array.isArray(data)) return [];
-          data.forEach((item) => {
-            // OPTIMIZATION 5: Pre-compute search string
-            // Instead of joining these 4 strings every time user types, we do it once here.
-            item._searchStr =
-              `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
-          });
-          return data;
-        },
-
-        handleLoadError: (error) => {
-          // Update all UI components to reflect error state
-          UIManager.showToast(`Failed to load data: ${error.message}`, true);
-          const countLabel = document.getElementById("resultsCount");
-          countLabel.innerText = "Data Unavailable";
-          countLabel.classList.add("error");
-          document.getElementById("hospitalList").innerHTML =
-            '<li class="nodata error">No data available for this category.</li>';
-          UIManager.generateCompanyFilters([]);
-        },
-      };
-
-      /**
-       * MODULE: UI MANAGER
-       * Handles DOM updates, Sidebar, Modals, and Toasts.
-       */
-      const UIManager = {
-        setupEventListeners: () => {
-          // Network Status Monitoring
-          window.addEventListener("offline", () =>
-            UIManager.showToast("You seem to be offline.", true),
-          );
-          window.addEventListener("online", () =>
-            setTimeout(() => UIManager.showToast("Back online!", false), 2000),
-          );
-
-          // Search Input Logic
-          const searchInput = document.getElementById("searchInput");
-          const searchClear = document.getElementById("searchClear");
-
-          // OPTIMIZATION 6: Debounce Search
-          // Only run filter 300ms after user STOPS typing.
-          const debouncedFilter = debounce(() => {
-            searchClear.style.display = searchInput.value ? "block" : "none";
-            UIManager.applyFilters();
-          }, 300);
-
-          searchInput.addEventListener("input", debouncedFilter);
-
-          searchClear.addEventListener("click", () => {
-            searchInput.value = "";
-            searchClear.style.display = "none";
-            UIManager.applyFilters();
-            searchInput.focus();
-            MapManager.resetView();
-          });
-
-          // Modal Close
-          document
-            .getElementById("genericModal")
-            .addEventListener("click", (e) => {
-              if (e.target.id === "genericModal") UIManager.closeModal();
+            // Hover/Click Logic
+            marker.on("mouseover", function () {
+              if (AppState.clickedMarker !== this) this.openPopup();
+            });
+            marker.on("mouseout", function () {
+              if (AppState.clickedMarker !== this) this.closePopup();
+            });
+            marker.on("click", function (e) {
+              AppState.clickedMarker = this;
+              this.openPopup();
+              L.DomEvent.stopPropagation(e);
             });
 
-          // --- Infinite Scroll Listener ---
-          const listContainer = document.getElementById("hospitalList");
-          listContainer.addEventListener("scroll", () => {
-            // Load next batch when user scrolls near bottom
-            if (
-              listContainer.scrollTop + listContainer.clientHeight >=
-              listContainer.scrollHeight - 100
-            ) {
-              UIManager.renderNextBatch();
+            AppState.markerMap[index] = marker;
+            return marker;
+          })
+          .filter((m) => m !== null);
+
+        // Bulk add to cluster group (faster than adding one by one)
+        AppState.markersClusterGroup.addLayers(markers);
+      },
+    };
+
+    /**
+     * MODULE: DATA MANAGER
+     * Handles fetching, caching, parsing, and error state for data.
+     */
+    const DataManager = {
+      // Simple in-memory cache for datasets
+      _cache: {},
+
+      resetState: () => {
+        // CRITICAL: Clear data immediately so map moves don't show stale info
+        AppState.currentDataset = [];
+        AppState.currentFilteredData = [];
+        AppState.markersClusterGroup.clearLayers();
+        AppState.markerMap = {};
+      },
+
+      loadDataset: async (type) => {
+        AppState.currentType = type;
+
+        // Immediate Reset before loading new data
+        DataManager.resetState();
+        UIManager.updateToggleUI();
+
+        // Optimization: If we have a pending pre-fetch for 'network', use it
+        let usePreFetch = type === "network" && initialNetworkFetch !== null;
+
+        // Only show loader if we don't have cache AND we aren't using the pre-fetch
+        // (If we use pre-fetch, it might resolve instantly, but showing loader briefly is safer)
+        if (!DataManager._cache[type]) {
+          const msg = `Loading ${CONFIG[type].label} Hospitals...`;
+          UIManager.showLoading(true, msg);
+        }
+
+        // Reset Sidebar & Filters immediately to "Loading" state
+        document.getElementById("hospitalList").innerHTML = "";
+        document.getElementById("resultsCount").classList.remove("error");
+        document.getElementById("resultsCount").innerText = "Loading data...";
+        document.getElementById("insurerFilters").innerHTML =
+          '<span class="filter-loading">Loading filters...</span>';
+
+        try {
+          let data;
+
+          // 1. Check Cache first
+          if (DataManager._cache[type]) {
+            console.log(`Using cached data for: ${type}`);
+            data = DataManager._cache[type];
+          }
+          // 2. Check Pre-fetch Promise (only for initial load)
+          else if (usePreFetch) {
+            console.log("Using pre-fetched network data...");
+            data = await initialNetworkFetch;
+            if (!data) throw new Error("Pre-fetch failed silently");
+
+            // Process and Cache it
+            data = DataManager._processData(data);
+            DataManager._cache[type] = data;
+          }
+          // 3. Normal Fetch (for 'Excluded' or refreshes)
+          else {
+            const response = await fetch(CONFIG[type].url);
+            if (!response.ok) {
+              throw new Error(
+                `HTTP Error ${response.status}: File not found`,
+              );
             }
-          });
+            data = await response.json();
 
-          // --- Event Delegation (Click) ---
-          listContainer.addEventListener("click", (e) => {
-            const li = e.target.closest(".hospital-item");
-            if (!li) return;
-
-            const id = li.dataset.id;
-            // Lookup item using the ui_id assigned during render
-            const item = AppState.visibleItems.find((x) => x._ui_id == id);
-            if (!item) return;
-
-            const marker = AppState.markerMap[item._ui_id];
-            if (marker) {
-              AppState.markersClusterGroup.zoomToShowLayer(marker, () => {
-                setTimeout(() => marker.openPopup(), 100);
-              });
-
-              if (window.innerWidth <= 768) {
-                document
-                  .getElementById("map")
-                  .scrollIntoView({ behavior: "smooth" });
-              }
-
-              document
-                .querySelectorAll(".hospital-item")
-                .forEach((el) => el.classList.remove("active"));
-              li.classList.add("active");
-            }
-          });
-
-          // --- Event Delegation (Hover) for Spiderfy ---
-          listContainer.addEventListener("mouseover", (e) => {
-            const li = e.target.closest(".hospital-item");
-            if (!li) return;
-            const id = li.dataset.id;
-
-            const marker = AppState.markerMap[id];
-            if (marker) {
-              const visibleParent =
-                AppState.markersClusterGroup.getVisibleParent(marker);
-              // Spiderfy small clusters on list hover
-              if (visibleParent && visibleParent !== marker) {
-                if (visibleParent.getChildCount() < 10)
-                  visibleParent.spiderfy();
-              }
-              // Bounce animation
-              const icon = marker.getElement();
-              if (icon) icon.classList.add("marker-jump");
-            }
-          });
-
-          listContainer.addEventListener("mouseout", (e) => {
-            const li = e.target.closest(".hospital-item");
-            if (!li) return;
-            const id = li.dataset.id;
-            const marker = AppState.markerMap[id];
-            if (marker) {
-              const icon = marker.getElement();
-              if (icon) icon.classList.remove("marker-jump");
-            }
-          });
-        },
-
-        updateToggleUI: () => {
-          document
-            .getElementById("btn-network")
-            .classList.toggle("active", AppState.currentType === "network");
-          document
-            .getElementById("btn-excluded")
-            .classList.toggle("active", AppState.currentType === "excluded");
-        },
-
-        generateCompanyFilters: (data) => {
-          const container = document.getElementById("insurerFilters");
-          container.innerHTML = "";
-          if (!data || data.length === 0) {
-            container.innerHTML = '<span class="filter-loading">None</span>';
-            return;
+            // Process and Cache it
+            data = DataManager._processData(data);
+            DataManager._cache[type] = data;
           }
 
-          const companies = new Set();
-          data.forEach((item) => {
-            const list =
+          // OPTIMIZATION 4: Object.freeze
+          // Hint V8 engine to keep this object immutable (reduces memory overhead)
+          AppState.currentDataset = Object.freeze(data);
+
+          if (
+            !Array.isArray(AppState.currentDataset) ||
+            AppState.currentDataset.length === 0
+          ) {
+            console.warn(type + " dataset is empty!");
+            AppState.currentDataset = [];
+          }
+
+          UIManager.generateCompanyFilters(AppState.currentDataset);
+          UIManager.applyFilters();
+        } catch (error) {
+          console.error("Data Load Error:", error);
+          DataManager.handleLoadError(error);
+        } finally {
+          UIManager.showLoading(false);
+        }
+      },
+
+      // Helper: Pre-compute search strings to speed up filtering later
+      _processData: (data) => {
+        if (!Array.isArray(data)) return [];
+        data.forEach((item) => {
+          // OPTIMIZATION 5: Pre-compute search string
+          // Instead of joining these 4 strings every time user types, we do it once here.
+          item._searchStr =
+            `${item.name} ${item.address} ${item.city} ${item.pincode}`.toLowerCase();
+        });
+        return data;
+      },
+
+      handleLoadError: (error) => {
+        // Update all UI components to reflect error state
+        UIManager.showToast(`Failed to load data: ${error.message}`, true);
+        const countLabel = document.getElementById("resultsCount");
+        countLabel.innerText = "Data Unavailable";
+        countLabel.classList.add("error");
+        document.getElementById("hospitalList").innerHTML =
+          '<li class="nodata error">No data available for this category.</li>';
+        UIManager.generateCompanyFilters([]);
+      },
+    };
+
+    /**
+     * MODULE: UI MANAGER
+     * Handles DOM updates, Sidebar, Modals, and Toasts.
+     */
+    const UIManager = {
+      setupEventListeners: () => {
+        // Network Status Monitoring
+        window.addEventListener("offline", () =>
+          UIManager.showToast("You seem to be offline.", true),
+        );
+        window.addEventListener("online", () =>
+          setTimeout(() => UIManager.showToast("Back online!", false), 2000),
+        );
+
+        // Search Input Logic
+        const searchInput = document.getElementById("searchInput");
+        const searchClear = document.getElementById("searchClear");
+
+        // OPTIMIZATION 6: Debounce Search
+        // Only run filter 300ms after user STOPS typing.
+        const debouncedFilter = debounce(() => {
+          searchClear.style.display = searchInput.value ? "block" : "none";
+          UIManager.applyFilters();
+        }, 300);
+
+        searchInput.addEventListener("input", debouncedFilter);
+
+        searchClear.addEventListener("click", () => {
+          searchInput.value = "";
+          searchClear.style.display = "none";
+          UIManager.applyFilters();
+          searchInput.focus();
+          MapManager.resetView();
+        });
+
+        // Modal Close
+        document
+          .getElementById("genericModal")
+          .addEventListener("click", (e) => {
+            if (e.target.id === "genericModal") UIManager.closeModal();
+          });
+
+        // --- Infinite Scroll Listener ---
+        const listContainer = document.getElementById("hospitalList");
+        listContainer.addEventListener("scroll", () => {
+          // Load next batch when user scrolls near bottom
+          if (
+            listContainer.scrollTop + listContainer.clientHeight >=
+            listContainer.scrollHeight - 100
+          ) {
+            UIManager.renderNextBatch();
+          }
+        });
+
+        // --- Event Delegation (Click) ---
+        listContainer.addEventListener("click", (e) => {
+          const li = e.target.closest(".hospital-item");
+          if (!li) return;
+
+          const id = li.dataset.id;
+          // Lookup item using the ui_id assigned during render
+          const item = AppState.visibleItems.find((x) => x._ui_id == id);
+          if (!item) return;
+
+          const marker = AppState.markerMap[item._ui_id];
+          if (marker) {
+            AppState.markersClusterGroup.zoomToShowLayer(marker, () => {
+              setTimeout(() => marker.openPopup(), 100);
+            });
+
+            if (window.innerWidth <= 768) {
+              document
+                .getElementById("map")
+                .scrollIntoView({ behavior: "smooth" });
+            }
+
+            document
+              .querySelectorAll(".hospital-item")
+              .forEach((el) => el.classList.remove("active"));
+            li.classList.add("active");
+          }
+        });
+
+        // --- Event Delegation (Hover) for Spiderfy ---
+        listContainer.addEventListener("mouseover", (e) => {
+          const li = e.target.closest(".hospital-item");
+          if (!li) return;
+          const id = li.dataset.id;
+
+          const marker = AppState.markerMap[id];
+          if (marker) {
+            const visibleParent =
+              AppState.markersClusterGroup.getVisibleParent(marker);
+            // Spiderfy small clusters on list hover
+            if (visibleParent && visibleParent !== marker) {
+              if (visibleParent.getChildCount() < 10)
+                visibleParent.spiderfy();
+            }
+            // Bounce animation
+            const icon = marker.getElement();
+            if (icon) icon.classList.add("marker-jump");
+          }
+        });
+
+        listContainer.addEventListener("mouseout", (e) => {
+          const li = e.target.closest(".hospital-item");
+          if (!li) return;
+          const id = li.dataset.id;
+          const marker = AppState.markerMap[id];
+          if (marker) {
+            const icon = marker.getElement();
+            if (icon) icon.classList.remove("marker-jump");
+          }
+        });
+      },
+
+      updateToggleUI: () => {
+        document
+          .getElementById("btn-network")
+          .classList.toggle("active", AppState.currentType === "network");
+        document
+          .getElementById("btn-excluded")
+          .classList.toggle("active", AppState.currentType === "excluded");
+      },
+
+      generateCompanyFilters: (data) => {
+        const container = document.getElementById("insurerFilters");
+        container.innerHTML = "";
+        if (!data || data.length === 0) {
+          container.innerHTML = '<span class="filter-loading">None</span>';
+          return;
+        }
+
+        const companies = new Set();
+        data.forEach((item) => {
+          const list =
+            item.excluded_by ||
+            item.insurers ||
+            (item.company ? [item.company] : []);
+          if (Array.isArray(list)) list.forEach((c) => companies.add(c));
+        });
+
+        if (companies.size === 0) {
+          container.innerHTML = '<span class="filter-loading">None</span>';
+          return;
+        }
+
+        // sort the company list alphabetically
+        const sortedCompanies = Array.from(companies).sort((a, b) =>
+          a.localeCompare(b),
+        );
+
+        sortedCompanies.forEach((company) => {
+          // label wrapper
+          const wrapper = document.createElement("label");
+          wrapper.className = "checkbox-item";
+          wrapper.title = `${company} Insurance Company`;
+          // checkbox input within label
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.value = company;
+          checkbox.checked = true;
+          // Directly trigger filter on change
+          checkbox.addEventListener("change", () => UIManager.applyFilters());
+          wrapper.appendChild(checkbox);
+          wrapper.appendChild(document.createTextNode(company));
+          container.appendChild(wrapper);
+        });
+      },
+
+      applyFilters: () => {
+        // If dataset is empty, skip logic but ensure map is cleared
+        if (!AppState.currentDataset.length) {
+          AppState.currentFilteredData = [];
+          MapManager.renderMarkers([]);
+          UIManager.updateSidebarList(true);
+          return;
+        }
+
+        const searchText = document
+          .getElementById("searchInput")
+          .value.toLowerCase();
+        const checkboxes = document.querySelectorAll(
+          '#insurerFilters input[type="checkbox"]',
+        );
+
+        const selectedCompanies =
+          checkboxes.length > 0
+            ? Array.from(checkboxes)
+              .filter((cb) => cb.checked)
+              .map((cb) => cb.value)
+            : null;
+
+        // Filter Data
+        AppState.currentFilteredData = AppState.currentDataset.filter(
+          (item) => {
+            // 1. Search (Optimized using pre-computed string)
+            if (searchText && !item._searchStr.includes(searchText))
+              return false;
+
+            // 2. Company Filter
+            const itemCompanies =
               item.excluded_by ||
               item.insurers ||
               (item.company ? [item.company] : []);
-            if (Array.isArray(list)) list.forEach((c) => companies.add(c));
-          });
+            if (selectedCompanies && itemCompanies.length > 0) {
+              return itemCompanies.some((c) => selectedCompanies.includes(c));
+            }
+            return true;
+          },
+        );
 
-          if (companies.size === 0) {
-            container.innerHTML = '<span class="filter-loading">None</span>';
-            return;
-          }
+        MapManager.renderMarkers(AppState.currentFilteredData);
+        UIManager.updateSidebarList(true);
+      },
 
-          // sort the company list alphabetically
-          const sortedCompanies = Array.from(companies).sort((a, b) =>
-            a.localeCompare(b),
-          );
+      // --- LAZY LOADING SIDEBAR ---
+      updateSidebarList: (resetScroll = false) => {
+        const listContainer = document.getElementById("hospitalList");
+        const countLabel = document.getElementById("resultsCount");
 
-          sortedCompanies.forEach((company) => {
-            // label wrapper
-            const wrapper = document.createElement("label");
-            wrapper.className = "checkbox-item";
-            wrapper.title = `${company} Insurance Company`;
-            // checkbox input within label
-            const checkbox = document.createElement("input");
-            checkbox.type = "checkbox";
-            checkbox.value = company;
-            checkbox.checked = true;
-            // Directly trigger filter on change
-            checkbox.addEventListener("change", () => UIManager.applyFilters());
-            wrapper.appendChild(checkbox);
-            wrapper.appendChild(document.createTextNode(company));
-            container.appendChild(wrapper);
-          });
-        },
+        if (resetScroll) listContainer.scrollTop = 0;
 
-        applyFilters: () => {
-          // If dataset is empty, skip logic but ensure map is cleared
-          if (!AppState.currentDataset.length) {
-            AppState.currentFilteredData = [];
-            MapManager.renderMarkers([]);
-            UIManager.updateSidebarList(true);
-            return;
-          }
-
-          const searchText = document
-            .getElementById("searchInput")
-            .value.toLowerCase();
-          const checkboxes = document.querySelectorAll(
-            '#insurerFilters input[type="checkbox"]',
-          );
-
-          const selectedCompanies =
-            checkboxes.length > 0
-              ? Array.from(checkboxes)
-                  .filter((cb) => cb.checked)
-                  .map((cb) => cb.value)
-              : null;
-
-          // Filter Data
-          AppState.currentFilteredData = AppState.currentDataset.filter(
+        // Filter visible items based on Map Bounds
+        if (
+          !AppState.currentFilteredData ||
+          AppState.currentFilteredData.length === 0
+        ) {
+          AppState.visibleItems = [];
+        } else {
+          const bounds = AppState.map.getBounds();
+          AppState.visibleItems = AppState.currentFilteredData.filter(
             (item) => {
-              // 1. Search (Optimized using pre-computed string)
-              if (searchText && !item._searchStr.includes(searchText))
-                return false;
-
-              // 2. Company Filter
-              const itemCompanies =
-                item.excluded_by ||
-                item.insurers ||
-                (item.company ? [item.company] : []);
-              if (selectedCompanies && itemCompanies.length > 0) {
-                return itemCompanies.some((c) => selectedCompanies.includes(c));
-              }
-              return true;
+              if (!item.lat || !item.lng) return false;
+              if (item.lat == 0.0 || item.lng == 0.0) return false;
+              return bounds.contains(L.latLng(item.lat, item.lng));
             },
           );
+        }
 
-          MapManager.renderMarkers(AppState.currentFilteredData);
-          UIManager.updateSidebarList(true);
-        },
-
-        // --- LAZY LOADING SIDEBAR ---
-        updateSidebarList: (resetScroll = false) => {
-          const listContainer = document.getElementById("hospitalList");
-          const countLabel = document.getElementById("resultsCount");
-
-          if (resetScroll) listContainer.scrollTop = 0;
-
-          // Filter visible items based on Map Bounds
-          if (
-            !AppState.currentFilteredData ||
-            AppState.currentFilteredData.length === 0
-          ) {
-            AppState.visibleItems = [];
-          } else {
-            const bounds = AppState.map.getBounds();
-            AppState.visibleItems = AppState.currentFilteredData.filter(
-              (item) => {
-                if (!item.lat || !item.lng) return false;
-                if (item.lat == 0.0 || item.lng == 0.0) return false;
-                return bounds.contains(L.latLng(item.lat, item.lng));
-              },
-            );
-          }
-
-          // Update Counts
-          if (AppState.visibleItems.length === 0) {
-            countLabel.innerText =
-              AppState.currentDataset.length > 0
-                ? "No Matches in View"
-                : "No Data Found";
-            countLabel.classList.add("error");
-            listContainer.innerHTML = "";
-            return;
-          }
-
-          countLabel.classList.remove("error");
-          countLabel.innerText = `Showing ${AppState.visibleItems.length} locations in view`;
-
-          // Reset Lazy Load State
-          AppState.renderedCount = 0;
+        // Update Counts
+        if (AppState.visibleItems.length === 0) {
+          countLabel.innerText =
+            AppState.currentDataset.length > 0
+              ? "No Matches in View"
+              : "No Data Found";
+          countLabel.classList.add("error");
           listContainer.innerHTML = "";
+          return;
+        }
 
-          // Render Initial Batch
-          UIManager.renderNextBatch();
-        },
+        countLabel.classList.remove("error");
+        countLabel.innerText = `Showing ${AppState.visibleItems.length} locations in view`;
 
-        renderNextBatch: () => {
-          if (AppState.renderedCount >= AppState.visibleItems.length) return;
+        // Reset Lazy Load State
+        AppState.renderedCount = 0;
+        listContainer.innerHTML = "";
 
-          const listContainer = document.getElementById("hospitalList");
-          const nextBatch = AppState.visibleItems.slice(
-            AppState.renderedCount,
-            AppState.renderedCount + AppState.batchSize,
+        // Render Initial Batch
+        UIManager.renderNextBatch();
+      },
+
+      renderNextBatch: () => {
+        if (AppState.renderedCount >= AppState.visibleItems.length) return;
+
+        const listContainer = document.getElementById("hospitalList");
+        const nextBatch = AppState.visibleItems.slice(
+          AppState.renderedCount,
+          AppState.renderedCount + AppState.batchSize,
+        );
+
+        // DocumentFragment prevents layout thrashing
+        const fragment = document.createDocumentFragment();
+        const isExcluded = AppState.currentType === "excluded";
+
+        nextBatch.forEach((item) => {
+          const li = document.createElement("li");
+          li.className = "hospital-item";
+          li.dataset.id = item._ui_id; // Store ID for delegation
+
+          const companyList = (item.excluded_by || item.insurers || []).join(
+            ", ",
           );
-
-          // DocumentFragment prevents layout thrashing
-          const fragment = document.createDocumentFragment();
-          const isExcluded = AppState.currentType === "excluded";
-
-          nextBatch.forEach((item) => {
-            const li = document.createElement("li");
-            li.className = "hospital-item";
-            li.dataset.id = item._ui_id; // Store ID for delegation
-
-            const companyList = (item.excluded_by || item.insurers || []).join(
-              ", ",
-            );
-            const badgeLabel = isExcluded ? "Excluded By" : "In-Network";
-            const badgeClass = isExcluded ? "excluded" : "network";
-            const titleText = `${badgeLabel}: ${companyList}`;
-            const location = `${item.city ? item.city + " - " : ""}${
-              item.pincode ? item.pincode : ""
+          const badgeLabel = isExcluded ? "Excluded By" : "In-Network";
+          const badgeClass = isExcluded ? "excluded" : "network";
+          const titleText = `${badgeLabel}: ${companyList}`;
+          const location = `${item.city ? item.city + " - " : ""}${item.pincode ? item.pincode : ""
             }`;
 
-            // Modern badge with ellipsis
-            li.innerHTML = `
+          // Modern badge with ellipsis
+          li.innerHTML = `
               <span class="h-name">${item.name}</span>
               <span class="h-loc">${location}</span>
             <span class="badge ${badgeClass} badge-truncate" title="${titleText}">${badgeLabel}: ${companyList}</span>
           `;
-            fragment.appendChild(li);
-          });
+          fragment.appendChild(li);
+        });
 
-          listContainer.appendChild(fragment);
-          AppState.renderedCount += nextBatch.length;
-        },
+        listContainer.appendChild(fragment);
+        AppState.renderedCount += nextBatch.length;
+      },
 
-        // --- UTILS ---
-        showLoading: (show, text) => {
-          const mapLoader = document.getElementById("map-loader");
-          const listContainer = document.getElementById("hospitalList");
+      // --- UTILS ---
+      showLoading: (show, text) => {
+        const mapLoader = document.getElementById("map-loader");
+        const listContainer = document.getElementById("hospitalList");
 
-          if (show) {
-            // Show Map Overlay
-            if (mapLoader) {
-              document.getElementById("map-loader-text").innerText = text;
-              mapLoader.style.display = "flex";
-            }
-          } else {
-            // Hide Map Overlay
-            if (mapLoader) mapLoader.style.display = "none";
-            // Clear skeleton if present
-            if (listContainer.querySelector(".skeleton-loader")) {
-              listContainer.innerHTML = "";
-            }
+        if (show) {
+          // Show Map Overlay
+          if (mapLoader) {
+            document.getElementById("map-loader-text").innerText = text;
+            mapLoader.style.display = "flex";
           }
-        },
-
-        showToast: (msg, isError) => {
-          const t = document.getElementById("toast");
-          t.innerText = msg;
-          t.className = isError ? "show error" : "show";
-          setTimeout(
-            () => (t.className = t.className.replace("show", "")),
-            5000,
-          );
-        },
-
-        // --- MODALS ---
-        openModal: (title, htmlContent) => {
-          const dialog = document.getElementById("genericModal");
-          document.getElementById("modalTitle").innerText = title;
-          document.getElementById("modalBody").innerHTML = htmlContent;
-
-          if (typeof dialog.showModal === "function") {
-            dialog.showModal();
-            document.getElementById("modalTitle").scrollIntoView();
-            document.getElementById("modalTitle").focus();
-          } else {
-            alert("Browser version doesnt support Dialog windows.");
+        } else {
+          // Hide Map Overlay
+          if (mapLoader) mapLoader.style.display = "none";
+          // Clear skeleton if present
+          if (listContainer.querySelector(".skeleton-loader")) {
+            listContainer.innerHTML = "";
           }
-        },
+        }
+      },
 
-        closeModal: () => {
-          document.getElementById("genericModal").close();
-        },
+      showToast: (msg, isError) => {
+        const t = document.getElementById("toast");
+        t.innerText = msg;
+        t.className = isError ? "show error" : "show";
+        setTimeout(
+          () => (t.className = t.className.replace("show", "")),
+          5000,
+        );
+      },
 
-        openDisclaimerModal: () => {
-          const content = `
+      // --- MODALS ---
+      openModal: (title, htmlContent) => {
+        const dialog = document.getElementById("genericModal");
+        document.getElementById("modalTitle").innerText = title;
+        document.getElementById("modalBody").innerHTML = htmlContent;
+
+        if (typeof dialog.showModal === "function") {
+          dialog.showModal();
+          document.getElementById("modalTitle").scrollIntoView();
+          document.getElementById("modalTitle").focus();
+        } else {
+          alert("Browser version doesnt support Dialog windows.");
+        }
+      },
+
+      closeModal: () => {
+        document.getElementById("genericModal").close();
+      },
+
+      openDisclaimerModal: () => {
+        const content = `
                   <h3>Informational Purpose Only:</h3>
                   <p>This repository, the associated software, and the visualized data are intended strictly for educational and informational purposes. This project is not affiliated with, endorsed by, or representative of any insurance company, regulatory body (such as IRDAI), or healthcare institution.</p>
                   <h3>No Warranty of Accuracy:</h3>
@@ -1140,26 +1143,26 @@
                 <button class="btn-close-modal" onclick="closeModal()">Understood</button>
               </div>
               `;
-          UIManager.openModal("Legal Disclaimer", content);
-        },
+        UIManager.openModal("Legal Disclaimer", content);
+      },
 
-        openSourcesModal: async () => {
-          UIManager.openModal("Data Sources", "<p>Loading sources...</p>");
-          try {
-            let data;
-            // Check cache first
-            if (AppState._sourcesDataCache) {
-              data = AppState._sourcesDataCache;
-            } else {
-              const response = await fetch(SOURCES_URL);
-              if (!response.ok) throw new Error("Sources file missing");
-              data = await response.json();
-              // Cache for future use
-              AppState._sourcesDataCache = data;
-            }
+      openSourcesModal: async () => {
+        UIManager.openModal("Data Sources", "<p>Loading sources...</p>");
+        try {
+          let data;
+          // Check cache first
+          if (AppState._sourcesDataCache) {
+            data = AppState._sourcesDataCache;
+          } else {
+            const response = await fetch(SOURCES_URL);
+            if (!response.ok) throw new Error("Sources file missing");
+            data = await response.json();
+            // Cache for future use
+            AppState._sourcesDataCache = data;
+          }
 
-            // Render using 'data' json
-            let html = `
+          // Render using 'data' json
+          let html = `
                       <p>The data visualized here is gathered and parsed from the following sources:</p>
                       <table class="source-table">
                           <thead>
@@ -1172,47 +1175,48 @@
                           <tbody>
                   `;
 
-            // --- Updated Row Rendering ---
-            data.forEach((row) => {
-              // Helper: Generates "Link (123)" or "-"
-              const makeCell = (url, count) => {
-                if (!url) {
-                  return "-";
-                }
+          // --- Updated Row Rendering ---
+          data.forEach((row) => {
+            // Helper: Generates "Link (123)" or "-"
+            const makeCell = (url, count) => {
+              if (!url) {
+                return "-";
+              }
 
-                // Format count: Use locale string for commas (e.g., 1,200) or (-) if undefined/null
-                const countDisplay =
-                  count !== undefined && count !== null
-                    ? `(${count.toLocaleString()})`
-                    : "(-)";
+              // Format count: Use locale string for commas (e.g., 1,200) or (-) if undefined/null
+              const countDisplay =
+                count !== undefined && count !== null
+                  ? `(${count.toLocaleString()})`
+                  : "(-)";
 
-                return `<a href="${url}" target="_blank">Link</a> <span class="count-badge">${countDisplay}</span>`;
-              };
+              return `<a href="${url}" target="_blank">Link</a> <span class="count-badge">${countDisplay}</span>`;
+            };
 
-              html += `<tr>
+            html += `<tr>
                           <td><strong>${row.company}</strong></td>
                           <td>${makeCell(row.network_url, row.network_count)}</td>
                           <td>${makeCell(row.excluded_url, row.excluded_count)}</td>
                       </tr>`;
-            });
+          });
 
-            html += `</tbody></table>`;
+          html += `</tbody></table>`;
 
-            document.getElementById("modalBody").innerHTML = html;
-          } catch (e) {
-            document.getElementById("modalBody").innerHTML =
-              `<p class="error">Could not load sources.</p>`;
-            console.warn(e.message);
-          }
-        },
-      };
+          document.getElementById("modalBody").innerHTML = html;
+        } catch (e) {
+          document.getElementById("modalBody").innerHTML =
+            `<p class="error">Could not load sources.</p>`;
+          console.warn(e.message);
+        }
+      },
+    };
 
-      // Expose globals for onclick handlers in HTML
-      window.loadDataset = DataManager.loadDataset;
-      window.openDisclaimerModal = UIManager.openDisclaimerModal;
-      window.openSourcesModal = UIManager.openSourcesModal;
-      window.closeModal = UIManager.closeModal;
-      window.resetMapView = MapManager.resetView;
-    </script>
-  </body>
+    // Expose globals for onclick handlers in HTML
+    window.loadDataset = DataManager.loadDataset;
+    window.openDisclaimerModal = UIManager.openDisclaimerModal;
+    window.openSourcesModal = UIManager.openSourcesModal;
+    window.closeModal = UIManager.closeModal;
+    window.resetMapView = MapManager.resetView;
+  </script>
+</body>
+
 </html>
