@@ -340,7 +340,8 @@ body {
     border: 0.5px solid var(--accent-color);
 }
 
-.search-box:active, .search-box:focus-visible {
+.search-box:active,
+.search-box:focus-visible {
     outline: none;
 }
 
@@ -552,7 +553,8 @@ path.leaflet-interactive {
     flex: 1;
     z-index: 1;
     background: var(--bg-color);
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
 }
 
 /* Leaflet Customization */

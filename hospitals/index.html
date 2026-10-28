@@ -420,54 +420,43 @@
         const isDarkMode =
           window.matchMedia &&
           window.matchMedia("(prefers-color-scheme: dark)").matches;
-
-        // Map Tiles Setup
+        // Initialize Map FIRST so AppState.map is available
+        AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
+          MAP_DEFAULTS.center,
+          MAP_DEFAULTS.zoom,
+        );
+        L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
+        // Map Tiles Setup & Failover
         let currentProvider = 0;
         let errorCount = 0;
         const ERROR_THRESHOLD = 10;
-
         function loadProvider(index) {
           const provider = PROVIDERS[index];
-
           if (AppState.tileLayer) {
             AppState.map.removeLayer(AppState.tileLayer);
           }
-
           AppState.tileLayer = L.tileLayer(
             provider.url,
             provider.options,
           ).addTo(AppState.map);
-
           AppState.tileLayer.on("tileerror", () => {
             errorCount++;
-
             if (
               errorCount > ERROR_THRESHOLD &&
               currentProvider < PROVIDERS.length - 1
             ) {
               currentProvider++;
               errorCount = 0;
-
-              console.warn(`Switching to backup map provider: ${PROVIDERS[currentProvider].name}`,);
+              console.warn(`Switching to backup map provider: ${PROVIDERS[currentProvider].name}`);
               loadProvider(currentProvider);
             }
           });
-
           AppState.tileLayer.on("tileload", () => {
             errorCount = 0;
           });
         }
-
+        // Now safe to load the tile provider
         loadProvider(0);
-
-
-        // Map Instantiation
-        AppState.map = L.map("map", MAP_DEFAULTS.options).setView(
-          MAP_DEFAULTS.center,
-          MAP_DEFAULTS.zoom,
-        );
-        L.control.zoom({ position: "bottomright" }).addTo(AppState.map);
-
         // Custom Reset button Control
         const ResetControl = L.Control.extend({
           options: { position: "bottomright" },
@@ -492,21 +481,17 @@
           },
         });
         AppState.map.addControl(new ResetControl());
-
         // Marker Cluster Configuration
         AppState.markersClusterGroup = L.markerClusterGroup({
-          // Custom Icon Function for Modern styling
           iconCreateFunction: function (cluster) {
             const count = cluster.getChildCount();
-            // Determine size class based on count
-            let sizeClass = "cluster-small"; // Small (<10)
+            let sizeClass = "cluster-small";
             if (count >= 10) sizeClass = "cluster-medium";
             if (count > 100) sizeClass = "cluster-large";
-
             return L.divIcon({
               html: `<span>${count}</span>`,
               className: `modern-cluster ${sizeClass}`,
-              iconSize: L.point(40, 40), // Large touch target
+              iconSize: L.point(40, 40),
             });
           },
           // OPTIMIZATION 3: Cluster Performance Settings
@@ -525,24 +510,13 @@
             a.layer.spiderfy();
           }
         });
-
         AppState.map.addLayer(AppState.markersClusterGroup);
-
         // Event Binding
         AppState.map.on("moveend", () => UIManager.updateSidebarList(false));
-
         AppState.map.on("click", () => {
           AppState.clickedMarker = null;
           AppState.map.closePopup();
         });
-
-        // Theme Listener for dynamic tile switching
-        window
-          .matchMedia("(prefers-color-scheme: dark)")
-          .addEventListener("change", (e) => {
-            const newUrl = e.matches ? darkTiles : lightTiles;
-            AppState.tileLayer.setUrl(newUrl);
-          });
       },
 
       resetView: () => {

@@ -247,7 +247,9 @@ function setupMapTiles(mapInstance) {
   let errorCount = 0;
   const ERROR_THRESHOLD = 5;
   function loadLayer(index) {
-    if (index >= PROVIDERS.length) return;
+    if (index >= PROVIDERS.length) {
+      return;
+    }
     const provider = PROVIDERS[index];
     console.log(`Setting map provider to: ${provider.name}`);
     // Remove old layer if exists
@@ -256,7 +258,9 @@ function setupMapTiles(mapInstance) {
     }
     currentLayer = L.tileLayer(provider.url, provider.options);
     currentLayer.on("tileerror", () => {
-      if (!navigator.onLine) return;
+      if (!navigator.onLine) { 
+        return;
+      }
       errorCount++;
       if (errorCount > ERROR_THRESHOLD) {
         // Only switch if we haven't exhausted providers
