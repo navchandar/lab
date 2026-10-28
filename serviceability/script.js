@@ -194,6 +194,12 @@ const myCanvasRenderer = new MaskedCanvas();
 
 // --- TILE LAYER SETUP ---
 function setupMapTiles(mapInstance) {
+  console.log("mapInstance", mapInstance);
+  if (!mapInstance) {
+    console.error("Map instance is null");
+    return;
+  }
+
   // Define multiple map providers for redundancy
   const PROVIDERS = [
     {
@@ -230,6 +236,12 @@ function setupMapTiles(mapInstance) {
   let activeIndex = 0;
   let errorCount = 0;
   const ERROR_THRESHOLD = 5;
+  console.log({
+    mapInstance,
+    currentLayer,
+    hasMap: !!mapInstance,
+    hasAddLayer: typeof mapInstance?.addLayer
+  });
 
   function loadLayer(index) {
     if (index >= PROVIDERS.length) {
@@ -1513,6 +1525,10 @@ window.addEventListener("popstate", (event) => {
 });
 
 // Start the App
-setupMapTiles(map);
-initApp();
-initModal();
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("map", map);
+  setupMapTiles(map);
+  initApp();
+  initModal();
+});
+
