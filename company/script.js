@@ -724,7 +724,7 @@ function loadSparkline() {
   ];
   const fmt = (v) => {
     if (v === "" || v === undefined || isNaN(v)) {
-      return "—";
+      return "-";
     }
     const num = parseFloat(v);
     return `${num > 0 ? "+" : ""}${num.toFixed(2)}%`;
@@ -738,8 +738,7 @@ function loadSparkline() {
   let pinned = null;
   function show(svg, x, y) {
     const d = svg.dataset;
-    const nowCount = d.now && !isNaN(d.now) ? Number(d.now).toLocaleString() : "—";
-    const sinceText = d.since ? ` · since ${d.since}` : "";
+    const nowCount = d.now && !isNaN(d.now) ? Number(d.now).toLocaleString() : "-";
     tip.innerHTML =
       rows
         .map(
@@ -747,7 +746,7 @@ function loadSparkline() {
             `<div class="row"><span>${label}</span><b class="${cls(d[k])}">${fmt(d[k])}</b></div>`
         )
         .join("") +
-      `<div class="meta">${nowCount} employees${sinceText}</div>`;
+      `<div class="meta">Approx ${nowCount} employees</div>`;
     tip.hidden = false;
     const r = tip.getBoundingClientRect();
     // Prevent tooltip from overflowing screen boundaries

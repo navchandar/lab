@@ -342,76 +342,131 @@ class GrowthAnalytics:
         return best[1] if best else None
 
     @staticmethod
-    def get_monthly_series(company_history: list) -> list[tuple[str, int | None]]:
+    def get_monthly_series(company_history: list) -> list[tuple[str, int]]:
         """
-        Builds a calendar series: [(date, count), ...] from 12 months ago -> latest.
-        Missing months are None (company too new, or no scrape near that date).
+        Extracts chronological monthly snapshot points (oldest -> newest).
+        Samples at ~30-day intervals working backward from the latest record.
         """
-        if not company_history:
+        if not company_history or len(company_history) < 2:
             return []
-        # Parse dates once per company (strptime is the slow part for 50k companies)
-        parsed = [(GrowthAnalytics._parse_date(r["d"]), r["c"]) for r in company_history]
-        latest_dt, latest_c = parsed[-1]
-        # Half a step, so neighbouring months never pick the same record
-        tolerance = SPARK_STEP_DAYS // 2
 
+        sorted_records = sorted(company_history, key=lambda x: x["d"])
+        latest = sorted_records[-1]
+        latest_dt = GrowthAnalytics._parse_date(latest["d"])
+        latest_c = int(latest["c"])
+
+        # Up to 12 months (360 days) of history
+        parsed = [(GrowthAnalytics._parse_date(r["d"]), int(r["c"])) for r in sorted_records]
+
+        # Determine how many months of actual history exist
+        earliest_dt = parsed[0][0]
+        total_days = max(1, (latest_dt - earliest_dt).days)
+        months_available = min(12, max(1, round(total_days / 30)))
+
+        # Pick one representative record per 30-day milestone
         series = []
-        for m in range(SPARK_MONTHS, -1, -1):
-            target = latest_dt - timedelta(days=m * SPARK_STEP_DAYS)
-            count = latest_c if m == 0 else GrowthAnalytics._headcount_near(parsed, target, tolerance)
-            series.append((target.strftime("%Y-%m-%d"), count))
-        return series
+        for m in range(months_available, 0, -1):
+            target_dt = latest_dt - timedelta(days=m * 30)
+            # Find the record closest to this monthly target date within a 15-day window
+            best = min(parsed, key=lambda x: abs((x[0] - target_dt).days))
+            if abs((best[0] - target_dt).days) <= 15:
+                series.append((best[0].strftime("%Y-%m-%d"), best[1]))
+
+        # Always append the latest (today's) count as the final point
+        series.append((latest["d"], latest_c))
+
+        # Deduplicate consecutive identical dates while preserving order
+        deduped = []
+        for s in series:
+            if not deduped or deduped[-1][0] != s[0]:
+                deduped.append(s)
+
+        return deduped if len(deduped) >= 2 else [(r["d"], int(r["c"])) for r in sorted_records[-2:]]
 
     @staticmethod
     def generate_sparkline_svg(series: list, growth: dict) -> str | None:
         """
-        Headcount sparkline (line goes up = hiring) with growth deltas embedded
-        as data-* attributes for the hover/touch tooltip.
+        Generates a multi-segment sparkline:
+        - Rising monthly segments are GREEN (#22c55e)
+        - Falling monthly segments are RED (#ef4444)
+        - Flat monthly segments are SLATE (#94a3b8)
+        - Adaptive height scaling based on company employee size.
         """
-        valid = [(i, c) for i, (_, c) in enumerate(series) if c is not None]
-        if len(valid) < 2:
+        if not series or len(series) < 2:
             return None
 
-        counts = [c for _, c in valid]
+        counts = [c for _, c in series]
         lo, hi = min(counts), max(counts)
-        # 2% floor on the range, so 1000 -> 1003 doesn't look like a big jump
-        span = max(hi - lo, hi * 0.02, 1)
         mid = (hi + lo) / 2
 
-        def y(c: int) -> float:
-            # SVG y=0 is the top; map to 2..18 inside a 20px-high viewBox
-            return round(10 - ((c - mid) / span) * 16, 2)
+        # --- ADAPTIVE SENSITIVITY FORMULA ---
+        # Large companies (200k+) get ~2.2% min span floor so 1,000s of changes are visible.
+        # Small companies get ~12-15% floor so 1 person change doesn't blow out the canvas.
+        size_factor = max(10, mid)
+        adaptive_pct = max(0.022, 0.25 / (size_factor ** 0.20))
+        span_floor = mid * adaptive_pct
 
-        x_step = 10
-        width = (len(series) - 1) * x_step
-        # Fixed x per month, so gaps stay in the correct calendar position
-        coords = [f"{i * x_step},{y(c)}" for i, c in valid]
-        path = "M " + " L ".join(coords)
-        last_x, last_y = coords[-1].split(",")
+        span = max(hi - lo, span_floor, 1.0)
 
-        first_c, last_c = counts[0], counts[-1]
-        color = "#22c55e" if last_c > first_c else "#ef4444" if last_c < first_c else "#94a3b8"
+        # SVG coordinate: y=2 is top (peak), y=18 is bottom (trough), center is 10.0
+        def scale_y(val: int) -> float:
+            norm = (val - mid) / span
+            # Clamp inside safe 2.0 to 18.0 SVG viewBox boundaries
+            return round(max(2.0, min(18.0, 10.0 - (norm * 16.0))), 2)
+
+        total_points = len(series)
+        x_step = 120.0 / (total_points - 1)
+
+        # Build individual (x, y) coordinates
+        coords = [(round(i * x_step, 1), scale_y(c)) for i, c in enumerate(counts)]
+
+        # --- DRAW MULTI-COLOR SEGMENTS ---
+        segment_paths = []
+        for i in range(len(coords) - 1):
+            x1, y1 = coords[i]
+            x2, y2 = coords[i + 1]
+            c1 = counts[i]
+            c2 = counts[i + 1]
+
+            # Compare actual headcount between the two monthly points
+            if c2 > c1:
+                color = "#22c55e"  # Up = Green
+            elif c2 < c1:
+                color = "#ef4444"  # Down = Red
+            else:
+                color = "#94a3b8"  # Flat = Gray
+
+            segment_paths.append(
+                f"<line x1='{x1}' y1='{y1}' x2='{x2}' y2='{y2}' "
+                f"stroke='{color}' stroke-width='2' stroke-linecap='round' vector-effect='non-scaling-stroke'/>"
+            )
+
+        # Dot at the latest point matches the most recent month's direction
+        last_c1, last_c2 = counts[-2], counts[-1]
+        dot_color = "#22c55e" if last_c2 >= last_c1 else "#ef4444"
+        last_x, last_y = coords[-1]
 
         def attr(label: str) -> str:
             v = growth.get(label)
             return "" if v is None else str(v)
 
-        since = series[valid[0][0]][0]
+        since = series[0][0]
         aria = " · ".join(
             f"{lbl} {growth[lbl]:+.2f}%" for _, _, lbl in TREND_PERIODS if growth.get(lbl) is not None
-        ) or "No growth data"
+        ) or "Headcount trajectory"
+
+        paths_joined = "".join(segment_paths)
 
         return (
-            f"<svg class='sparkline' viewBox='0 0 {width} 20' preserveAspectRatio='none' "
+            f"<svg class='sparkline' viewBox='0 0 120 20' preserveAspectRatio='none' "
             f"xmlns='http://www.w3.org/2000/svg' role='img' aria-label='{aria}' "
             f"data-mom='{attr('MoM')}' data-m3='{attr('3M')}' data-m6='{attr('6M')}' "
-            f"data-yoy='{attr('YoY')}' data-now='{last_c}' data-since='{since}'>"
-            f"<path d='{path}' fill='none' stroke='{color}' stroke-width='2' "
-            f"stroke-linecap='round' stroke-linejoin='round' vector-effect='non-scaling-stroke'/>"
-            f"<circle cx='{last_x}' cy='{last_y}' r='1.8' fill='{color}'/></svg>"
+            f"data-yoy='{attr('YoY')}' data-now='{last_c2}'>"
+            f"{paths_joined}"
+            f"<circle cx='{last_x}' cy='{last_y}' r='2.2' fill='{dot_color}'/>"
+            f"</svg>"
         )
-
-
+        
     @staticmethod
     def aggregate_global_history() -> None:
         """Aggregates headcount for all companies into a global daily index by carrying values forward."""
