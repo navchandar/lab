@@ -450,7 +450,7 @@ class GrowthAnalytics:
             v = growth.get(label)
             return "" if v is None else str(v)
 
-        since = series[0][0]
+        # since = series[0][0]
         aria = " · ".join(
             f"{lbl} {growth[lbl]:+.2f}%" for _, _, lbl in TREND_PERIODS if growth.get(lbl) is not None
         ) or "Headcount trajectory"
