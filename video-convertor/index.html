@@ -1184,7 +1184,6 @@
         const CACHE_NAME = `${CACHE_PREFIX}assets-v1`;
 
         const MAX_SIZE = 500 * 1024 * 1024; // 500 MiB
-        const RELEASE_AFTER_SIZE = 150 * 1024 * 1024;
 
         const $ = (id) => document.getElementById(id);
         $("copyright-year").textContent = new Date().getFullYear();
@@ -1736,12 +1735,25 @@
                 job.engine = instance;
 
                 instance.on("log", ({ message }) => {
-                    if (activeJob?.engine === instance) {
-                        log(message);
+                    if (
+                        activeJob !== job ||
+                        job.engine !== instance ||
+                        job.cancelled
+                    ) {
+                        return;
                     }
+                    log(message);
                 });
-
                 instance.on("progress", ({ progress }) => {
+                    // Ignore callbacks belonging to any earlier job or engine.
+                    if (
+                        activeJob !== job ||
+                        job.engine !== instance ||
+                        job.cancelled ||
+                        phase !== "convert"
+                    ) {
+                        return;
+                    }
                     updateConversionProgress(instance, progress);
                 });
 
@@ -1914,8 +1926,12 @@
                 speed: ui.speed.value,
                 faststart: ui.faststart.checked,
                 started: performance.now(),
-                encodeStarted: 0
+                encodeStarted: 0,
+                displayedFraction: 0,
+                lastProgressPaint: 0,
+                smoothedETA: undefined
             };
+
 
             activeJob = job;
             busy = true;
@@ -1935,7 +1951,6 @@
             let instance = null;
             let mounted = false;
             let inputPath = null;
-            let succeeded = false;
 
             const extension = job.preset === "mov" ? ".mov" : ".mp4";
             const outputPath = `/output${extension}`;
@@ -2038,7 +2053,6 @@
                     `(${comparison}) · Total time ${duration(elapsed)}`;
 
                 ui.result.hidden = false;
-                succeeded = true;
                 setStage("done");
 
                 setStatus("Conversion complete");
@@ -2068,22 +2082,22 @@
             } finally {
                 phase = "cleanup";
                 syncUI();
-
-                await cleanFiles(instance, mounted, inputPath, outputPath);
-
-                if (
-                    instance &&
-                    (!succeeded || file.size >= RELEASE_AFTER_SIZE)
-                ) {
-                    destroyEngine(instance);
+                try {
+                    await cleanFiles(
+                        instance,
+                        mounted,
+                        inputPath,
+                        outputPath
+                    );
+                } finally {
+                    // Do not carry the previous file's FFmpeg runtime to next conversion.
+                    destroyEngine(instance ?? job.engine);
+                    activeJob = null;
+                    busy = false;
+                    phase = "idle";
+                    flushLogs();
+                    syncUI();
                 }
-
-                activeJob = null;
-                busy = false;
-                phase = "idle";
-
-                flushLogs();
-                syncUI();
             }
         }
 
