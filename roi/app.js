@@ -11,7 +11,9 @@
 function showToast(message, type = 'info') {
   try {
     const container = document.getElementById('toastContainer');
-    if (!container) return;
+    if (!container) {
+      return;
+    }
     const toast = document.createElement('div');
     const bgStyles = {
       info: 'bg-slate-900/90 text-white border-slate-700',
@@ -115,7 +117,9 @@ function initTheme() {
 // -------------------------------------------------------------
 function handleFile(file) {
   try {
-    if (!file) return;
+    if (!file) {
+      return;
+    }
     if (!file.type || !file.type.startsWith('image/')) {
       showToast('Please upload a valid image file (PNG, JPG, WebP, etc.).', 'error');
       return;
@@ -211,7 +215,9 @@ function getSvgCoordinates(evt) {
     pt.x = evt.clientX;
     pt.y = evt.clientY;
     const ctm = DOM.svgOverlay.getScreenCTM();
-    if (!ctm) return { x: 0, y: 0 };
+    if (!ctm) {
+      return { x: 0, y: 0 };
+    }
     const cursorPt = pt.matrixTransform(ctm.inverse());
     return {
       x: Math.round(Math.max(0, Math.min(state.imageMeta.width, cursorPt.x))),
@@ -229,7 +235,9 @@ function initInteractions() {
   // Mouse down on vertices or polygon body
   DOM.svgOverlay.addEventListener('mousedown', (e) => {
     try {
-      if (!state.imageMeta.loaded) return;
+      if (!state.imageMeta.loaded) {
+        return;
+      }
       // 1. Check Vertex Point Click
       if (e.target.dataset.pointIndex !== undefined) {
         e.preventDefault();
@@ -260,7 +268,9 @@ function initInteractions() {
   // Global mousemove for smooth dragging outside SVG bounds
   window.addEventListener('mousemove', (e) => {
     try {
-      if (!state.dragMode || !state.activeZone) return;
+      if (!state.dragMode || !state.activeZone) {
+        return;
+      }
       const current = getSvgCoordinates(e);
       if (state.dragMode === 'point') {
         if (state.activePointIndex >= 0 && state.activeZone.area[state.activePointIndex]) {
@@ -274,10 +284,10 @@ function initInteractions() {
         let validDx = dx;
         let validDy = dy;
         state.initialPointsSnapshot.forEach(p => {
-          if (p.x + validDx < 0) validDx = -p.x;
-          if (p.x + validDx > state.imageMeta.width) validDx = state.imageMeta.width - p.x;
-          if (p.y + validDy < 0) validDy = -p.y;
-          if (p.y + validDy > state.imageMeta.height) validDy = state.imageMeta.height - p.y;
+          if (p.x + validDx < 0) {validDx = -p.x;}
+          if (p.x + validDx > state.imageMeta.width) {validDx = state.imageMeta.width - p.x;}
+          if (p.y + validDy < 0) {validDy = -p.y;}
+          if (p.y + validDy > state.imageMeta.height) {validDy = state.imageMeta.height - p.y;}
         });
         state.activeZone.area = state.initialPointsSnapshot.map(p => ({
           x: Math.round(p.x + validDx),
@@ -324,7 +334,9 @@ function initInteractions() {
 window.deleteZone = function(id) {
   try {
     state.zones = state.zones.filter(z => z.id !== id);
-    if (state.selectedId === id) state.selectedId = state.zones[0]?.id || null;
+    if (state.selectedId === id) {
+      state.selectedId = state.zones[0]?.id || null;
+    }
     render();
     showToast('Zone removed.', 'info');
   } catch (err) {
@@ -334,7 +346,9 @@ window.deleteZone = function(id) {
 window.insertPointOnEdge = function(id, afterIndex, x, y) {
   try {
     const zone = state.zones.find(z => z.id === id);
-    if (!zone) return;
+    if (!zone) {
+      return;
+    }
     zone.area.splice(afterIndex + 1, 0, { x, y });
     state.selectedId = id;
     render();
