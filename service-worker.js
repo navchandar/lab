@@ -1,4 +1,4 @@
-// version=v2026.11.10
+// version=v2026.11.17
 
 const IGNORED_DIRS = [".git",".github","config","node_modules","__pycache__","Lychee","stefanzweifel",".ruff_cache","ruff_cache"];
 
@@ -54,6 +54,8 @@ const urlsToCache = [
   'pm-e-drive/index.html',
   'polyforge/index.html',
   'polyforge/script.js',
+  'roi/app.js',
+  'roi/index.html',
   'serviceability/index.html',
   'serviceability/script.js',
   'serviceability/style.css',
