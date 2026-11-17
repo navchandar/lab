@@ -30,6 +30,7 @@ const HIDDEN_TOOLS = [
   "whistle-counter",
   "snacks",
   "video-convertor",
+  "roi",
 ];
 
 const IGNORED_FILES = [

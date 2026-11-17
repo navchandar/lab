@@ -47,6 +47,8 @@ Each project is lightweight, mobile-friendly, and hosted via GitHub Pages, made 
 | ⏲️ <a href="https://navchandar.github.io/lab/whistle-counter/" target="_blank">**Whistle Counter**</a> | Web utility to detect whistles using Local Audio processing. | 🟩🟩🟩🟩⬜ 80%  |
 | 🍱 <a href="https://navchandar.github.io/lab/snacks/" target="_blank">**Snack a Day**</a> | Simple daily snack tracker for kids. | 🟩🟩🟩🟩🟩 100%  |
 | 🎬 <a href="https://navchandar.github.io/lab/video-convertor/" target="_blank">**Video Convertor**</a> | Local Video convertor using FFMPEG WASM | 🟩🟩🟩🟩⬜ 80%  |
+|  <a href="https://navchandar.github.io/lab/roi/" target="_blank">**Regions of Interest**</a> | Image Annotation to add Regions of Interest | 🟩🟩🟩🟩⬜ 80%  |
+
 
 
 

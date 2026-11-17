@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- SEO & Social Meta Tags -->
+  <title>Regions Of Interest</title>
+  <meta name="description" content="A lightweight, high-performance web tool for annotating Region of Interest (ROI) and Exclusion zones with interactive polygon vertices, dynamic JSON export, and real-time scaling.">
+  <meta name="keywords" content="image annotation, polygon editor, computer vision, ROI annotator, exclusion zone, machine learning dataset, vision inspection">
+  <meta name="author" content="Naveenchandar">
+  <meta name="robots" content="index, follow">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Regions Of Interest - Precision Vision Annotation">
+  <meta property="og:description" content="Fast, browser-based polygon annotation tool for machine vision and inspection pipelines.">
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:title" content="Regions Of Interest">
+  <meta property="twitter:description" content="Fast, browser-based polygon annotation tool for computer vision inspection.">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Vertex & Edge handle styling */
+    .vertex-handle {
+      transition: r 0.15s ease, stroke-width 0.15s ease;
+    }
+    .vertex-handle:hover {
+      r: 8px;
+      stroke-width: 3.5px;
+    }
+    .edge-add-handle {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .edge-add-handle:hover {
+      r: 7px;
+      opacity: 1;
+      filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.8));
+    }
+    .shape-polygon {
+      cursor: grab;
+      transition: fill-opacity 0.2s ease;
+    }
+    .shape-polygon:active {
+      cursor: grabbing;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.35); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.55); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased transition-colors duration-300 bg-gradient-to-br from-slate-50 via-indigo-50/40 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-800 dark:text-slate-100">
+  <!-- Top Navigation / Application Header -->
+  <header class="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800/80 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-sm">
+    <!-- Branding -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 via-teal-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white font-black text-lg select-none">
+        ROI
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base font-bold tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
+            Regions Of Interest
+          </h1>
+          <span class="text-[10px] tracking-wide uppercase px-2 py-0.5 rounded-full font-semibold bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/50">
+            v2.0
+          </span>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">Precise ROI & Exclusion Area Annotator</p>
+      </div>
+    </div>
+    <!-- Toolbar Controls -->
+    <div class="flex items-center gap-2.5">
+      <!-- Upload Button -->
+      <label class="cursor-pointer group flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg bg-white/90 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition shadow-sm">
+        <svg class="w-4 h-4 text-indigo-500 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+        </svg>
+        <span>Upload Image</span>
+        <input type="file" id="fileInput" accept="image/*" class="hidden">
+      </label>
+      <div class="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
+      <!-- Add ROI Button -->
+      <button id="addRoiBtn" disabled class="group flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-emerald-600/20 hover:shadow-emerald-600/30 transition">
+        <svg class="w-3.5 h-3.5 text-emerald-100 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Add ROI</span>
+      </button>
+      <!-- Add Exclusion Button -->
+      <button id="addExclusionBtn" disabled class="group flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-lg text-white bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 disabled:opacity-40 disabled:cursor-not-allowed shadow-md shadow-rose-600/20 hover:shadow-rose-600/30 transition">
+        <svg class="w-3.5 h-3.5 text-rose-100 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Add Exclusion</span>
+      </button>
+      <div class="h-5 w-px bg-slate-200 dark:bg-slate-800 mx-1"></div>
+      <!-- Theme Toggle (Light / Dark) -->
+      <button id="themeToggleBtn" aria-label="Toggle Theme" class="p-2 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition">
+        <!-- Sun Icon -->
+        <svg id="sunIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <!-- Moon Icon -->
+        <svg id="moonIcon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+  <!-- Interactive Workspace with Gradient Backgrounds -->
+  <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+    <!-- Canvas Area with Subtle Radial Ambient Gradient -->
+    <main class="flex-1 p-4 sm:p-6 flex flex-col items-center justify-center overflow-auto relative select-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-100/40 via-transparent to-transparent dark:from-indigo-950/20 dark:via-transparent dark:to-transparent">
+      <!-- Clickable Empty Canvas Upload Zone -->
+      <div 
+        id="emptyState" 
+        role="button" 
+        tabindex="0" 
+        aria-label="Upload an image to start annotating"
+        class="group text-center p-8 max-w-sm rounded-3xl border-2 border-dashed border-slate-300/80 dark:border-slate-800 hover:border-indigo-500 dark:hover:border-indigo-400 bg-white/70 dark:bg-slate-900/50 hover:bg-white dark:hover:bg-slate-900/80 cursor-pointer transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.99] shadow-xl shadow-slate-200/50 dark:shadow-black/40 backdrop-blur-md outline-none focus:ring-2 focus:ring-indigo-500/50"
+      >
+        <div class="w-14 h-14 mx-auto mb-3.5 rounded-2xl bg-gradient-to-tr from-slate-100 via-indigo-50 to-indigo-100 dark:from-slate-800 dark:via-indigo-950/60 dark:to-slate-900 group-hover:from-indigo-100 group-hover:to-teal-100 dark:group-hover:from-indigo-950 dark:group-hover:to-teal-950 flex items-center justify-center text-slate-400 dark:text-slate-500 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 shadow-inner transition-colors duration-300">
+          <svg class="w-7 h-7 transform group-hover:-translate-y-0.5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <p class="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+          No Image Loaded
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Click in this box or drag &amp; drop an image to get started.
+        </p>
+        <span class="inline-flex items-center gap-1.5 mt-3 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50/80 dark:bg-indigo-950/60 px-3 py-1 rounded-full border border-indigo-200/60 dark:border-indigo-800/60 shadow-sm">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          Browse File
+        </span>
+      </div>
+      <!-- Stage with Image and Scaled SVG Overlay -->
+      <div id="stage" class="relative max-w-full max-h-[82vh] hidden rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-black overflow-hidden ring-1 ring-black/5 dark:ring-white/5">
+        <img id="imageElement" class="block max-w-full max-h-[82vh] object-contain select-none pointer-events-none" alt="Annotation Target">
+        <svg id="svgOverlay" class="absolute inset-0 w-full h-full"></svg>
+      </div>
+      <!-- Floating Instructions Bar -->
+      <div id="instructions" class="hidden mt-3 text-[11px] text-slate-600 dark:text-slate-400 flex items-center gap-3.5 bg-white/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm">
+        <span><strong class="text-slate-800 dark:text-slate-200">Drag Body:</strong> Move zone</span>
+        <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+        <span><strong class="text-slate-800 dark:text-slate-200">Drag Points:</strong> Reshape</span>
+        <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+        <span><strong class="text-slate-800 dark:text-slate-200">Click '+' Edge:</strong> Add point</span>
+        <span class="text-slate-300 dark:text-slate-700">&bull;</span>
+        <span><strong class="text-slate-800 dark:text-slate-200">Right-Click Point:</strong> Remove</span>
+      </div>
+    </main>
+    <!-- Sidebar: Layers & Live Schema Output -->
+    <aside class="w-full lg:w-[410px] bg-white/70 dark:bg-slate-900/70 backdrop-blur-lg border-t lg:border-t-0 lg:border-l border-slate-200/80 dark:border-slate-800/80 flex flex-col h-auto lg:h-[calc(100vh-65px)] shadow-lg">
+      <!-- Layers Header -->
+      <div class="p-4 border-b border-slate-200/80 dark:border-slate-800/80">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <h2 class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">
+              Zones
+            </h2>
+            <span id="zoneCountBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              0
+            </span>
+          </div>
+          <span class="text-[11px] text-slate-400">Min 3 vertices</span>
+        </div>
+        <!-- Layers List Container -->
+        <div id="zoneList" class="mt-3 space-y-1.5 max-h-44 overflow-y-auto pr-1">
+          <p class="text-xs text-slate-400 dark:text-slate-500 italic py-2 text-center">No zones created yet.</p>
+        </div>
+      </div>
+      <!-- JSON Output Viewer with Whitish-Gradient Light Mode & Dark Obsidian Night Mode -->
+      <div class="flex-1 p-4 flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-bold">
+            JSON Output
+          </h2>
+          <button id="copyJsonBtn" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition shadow-sm flex items-center gap-1.5 active:scale-95">
+            <svg class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <span>Copy</span>
+          </button>
+        </div>
+        <!-- 
+          jsonOutput Container:
+          Light Mode: bg-gradient-to-b from-white via-slate-50 to-indigo-50/30 (Whitish pearlescent gradient)
+          Dark Mode: dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 (Dark obsidian gradient)
+        -->
+        <pre 
+          id="jsonOutput" 
+          class="flex-1 p-3.5 rounded-2xl font-mono text-[11px] leading-relaxed overflow-auto whitespace-pre select-all border shadow-inner transition-colors duration-200 border-slate-200/90 dark:border-slate-800/90 bg-gradient-to-b from-white via-slate-50 to-indigo-50/30 text-emerald-700 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-emerald-400"
+        ></pre>
+      </div>
+    </aside>
+  </div>
+  <!-- Toast Notification Container for User Feedback / Errors -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+  <!-- External JavaScript Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
