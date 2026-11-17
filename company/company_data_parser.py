@@ -54,7 +54,7 @@ NSE_URL = "https://archives.nseindia.com/content/equities/EQUITY_L.csv"
 BSE_URL = "https://www.bseindia.com/downloads1/List_of_companies.csv"
 
 # Set the timer to under 6 hours (Github actions limit)
-MAX_RUNTIME_SECONDS = int(5.9 * 60 * 60)
+MAX_RUNTIME_SECONDS = int(5.75 * 60 * 60)
 now = datetime.now(UTC)
 day_of_week = now.weekday()  # 0 = Monday, 6 = Sunday
 # Discovery: Only crawl for NEW companies on Mon, Wed (0,2)

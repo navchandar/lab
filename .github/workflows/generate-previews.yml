@@ -43,6 +43,28 @@ jobs:
             shot-scraper "$LIVE_URL" -o "$dir/preview.png" --width 1200 --height 630 --wait 5000
           done
 
+      - name: Remove Minor Preview changes
+        run: |
+          find . -maxdepth 2 -name "preview.png" -not -path "./preview.png" | while read -r file; do
+
+            if ! git cat-file -e HEAD:"${file#./}" 2>/dev/null; then
+              echo "New file: $file"
+              continue
+            fi
+
+            old_size=$(git show HEAD:"${file#./}" | wc -c)
+            new_size=$(wc -c < "$file")
+
+            diff_size=$(( old_size > new_size ? old_size - new_size : new_size - old_size ))
+
+            if [ "$diff_size" -lt 1024 ]; then
+              echo "Reverting insignificant change ($diff_size bytes): $file"
+              git checkout HEAD -- "$file"
+            else
+              echo "Keeping change ($diff_size bytes): $file"
+            fi
+          done
+
       - name: Create Gallery Page
         run: |
           mkdir -p $(dirname ${{ env.GALLERY_PATH }})
